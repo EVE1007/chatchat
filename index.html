@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phone Chat 模拟器</title>
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Comic+Neue:wght@400;700&family=Fredoka+One&family=Nunito:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&family=Roboto:wght@400;500&family=Raleway:wght@400;500;600&family=Lato:wght@400;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         /* 主题系统 - 简约风格 (默认) */
         :root {
@@ -48,6 +50,52 @@
             --spacing-md: 12px;
             --spacing-lg: 20px;
             --spacing-xl: 32px;
+            
+            /* 尺寸系统 */
+            --size-xs: 20px;
+            --size-sm: 24px;
+            --size-md: 30px;
+            --size-lg: 40px;
+            --size-xl: 50px;
+            --size-xxl: 60px;
+            
+            /* 字体大小系统 */
+            --font-size-xs: 10px;
+            --font-size-sm: 12px;
+            --font-size-md: 14px;
+            --font-size-lg: 16px;
+            --font-size-xl: 18px;
+            --font-size-xxl: 20px;
+            --font-size-xxxl: 24px;
+            --font-size-huge: 32px;
+            --font-size-giant: 80px;
+            
+            /* 圆角系统 */
+            --radius-xs: 4px;
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 15px;
+            --radius-xxl: 18px;
+            --radius-xxxl: 20px;
+            --radius-huge: 25px;
+            --radius-round: 50%;
+            
+            /* 行高系统 */
+            --line-height-tight: 1.3;
+            --line-height-normal: 1.4;
+            --line-height-relaxed: 1.5;
+            --line-height-loose: 1.6;
+            
+            /* Z-index系统 */
+            --z-index-dropdown: 10;
+            --z-index-sticky: 20;
+            --z-index-fixed: 30;
+            --z-index-modal-backdrop: 40;
+            --z-index-modal: 50;
+            --z-index-popover: 60;
+            --z-index-tooltip: 70;
+            --z-index-notification: 80;
             
             /* 动画系统 */
             --transition-fast: 0.15s ease;
@@ -113,7 +161,6 @@
             /* 特殊背景 */
             --bg-header-default: rgba(247, 247, 247, 0.75);
             --bg-form-light: rgba(255, 255, 255, 0.6);
-            --bg-white-70: rgba(255, 255, 255, 0.7);
             --bg-black-50: rgba(0, 0, 0, 0.5);
             --bg-blue-05: rgba(0, 123, 255, 0.05);
             --bg-blue-10: rgba(0, 123, 255, 0.1);
@@ -151,6 +198,7 @@
             --color-gray-bg: #f5f5f5;
             --color-gray-bg-light: #f8f8f8;
             --color-gray-bg-lighter: #fafafa;
+            --color-border: #eee;
             --color-border-light: #eee;
             --color-border-medium: #ddd;
             --color-border-gray: #ccc;
@@ -160,6 +208,10 @@
             --color-wallpaper: #a8d4a8;
             --color-neon-green: #00ff88;
             --color-neon-blue: #00d4ff;
+            --color-orange: #FF9500;
+            --color-yellow: #FFCC00;
+            --color-light-blue: #5AC8FA;
+            --color-pink: #AF52DE;
             
             /* iOS 系统颜色 */
             --color-ios-green: #34C759;
@@ -224,15 +276,15 @@
         
         .add-btn {
             position: absolute;
-            right: 15px;
-            top: 38px;
-            width: 30px;
-            height: 30px;
+            right: var(--spacing-lg);
+            top: 39.5px;
+            width: var(--size-md);
+            height: var(--size-md);
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 20px;
+            font-size: var(--font-size-xxl);
             color: var(--color-gray-dark);
         }
         
@@ -242,49 +294,50 @@
         
         .flex-row {
             display: flex;
-            gap: 10px;
+            gap: var(--spacing-sm);
         }
         
         .flex-row-center {
             display: flex;
-            gap: 8px;
+            gap: var(--spacing-sm);
             align-items: center;
         }
         
         .persona-add-btn {
-            width: 30px;
-            height: 30px;
+            width: var(--size-md);
+            height: var(--size-md);
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 20px;
+            font-size: var(--font-size-xxl);
             color: var(--color-blue);
-            background: rgba(0, 123, 255, 0.1);
-            border-radius: 50%;
-            margin-right: 5px;
+            background: var(--bg-blue-10);
+            border-radius: var(--radius-round);
+            margin-right: var(--spacing-xs);
         }
         
         .worldbook-add-btn {
             position: absolute;
-            right: 15px;
-            width: 30px;
-            height: 30px;
+            right: var(--spacing-lg);
+            top: 39px;
+            width: var(--size-md);
+            height: var(--size-md);
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 20px;
+            font-size: var(--font-size-xxl);
             color: var(--color-gray-dark);
         }
         
         .save-btn-absolute {
             position: absolute;
-            right: 15px;
-            padding: 5px 10px;
+            right: var(--spacing-lg);
+            padding: var(--spacing-xs) var(--spacing-sm);
             background: none;
             border: none;
-            font-size: 16px;
+            font-size: var(--font-size-lg);
             color: var(--color-gray-dark);
             cursor: pointer;
         }
@@ -313,9 +366,10 @@
         
         .chat-menu-btn {
             position: absolute;
-            right: 15px;
-            width: 30px;
-            height: 30px;
+            right: var(--spacing-lg);
+            top: 1.5px;
+            width: var(--size-md);
+            height: var(--size-md);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -324,7 +378,7 @@
         }
         
         .settings-icon-custom {
-            background-color: #FF69B4;
+            background-color: var(--color-pink);
         }
         
         .theme-preview-simple {
@@ -348,23 +402,23 @@
         }
         
         .check-icon {
-            color: #007AFF;
+            color: var(--color-blue);
         }
         
         .settings-item-margin {
-            margin-top: 20px;
+            margin-top: var(--spacing-lg);
         }
         
         .small-desc {
-            color: #666;
-            font-size: 12px;
+            color: var(--color-gray);
+            font-size: var(--font-size-sm);
             display: block;
-            margin-top: 5px;
+            margin-top: var(--spacing-xs);
         }
         
         .api-form-flex {
             display: flex;
-            gap: 8px;
+            gap: var(--spacing-sm);
             align-items: center;
         }
         
@@ -375,28 +429,28 @@
         
         .fetch-btn {
             display: none;
-            padding: 8px 12px;
-            background: #007AFF;
-            color: white;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--color-blue);
+            color: var(--color-white);
             border: none;
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 12px;
+            font-size: var(--font-size-sm);
             white-space: nowrap;
         }
         
         .test-connection-btn {
-            background-color: #34C759;
-            margin-top: 10px;
+            background-color: var(--color-ios-green);
+            margin-top: var(--spacing-sm);
         }
         
         .color-option {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+            width: var(--size-md);
+            height: var(--size-md);
+            border-radius: var(--radius-round);
             cursor: pointer;
             border: 2px solid transparent;
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast) ease;
         }
         
         .color-option:hover {
@@ -404,27 +458,27 @@
         }
         
         .color-option.selected {
-            border-color: white;
+            border-color: var(--color-white);
             box-shadow: 0 0 0 2px var(--color-blue);
         }
         
-        .color-red { background-color: #FF3B30; }
-        .color-orange { background-color: #FF9500; }
-        .color-yellow { background-color: #FFCC00; }
-        .color-green { background-color: #34C759; }
-        .color-light-blue { background-color: #5AC8FA; }
-        .color-blue { background-color: #007AFF; }
-        .color-purple { background-color: #5856D6; }
-        .color-pink { background-color: #AF52DE; }
-        .color-red-alt { background-color: #FF2D55; }
+        .color-red { background-color: var(--color-ios-red); }
+        .color-orange { background-color: var(--color-orange); }
+        .color-yellow { background-color: var(--color-yellow); }
+        .color-green { background-color: var(--color-ios-green); }
+        .color-light-blue { background-color: var(--color-light-blue); }
+        .color-blue { background-color: var(--color-blue); }
+        .color-purple { background-color: var(--color-ios-purple); }
+        .color-pink { background-color: var(--color-pink); }
+        .color-red-alt { background-color: var(--color-ios-red); }
         
         .wallpaper-option {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
+            width: var(--size-xxl);
+            height: var(--size-xxl);
+            border-radius: var(--radius-lg);
             cursor: pointer;
             border: 2px solid transparent;
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast) ease;
         }
         
         .wallpaper-option:hover {
@@ -452,7 +506,7 @@
         }
         
         .upload-custom-item {
-            margin-top: 15px;
+            margin-top: var(--spacing-lg);
         }
         
         .file-input-hidden {
@@ -460,26 +514,26 @@
         }
         
         .icon-user-blue {
-            color: #007AFF;
+            color: var(--color-blue);
         }
         
         .icon-users-green {
-            color: #34C759;
+            color: var(--color-ios-green);
         }
         
         .memory-checkbox {
-            margin-right: 8px;
+            margin-right: var(--spacing-sm);
         }
         
         .memory-desc {
-            font-size: 13px;
-            color: #666;
-            margin-top: 5px;
+            font-size: var(--font-size-md);
+            color: var(--color-gray);
+            margin-top: var(--spacing-xs);
         }
         
         .form-actions-flex {
             display: flex;
-            gap: 10px;
+            gap: var(--spacing-sm);
         }
         
         .form-submit-flex {
@@ -487,19 +541,19 @@
         }
         
         .form-delete-red {
-            background: #ff3b30;
-            color: white;
-            padding: 16px;
+            background: var(--color-ios-red);
+            color: var(--color-white);
+            padding: var(--spacing-lg);
             border: none;
-            border-radius: var(--theme-button-radius, 15px);
-            font-size: 17px;
+            border-radius: var(--theme-button-radius, var(--radius-xl));
+            font-size: var(--font-size-xl);
             font-weight: 600;
             cursor: pointer;
             display: none;
         }
         
         .danger-color {
-            color: #ff3b30;
+            color: var(--color-ios-red);
         }
         
         .danger-section-icon {
@@ -512,38 +566,38 @@
         
         /* 更多工具类 - 继续替换硬编码 */
         .checkbox-with-margin {
-            margin-right: 8px;
+            margin-right: var(--spacing-sm);
         }
         
         .margin-top-20 {
-            margin-top: 20px;
+            margin-top: var(--spacing-lg);
         }
         
         .margin-top-15 {
-            margin-top: 15px;
+            margin-top: var(--spacing-lg);
         }
         
         .margin-top-10 {
-            margin-top: 10px;
+            margin-top: var(--spacing-sm);
         }
         
         .margin-top-8 {
-            margin-top: 8px;
+            margin-top: var(--spacing-sm);
         }
         
         .margin-top-5 {
-            margin-top: 5px;
+            margin-top: var(--spacing-xs);
         }
         
         .flex-space-between {
             display: flex;
             justify-content: space-between;
-            margin-top: 5px;
+            margin-top: var(--spacing-xs);
         }
         
         .flex-gap-15 {
             display: flex;
-            gap: 15px;
+            gap: var(--spacing-lg);
         }
         
         .flex-1 {
@@ -552,14 +606,14 @@
         
         .flex-gap-15-mb-15 {
             display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
         }
         
         .flex-gap-15-mb-10 {
             display: flex;
-            gap: 15px;
-            margin-bottom: 10px;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
         }
         
         .width-100 {
@@ -569,95 +623,95 @@
         .max-height-200-auto {
             max-height: 200px;
             overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
+            border: 1px solid var(--color-border-medium);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm);
         }
         
         .max-height-300-auto {
             max-height: 300px;
             overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
+            border: 1px solid var(--color-border-medium);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm);
         }
         
         .small-text {
-            font-size: 13px;
-            color: #666;
+            font-size: var(--font-size-md);
+            color: var(--color-gray);
         }
         
         .tiny-text {
-            font-size: 12px;
-            color: #666;
+            font-size: var(--font-size-sm);
+            color: var(--color-gray);
         }
         
         .tiny-text-gray {
-            font-size: 12px;
-            color: #999;
+            font-size: var(--font-size-sm);
+            color: var(--color-gray-medium);
         }
         
         .label-small {
-            font-size: 13px;
-            color: #666;
+            font-size: var(--font-size-md);
+            color: var(--color-gray);
         }
         
         .delete-btn-red {
-            background: #ff3b30;
-            color: white;
+            background: var(--color-ios-red);
+            color: var(--color-white);
             border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-right: 5px;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-xs);
+            margin-right: var(--spacing-xs);
         }
         
         .cancel-btn-blue {
-            background: #007AFF;
-            color: white;
+            background: var(--color-blue);
+            color: var(--color-white);
             border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-xs);
         }
         
         .selection-checkbox {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid #007AFF;
-            margin-right: 10px;
+            width: var(--size-xs);
+            height: var(--size-xs);
+            border-radius: var(--radius-round);
+            border: 2px solid var(--color-blue);
+            margin-right: var(--spacing-sm);
             display: flex;
             align-items: center;
             justify-content: center;
         }
         
         .selection-checkbox.selected {
-            background-color: #007AFF;
+            background-color: var(--color-blue);
         }
         
         .check-icon-white {
-            color: white;
-            font-size: 12px;
+            color: var(--color-white);
+            font-size: var(--font-size-sm);
         }
         
         .group-member-count {
-            font-size: 12px;
-            color: #666;
+            font-size: var(--font-size-sm);
+            color: var(--color-gray);
         }
         
         .italic-gray {
-            color: #666;
+            color: var(--color-gray);
             font-style: italic;
         }
         
         .text-center-gray {
             text-align: center;
-            color: #666;
-            padding: 40px;
+            color: var(--color-gray);
+            padding: var(--size-lg);
         }
         
         .worldbook-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--color-border);
             cursor: pointer;
         }
         
@@ -669,16 +723,16 @@
         
         .worldbook-title {
             font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 5px;
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--spacing-xs);
         }
         
         .avatar-group-green {
-            background-color: #34C759;
+            background-color: var(--color-ios-green);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: var(--color-white);
             font-weight: bold;
         }
         
@@ -687,35 +741,33 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 15px;
-            background-color: #f5f5f5;
-            border-bottom: 1px solid #eee;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            background-color: var(--color-gray-bg);
+            border-bottom: 1px solid var(--color-border);
         }
         
         .contact-item.selected {
-            background-color: #e3f2fd;
+            background-color: var(--color-blue-light);
         }
         
         .empty-message {
             text-align: center;
-            color: #666;
-            padding: 40px 20px;
+            color: var(--color-gray);
+            padding: var(--size-lg) var(--spacing-lg);
         }
         
         .empty-chat-state {
             text-align: center;
-            color: #999;
-            padding: 50px 20px;
-            font-size: 16px;
+            color: var(--color-gray-medium);
+            padding: var(--size-xl) var(--spacing-lg);
+            font-size: var(--font-size-lg);
         }
         
         .character-info-flex {
             flex: 1;
         }
         
-        .no-avatar {
-            /* 隐藏头像时的样式调整 */
-        }
+
         
         .message-container.no-avatar .message-avatar {
             display: none;
@@ -724,26 +776,26 @@
         /* 更多JavaScript动态样式类 */
         .empty-worldbook {
             text-align: center;
-            color: #666;
-            padding: 40px;
+            color: var(--color-gray);
+            padding: var(--size-lg);
         }
         
         .empty-playlist {
             text-align: center;
-            color: #666;
-            padding: 20px;
+            color: var(--color-gray);
+            padding: var(--spacing-lg);
         }
         
         .empty-personas {
             text-align: center;
-            color: #666;
-            padding: 40px;
+            color: var(--color-gray);
+            padding: var(--size-lg);
         }
         
         .empty-mount-chats {
-            color: #666;
+            color: var(--color-gray);
             text-align: center;
-            padding: 20px;
+            padding: var(--spacing-lg);
         }
         
         .song-title {
@@ -751,32 +803,32 @@
         }
         
         .song-artist {
-            font-size: 12px;
-            color: #666;
+            font-size: var(--font-size-sm);
+            color: var(--color-gray);
         }
         
         .song-duration {
-            font-size: 12px;
-            color: #999;
+            font-size: var(--font-size-sm);
+            color: var(--color-gray-medium);
         }
         
         .remove-character-btn {
             background: none;
             border: none;
-            color: #ff3b30;
+            color: var(--color-ios-red);
             cursor: pointer;
-            margin-left: 10px;
+            margin-left: var(--spacing-sm);
         }
         
         .mount-checkbox {
-            margin-right: 10px;
+            margin-right: var(--spacing-sm);
         }
         
         .mount-avatar-small {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            margin-right: 10px;
+            width: var(--size-md);
+            height: var(--size-md);
+            border-radius: var(--radius-round);
+            margin-right: var(--spacing-sm);
         }
         
         .mount-name {
@@ -784,12 +836,12 @@
         }
         
         .mount-type {
-            font-size: 12px;
-            color: #666;
+            font-size: var(--font-size-sm);
+            color: var(--color-gray);
         }
         
         .worldbook-checkbox {
-            margin-right: 12px;
+            margin-right: var(--spacing-md);
             margin-top: 2px;
         }
         
@@ -799,29 +851,29 @@
         
         .worldbook-title-text {
             font-weight: 600;
-            font-size: 15px;
-            margin-bottom: 4px;
-            color: #333;
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--spacing-xs);
+            color: var(--color-gray-dark);
         }
         
         .worldbook-desc-text {
-            font-size: 13px;
-            color: #666;
-            line-height: 1.4;
-            margin-bottom: 6px;
+            font-size: var(--font-size-md);
+            color: var(--color-gray);
+            line-height: var(--line-height-normal);
+            margin-bottom: var(--spacing-sm);
         }
         
         .worldbook-date-text {
-            font-size: 11px;
-            color: #999;
+            font-size: var(--font-size-xs);
+            color: var(--color-gray-medium);
         }
         
         .identity-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f0f2f5, #e8ebf0);
-            margin-right: 12px;
+            width: var(--size-lg);
+            height: var(--size-lg);
+            border-radius: var(--radius-round);
+            background: linear-gradient(135deg, var(--theme-avatar-bg-1), var(--theme-avatar-bg-2));
+            margin-right: var(--spacing-md);
         }
         
         .identity-content-flex {
@@ -830,106 +882,112 @@
         
         .identity-name {
             font-weight: 600;
-            font-size: 15px;
+            font-size: var(--font-size-lg);
             margin-bottom: 3px;
         }
         
         .identity-desc {
-            font-size: 13px;
-            color: #666;
-            line-height: 1.3;
+            font-size: var(--font-size-md);
+            color: var(--color-gray);
+            line-height: var(--line-height-tight);
         }
         
         .identity-check-icon {
-            color: var(--theme-button-bg, #4a84c1);
-            margin-left: 8px;
+            color: var(--theme-button-bg, var(--color-blue));
+            margin-left: var(--spacing-sm);
         }
         
         .delete-worldbook-btn {
             background: none;
             border: none;
-            color: #ff3b30;
+            color: var(--color-ios-red);
             cursor: pointer;
-            font-size: 16px;
-            padding: 5px;
+            font-size: var(--font-size-lg);
+            padding: var(--spacing-xs);
         }
         
         .mount-item {
             display: flex;
             align-items: center;
-            padding: 8px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: var(--spacing-sm);
+            border-bottom: 1px solid var(--color-gray-light);
             cursor: pointer;
         }
         
         .mount-avatar-group {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: #34C759;
+            width: var(--size-md);
+            height: var(--size-md);
+            border-radius: var(--radius-round);
+            background-color: var(--color-ios-green);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: var(--color-white);
             font-weight: bold;
-            margin-right: 10px;
+            margin-right: var(--spacing-sm);
         }
         
         .empty-emoji-grid {
             text-align: center;
-            color: #666;
-            padding: 20px;
+            color: var(--color-gray);
+            padding: var(--spacing-lg);
             grid-column: 1 / -1;
         }
         
         .worldbook-mount-item {
             align-items: flex-start;
-            padding: 12px;
-            transition: background-color 0.2s;
+            padding: var(--spacing-md);
+            transition: background-color var(--transition-fast);
         }
         
         .worldbook-mount-item:hover {
-            background-color: #f8f9fa;
+            background-color: var(--color-gray-bg-light);
         }
         
         .identity-item {
             display: flex;
             align-items: center;
-            padding: 12px;
+            padding: var(--spacing-md);
             border: 2px solid transparent;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             cursor: pointer;
-            margin-bottom: 8px;
-            transition: all 0.2s ease;
-            background-color: #f8f9fa;
+            margin-bottom: var(--spacing-sm);
+            transition: all var(--transition-fast) ease;
+            background-color: var(--color-gray-bg-light);
         }
         
         .identity-item.selected {
-            border-color: var(--theme-button-bg, #4a84c1);
-            background-color: rgba(74, 132, 193, 0.1);
+            border-color: var(--theme-button-bg, var(--color-blue));
+            background-color: var(--bg-default-10);
         }
         }
 
         /* 可爱风格主题 */
         body[data-theme="cute"] {
-            --theme-font-family: 'Varela Round', 'Quicksand', sans-serif;
+            --theme-font-family: 'Comfortaa', 'Comic Neue', 'Varela Round', 'Quicksand', sans-serif;
             --theme-font-weight: 500;
             --theme-line-height: 1.6;
+            --theme-title-font-size: 20px;
+            --theme-title-font-weight: 700;
+            --theme-setting-title-font: 'Fredoka One', 'Comfortaa', sans-serif;
             
             --theme-button-bg: rgba(255, 182, 193, 0.9);
             --theme-button-bg-hover: rgba(255, 182, 193, 1);
             --theme-button-color: white;
             --theme-button-border: none;
-            --theme-button-radius: 20px;
-            --theme-button-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
+            --theme-button-radius: 25px;
+            --theme-button-shadow: 0 3px 10px rgba(255, 105, 180, 0.4);
+            --theme-button-font-size: 16px;
+            --theme-button-font-weight: 600;
+            --theme-button-letter-spacing: 0.5px;
             
             --theme-button-secondary-bg: rgba(255, 240, 245, 0.8);
             --theme-button-secondary-bg-hover: rgba(255, 240, 245, 0.95);
             --theme-button-secondary-color: #d44d5c;
             --theme-button-secondary-border: rgba(255, 182, 193, 0.3);
             
-            --theme-header-bg: rgba(255, 230, 240, 0.85);
-            --theme-header-backdrop: blur(15px);
+            --theme-header-bg: rgba(255, 230, 240, 0.8);
+            --theme-header-backdrop: blur(10px);
             
             --theme-form-bg: rgba(255, 249, 252, 0.8);
             --theme-input-border: rgba(255, 204, 213, 0.4);
@@ -943,6 +1001,7 @@
             --theme-avatar-border: rgba(255, 255, 255, 0.9);
             
             --theme-text-primary: #d44d5c;
+            --theme-text-shadow: 0 1px 3px rgba(255, 182, 193, 0.2);
             
             /* 可爱主题的背景色 */
             --body-bg: linear-gradient(135deg, #ffeef7, #ffe4f0);
@@ -968,15 +1027,54 @@
             --preview-glass-user: rgba(255, 182, 193, 0.85);
             --preview-glass-border: 1px solid rgba(255, 204, 213, 0.4);
         }
+        
+        /* 可爱主题的特殊效果 */
+        body[data-theme="cute"] .settings-icon {
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(255, 182, 193, 0.3);
+        }
+        
+        body[data-theme="cute"] .form-submit:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(255, 182, 193, 0.4);
+        }
+        
+
+        
+        body[data-theme="cute"] .control-btn {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            box-shadow: 0 3px 10px rgba(255, 182, 193, 0.3);
+        }
+        
+        body[data-theme="cute"] .control-btn:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        body[data-theme="cute"] .app-title.chat-mode {
+            background: linear-gradient(90deg, #ff6b9d, #ffa8cc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
         /* 绿色自然主题 */
         body[data-theme="nature"] {
+            --theme-font-family: 'Nunito', 'Montserrat', 'Open Sans', sans-serif;
+            --theme-font-weight: 400;
+            --theme-line-height: 1.6;
+            --theme-title-font-size: var(--font-size-xl);
+            --theme-title-font-weight: 600;
+            --theme-setting-title-font: 'Nunito', 'Montserrat', sans-serif;
+            
             --theme-button-bg: rgba(76, 217, 100, 0.85);
             --theme-button-bg-hover: rgba(76, 217, 100, 1);
-            --theme-button-color: white;
+            --theme-button-color: var(--color-white);
             --theme-button-border: none;
-            --theme-button-radius: 15px;
+            --theme-button-radius: var(--radius-xxxl);
             --theme-button-shadow: 0 4px 15px rgba(76, 217, 100, 0.3);
+            --theme-button-font-size: var(--font-size-lg);
+            --theme-button-font-weight: 500;
+            --theme-button-letter-spacing: 0.3px;
             
             --theme-button-secondary-bg: rgba(220, 245, 220, 0.8);
             --theme-button-secondary-bg-hover: rgba(220, 245, 220, 0.95);
@@ -998,6 +1096,7 @@
             --theme-avatar-border: rgba(255, 255, 255, 0.9);
             
             --theme-text-primary: #2d7d32;
+            --theme-text-shadow: 0 1px 2px rgba(76, 217, 100, 0.15);
             
             /* 自然主题的背景色 */
             --body-bg: linear-gradient(135deg, #e8f5e8, #c8e6c9);
@@ -1023,15 +1122,52 @@
             --preview-glass-user: rgba(76, 217, 100, 0.8);
             --preview-glass-border: 1px solid rgba(76, 217, 100, 0.3);
         }
+        
+        /* 自然主题的特殊效果 */
+        body[data-theme="nature"] .settings-icon {
+            border-radius: 10px;
+            background-image: linear-gradient(135deg, #4cd964, #5ac969);
+        }
+        
+        body[data-theme="nature"] .form-submit {
+            background: linear-gradient(135deg, #4cd964, #5ac969);
+        }
+        
+        body[data-theme="nature"] .form-submit:hover {
+            background: linear-gradient(135deg, #5ac969, #4cd964);
+        }
+        
+        body[data-theme="nature"] .control-btn {
+            background: linear-gradient(135deg, #81c784, #66bb6a);
+        }
+        
+        body[data-theme="nature"] .app-title.chat-mode {
+            background: linear-gradient(90deg, #4caf50, #66bb6a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+
 
         /* 蓝色科技主题 */
         body[data-theme="tech"] {
+            --theme-font-family: 'Inter', 'Roboto', 'Helvetica Neue', sans-serif;
+            --theme-font-weight: 400;
+            --theme-line-height: 1.5;
+            --theme-title-font-size: var(--font-size-xl);
+            --theme-title-font-weight: 600;
+            --theme-setting-title-font: 'Inter', 'Roboto', sans-serif;
+            
             --theme-button-bg: rgba(0, 123, 255, 0.85);
             --theme-button-bg-hover: rgba(0, 123, 255, 1);
-            --theme-button-color: white;
+            --theme-button-color: var(--color-white);
             --theme-button-border: none;
-            --theme-button-radius: 12px;
-            --theme-button-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            --theme-button-radius: var(--radius-md);
+            --theme-button-shadow: 0 2px 8px rgba(0, 123, 255, 0.25);
+            --theme-button-font-size: var(--font-size-lg);
+            --theme-button-font-weight: 500;
+            --theme-button-letter-spacing: 0.2px;
             
             --theme-button-secondary-bg: rgba(230, 245, 255, 0.8);
             --theme-button-secondary-bg-hover: rgba(230, 245, 255, 0.95);
@@ -1053,6 +1189,7 @@
             --theme-avatar-border: rgba(255, 255, 255, 0.9);
             
             --theme-text-primary: #1976d2;
+            --theme-text-shadow: none;
             
             /* 科技主题的背景色 */
             --body-bg: linear-gradient(135deg, #e3f2fd, #bbdefb);
@@ -1078,15 +1215,66 @@
             --preview-glass-user: rgba(0, 123, 255, 0.8);
             --preview-glass-border: 1px solid rgba(0, 123, 255, 0.3);
         }
+        
+        /* 科技主题的特殊效果 */
+        body[data-theme="tech"] .settings-icon {
+            border-radius: 4px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        body[data-theme="tech"] .form-submit {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body[data-theme="tech"] .form-submit::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        body[data-theme="tech"] .form-submit:active::after {
+            width: 300px;
+            height: 300px;
+        }
+        
+        body[data-theme="tech"] .control-btn {
+            border: 1px solid rgba(0, 123, 255, 0.2);
+            background: rgba(0, 123, 255, 0.9);
+        }
+        
+        body[data-theme="tech"] .app-title.chat-mode {
+            background: linear-gradient(90deg, #2196f3, #64b5f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
         /* 紫色梦幻主题 */
         body[data-theme="dream"] {
+            --theme-font-family: 'Raleway', 'Lato', 'Poppins', sans-serif;
+            --theme-font-weight: 400;
+            --theme-line-height: 1.6;
+            --theme-title-font-size: var(--font-size-xl);
+            --theme-title-font-weight: 600;
+            --theme-setting-title-font: 'Raleway', 'Poppins', sans-serif;
+            
             --theme-button-bg: rgba(156, 39, 176, 0.85);
             --theme-button-bg-hover: rgba(156, 39, 176, 1);
-            --theme-button-color: white;
+            --theme-button-color: var(--color-white);
             --theme-button-border: none;
-            --theme-button-radius: 18px;
-            --theme-button-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+            --theme-button-radius: var(--radius-huge);
+            --theme-button-shadow: 0 4px 20px rgba(156, 39, 176, 0.35);
+            --theme-button-font-size: var(--font-size-lg);
+            --theme-button-font-weight: 500;
+            --theme-button-letter-spacing: 0.4px;
             
             --theme-button-secondary-bg: rgba(240, 230, 245, 0.8);
             --theme-button-secondary-bg-hover: rgba(240, 230, 245, 0.95);
@@ -1108,6 +1296,7 @@
             --theme-avatar-border: rgba(255, 255, 255, 0.9);
             
             --theme-text-primary: #7b1fa2;
+            --theme-text-shadow: 0 1px 3px rgba(156, 39, 176, 0.15);
             
             /* 梦幻主题的背景色 */
             --body-bg: linear-gradient(135deg, #f3e5f5, #e1bee7);
@@ -1132,6 +1321,41 @@
             --preview-glass-ai: rgba(240, 230, 245, 0.8);
             --preview-glass-user: rgba(156, 39, 176, 0.8);
             --preview-glass-border: 1px solid rgba(156, 39, 176, 0.3);
+        }
+        
+        /* 梦幻主题的特殊效果 */
+        body[data-theme="dream"] .settings-icon {
+            border-radius: 15px;
+            background-image: linear-gradient(135deg, #ce93d8, #ba68c8);
+            box-shadow: 0 3px 15px rgba(156, 39, 176, 0.3);
+        }
+        
+        body[data-theme="dream"] .form-submit {
+            background: linear-gradient(135deg, #9c27b0, #ba68c8);
+            box-shadow: 0 4px 20px rgba(156, 39, 176, 0.35);
+        }
+        
+        body[data-theme="dream"] .form-submit:hover {
+            background: linear-gradient(135deg, #ba68c8, #9c27b0);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(156, 39, 176, 0.4);
+        }
+        
+        body[data-theme="dream"] .control-btn {
+            background: linear-gradient(135deg, #ba68c8, #ab47bc);
+            box-shadow: 0 3px 15px rgba(156, 39, 176, 0.3);
+        }
+        
+        body[data-theme="dream"] .control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(156, 39, 176, 0.4);
+        }
+        
+        body[data-theme="dream"] .app-title.chat-mode {
+            background: linear-gradient(90deg, #9c27b0, #ba68c8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         html { 
@@ -1182,7 +1406,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            padding: 6px 20px;
+            padding: 12px 20px 6px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -1260,9 +1484,9 @@
             text-align: center;
             color: white;
             text-shadow: var(--text-shadow-md);
-            margin-bottom: 20px;
+            margin-bottom: 40px;
             flex-shrink: 0;
-            margin-top: 60px;
+            margin-top: 90px;
             padding-top: 20px;
         }
         
@@ -1280,7 +1504,7 @@
         
         #app-grid {
             position: absolute;
-            top: 50%;
+            top: 55%;
             left: 50%;
             transform: translate(-50%, -50%);
             display: flex;
@@ -1359,16 +1583,17 @@
             top: 0;
             left: 0;
             width: 100%;
-            padding: 6px 20px;
+            padding: 12px 20px 6px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: black;
-            z-index: 15;
+            z-index: 1000;
             font-size: 14px;
             box-sizing: border-box;
             pointer-events: none;
             background: transparent;
+            border-bottom: none;
         }
         
         .app-status-time {
@@ -1429,38 +1654,76 @@
             color: var(--color-green);
         }
         
-        .app-header {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            padding-top: 45px;
-            border-bottom: 1px solid #eee;
-            background-color: var(--theme-header-bg);
-            backdrop-filter: var(--theme-header-backdrop);
-            -webkit-backdrop-filter: var(--theme-header-backdrop);
-            margin-top: 0;
-            position: relative;
-            z-index: 10;
-            transition: background-color 0.3s ease;
+        .app-header { 
+            position: relative; 
+            z-index: 15; 
+            flex-shrink: 0; 
+            padding: 12px 32px; 
+            padding-top: 45px; 
+            height: 84px;
+            box-sizing: border-box;
+            background-color: var(--theme-header-bg); 
+            backdrop-filter: var(--theme-header-backdrop); 
+            -webkit-backdrop-filter: var(--theme-header-backdrop); 
+            border-bottom: 1px solid var(--color-border); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 18px; 
+            font-weight: 600; 
+            transition: var(--transition-normal);
+            overflow: hidden; /* 防止内容溢出 */
         }
+
+        .header { 
+    position: relative; 
+    z-index: 15; 
+    flex-shrink: 0; 
+    padding: 12px 32px; 
+    padding-top: 45px; 
+    height: 84px;
+    box-sizing: border-box;
+    background-color: var(--theme-header-bg); 
+    backdrop-filter: var(--theme-header-backdrop); 
+    -webkit-backdrop-filter: var(--theme-header-backdrop); 
+    border-bottom: 1px solid var(--color-border); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    font-size: 18px; 
+    font-weight: 600; 
+    transition: var(--transition-normal);
+    overflow: hidden; /* 防止内容溢出 */
+}
+        
+
         
         .app-title {
-            font-weight: bold;
-            font-size: 18px;
+            font-weight: var(--theme-title-font-weight, bold);
+            font-size: var(--theme-title-font-size, 18px);
+            font-family: var(--theme-setting-title-font, var(--theme-font-family));
             text-align: center;
             flex: 1;
             color: var(--color-black);
+            text-shadow: none;
+            letter-spacing: var(--theme-title-letter-spacing, 0);
         }
+
+        .header .header-actions { display: flex; align-items: center; gap: 15px; position: absolute; right: 20px; top: 70%; transform: translateY(-50%); }
+        .header .back-btn, .header .action-btn { font-size: 24px; cursor: pointer; width: 30px; text-align: center; color: #000000; display: flex; align-items: center; justify-content: center; background: none; border: none; padding: 0; }
+        .header .back-btn { position: absolute; left: 20px; }
+        .header .header-title { text-align: center; flex: 1; color: #000000; }
+        .header .action-btn img { height: 26px; }
+        .header .save-btn { font-size: 16px; color: #000000; font-weight: 600; cursor: pointer; position: absolute; right: 20px; }
         
         .back-button {
             position: absolute;
-            left: 15px;
-            padding: 5px 10px;
+            left: 20px;
+            padding: 0;
             background: none;
             border: none;
-            font-size: 20px;
-            color: var(--color-gray-dark);
+            font-size: 24px;
+            color: #000000;
             cursor: pointer;
             width: 30px;
             text-align: center;
@@ -1468,6 +1731,8 @@
             align-items: center;
             justify-content: center;
         }
+        
+
         
         .app-content {
             flex: 1;
@@ -1483,12 +1748,32 @@
             padding: 15px 10px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .settings-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+            padding-left: 15px;
         }
         
         .settings-item-left {
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+        
+        .setting-label {
+            font-weight: var(--theme-button-font-weight, 500);
+            font-size: 16px;
+            color: var(--theme-text-primary, #333);
+            font-family: var(--theme-font-family);
+            margin-bottom: 2px;
+        }
+        
+        .setting-desc {
+            font-size: 13px;
+            color: #666;
+            font-family: var(--theme-font-family);
         }
         
         .settings-icon {
@@ -1500,14 +1785,28 @@
             justify-content: center;
             align-items: center;
             color: white;
+            flex-shrink: 0;
         }
         
         .settings-icon.wifi { background-color: var(--color-blue); }
         .settings-icon.display { background-color: var(--color-blue); }
-        .settings-icon.wallpaper { background-color: var(--color-ios-green); }
+        .settings-icon.wallpaper { 
+            background-color: var(--color-ios-green); 
+            width: 30px !important;
+            height: 30px !important;
+            border-radius: 6px !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
         .settings-icon.datetime { background-color: var(--color-ios-purple); }
         .settings-icon.notification { background-color: var(--color-ios-red); }
         .settings-icon.about { background-color: var(--color-ios-gray); }
+        
+        /* 确保壁纸文字正常显示 */
+        .settings-item-left div:not(.settings-icon) {
+            white-space: nowrap;
+        }
         
         .settings-toggle {
             position: relative;
@@ -2899,14 +3198,16 @@
             color: var(--theme-button-color, white);
             border: var(--theme-button-border, none);
             border-radius: var(--theme-button-radius, 15px);
-            font-size: 17px;
-            font-weight: 600;
+            font-size: var(--theme-button-font-size, 17px);
+            font-weight: var(--theme-button-font-weight, 600);
+            font-family: var(--theme-font-family);
             cursor: pointer;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             box-shadow: var(--theme-button-shadow, 0 4px 15px rgba(0, 123, 255, 0.3));
             transition: all var(--transition-normal, 0.3s ease);
-            letter-spacing: 0.5px;
+            letter-spacing: var(--theme-button-letter-spacing, 0.5px);
+            text-shadow: var(--theme-text-shadow, none);
         }
         
         .form-submit:hover {
@@ -2918,6 +3219,116 @@
         .form-submit:active {
             transform: translateY(0);
             box-shadow: var(--theme-button-shadow, 0 2px 10px rgba(0, 123, 255, 0.3));
+        }
+        
+        .avatar-upload {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: var(--theme-form-bg, rgba(255, 255, 255, 0.6));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 18px;
+            border: 1px solid var(--theme-input-border, rgba(0, 0, 0, 0.05));
+            text-align: center;
+        }
+        
+
+        /* 第二个重复的完整:root CSS变量定义块已安全删除 */
+        /* 该重复块与第一个:root块内容完全相同，包含约900行重复的CSS变量和工具类 */
+
+        
+        .identity-item {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-md);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            margin-bottom: var(--spacing-sm);
+            transition: all var(--transition-fast) ease;
+            background-color: var(--color-gray-bg-light);
+        }
+        
+        .identity-item.selected {
+            border-color: var(--theme-button-bg, var(--color-blue));
+            background-color: var(--bg-default-10);
+        }
+
+        html { 
+            height: 100%; 
+            overflow: hidden; 
+        }
+        
+        body { 
+            height: 100vh; 
+            overflow: hidden; 
+            margin: 0; 
+            padding: 0; 
+            font-family: var(--theme-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
+            font-weight: normal; 
+            background: var(--body-bg, #1a1a1a); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            box-sizing: border-box; 
+            transition: all 0.3s ease;
+        }
+        
+        #phone-screen { 
+            width: 360px; 
+            height: 750px; 
+            background-color: var(--color-black); 
+            position: relative; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            border-radius: 25px; 
+            box-shadow: var(--shadow-phone); 
+        }
+        
+        .battery-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+        }
+        
+        .battery-icon {
+            width: 20px;
+            height: 10px;
+            border: 1px solid white;
+            border-radius: 4px;
+            position: relative;
+            padding: 1px;
+        }
+        
+        .battery-icon::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: 2px;
+            width: 1.5px;
+            height: 4px;
+            background-color: white;
+            border-radius: 0 1px 1px 0;
+        }
+        
+        .battery-level {
+            height: 100%;
+            background-color: white;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        
+        .battery-container.charging .battery-level {
+            background-color: var(--color-green);
+            animation: charge-breath 2s infinite;
+        }
+        
+        .battery-container { display: flex; align-items: center; gap: 4px; font-size: 14px; }
+        
+        .battery-container.charging .battery-text {
+            color: var(--color-green);
         }
         
         .avatar-upload {
@@ -2998,7 +3409,7 @@
             box-shadow: var(--shadow-button);
         }
         
-        /* 微博界面 */
+        /* 社交动态界面 */
         .weibo-post {
             padding: 15px;
             border-bottom: 1px solid #eee;
@@ -3130,14 +3541,15 @@
             height: 50px;
             border: none;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: var(--theme-button-bg, linear-gradient(135deg, #667eea, #764ba2));
             color: white;
             font-size: 20px;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: var(--theme-button-shadow, 0 2px 8px rgba(0, 0, 0, 0.15));
         }
         
         .control-btn:hover {
@@ -3172,12 +3584,19 @@
             height: 30px;
             border: none;
             border-radius: 50%;
-            background-color: #007AFF;
+            background-color: var(--theme-button-bg, #007AFF);
             color: white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-button);
+        }
+        
+        .add-music-btn:hover, .invite-character-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--theme-button-shadow);
         }
         
         .playlist {
@@ -3570,12 +3989,32 @@
         }
         
         .modal-primary {
-            background-color: #007AFF;
-            color: white;
+            background-color: var(--theme-button-bg, #007AFF);
+            color: var(--theme-button-color, white);
+            font-family: var(--theme-font-family);
+            font-weight: var(--theme-button-font-weight, 500);
+            letter-spacing: var(--theme-button-letter-spacing, 0);
+            transition: all 0.2s ease;
+        }
+        
+        .modal-primary:hover {
+            background-color: var(--theme-button-bg-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--theme-button-shadow);
         }
         
         .modal-secondary {
-            background-color: #eee;
+            background-color: var(--theme-button-secondary-bg, #eee);
+            color: var(--theme-button-secondary-color, #333);
+            font-family: var(--theme-font-family);
+            font-weight: var(--theme-button-font-weight, 500);
+            letter-spacing: var(--theme-button-letter-spacing, 0);
+            transition: all 0.2s ease;
+        }
+        
+        .modal-secondary:hover {
+            background-color: var(--theme-button-secondary-bg-hover);
+            transform: translateY(-1px);
         }
         
         /* 消息操作菜单 */
@@ -4119,7 +4558,7 @@
             border-bottom: none;
         }
         
-        /* 微博设置详细选项 */
+        /* 社交动态设置详细选项 */
         .weibo-settings {
             border-top: 1px solid #f5f5f5;
             margin-top: 0;
@@ -4589,7 +5028,12 @@
         /* 可爱主题的header特殊样式 */
         body[data-theme="cute"] .app-header {
             border-bottom: 1px solid #ffccd5;
+            background-color: rgba(255, 230, 240, 0.8) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
         }
+        
+
         
         body[data-theme="nature"] {
             --theme-button-bg-rgb: 76, 217, 100;
@@ -4631,44 +5075,21 @@
         
         /* 主题样式定义在后面统一处理 */
         
-        /* 选择模式样式 */
-        #api-chat-screen .app-header .default-controls { 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
+
         
-        #api-chat-screen .app-header .selection-controls { 
-            display: none;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
+
+        
+        /* 聊天消息界面使用和完成.html一样的header样式 */
+        #api-chat-screen .header .default-controls, #api-chat-screen .header .selection-controls { 
+            display: contents;
         }
         
         #api-chat-screen.selection-mode .default-controls { 
-            display: none !important; 
+            display: none;
         }
         
-        #api-chat-screen.selection-mode .selection-controls {
-            display: flex !important;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            gap: 8px;
-        }
-        
-        /* 确保选择模式不改变header高度和padding */
-        #api-chat-screen.selection-mode .app-header {
-            padding: 10px !important;
-            padding-top: 45px !important;
-            height: auto !important;
-            box-sizing: border-box !important;
-        }
-        
-        /* 确保所有选择模式的按钮都正确对齐 */
-        #api-chat-screen.selection-mode .back-button {
-            left: 15px;
+        #api-chat-screen:not(.selection-mode) .selection-controls { 
+            display: none;
         }
         
         #selection-cancel-btn, #selection-delete-btn { 
@@ -5204,7 +5625,7 @@
                     </div>
                 </div>
                 
-                <!-- 微博界面 -->
+                <!-- 社交动态界面 -->
                 <div id="weibo-screen" class="app-screen">
                     <div class="app-status-bar">
                         <div class="app-status-time"></div>
@@ -5279,6 +5700,15 @@
                 
                 <!-- 世界书编辑表单 -->
                 <div id="worldbook-form-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hideWorldbookForm()">‹</button>
                         <div class="app-title" id="worldbook-form-title">新建世界书</div>
@@ -5713,7 +6143,7 @@
                                         <div class="setting-item">
                                             <div class="setting-left">
                                                 <div class="setting-label">主动发动态频率</div>
-                                                <div class="setting-desc">角色主动发布微博的频率</div>
+                                                <div class="setting-desc">角色主动发布社交动态的频率</div>
                                             </div>
                                             <div class="setting-right">
                                                 <select id="background-weibo-frequency" class="setting-select">
@@ -5802,6 +6232,15 @@
                 
                 <!-- 人物编辑表单 -->
                 <div id="character-form-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hideCharacterForm()">‹</button>
                         <div class="app-title" id="character-form-title">新建人物</div>
@@ -5835,6 +6274,15 @@
                 
                 <!-- 面具创建表单 -->
                 <div id="persona-form-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hidePersonaForm()">‹</button>
                         <div class="app-title" id="persona-form-title">新建面具</div>
@@ -5867,12 +6315,23 @@
                 
                 <!-- API聊天界面 -->
                 <div id="api-chat-screen" class="app-screen">
-                    <div class="app-header">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="header">
                         <div class="default-controls">
-                            <button class="back-button" onclick="hideApp('api-chat-screen')">‹</button>
-                            <div class="app-title" id="api-chat-title">角色聊天</div>
-                            <div class="chat-menu-button chat-menu-btn" onclick="showChatSettings()">
+                            <button class="back-btn" onclick="backToChatApp()">‹</button>
+                            <span class="header-title" id="api-chat-title">角色聊天</span>
+                            <div class="header-actions">
+                                <span class="action-btn" onclick="showChatSettings()">
                                 <i class="fas fa-ellipsis-v"></i>
+                                </span>
                             </div>
                         </div>
                         <div class="selection-controls">
@@ -5931,6 +6390,15 @@
                 
                 <!-- 浏览器界面 -->
                 <div id="browser-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hideApp('browser-screen')">‹</button>
                         <div class="app-title">浏览器</div>
@@ -5946,6 +6414,15 @@
                 
                 <!-- 相机界面 -->
                 <div id="camera-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hideApp('camera-screen')">‹</button>
                         <div class="app-title">相机</div>
@@ -5962,6 +6439,15 @@
                 
                 <!-- 相册界面 -->
                 <div id="album-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hideApp('album-screen')">‹</button>
                         <div class="app-title">相册</div>
@@ -5975,6 +6461,15 @@
                 
                 <!-- 照片详情 -->
                 <div id="photo-detail-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hideApp('photo-detail-screen')">‹</button>
                         <div class="app-title">照片</div>
@@ -6042,7 +6537,7 @@
                                 <div class="settings-icon wallpaper">
                                     <i class="fas fa-image"></i>
                                 </div>
-                                <div>墙纸</div>
+                                <div>壁纸</div>
                             </div>
                             <i class="fas fa-chevron-right"></i>
                         </div>
@@ -6078,8 +6573,17 @@
                 
                 <!-- 日期与时间设置 -->
                 <div id="datetime-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
-                        <button class="back-button" onclick="hideApp('datetime-screen')">‹</button>
+                        <button class="back-button" onclick="backToSettings('datetime-screen')">‹</button>
                         <div class="app-title">日期与时间</div>
                     </div>
                     <div class="app-content">
@@ -6097,8 +6601,17 @@
                 
                 <!-- 关于我们 -->
                 <div id="about-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
-                        <button class="back-button" onclick="hideApp('about-screen')">‹</button>
+                        <button class="back-button" onclick="backToSettings('about-screen')">‹</button>
                         <div class="app-title">关于我们</div>
                     </div>
                     <div class="app-content">
@@ -6122,7 +6635,7 @@
                         </div>
                     </div>
                     <div class="app-header">
-                        <button class="back-button" onclick="hideApp('theme-screen')">‹</button>
+                        <button class="back-button" onclick="backToSettings('theme-screen')">‹</button>
                         <div class="app-title">主题设置</div>
                     </div>
                     <div class="app-content">
@@ -6183,16 +6696,25 @@
                     </div>
                 </div>
                 
-                <!-- 墙纸设置 -->
+                <!-- 壁纸设置 -->
                 <div id="wallpaper-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
-                        <button class="back-button" onclick="hideApp('wallpaper-screen')">‹</button>
-                        <div class="app-title">墙纸</div>
+                        <button class="back-button" onclick="backToSettings('wallpaper-screen')">‹</button>
+                        <div class="app-title">壁纸</div>
                     </div>
                     <div class="app-content">
                         <div class="settings-item" onclick="showWallpaperPicker()">
                             <div class="settings-item-left">
-                                <div>选择新墙纸</div>
+                                <div>选择新壁纸</div>
                             </div>
                             <i class="fas fa-chevron-right"></i>
                         </div>
@@ -6207,6 +6729,15 @@
                 
                 <!-- 无线局域网设置 -->
                 <div id="wifi-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hideApp('wifi-screen')">‹</button>
                         <div class="app-title">无线局域网</div>
@@ -6253,8 +6784,17 @@
                 
                 <!-- API设置界面 -->
                 <div id="api-settings-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="app-header">
-                        <button class="back-button" onclick="hideApp('api-settings-screen')">‹</button>
+                        <button class="back-button" onclick="backToSettings('api-settings-screen')">‹</button>
                         <div class="app-title">API设置</div>
                     </div>
                     <div class="app-content">
@@ -6310,9 +6850,9 @@
                             </div>
                             
                             <div class="api-form-group">
-                                <label class="api-form-label">温度 (0-1)</label>
-                                <input type="range" class="api-form-range" id="api-temperature" min="0" max="1" step="0.1" value="0.7">
-                                <span id="temperature-value">0.7</span>
+                                <label class="api-form-label">温度 (0-2)</label>
+                                <input type="range" class="api-form-range" id="api-temperature" min="0" max="2" step="0.01" value="0.70">
+                                <span id="temperature-value">0.70</span>
                             </div>
                             
 
@@ -6355,11 +6895,11 @@
                     </div>
                 </div>
                 
-                <!-- 墙纸选择器模态框 -->
+                <!-- 壁纸选择器模态框 -->
                 <div class="modal" id="wallpaper-picker-modal">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <div class="modal-title">选择墙纸</div>
+                            <div class="modal-title">选择壁纸</div>
                             <button class="modal-close" onclick="hideModal('wallpaper-picker-modal')">&times;</button>
                         </div>
                         <div class="modal-body">
@@ -6403,7 +6943,7 @@
                                     <div class="icon-preview">
                                         <i class="fab fa-weibo"></i>
                                     </div>
-                                    <span>微博</span>
+                                    <span>社交网络</span>
                                 </div>
                                 <div class="icon-option" onclick="selectAppIcon('music-screen', 'fas fa-music')">
                                     <div class="icon-preview">
@@ -7090,6 +7630,17 @@
         </div>
 
     <script>
+        // 初始化Dexie数据库
+        const db = new Dexie('PhoneChatDB');
+        db.version(1).stores({
+            characters: '&id, name',
+            contacts: '&id, characterId', 
+            chatMessages: '&id, characterId, timestamp',
+            apiSettings: '&id',
+            customEmojis: '&id, description',
+            photos: '&id, timestamp'
+        });
+
         // 全局变量
         let characters = [];
         let contacts = [];
@@ -7120,7 +7671,7 @@
             endpoint: '/chat/completions',
             key: '',
             model: 'gpt-3.5-turbo',
-            temperature: 0.7
+            temperature: 0.70
         };
         
         // 注意：记忆设置现在已改为每个聊天窗口独立的设置，存储在各自的聊天设置中
@@ -7141,40 +7692,52 @@
         let customIconImage = null;
         
         // 初始化应用
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             updateTime();
-            loadCharacters();
-            loadContacts();
-            loadChatMessages();
-            loadPhotos();
-            loadChatSettings();
+            
+            // 并行加载所有数据
+            await Promise.all([
+                loadCharacters(),
+                loadContacts(), 
+                loadChatMessages(),
+                loadPhotos(),
+                loadChatSettings(),
+                loadApiSettings(),
+                loadCustomEmojis()
+            ]);
+            
+            // 加载其他不需要数据库的设置
             loadWallpaper();
             loadAppIcons();
-            loadApiSettings();
             loadSavedTheme();
             loadWorldbooks();
             loadMusicData();
-            loadPersonas(); // 加载面具数据
-            // loadMemorySettings(); // 记忆设置现在存储在各个聊天的独立设置中
-            loadGroupChats(); // 加载群聊数据
-            loadCustomEmojis(); // 加载自定义表情包
+            loadPersonas();
+            loadGroupChats();
             
+            // 渲染界面
             renderMessageList();
             renderContactList();
             renderCharacterList();
             renderAlbum();
-            renderPersonaList(); // 渲染面具列表
+            renderPersonaList();
             
             // 初始化时设置正确的按钮显示状态 - 延迟执行确保DOM加载完成
             setTimeout(() => {
                 switchWechatTab('message-list');
+                // 确保app标题有chat-mode类和正确内容
+                const appTitle = document.querySelector('#chat-screen .app-title');
+                if (appTitle) {
+                    appTitle.classList.add('chat-mode');
+                    appTitle.textContent = '💬';
+                }
                 initializeChatSettings(); // 初始化聊天设置界面
                 updateWorldbookMountDisplay(); // 更新世界书挂载显示
             }, 100);
             
             // 温度滑块显示
             document.getElementById('api-temperature').addEventListener('input', function() {
-                document.getElementById('temperature-value').textContent = this.value;
+                document.getElementById('temperature-value').textContent = parseFloat(this.value).toFixed(2);
             });
             
             // Gemini模型选择同步
@@ -7207,15 +7770,25 @@
             // 图片上传
             document.getElementById('image-upload').addEventListener('change', function(e) {
                 if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    
+                    // 检查文件类型，GIF格式不被Gemini API支持
+                    if (file.type === 'image/gif') {
+                        alert('抱歉，Gemini API 不支持 GIF 格式的图片。\n\n请选择其他格式的图片，如：\n• JPEG\n• PNG\n• WEBP');
+                        // 清空文件选择器
+                        e.target.value = '';
+                        return;
+                    }
+                    
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         sendImageMessage(event.target.result);
                     };
-                    reader.readAsDataURL(e.target.files[0]);
+                    reader.readAsDataURL(file);
                 }
             });
             
-            // 自定义墙纸上传
+            // 自定义壁纸上传
             document.getElementById('custom-wallpaper-upload').addEventListener('change', function(e) {
                 if (e.target.files && e.target.files[0]) {
                     const reader = new FileReader();
@@ -7254,7 +7827,15 @@
         
         // 显示/隐藏应用
         function showApp(appId) {
-            event.preventDefault();
+            if (event) event.preventDefault();
+            
+            // 隐藏所有app界面
+            const allApps = document.querySelectorAll('.app-screen');
+            allApps.forEach(app => {
+                app.style.display = 'none';
+            });
+            
+            // 显示目标界面
             document.getElementById(appId).style.display = 'flex';
             
             // 如果是聊天界面，刷新消息列表
@@ -7278,10 +7859,16 @@
             showApp('chat-screen');
             switchWechatTab('contact-list');
             // 手动触发标签切换的样式
-            document.querySelectorAll('.wechat-tab').forEach(tab => {
-                tab.classList.remove('active');
+            const wechatTabs = document.querySelectorAll('.wechat-tab');
+            wechatTabs.forEach(tab => {
+                if (tab && tab.classList) {
+                    tab.classList.remove('active');
+                }
             });
-            document.querySelectorAll('.wechat-tab')[1].classList.add('active'); // 通讯录是第二个标签
+            // 安全地添加active类到第二个标签（通讯录）
+            if (wechatTabs.length > 1 && wechatTabs[1] && wechatTabs[1].classList) {
+                wechatTabs[1].classList.add('active');
+            }
         }
         
         function hideApp(appId) {
@@ -7306,27 +7893,29 @@
         function switchWechatTab(tabId) {
             // 移除所有标签的active类
             document.querySelectorAll('.wechat-tab').forEach(tab => {
-                tab.classList.remove('active');
+                if (tab && tab.classList) {
+                    tab.classList.remove('active');
+                }
             });
             
             // 添加当前标签的active类
-            if (event && event.currentTarget) {
+            if (event && event.currentTarget && event.currentTarget.classList) {
                 event.currentTarget.classList.add('active');
             } else {
                 // 如果没有event对象，根据tabId设置active
                 if (tabId === 'message-list') {
                     const messageTab = document.getElementById('message-tab');
-                    if (messageTab) {
+                    if (messageTab && messageTab.classList) {
                         messageTab.classList.add('active');
                     }
                 } else if (tabId === 'contact-list') {
                     const tabs = document.querySelectorAll('.wechat-tab');
-                    if (tabs.length > 1) {
+                    if (tabs.length > 1 && tabs[1] && tabs[1].classList) {
                         tabs[1].classList.add('active');
                     }
                 } else if (tabId === 'profile-page') {
                     const tabs = document.querySelectorAll('.wechat-tab');
-                    if (tabs.length > 2) {
+                    if (tabs.length > 2 && tabs[2] && tabs[2].classList) {
                         tabs[2].classList.add('active');
                     }
                 }
@@ -7344,6 +7933,21 @@
             
             // 显示选中的内容
             if (targetEl) targetEl.style.display = 'block';
+            
+            // 控制app标题的渐变效果和内容
+            const appTitle = document.querySelector('#chat-screen .app-title');
+            if (appTitle) {
+                if (tabId === 'message-list') {
+                    appTitle.classList.add('chat-mode');
+                    appTitle.textContent = '💬';
+                } else if (tabId === 'contact-list') {
+                    appTitle.classList.remove('chat-mode');
+                    appTitle.textContent = '角色';
+                } else if (tabId === 'profile-page') {
+                    appTitle.classList.remove('chat-mode');
+                    appTitle.textContent = '我';
+                }
+            }
             
             // 控制加号按钮显示
             const addContactBtn = document.getElementById('add-contact-btn');
@@ -7400,77 +8004,297 @@
             }
         }
         
-        // 加载角色数据
-        function loadCharacters() {
-            const savedCharacters = localStorage.getItem('characters');
-            if (savedCharacters) {
-                characters = JSON.parse(savedCharacters);
-            } else {
-                // 默认为空数组，用户需要自己创建角色
-                characters = [];
-                saveCharacters();
+        // 加载角色数据 - 使用IndexedDB（包含数据迁移）
+        async function loadCharacters() {
+            try {
+                // 先检查IndexedDB中是否有数据
+                const savedCharacters = await db.characters.toArray();
+                
+                if (savedCharacters.length === 0) {
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localStorageData = localStorage.getItem('characters');
+                    if (localStorageData) {
+                        console.log('检测到localStorage中的角色数据，开始迁移...');
+                        const localCharacters = JSON.parse(localStorageData);
+                        
+                        if (localCharacters.length > 0) {
+                            // 迁移数据到IndexedDB
+                            await db.characters.bulkAdd(localCharacters);
+                            characters = localCharacters;
+                            console.log('角色数据迁移完成:', characters);
+                            // 可选：清除localStorage中的旧数据
+                            // localStorage.removeItem('characters');
+                        } else {
+                            characters = [];
+                        }
+                    } else {
+                        characters = [];
+                    }
+                } else {
+                    // IndexedDB中有数据，直接使用
+                    characters = savedCharacters;
+                    console.log('从IndexedDB加载角色数据:', characters);
+                }
+            } catch (error) {
+                console.error('加载角色数据失败:', error);
+                // 如果IndexedDB失败，尝试从localStorage加载
+                const localStorageData = localStorage.getItem('characters');
+                if (localStorageData) {
+                    characters = JSON.parse(localStorageData);
+                    console.log('从localStorage备份加载角色数据:', characters);
+                } else {
+                    characters = [];
+                }
             }
         }
         
-        // 保存角色数据
-        function saveCharacters() {
-            console.log('保存角色数据到localStorage:', characters);
-            localStorage.setItem('characters', JSON.stringify(characters));
+        // 保存角色数据 - 使用IndexedDB
+        async function saveCharacters() {
+            try {
+                console.log('保存角色数据到IndexedDB:', characters);
+                
+                // 清空现有数据
+                await db.characters.clear();
+                
+                // 批量插入新数据
+                if (characters.length > 0) {
+                    await db.characters.bulkAdd(characters);
+                }
+                
+                console.log('角色数据保存成功');
+            } catch (error) {
+                console.error('保存角色时发生错误:', error);
+                alert('保存角色时发生错误: ' + error.message);
+                throw error;
+            }
+        }
+        
+        // 显示存储使用情况
+        function showStorageUsage() {
+            const usage = [];
             
-            // 验证保存是否成功
-            const saved = localStorage.getItem('characters');
-            const parsed = JSON.parse(saved);
-            console.log('保存验证 - localStorage中的数据:', parsed);
+            // 计算各种数据的大小
+            const characters = localStorage.getItem('characters') || '[]';
+            const chatMessages = localStorage.getItem('chatMessages') || '{}';
+            const photos = localStorage.getItem('photos') || '[]';
+            const customEmojis = localStorage.getItem('customEmojis') || '[]';
+            
+            usage.push(`角色数据: ${(characters.length / 1024).toFixed(1)} KB`);
+            usage.push(`聊天记录: ${(chatMessages.length / 1024).toFixed(1)} KB`);
+            usage.push(`照片数据: ${(photos.length / 1024).toFixed(1)} KB`);
+            usage.push(`表情包: ${(customEmojis.length / 1024).toFixed(1)} KB`);
+            
+            const total = characters.length + chatMessages.length + photos.length + customEmojis.length;
+            usage.push(`总计: ${(total / 1024).toFixed(1)} KB`);
+            
+            console.log('存储使用情况:\n' + usage.join('\n'));
+            alert('存储使用情况:\n' + usage.join('\n'));
         }
         
-        // 加载联系人数据
-        function loadContacts() {
-            const savedContacts = localStorage.getItem('contacts');
-            if (savedContacts) {
-                contacts = JSON.parse(savedContacts);
-            } else {
-                // 默认为空联系人列表
-                contacts = [];
-                saveContacts();
+        // 加载联系人数据 - 使用IndexedDB（包含数据迁移）
+        async function loadContacts() {
+            try {
+                const savedContacts = await db.contacts.toArray();
+                
+                if (savedContacts.length === 0) {
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localStorageData = localStorage.getItem('contacts');
+                    if (localStorageData) {
+                        console.log('检测到localStorage中的联系人数据，开始迁移...');
+                        const localContacts = JSON.parse(localStorageData);
+                        
+                        if (localContacts.length > 0) {
+                            const contactArray = localContacts.map((contactId, index) => ({
+                                id: index,
+                                characterId: contactId
+                            }));
+                            await db.contacts.bulkAdd(contactArray);
+                        }
+                        
+                        contacts = localContacts;
+                        console.log('联系人数据迁移完成:', contacts);
+                    } else {
+                        contacts = [];
+                    }
+                } else {
+                    contacts = savedContacts.map(contact => contact.characterId);
+                    console.log('从IndexedDB加载联系人:', contacts);
+                }
+            } catch (error) {
+                console.error('加载联系人失败:', error);
+                // 如果IndexedDB失败，尝试从localStorage加载
+                const localStorageData = localStorage.getItem('contacts');
+                if (localStorageData) {
+                    contacts = JSON.parse(localStorageData);
+                    console.log('从localStorage备份加载联系人:', contacts);
+                } else {
+                    contacts = [];
+                }
             }
         }
         
-        // 保存联系人数据
-        function saveContacts() {
-            localStorage.setItem('contacts', JSON.stringify(contacts));
+        // 保存联系人数据 - 使用IndexedDB
+        async function saveContacts() {
+            try {
+                await db.contacts.clear();
+                const contactArray = contacts.map((contactId, index) => ({
+                    id: index,
+                    characterId: contactId
+                }));
+                if (contactArray.length > 0) {
+                    await db.contacts.bulkAdd(contactArray);
+                }
+            } catch (error) {
+                console.error('保存联系人失败:', error);
+            }
         }
         
-        // 加载聊天消息
-        function loadChatMessages() {
-            const savedMessages = localStorage.getItem('chatMessages');
-            if (savedMessages) {
-                chatMessages = JSON.parse(savedMessages);
-            } else {
+        // 加载聊天消息 - 使用IndexedDB（包含数据迁移）
+        async function loadChatMessages() {
+            try {
+                const savedMessages = await db.chatMessages.toArray();
                 chatMessages = {};
+                
+                if (savedMessages.length === 0) {
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localStorageData = localStorage.getItem('chatMessages');
+                    if (localStorageData) {
+                        console.log('检测到localStorage中的聊天数据，开始迁移...');
+                        const localMessages = JSON.parse(localStorageData);
+                        
+                        // 将对象格式转换为数组格式存储到IndexedDB
+                        const messageArray = [];
+                        for (const [characterId, messages] of Object.entries(localMessages)) {
+                            for (const message of messages) {
+                                messageArray.push({
+                                    id: `${characterId}_${message.id || message.timestamp}`,
+                                    characterId: characterId,
+                                    timestamp: message.timestamp,
+                                    messageData: message
+                                });
+                            }
+                        }
+                        
+                        if (messageArray.length > 0) {
+                            await db.chatMessages.bulkAdd(messageArray);
+                        }
+                        
+                        chatMessages = localMessages;
+                        console.log('聊天消息迁移完成:', chatMessages);
+                    }
+                } else {
+                    // 将数组格式转换回对象格式
+                    for (const msgRecord of savedMessages) {
+                        const characterId = msgRecord.characterId;
+                        if (!chatMessages[characterId]) {
+                            chatMessages[characterId] = [];
+                        }
+                        chatMessages[characterId].push(msgRecord.messageData);
+                    }
+                    
+                    // 按时间戳排序
+                    for (const characterId in chatMessages) {
+                        chatMessages[characterId].sort((a, b) => a.timestamp - b.timestamp);
+                    }
+                    
+                    console.log('从IndexedDB加载聊天消息:', chatMessages);
+                }
+            } catch (error) {
+                console.error('加载聊天消息失败:', error);
+                // 如果IndexedDB失败，尝试从localStorage加载
+                const localStorageData = localStorage.getItem('chatMessages');
+                if (localStorageData) {
+                    chatMessages = JSON.parse(localStorageData);
+                    console.log('从localStorage备份加载聊天消息:', chatMessages);
+                } else {
+                    chatMessages = {};
+                }
             }
         }
         
-        // 保存聊天消息
-        function saveChatMessages() {
-            localStorage.setItem('chatMessages', JSON.stringify(chatMessages));
-        }
-        
-        // 加载照片
-        function loadPhotos() {
-            const savedPhotos = localStorage.getItem('photos');
-            if (savedPhotos) {
-                photos = JSON.parse(savedPhotos);
-            } else {
-                photos = [];
+        // 保存聊天消息 - 使用IndexedDB
+        async function saveChatMessages() {
+            try {
+                console.log('保存聊天消息到IndexedDB');
+                
+                // 将chatMessages对象转换为数组格式存储
+                const messageArray = [];
+                for (const [characterId, messages] of Object.entries(chatMessages)) {
+                    for (const message of messages) {
+                        messageArray.push({
+                            id: `${characterId}_${message.id || message.timestamp}`,
+                            characterId: characterId,
+                            timestamp: message.timestamp,
+                            messageData: message
+                        });
+                    }
+                }
+                
+                // 清空现有消息
+                await db.chatMessages.clear();
+                
+                // 批量插入新消息
+                if (messageArray.length > 0) {
+                    await db.chatMessages.bulkAdd(messageArray);
+                }
+                
+                console.log('聊天消息保存成功');
+            } catch (error) {
+                console.error('保存聊天消息失败:', error);
             }
         }
         
-        // 保存照片
-        function savePhotos() {
-            localStorage.setItem('photos', JSON.stringify(photos));
+        // 加载照片 - 使用IndexedDB（包含数据迁移）
+        async function loadPhotos() {
+            try {
+                const savedPhotos = await db.photos.toArray();
+                
+                if (savedPhotos.length === 0) {
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localStorageData = localStorage.getItem('photos');
+                    if (localStorageData) {
+                        console.log('检测到localStorage中的照片数据，开始迁移...');
+                        const localPhotos = JSON.parse(localStorageData);
+                        
+                        if (localPhotos.length > 0) {
+                            await db.photos.bulkAdd(localPhotos);
+                        }
+                        
+                        photos = localPhotos;
+                        console.log('照片数据迁移完成:', photos);
+                    } else {
+                        photos = [];
+                    }
+                } else {
+                    photos = savedPhotos;
+                    console.log('从IndexedDB加载照片:', photos);
+                }
+            } catch (error) {
+                console.error('加载照片失败:', error);
+                // 如果IndexedDB失败，尝试从localStorage加载
+                const localStorageData = localStorage.getItem('photos');
+                if (localStorageData) {
+                    photos = JSON.parse(localStorageData);
+                    console.log('从localStorage备份加载照片:', photos);
+                } else {
+                    photos = [];
+                }
+            }
         }
         
-        // 加载聊天设置
+        // 保存照片 - 使用IndexedDB
+        async function savePhotos() {
+            try {
+                await db.photos.clear();
+                if (photos.length > 0) {
+                    await db.photos.bulkAdd(photos);
+                }
+            } catch (error) {
+                console.error('保存照片失败:', error);
+            }
+        }
+        
+        // 加载聊天设置 - 暂时仍使用localStorage
         function loadChatSettings() {
             const savedSettings = localStorage.getItem('chatSettings');
             if (savedSettings) {
@@ -7483,7 +8307,7 @@
             localStorage.setItem('chatSettings', JSON.stringify(chatSettings));
         }
         
-        // 加载墙纸
+        // 加载壁纸
         function loadWallpaper() {
             const savedWallpaper = localStorage.getItem('wallpaper');
             const wallpaperType = localStorage.getItem('wallpaperType');
@@ -7544,8 +8368,8 @@
                         document.getElementById('api-model').value = apiSettings.model || 'gpt-3.5-turbo';
                     }
                     
-                    document.getElementById('api-temperature').value = apiSettings.temperature || 0.7;
-                    document.getElementById('temperature-value').textContent = apiSettings.temperature || 0.7;
+                    document.getElementById('api-temperature').value = apiSettings.temperature || 0.70;
+                    document.getElementById('temperature-value').textContent = (apiSettings.temperature || 0.70).toFixed(2);
                     
                     // 处理最大token数设置
 
@@ -7561,7 +8385,7 @@
                 endpoint: '/chat/completions',
                 key: '',
                 model: 'gemini-2.0-flash-exp',
-                temperature: 0.7
+                temperature: 0.70
             };
             
             // 确保界面元素正确显示
@@ -7571,8 +8395,8 @@
                 document.getElementById('api-endpoint').value = '/chat/completions';
                 document.getElementById('api-key').value = '';
                 document.getElementById('api-model').value = 'gemini-2.0-flash-exp';
-                document.getElementById('api-temperature').value = 0.7;
-                document.getElementById('temperature-value').textContent = '0.7';
+                document.getElementById('api-temperature').value = 0.70;
+                document.getElementById('temperature-value').textContent = '0.70';
                 
                 // 触发API类型变化处理
                 onApiTypeChange();
@@ -8068,14 +8892,151 @@
         // 加载更多历史消息
         function loadMoreMessages(characterId) {
             const messagesContainer = document.getElementById('api-chat-messages');
+            const allMessages = chatMessages[characterId] || [];
+            const chatSettings = getCurrentChatSettings();
+            
+            // 保存滚动位置
             const scrollHeight = messagesContainer.scrollHeight;
             const scrollTop = messagesContainer.scrollTop;
             
-            // 更新偏移量
-            currentMessageOffset = Math.max(0, currentMessageOffset - MESSAGE_LIMIT);
+            // 计算要加载的历史消息范围
+            const newOffset = Math.max(0, currentMessageOffset - MESSAGE_LIMIT);
+            const historicalMessages = allMessages.slice(newOffset, currentMessageOffset);
             
-            // 渲染更多消息
-            renderChatMessages(characterId, true);
+            // 移除现有的"查看历史消息"按钮
+            const existingLoadMoreBtn = messagesContainer.querySelector('.load-more-messages');
+            if (existingLoadMoreBtn) {
+                existingLoadMoreBtn.remove();
+            }
+            
+            // 如果还有更多历史消息，在顶部添加新的"查看历史消息"按钮
+            if (newOffset > 0) {
+                const loadMoreBtn = document.createElement('div');
+                loadMoreBtn.className = 'load-more-messages';
+                loadMoreBtn.innerHTML = `
+                    <div class="load-more-content">
+                        <i class="fas fa-chevron-up"></i>
+                        <span>查看历史消息 (${newOffset}条)</span>
+                    </div>
+                `;
+                loadMoreBtn.onclick = () => loadMoreMessages(characterId);
+                messagesContainer.insertBefore(loadMoreBtn, messagesContainer.firstChild);
+            }
+            
+            // 在现有消息前面插入历史消息
+            const timestampEnabled = chatSettings.timestampEnabled !== false;
+            const timestampPosition = chatSettings.timestampPosition || 'center';
+            let lastTimestamp = 0;
+            
+            // 从后往前插入，保持时间顺序
+            for (let i = historicalMessages.length - 1; i >= 0; i--) {
+                const message = historicalMessages[i];
+                
+                // 处理系统消息（如戳一戳）
+                if (message.sender === 'system' && message.isPoke) {
+                    const systemContainer = document.createElement('div');
+                    systemContainer.className = 'poke-system-container';
+                    
+                    const systemMessage = document.createElement('div');
+                    systemMessage.className = 'poke-system-message';
+                    systemMessage.textContent = message.content;
+                    
+                    systemContainer.appendChild(systemMessage);
+                    
+                    // 插入到按钮后面（如果有按钮的话）
+                    const insertAfter = messagesContainer.querySelector('.load-more-messages');
+                    if (insertAfter) {
+                        insertAfter.parentNode.insertBefore(systemContainer, insertAfter.nextSibling);
+                    } else {
+                        messagesContainer.insertBefore(systemContainer, messagesContainer.firstChild);
+                    }
+                    continue;
+                }
+                
+                const messageContainer = document.createElement('div');
+                messageContainer.className = `message-container ${message.sender}${chatSettings.hideAvatars ? ' no-avatar' : ''}`;
+                messageContainer.dataset.messageId = message.id;
+                
+                if (message.sender === 'received') {
+                    const character = characters.find(c => c.id === characterId);
+                    const displayAvatar = chatSettings.aiChatAvatar || character.avatarUrl;
+                    const displayName = chatSettings.aiChatNickname || character.name;
+                    const bubbleColor = chatSettings.aiBubbleColor || '#f0f0f0';
+                    const bubbleOpacity = chatSettings.aiBubbleOpacity || '1';
+                    const textColor = isLightColor(bubbleColor) ? '#333' : '#fff';
+                    const bubblePadding = chatSettings.bubblePadding || '12';
+                    
+                    let messageContent = '';
+                    if (message.type === 'voice_message') {
+                        messageContent = `<div class="voice-message"><i class="fas fa-microphone"></i><span class="voice-content">${message.content}</span><div class="voice-duration">0:05</div></div>`;
+                    } else if (message.type === 'ai_image') {
+                        messageContent = `<div class="ai-image-container"><img src="${message.image}" class="message-image" onclick="showImage('${message.image}')" alt="AI生成的图片"><div class="image-description">${message.imageDescription || ''}</div></div>`;
+                    } else if (message.type === 'transfer') {
+                        messageContent = `<div class="transfer-message"><i class="fas fa-dollar-sign"></i><div class="transfer-content"><div class="transfer-amount">¥${message.amount}</div><div class="transfer-note">${message.note || '转账'}</div></div></div>`;
+                    } else {
+                        const chatMode = chatSettings.chatMode || 'online';
+                        messageContent = chatMode === 'offline' ? processOfflineContent(message.content) : message.content;
+                    }
+                    
+                    let avatarHtml = '';
+                    if (!chatSettings.hideAvatars) {
+                        avatarHtml = `<div class="message-avatar" style="background-color: ${character.color}; ${displayAvatar ? `background-image: url(${displayAvatar}); background-size: cover; background-position: center;` : ''}" onclick="pokeCharacter('${character.id}')" title="戳一戳">${displayAvatar ? '' : displayName.charAt(0)}${timestampEnabled && timestampPosition === 'avatar' ? `<div class="timestamp timestamp-avatar">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
+                    }
+                    
+                    let bubbleHtml = `<div class="message-bubble" style="background-color: ${bubbleColor}; opacity: ${bubbleOpacity}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">${messageContent}${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
+                    
+                    messageContainer.innerHTML = avatarHtml + bubbleHtml;
+                } else {
+                    let myDisplayAvatar = chatSettings.myChatAvatar;
+                    if (!myDisplayAvatar && chatSettings.selectedIdentityId) {
+                        const selectedPersona = personas.find(p => p.id === chatSettings.selectedIdentityId);
+                        if (selectedPersona && selectedPersona.avatarUrl) {
+                            myDisplayAvatar = selectedPersona.avatarUrl;
+                        }
+                    }
+                    
+                    const myBubbleColor = chatSettings.myBubbleColor || '#007AFF';
+                    const myBubbleOpacity = chatSettings.myBubbleOpacity || '1';
+                    const myTextColor = isLightColor(myBubbleColor) ? '#333' : '#fff';
+                    const myBubblePadding = chatSettings.bubblePadding || '12';
+                    
+                    let myBubbleHtml = `<div class="message-bubble" style="background-color: ${myBubbleColor}; opacity: ${myBubbleOpacity}; color: ${myTextColor}; position: relative; padding: ${myBubblePadding}px;">${message.content}${message.image ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
+                    
+                    let myAvatarHtml = '';
+                    if (!chatSettings.hideAvatars) {
+                        myAvatarHtml = `<div class="message-avatar" style="background-color: #007AFF; ${myDisplayAvatar ? `background-image: url(${myDisplayAvatar}); background-size: cover; background-position: center;` : ''}">${myDisplayAvatar ? '' : '<i class="fas fa-user"></i>'}${timestampEnabled && timestampPosition === 'avatar' ? `<div class="timestamp timestamp-avatar">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
+                    }
+                    
+                    messageContainer.innerHTML = myBubbleHtml + myAvatarHtml;
+                }
+                
+                // 添加长按监听器和右键菜单
+                addMessageLongPressListener(messageContainer, message.id);
+                const bubble = messageContainer.querySelector('.message-bubble');
+                if (bubble) {
+                    bubble.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        showMessageMenu(message.id, e);
+                    });
+                    
+                    bubble.onclick = (e) => {
+                        if (e.target.tagName === 'IMG' && e.target.classList.contains('message-image')) {
+                            showImage(e.target.src);
+                        }
+                    };
+                }
+                
+                // 插入消息到正确位置
+                const insertAfter = messagesContainer.querySelector('.load-more-messages');
+                if (insertAfter) {
+                    insertAfter.parentNode.insertBefore(messageContainer, insertAfter.nextSibling);
+                } else {
+                    messagesContainer.insertBefore(messageContainer, messagesContainer.firstChild);
+                }
+            }
+            
+            // 更新偏移量
+            currentMessageOffset = newOffset;
             
             // 保持滚动位置
             setTimeout(() => {
@@ -8151,12 +9112,12 @@
             const deleteBtn = document.getElementById('character-delete-btn');
             console.log('设置保存按钮，characterId:', characterId);
             if (characterId) {
-                document.querySelector('#character-form-screen .form-submit').onclick = () => saveCharacter(characterId);
+                document.querySelector('#character-form-screen .form-submit').onclick = async () => await saveCharacter(characterId);
                 // 编辑模式显示删除按钮
                 if (deleteBtn) deleteBtn.style.display = 'block';
                 console.log('设置为编辑模式，角色ID:', characterId);
             } else {
-                document.querySelector('#character-form-screen .form-submit').onclick = () => saveCharacter();
+                document.querySelector('#character-form-screen .form-submit').onclick = async () => await saveCharacter();
                 // 新建模式隐藏删除按钮
                 if (deleteBtn) deleteBtn.style.display = 'none';
                 console.log('设置为创建模式，无角色ID');
@@ -8171,7 +9132,7 @@
         }
         
         // 保存角色
-        function saveCharacter(characterId = null) {
+        async function saveCharacter(characterId = null) {
             try {
                 console.log('=== 开始保存角色 ===');
                 const name = document.getElementById('character-name').value.trim();
@@ -8204,7 +9165,7 @@
                         console.log('更新角色完成:', characters[index]);
                         
                         // 保存并更新界面
-                        saveCharacters();
+                        await saveCharacters();
                         renderCharacterList();
                         renderContactList();
                         renderMessageList();
@@ -8235,13 +9196,13 @@
                     // 自动将新创建的角色添加到联系人列表
                     if (!contacts.includes(newCharacter.id)) {
                         contacts.push(newCharacter.id);
-                        saveContacts();
+                        await saveContacts();
                         console.log('新角色已自动添加到联系人列表');
                     }
                     
                     // 保存并更新界面
-                    console.log('开始保存到localStorage...');
-                    saveCharacters();
+                    console.log('开始保存到IndexedDB...');
+                    await saveCharacters();
                     console.log('保存后检查角色数组:', characters);
                     
                     console.log('开始渲染界面...');
@@ -8326,7 +9287,7 @@
         }
         
         // 删除选中的角色
-        function deleteSelectedCharacters() {
+        async function deleteSelectedCharacters() {
             if (selectedCharacters.length === 0) {
                 alert('请先选择要删除的角色');
                 return;
@@ -8350,9 +9311,9 @@
                 });
                 
                 // 保存数据
-                saveCharacters();
-                saveContacts();
-                saveChatMessages();
+                await saveCharacters();
+                await saveContacts();
+                await saveChatMessages();
                 
                 // 退出多选模式并更新界面
                 exitMultiSelectMode();
@@ -8363,7 +9324,7 @@
         }
         
         // 删除当前编辑的角色
-        function deleteCurrentCharacter() {
+        async function deleteCurrentCharacter() {
             if (currentEditingCharacterId) {
                 const character = characters.find(c => c.id === currentEditingCharacterId);
                 
@@ -8378,9 +9339,9 @@
                     }
                     
                     // 保存数据
-                    saveCharacters();
-                    saveContacts();
-                    saveChatMessages();
+                    await saveCharacters();
+                    await saveContacts();
+                    await saveChatMessages();
                     
                     // 更新界面并返回
                     renderCharacterList();
@@ -8405,7 +9366,7 @@
         }
         
         // 添加选中的联系人
-        function addSelectedContacts() {
+        async function addSelectedContacts() {
             const checkboxes = document.querySelectorAll('.contact-checkbox:checked');
             checkboxes.forEach(checkbox => {
                 const characterId = checkbox.value;
@@ -8414,7 +9375,7 @@
                 }
             });
             
-            saveContacts();
+            await saveContacts();
             renderMessageList();
             renderContactList();
             hideModal('add-contact-modal');
@@ -8445,6 +9406,18 @@
             
             renderChatMessages(character.id);
             showApp('api-chat-screen');
+        }
+        
+        // 从聊天界面返回到聊天应用
+        function backToChatApp() {
+            hideApp('api-chat-screen');
+            showApp('chat-screen');
+        }
+        
+        // 从设置子页面返回到设置主页面
+        function backToSettings(currentScreen) {
+            hideApp(currentScreen);
+            showApp('settings-screen');
         }
         
         // 发送API消息 - 原来的版本（已被新版本替代）
@@ -8594,13 +9567,15 @@
             }
         }
         
-        // 解析AI回复 - 按照index.html的逻辑，新增表情包支持
+        // 解析AI回复 - 按照index.html的逻辑，新增表情包支持和格式修正
         function parseAiResponse(content) { 
             try { 
                 const parsed = JSON.parse(content); 
                 if (Array.isArray(parsed)) {
-                    // 🔥【新增】处理表情包消息类型
-                    return parsed.map(item => {
+                    // 🔥【新增】处理表情包消息类型和格式修正
+                    const processedMessages = [];
+                    
+                    parsed.forEach(item => {
                         if (typeof item === 'object' && item.type === 'emoji') {
                             // 查找匹配的表情包
                             const matchingEmoji = customEmojis.find(emoji => 
@@ -8608,21 +9583,42 @@
                             );
                             
                             if (matchingEmoji) {
+                                // 检查表情包是否为GIF格式
+                                if (matchingEmoji.url && matchingEmoji.url.includes('data:image/gif')) {
+                                    console.warn('AI尝试使用GIF格式表情包:', item.description);
+                                    processedMessages.push(`[${matchingEmoji.description}] (GIF格式不支持API识别)`);
+                                } else {
                                 // 返回表情包对象，包含完整的表情包信息
-                                return {
+                                    processedMessages.push({
                                     type: 'emoji',
                                     url: matchingEmoji.url,
                                     description: matchingEmoji.description,
                                     id: matchingEmoji.id
-                                };
+                                    });
+                                }
                             } else {
                                 // 如果找不到匹配的表情包，返回错误消息
                                 console.warn('AI尝试使用不存在的表情包:', item.description);
-                                return `[错误: 表情包"${item.description}"不存在]`;
+                                processedMessages.push(`[错误: 表情包"${item.description}"不存在]`);
                             }
+                        } else if (typeof item === 'string') {
+                            // 🚨 【新增】检查并修复合并消息问题
+                            if (item.includes('\n')) {
+                                console.warn('检测到AI将多条消息合并在一个元素中，正在自动分拆:', item);
+                                // 将换行符分隔的内容分拆成多条消息
+                                const splitMessages = item.split('\n')
+                                    .map(msg => msg.trim())
+                                    .filter(msg => msg.length > 0);
+                                processedMessages.push(...splitMessages);
+                            } else {
+                                processedMessages.push(item);
+                            }
+                        } else {
+                            processedMessages.push(item);
                         }
-                        return item;
                     });
+                    
+                    return processedMessages;
                 }
             } catch (e) {} 
             
@@ -8631,8 +9627,10 @@
                 if (match && match[0]) { 
                     const parsed = JSON.parse(match[0]); 
                     if (Array.isArray(parsed)) {
-                        // 🔥【新增】处理表情包消息类型
-                        return parsed.map(item => {
+                        // 🔥【新增】处理表情包消息类型和格式修正
+                        const processedMessages = [];
+                        
+                        parsed.forEach(item => {
                             if (typeof item === 'object' && item.type === 'emoji') {
                                 // 查找匹配的表情包
                                 const matchingEmoji = customEmojis.find(emoji => 
@@ -8640,21 +9638,42 @@
                                 );
                                 
                                 if (matchingEmoji) {
+                                    // 检查表情包是否为GIF格式
+                                    if (matchingEmoji.url && matchingEmoji.url.includes('data:image/gif')) {
+                                        console.warn('AI尝试使用GIF格式表情包:', item.description);
+                                        processedMessages.push(`[${matchingEmoji.description}] (GIF格式不支持API识别)`);
+                                    } else {
                                     // 返回表情包对象，包含完整的表情包信息
-                                    return {
+                                        processedMessages.push({
                                         type: 'emoji',
                                         url: matchingEmoji.url,
                                         description: matchingEmoji.description,
                                         id: matchingEmoji.id
-                                    };
+                                        });
+                                    }
                                 } else {
                                     // 如果找不到匹配的表情包，返回错误消息
                                     console.warn('AI尝试使用不存在的表情包:', item.description);
-                                    return `[错误: 表情包"${item.description}"不存在]`;
+                                    processedMessages.push(`[错误: 表情包"${item.description}"不存在]`);
                                 }
+                            } else if (typeof item === 'string') {
+                                // 🚨 【新增】检查并修复合并消息问题
+                                if (item.includes('\n')) {
+                                    console.warn('检测到AI将多条消息合并在一个元素中，正在自动分拆:', item);
+                                    // 将换行符分隔的内容分拆成多条消息
+                                    const splitMessages = item.split('\n')
+                                        .map(msg => msg.trim())
+                                        .filter(msg => msg.length > 0);
+                                    processedMessages.push(...splitMessages);
+                                } else {
+                                    processedMessages.push(item);
+                                }
+                            } else {
+                                processedMessages.push(item);
                             }
-                            return item;
                         });
+                        
+                        return processedMessages;
                     }
                 } 
             } catch (e) {} 
@@ -8814,11 +9833,11 @@
             tempInput.onchange = function(e) {
                 if (e.target.files && e.target.files[0]) {
                     const reader = new FileReader();
-                    reader.onload = function(event) {
+                    reader.onload = async function(event) {
                         const characterIndex = characters.findIndex(c => c.id === currentChatCharacter.id);
                         if (characterIndex !== -1) {
                             characters[characterIndex].avatarUrl = event.target.result;
-                            saveCharacters();
+                            await saveCharacters();
                             renderCharacterList();
                             renderContactList();
                             renderMessageList();
@@ -8838,13 +9857,13 @@
         }
         
         // 修改备注
-        function changeCharacterNickname() {
+        async function changeCharacterNickname() {
             const newName = prompt('请输入新的备注名称:', currentChatCharacter.name);
             if (newName && newName.trim() !== '') {
                 const characterIndex = characters.findIndex(c => c.id === currentChatCharacter.id);
                 if (characterIndex !== -1) {
                     characters[characterIndex].name = newName.trim();
-                    saveCharacters();
+                    await saveCharacters();
                     document.getElementById('api-chat-title').textContent = newName.trim();
                     renderCharacterList();
                     renderContactList();
@@ -9056,23 +10075,23 @@
             hideModal('color-picker-modal');
         }
         
-        // 显示墙纸选择器
+        // 显示壁纸选择器
         function showWallpaperPicker() {
             showModal('wallpaper-picker-modal');
         }
         
-        // 选择墙纸
+        // 选择壁纸
         function selectWallpaper(wallpaperId) {
             document.querySelectorAll('.wallpaper-option').forEach(option => {
                 option.classList.remove('selected');
             });
             event.target.classList.add('selected');
             
-            // 设置选中的墙纸
+            // 设置选中的壁纸
             selectedWallpaper = wallpaperId;
         }
         
-        // 应用墙纸选择
+        // 应用壁纸选择
         function applyWallpaperSelection() {
             if (selectedWallpaper) {
                 let wallpaperStyle = '';
@@ -9115,7 +10134,7 @@
             hideModal('wallpaper-picker-modal');
         }
         
-        // 上传自定义墙纸
+        // 上传自定义壁纸
         function uploadCustomWallpaper() {
             document.getElementById('custom-wallpaper-upload').click();
         }
@@ -9439,7 +10458,7 @@
                     model: document.getElementById('api-type').value === 'gemini' ? 
                            document.getElementById('api-model-select').value : 
                            document.getElementById('api-model').value.trim(),
-                    temperature: parseFloat(document.getElementById('api-temperature').value) || 0.7
+                    temperature: parseFloat(document.getElementById('api-temperature').value) || 0.70
                 };
                 
                 if (!tempSettings.key) {
@@ -9644,7 +10663,7 @@
                 model: document.getElementById('api-type').value === 'gemini' ? 
                        (document.getElementById('api-model-select') ? document.getElementById('api-model-select').value : document.getElementById('api-model').value.trim()) : 
                        document.getElementById('api-model').value.trim(),
-                temperature: parseFloat(document.getElementById('api-temperature').value) || 0.7
+                temperature: parseFloat(document.getElementById('api-temperature').value) || 0.70
             };
             
             localStorage.setItem('apiSettings', JSON.stringify(apiSettings));
@@ -9654,7 +10673,7 @@
         
         // 电池管理功能
         async function initBatteryManager() {
-            // 首先设置默认显示
+            // 首先设置默认显示为 ᰔᩚ
             const allBatteryTexts = document.querySelectorAll('.battery-text');
             allBatteryTexts.forEach(element => {
                 element.textContent = 'ᰔᩚ';
@@ -9670,10 +10689,16 @@
                 } catch (err) {
                     console.error("无法获取电池信息:", err);
                     // 保持默认显示 ᰔᩚ
+                    allBatteryTexts.forEach(element => {
+                        element.textContent = 'ᰔᩚ';
+                    });
                 }
             } else {
                 console.log("浏览器不支持电池状态API，使用默认显示。");
                 // 保持默认显示 ᰔᩚ
+                allBatteryTexts.forEach(element => {
+                    element.textContent = 'ᰔᩚ';
+                });
             }
         }
         
@@ -9689,11 +10714,11 @@
                 
                 if (batteryLevelEl && batteryTextEl) {
                     batteryLevelEl.style.width = `${level}%`;
-                    batteryTextEl.textContent = 'ᰔᩚ';
+                    batteryTextEl.textContent = `${level}%`;
                     
                     if (isCharging) {
                         batteryContainer.classList.add('charging');
-            } else {
+                    } else {
                         batteryContainer.classList.remove('charging');
                     }
                 }
@@ -9704,8 +10729,9 @@
             const appBatteryTexts = document.querySelectorAll('.app-battery-container .battery-text');
             const appBatteryLevels = document.querySelectorAll('.app-battery-level');
             
+            // 应用内也显示真实电量
             appBatteryTexts.forEach(element => {
-                element.textContent = 'ᰔᩚ';
+                element.textContent = `${level}%`;
             });
             
             appBatteryLevels.forEach(element => {
@@ -10412,6 +11438,11 @@
                 throw new Error('请先设置API密钥');
             }
             
+            // 检查图片格式，GIF不被Gemini API支持
+            if (imageUrl && imageUrl.includes('data:image/gif')) {
+                throw new Error('Unsupported MIME type: image/gif');
+            }
+            
             // 检查当前模型是否支持视觉识别
             if (!isVisionModelSupported()) {
                 throw new Error('当前选择的模型不支持图片识别功能。请选择支持视觉的模型，如 gpt-4o、gpt-4-vision、gemini-1.5-pro 或 gemini-2.0-flash 等。');
@@ -10782,25 +11813,27 @@
                 const historyCount = chatSettings.historyCount || 5; // 使用当前聊天的记忆轮数设置
                 const allMessages = chatMessages[character.id];
                 
-                // 按轮次提取消息：一轮 = 用户发送 + AI所有回复
+                // 按轮次提取消息：一轮 = 用户发送（可能多条）+ AI完整回复（可能多条）
                 let currentRound = [];
-                let lastSender = null;
+                let isInUserPhase = false; // 是否在用户发言阶段
+                let hasAIReply = false; // 当前轮是否有AI回复
                 
                 for (const msg of allMessages) {
                     if (msg.sender === 'sent') {
-                        // 用户消息开始新的一轮
-                        if (currentRound.length > 0) {
+                        if (!isInUserPhase && currentRound.length > 0 && hasAIReply) {
+                            // 如果上一轮已经有AI回复，开始新的一轮
                             conversationRounds.push(currentRound);
+                            currentRound = [];
+                            hasAIReply = false;
                         }
-                        currentRound = [msg];
-                        lastSender = 'sent';
-                    } else if (msg.sender === 'received' && lastSender === 'sent') {
-                        // AI回复，添加到当前轮
+                        // 用户消息（可能是同一轮的多条消息）
                         currentRound.push(msg);
-                        lastSender = 'received';
-                    } else if (msg.sender === 'received' && lastSender === 'received') {
-                        // AI的后续回复，继续添加到当前轮
+                        isInUserPhase = true;
+                    } else if (msg.sender === 'received') {
+                        // AI回复消息
                         currentRound.push(msg);
+                        isInUserPhase = false;
+                        hasAIReply = true;
                     }
                 }
                 
@@ -11729,32 +12762,71 @@
             }
         }
         
-        // 加载自定义表情包
-        function loadCustomEmojis() {
-            const savedCustomEmojis = localStorage.getItem('customEmojis');
-            const savedRecentEmojis = localStorage.getItem('recentEmojis');
-            
-            if (savedCustomEmojis) {
-                try {
-                    customEmojis = JSON.parse(savedCustomEmojis);
-                } catch (e) {
+        // 加载自定义表情包 - 使用IndexedDB（包含数据迁移）
+        async function loadCustomEmojis() {
+            try {
+                const savedCustomEmojis = await db.customEmojis.toArray();
+                
+                if (savedCustomEmojis.length === 0) {
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localStorageData = localStorage.getItem('customEmojis');
+                    if (localStorageData) {
+                        console.log('检测到localStorage中的自定义表情包数据，开始迁移...');
+                        const localEmojis = JSON.parse(localStorageData);
+                        
+                        if (localEmojis.length > 0) {
+                            await db.customEmojis.bulkAdd(localEmojis);
+                        }
+                        
+                        customEmojis = localEmojis;
+                        console.log('自定义表情包迁移完成:', customEmojis);
+                    } else {
+                        customEmojis = [];
+                    }
+                } else {
+                    customEmojis = savedCustomEmojis;
+                    console.log('从IndexedDB加载自定义表情包:', customEmojis);
+                }
+                
+                // recentEmojis继续使用localStorage，因为数据量小
+                const savedRecentEmojis = localStorage.getItem('recentEmojis');
+                if (savedRecentEmojis) {
+                    recentEmojis = JSON.parse(savedRecentEmojis);
+                } else {
+                    recentEmojis = [];
+                }
+            } catch (error) {
+                console.error('加载自定义表情包失败:', error);
+                // 如果IndexedDB失败，尝试从localStorage加载
+                const localStorageData = localStorage.getItem('customEmojis');
+                if (localStorageData) {
+                    customEmojis = JSON.parse(localStorageData);
+                    console.log('从localStorage备份加载自定义表情包:', customEmojis);
+                } else {
                     customEmojis = [];
                 }
-            }
-            
-            if (savedRecentEmojis) {
-                try {
+                
+                const savedRecentEmojis = localStorage.getItem('recentEmojis');
+                if (savedRecentEmojis) {
                     recentEmojis = JSON.parse(savedRecentEmojis);
-                } catch (e) {
+                } else {
                     recentEmojis = [];
                 }
             }
         }
         
-        // 保存自定义表情包
-        function saveCustomEmojis() {
-            localStorage.setItem('customEmojis', JSON.stringify(customEmojis));
-            localStorage.setItem('recentEmojis', JSON.stringify(recentEmojis));
+        // 保存自定义表情包 - 使用IndexedDB
+        async function saveCustomEmojis() {
+            try {
+                await db.customEmojis.clear();
+                if (customEmojis.length > 0) {
+                    await db.customEmojis.bulkAdd(customEmojis);
+                }
+                // recentEmojis继续使用localStorage
+                localStorage.setItem('recentEmojis', JSON.stringify(recentEmojis));
+            } catch (error) {
+                console.error('保存自定义表情包失败:', error);
+            }
         }
         
         // 显示自定义表情包面板
@@ -11906,7 +12978,7 @@
         }
         
         // 添加到最近使用的表情包
-        function addToRecentEmojis(emoji) {
+        async function addToRecentEmojis(emoji) {
             // 移除已存在的相同表情包
             recentEmojis = recentEmojis.filter(e => e.url !== emoji.url);
             
@@ -11918,7 +12990,7 @@
                 recentEmojis = recentEmojis.slice(0, 20);
             }
             
-            saveCustomEmojis();
+            await saveCustomEmojis();
         }
         
         // 检测当前模型是否支持视觉功能
@@ -12016,6 +13088,14 @@
                 if (!file.type.startsWith('image/')) {
                     alert('请选择图片文件');
                     return;
+                }
+                
+                // 检查GIF格式，提醒用户可能的问题
+                if (file.type === 'image/gif') {
+                    const confirmed = confirm('检测到GIF格式的表情包！\n\n⚠️ 注意事项：\n• AI可以发送这个GIF动图\n• 但Gemini API无法识别GIF内容\n• 重新生成功能可能失效\n• 建议使用静态图片格式\n\n是否仍要上传这个GIF表情包？');
+                    if (!confirmed) {
+                        return;
+                    }
                 }
                 
                 if (file.size > 5 * 1024 * 1024) {
@@ -13354,8 +14434,8 @@
 
         // 智能回复功能
         function triggerSmartReply() {
-            if (!pendingUserMessage) {
-                alert('请先发送一条消息，然后点击此按钮来获取AI回复');
+            if (!currentChatCharacter) {
+                alert('请先选择一个角色');
                 return;
             }
 
@@ -13364,8 +14444,240 @@
                 return;
             }
 
-            // 开始AI回复
+            const messages = chatMessages[currentChatCharacter.id] || [];
+            
+            // 找到最后一条用户消息
+            let lastUserMessage = null;
+            let hasUnrepliedUserMessage = false;
+            
+            for (let i = messages.length - 1; i >= 0; i--) {
+                if (messages[i].sender === 'sent') {
+                    lastUserMessage = messages[i];
+                    
+                    // 检查这条用户消息后是否有AI回复
+                    hasUnrepliedUserMessage = true;
+                    for (let j = i + 1; j < messages.length; j++) {
+                        if (messages[j].sender === 'received') {
+                            hasUnrepliedUserMessage = false;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+            
+            // 情况1：有未回复的用户消息
+            if (lastUserMessage && hasUnrepliedUserMessage) {
+                pendingUserMessage = lastUserMessage;
             processAIReply();
+                return;
+            }
+            
+            // 情况2：最后的用户消息已有AI回复，需要AI续写
+            if (lastUserMessage && !hasUnrepliedUserMessage) {
+                // 检查从最后一条用户消息后的AI回复轮数
+                let aiReplyRounds = 0;
+                let lastUserMessageIndex = -1;
+                
+                // 找到最后一条用户消息的索引
+                for (let i = messages.length - 1; i >= 0; i--) {
+                    if (messages[i].sender === 'sent') {
+                        lastUserMessageIndex = i;
+                        break;
+                    }
+                }
+                
+                // 计算从最后一条用户消息后的AI回复轮数
+                // 一轮 = 连续的AI消息直到下一个断点
+                if (lastUserMessageIndex !== -1) {
+                    let inAIReplyRound = false;
+                    
+                    for (let i = lastUserMessageIndex + 1; i < messages.length; i++) {
+                        if (messages[i].sender === 'received') {
+                            if (!inAIReplyRound) {
+                                // 开始新的AI回复轮
+                                aiReplyRounds++;
+                                inAIReplyRound = true;
+                            }
+                            // 继续当前回合（多条连续AI消息算一轮）
+                        } else {
+                            // 如果有其他类型消息，结束当前回合
+                            inAIReplyRound = false;
+                        }
+                    }
+                }
+                
+                // AI回复逻辑：
+                // aiReplyRounds = 0: 没有回复用户消息，不应该到这里
+                // aiReplyRounds = 1: 已回复用户消息1轮，现在是第1次续写（第2轮）
+                // aiReplyRounds = 2: 已回复+续写1轮，现在是第2次续写（第3轮）
+                // aiReplyRounds >= 3: 已回复+续写2轮，提示用户发消息
+                
+                if (aiReplyRounds >= 3) {
+                    const characterName = currentChatCharacter.name;
+                    alert(`${characterName}已经说了很多话了，先和${characterName}说说话吧~`);
+                    return;
+                }
+                
+                // AI续写对话（第1次或第2次续写）
+                processAIContinuation();
+                return;
+            }
+            
+            // 情况3：没有用户消息
+            alert('请先发送一条消息，然后点击此按钮来获取AI回复');
+        }
+
+        // 处理AI续写对话
+        async function processAIContinuation() {
+            if (!currentChatCharacter) return;
+
+            isWaitingForReply = true;
+            
+            // 更新智能回复按钮状态
+            const smartReplyBtn = document.getElementById('smart-reply-btn');
+            if (smartReplyBtn) {
+                smartReplyBtn.disabled = true;
+                smartReplyBtn.style.opacity = '0.65';
+                smartReplyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+
+            // 显示正在输入提示
+            showTypingIndicator();
+            
+            // 添加随机延迟
+            const delay = Math.random() * 2000 + 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+
+            try {
+                // 获取AI最后的消息内容，以便基于此续写
+                const messages = chatMessages[currentChatCharacter.id] || [];
+                let lastAIMessage = "";
+                
+                // 找到最后一条AI消息
+                for (let i = messages.length - 1; i >= 0; i--) {
+                    if (messages[i].sender === 'received') {
+                        lastAIMessage = messages[i].content || "";
+                        break;
+                    }
+                }
+                
+                // 构建续写提示词，基于AI自己最后的话来续写
+                let continuationPrompt = "你刚才说了：\"" + lastAIMessage + "\"\n\n";
+                continuationPrompt += "现在请基于你刚才说的话，主动继续这个话题或者自然地转到相关话题。就像真实聊天中，你想要继续表达更多想法，或者询问对方的看法，或者分享相关的内容。请自然地继续对话，不要重复之前说过的话。";
+                continuationPrompt += "\n\n🚨 重要提醒：请严格遵守JSON格式，每条消息必须分开发送，绝对不能将多条消息合并在一个元素中！正确格式：[\"消息1\", \"消息2\"]，错误格式：[\"消息1\\n消息2\"]";
+                
+                const response = await callChatAPI(continuationPrompt, currentChatCharacter);
+                const aiMessages = parseAiResponse(response);
+                
+                hideTypingIndicator();
+                
+                // 逐条发送消息
+                for (let i = 0; i < aiMessages.length; i++) {
+                    const msgData = aiMessages[i];
+                    let aiMessage;
+                    
+                    if (typeof msgData === 'object' && msgData.type === 'voice_message') {
+                        aiMessage = { 
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            type: 'voice_message', 
+                            content: msgData.content, 
+                            timestamp: Date.now() + i * 100
+                        };
+                    } else if (typeof msgData === 'object' && msgData.type === 'ai_image') {
+                        aiMessage = { 
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            type: 'ai_image', 
+                            content: '',
+                            image: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#f0f0f0"/><text x="100" y="75" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">[AI描述的图片]</text></svg>')}`,
+                            imageDescription: msgData.description,
+                            timestamp: Date.now() + i * 100
+                        };
+                    } else if (typeof msgData === 'object' && msgData.type === 'transfer') {
+                        aiMessage = { 
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            type: 'transfer', 
+                            amount: msgData.amount, 
+                            note: msgData.note, 
+                            timestamp: Date.now() + i * 100
+                        };
+                    } else if (typeof msgData === 'object' && msgData.type === 'emoji') {
+                        // 处理AI发送的表情包
+                        aiMessage = { 
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            content: '',
+                            image: msgData.url,
+                            isEmoji: true,
+                            emojiDescription: msgData.description,
+                            timestamp: Date.now() + i * 100
+                        };
+                        
+                        // 将表情包添加到最近使用
+                        addToRecentEmojis({
+                            id: msgData.id,
+                            url: msgData.url,
+                            description: msgData.description
+                        });
+                    } else {
+                        aiMessage = { 
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            content: String(msgData), 
+                            timestamp: Date.now() + i * 100
+                        };
+                    }
+                    
+                    chatMessages[currentChatCharacter.id].push(aiMessage);
+                    saveChatMessages();
+                    renderChatMessages(currentChatCharacter.id);
+                    
+                    if (i < aiMessages.length - 1) {
+                        const delay = Math.random() * 1000 + 500;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        
+                        if (i < aiMessages.length - 1) {
+                            showTypingIndicator();
+                            await new Promise(resolve => setTimeout(resolve, Math.random() * 800 + 400));
+                            hideTypingIndicator();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('AI续写失败:', error);
+                hideTypingIndicator();
+                
+                const errorMessage = {
+                    id: Date.now().toString(),
+                    sender: 'received',
+                    content: `[续写失败: ${error.message}]`,
+                    timestamp: Date.now()
+                };
+                
+                chatMessages[currentChatCharacter.id].push(errorMessage);
+                saveChatMessages();
+                renderChatMessages(currentChatCharacter.id);
+            } finally {
+                // 重置状态
+                isWaitingForReply = false;
+                pendingUserMessage = null;
+                
+                // 恢复智能回复按钮
+                if (smartReplyBtn) {
+                    smartReplyBtn.disabled = false;
+                    smartReplyBtn.style.opacity = '';
+                    smartReplyBtn.style.animation = 'none';
+                    smartReplyBtn.classList.remove('waiting');
+                    smartReplyBtn.innerHTML = '<i class="fas fa-comment-dots"></i>';
+                    smartReplyBtn.title = '获取AI回复';
+                }
+                
+                // 更新按钮显示状态
+                updateFloatingButtonsVisibility();
+            }
         }
 
         // 处理AI回复
