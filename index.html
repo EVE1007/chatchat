@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Phone Chat 模拟器</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Comic+Neue:wght@400;700&family=Fredoka+One&family=Nunito:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&family=Roboto:wght@400;500&family=Raleway:wght@400;500;600&family=Lato:wght@400;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -42,7 +42,7 @@
             --theme-text-primary: #333;
             
             /* 默认主题的背景色 */
-            --body-bg: #1a1a1a;
+            --body-bg: #ffffff;
             
             /* 间距系统 */
             --spacing-xs: 4px;
@@ -1367,10 +1367,10 @@
             height: 100vh; 
             overflow: hidden; 
             margin: 0; 
-            padding: 0; 
+            padding: 20px; 
             font-family: var(--theme-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
             font-weight: normal; 
-            background: var(--body-bg, #1a1a1a); 
+            background: var(--body-bg, #dcdcdc); 
             display: flex; 
             justify-content: center; 
             align-items: center; 
@@ -1378,9 +1378,20 @@
             transition: all 0.3s ease;
         }
         
+        #phone-frame { 
+            padding: 12px; 
+            background-color: #fff; 
+            border-radius: 50px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25), inset 0 2px 4px rgba(0,0,0,0.1); 
+            position: relative; 
+            display: none; /* 默认隐藏，由外观设置控制 */
+        }
+        
+
+        
         #phone-screen { 
-            width: 360px; 
-            height: 750px; 
+            width: 350px; 
+            height: 740px; 
             background-color: var(--color-black); 
             position: relative; 
             overflow: hidden; 
@@ -1806,6 +1817,61 @@
         /* 确保壁纸文字正常显示 */
         .settings-item-left div:not(.settings-icon) {
             white-space: nowrap;
+        }
+        
+        /* 屏幕尺寸选择样式 */
+        .size-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .size-option:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+            padding-left: 15px;
+        }
+        
+        .size-option-left {
+            flex: 1;
+        }
+        
+        .size-name {
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .size-desc {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .size-preview {
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 70px;
+        }
+        
+        .size-preview-rect {
+            background-color: #333;
+            border-radius: 3px;
+            border: 1px solid #666;
+        }
+        
+        .check-icon {
+            color: var(--color-ios-green);
+            font-size: 18px;
+            position: absolute;
+            right: 15px;
         }
         
         .settings-toggle {
@@ -2511,23 +2577,60 @@
         }
         
         .message-image {
-            max-width: 200px;
-            max-height: 200px;
+            max-width: 150px;  /* 从200px减小到150px */
+            max-height: 150px;  /* 从200px减小到150px */
             border-radius: 10px;
             margin-top: 5px;
             cursor: pointer;
+            transition: transform 0.2s ease;
+            object-fit: cover;  /* 确保图片适应容器 */
+        }
+        
+        .message-image:hover {
+            transform: scale(1.05);
         }
         
         .message-emoji {
-            max-width: 120px;
-            max-height: 120px;
+            max-width: 100px;  /* 从120px减小到100px */
+            max-height: 100px;  /* 从120px减小到100px */
             border-radius: 8px;
             cursor: pointer;
             transition: transform 0.2s ease;
         }
         
         .message-emoji:hover {
-            transform: scale(1.05);
+            transform: scale(1.1);  /* 从1.05增加到1.1 */
+        }
+        
+        /* 无气泡的表情包样式 */
+        .message-container.emoji-only .message-bubble {
+            background: none !important;
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
+        }
+        
+        /* 图片预览模态框 */
+        .image-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+        
+        .image-preview-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
         }
         
         /* 特殊消息类型样式 */
@@ -2540,6 +2643,84 @@
             min-width: 100px;
             cursor: pointer;
             transition: all 0.2s ease;
+        }
+        
+        /* 系统消息样式 */
+        .system-message {
+            text-align: center;
+            color: var(--color-gray-medium);
+            font-size: var(--font-size-sm);
+            padding: 6px 12px;
+            margin: 0;
+            background: var(--bg-white-10);
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            display: inline-block;
+            max-width: 60%;
+            width: fit-content;
+        }
+
+        /* 撤回消息样式 */
+        .recalled-message {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin: 5px 0;
+            padding: 8px 12px;
+            width: fit-content;
+            max-width: 70%;
+            background: var(--bg-white-10);
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            animation: recallFadeIn 0.5s ease-in-out;
+            position: relative; /* 🔥【修复】为选中标记提供定位基准 */
+        }
+        
+        .recalled-message .original-text {
+            color: #999;
+            font-size: 11px;
+            margin-top: 4px;
+            padding-top: 4px;
+        }
+        
+        /* 🔥【新增】撤回消息选中状态 - 显示勾选标记 */
+        [data-message-id].selected .recalled-message::after {
+            content: '✔';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--theme-button-bg, #4a84c1);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 撤回消息包装器 */
+        .message-wrapper.system {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        /* 撤回动画 */
+        @keyframes recallFadeIn {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(10px); }
         }
         
         .voice-message:hover {
@@ -3259,33 +3440,6 @@
             overflow: hidden; 
         }
         
-        body { 
-            height: 100vh; 
-            overflow: hidden; 
-            margin: 0; 
-            padding: 0; 
-            font-family: var(--theme-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
-            font-weight: normal; 
-            background: var(--body-bg, #1a1a1a); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            box-sizing: border-box; 
-            transition: all 0.3s ease;
-        }
-        
-        #phone-screen { 
-            width: 360px; 
-            height: 750px; 
-            background-color: var(--color-black); 
-            position: relative; 
-            overflow: hidden; 
-            display: flex; 
-            flex-direction: column; 
-            border-radius: 25px; 
-            box-shadow: var(--shadow-phone); 
-        }
-        
         .battery-container {
             display: flex;
             align-items: center;
@@ -3409,7 +3563,144 @@
             box-shadow: var(--shadow-button);
         }
         
-        /* 社交动态界面 */
+        /* 论坛界面 */
+        .forum-categories {
+            padding: 15px;
+        }
+        
+        .forum-category {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .forum-category:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .category-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        
+        .forum-category:nth-child(1) .category-icon {
+            background: linear-gradient(135deg, #ff6b6b, #ff8787);
+            color: white;
+        }
+        
+        .forum-category:nth-child(2) .category-icon {
+            background: linear-gradient(135deg, #4ecdc4, #44a3aa);
+            color: white;
+        }
+        
+        .forum-category:nth-child(3) .category-icon {
+            background: linear-gradient(135deg, #f06292, #ec407a);
+            color: white;
+        }
+        
+        .category-info {
+            flex: 1;
+        }
+        
+        .category-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .category-desc {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .category-count {
+            font-size: 20px;
+            font-weight: 600;
+            color: #999;
+        }
+        
+        /* 游戏界面 */
+        .game-list {
+            padding: 15px;
+        }
+        
+        .game-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .game-item:hover:not(.coming-soon) {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .game-item.coming-soon {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .game-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-right: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .game-info {
+            flex: 1;
+        }
+        
+        .game-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .game-desc {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .game-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        /* 社交动态界面 (已移除，改为论坛) */
         .weibo-post {
             padding: 15px;
             border-bottom: 1px solid #eee;
@@ -3867,6 +4158,45 @@
             border-color: #007AFF;
         }
         
+        /* 壁纸预览容器 */
+        .wallpaper-preview-container {
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            min-height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wallpaper-preview-placeholder {
+            text-align: center;
+            color: #999;
+        }
+        
+        .wallpaper-preview-placeholder i {
+            font-size: 48px;
+            margin-bottom: 10px;
+            color: #ddd;
+        }
+        
+        .wallpaper-preview-placeholder div {
+            font-size: 14px;
+        }
+        
+        .wallpaper-preview-image {
+            width: 280px;
+            height: 200px;
+            border-radius: 12px;
+            object-fit: contain;
+            border: 3px solid #ddd;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
         /* 图标设置 */
         .icon-options {
             display: grid;
@@ -4069,6 +4399,203 @@
             font-style: italic;
         }
         
+        /* 朋友圈（动态）样式 */
+        .moments-page {
+            height: 100%;
+            overflow-y: auto;
+            background-color: #f5f5f5;
+        }
+        
+        .moments-header {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        
+        .moments-cover {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+        }
+        
+        .cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .cover-image-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #6b8dd6, #8fa8e8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .cover-image-placeholder::after {
+            content: "朋友圈封面";
+        }
+        
+        .moments-user-info {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .moments-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .moments-username {
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        
+        .moments-list {
+            background-color: white;
+            min-height: calc(100vh - 250px);
+        }
+        
+        .moment-item {
+            display: flex;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .moment-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background-color: #f0f0f0;
+            margin-right: 12px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+        
+        .moment-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .moment-username {
+            font-weight: 600;
+            color: #576b95;
+            margin-bottom: 5px;
+        }
+        
+        .moment-text {
+            color: #333;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+        
+        .moment-images {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px;
+            margin-bottom: 8px;
+        }
+        
+        .moment-image {
+            aspect-ratio: 1;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .moment-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .moment-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+        
+        .moment-time {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .moment-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .moment-action-btn {
+            background: none;
+            border: none;
+            color: #576b95;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .moment-interactions {
+            background-color: #f7f7f7;
+            border-radius: 4px;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 13px;
+            display: none;
+        }
+        
+        .moment-interactions.show {
+            display: block;
+        }
+        
+        .publish-moment-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #576b95;
+            color: white;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        .publish-moment-btn:active {
+            transform: scale(0.95);
+        }
+
         /* 面具区域样式 */
         .persona-header {
             display: flex;
@@ -5484,8 +6011,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <div id="phone-screen">
-        <div class="wallpaper">
+    <div id="phone-frame">
+        <div id="phone-screen">
+        <div class="wallpaper" id="wallpaper-element">
             <!-- 状态栏 -->
             <div id="status-bar">
                 <span id="status-bar-time">14:25</span>
@@ -5526,24 +6054,24 @@
                         </a>
                     </div>
                     <div class="app-row">
-                        <a href="#" class="app" onclick="showApp('album-screen')">
-                            <div class="app-icon">
-                                <img src="https://i.postimg.cc/DyS7X2SW/IMG-3081.jpg" alt="相册" class="app-icon-img">
-                            </div>
-                            <span>相册</span>
-                        </a>
+                                        <a href="#" class="app" onclick="showApp('game-screen')">
+                    <div class="app-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <span>游戏</span>
+                </a>
                         <a href="#" class="app" onclick="showApp('music-screen')">
                             <div class="app-icon">
                                 <i class="fas fa-music"></i>
                             </div>
                             <span>音乐</span>
                         </a>
-                        <a href="#" class="app" onclick="showApp('weibo-screen')">
-                            <div class="app-icon">
-                                <img src="https://i.postimg.cc/8cHffTcX/IMG-3064.jpg" alt="社交动态" class="app-icon-img">
-                            </div>
-                            <span>社交动态</span>
-                        </a>
+                                        <a href="#" class="app" onclick="showApp('forum-screen')">
+                    <div class="app-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <span>论坛</span>
+                </a>
                     </div>
                 </div>
 
@@ -5587,6 +6115,57 @@
 
                         </div>
                         
+                        <!-- 动态页面（朋友圈）-->
+                        <div class="moments-page hide" id="moments-page">
+                            <div class="moments-header">
+                                <div class="moments-cover">
+                                    <div class="cover-image-placeholder"></div>
+                                    <div class="moments-user-info">
+                                        <div class="moments-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <span class="moments-username">我的名字</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="moments-list" id="moments-list">
+                                <!-- 动态列表将通过JS动态生成 -->
+                                <div class="moment-item">
+                                    <div class="moment-avatar">
+                                        <div class="avatar-placeholder">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    </div>
+                                    <div class="moment-content">
+                                        <div class="moment-username">示例用户</div>
+                                        <div class="moment-text">今天天气真好，适合出去走走~</div>
+                                        <div class="moment-images">
+                                            <!-- 图片预览区域 -->
+                                        </div>
+                                        <div class="moment-footer">
+                                            <div class="moment-time">5分钟前</div>
+                                            <div class="moment-actions">
+                                                <button class="moment-action-btn">
+                                                    <i class="far fa-heart"></i>
+                                                </button>
+                                                <button class="moment-action-btn">
+                                                    <i class="far fa-comment"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="moment-interactions">
+                                            <!-- 点赞和评论区域 -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 发布按钮 -->
+                            <button class="publish-moment-btn" onclick="showPublishMoment()">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
 
                         
                         <!-- 面具区域 -->
@@ -5618,6 +6197,10 @@
                             <i class="fas fa-address-book"></i>
                             <span>角色</span>
                         </div>
+                        <div class="wechat-tab" onclick="switchWechatTab('moments-page')">
+                            <i class="fas fa-circle-notch"></i>
+                            <span>动态</span>
+                        </div>
                         <div class="wechat-tab" onclick="switchWechatTab('profile-page')">
                             <i class="fas fa-masks-theater"></i>
                             <span>我</span>
@@ -5625,8 +6208,8 @@
                     </div>
                 </div>
                 
-                <!-- 社交动态界面 -->
-                <div id="weibo-screen" class="app-screen">
+                <!-- 论坛界面 -->
+                <div id="forum-screen" class="app-screen">
                     <div class="app-status-bar">
                         <div class="app-status-time"></div>
                         <div class="app-battery-container">
@@ -5637,37 +6220,40 @@
                         </div>
                     </div>
                     <div class="app-header">
-                        <button class="back-button" onclick="hideApp('weibo-screen')">‹</button>
-                        <div class="app-title">社交动态</div>
+                        <button class="back-button" onclick="hideApp('forum-screen')">‹</button>
+                        <div class="app-title">论坛</div>
                     </div>
                     <div class="app-content">
-                        <div class="weibo-post">
-                            <div class="weibo-header">
-                                <div class="weibo-avatar"></div>
-                                <div class="weibo-user">
-                                    <div class="weibo-name">张三</div>
-                                    <div class="weibo-time">10分钟前</div>
+                        <div class="forum-categories">
+                            <div class="forum-category">
+                                <div class="category-icon">
+                                    <i class="fas fa-fire"></i>
                                 </div>
+                                <div class="category-info">
+                                    <div class="category-name">热门话题</div>
+                                    <div class="category-desc">最受欢迎的讨论</div>
+                                </div>
+                                <div class="category-count">128</div>
                             </div>
-                            <div class="weibo-content">
-                                今天天气真好，出去走走心情都变好了！
+                            <div class="forum-category">
+                                <div class="category-icon">
+                                    <i class="fas fa-gamepad"></i>
+                                </div>
+                                <div class="category-info">
+                                    <div class="category-name">游戏讨论</div>
+                                    <div class="category-desc">分享游戏心得</div>
+                                </div>
+                                <div class="category-count">89</div>
                             </div>
-                            <div class="weibo-images">
-                                <div class="weibo-image"></div>
-                            </div>
-                            <div class="weibo-actions">
-                                <div class="weibo-action">
-                                    <i class="far fa-comment"></i>
-                                    <span>评论</span>
+                            <div class="forum-category">
+                                <div class="category-icon">
+                                    <i class="fas fa-heart"></i>
                                 </div>
-                                <div class="weibo-action">
-                                    <i class="fas fa-retweet"></i>
-                                    <span>转发</span>
+                                <div class="category-info">
+                                    <div class="category-name">角色互动</div>
+                                    <div class="category-desc">与AI角色的故事</div>
                                 </div>
-                                <div class="weibo-action">
-                                    <i class="far fa-heart"></i>
-                                    <span>点赞</span>   
-                                </div>
+                                <div class="category-count">256</div>
                             </div>
                         </div>
                     </div>
@@ -6437,8 +7023,8 @@
                     </div>
                 </div>
                 
-                <!-- 相册界面 -->
-                <div id="album-screen" class="app-screen">
+                <!-- 游戏界面 -->
+                <div id="game-screen" class="app-screen">
                     <div class="app-status-bar">
                         <div class="app-status-time"></div>
                         <div class="app-battery-container">
@@ -6449,12 +7035,39 @@
                         </div>
                     </div>
                     <div class="app-header">
-                        <button class="back-button" onclick="hideApp('album-screen')">‹</button>
-                        <div class="app-title">相册</div>
+                        <button class="back-button" onclick="hideApp('game-screen')">‹</button>
+                        <div class="app-title">游戏中心</div>
                     </div>
-                    <div class="app-content padding-none">
-                        <div class="album-grid" id="album-grid">
-                            <!-- 相册内容将通过JS动态生成 -->
+                    <div class="app-content">
+                        <div class="game-list">
+                            <div class="game-item" onclick="startGame('witchPotion')">
+                                <div class="game-icon">
+                                    <i class="fas fa-flask"></i>
+                                </div>
+                                <div class="game-info">
+                                    <div class="game-name">女巫的解药</div>
+                                    <div class="game-desc">与AI角色一起调制神秘药水</div>
+                                </div>
+                                <div class="game-badge">NEW</div>
+                            </div>
+                            <div class="game-item coming-soon">
+                                <div class="game-icon">
+                                    <i class="fas fa-dice"></i>
+                                </div>
+                                <div class="game-info">
+                                    <div class="game-name">角色猜谜</div>
+                                    <div class="game-desc">即将推出</div>
+                                </div>
+                            </div>
+                            <div class="game-item coming-soon">
+                                <div class="game-icon">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div class="game-info">
+                                    <div class="game-name">互动故事</div>
+                                    <div class="game-desc">即将推出</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -6523,12 +7136,24 @@
                             </div>
                             <i class="fas fa-chevron-right"></i>
                         </div>
-                        <div class="settings-item">
+                        <div class="settings-item" onclick="showApp('display-screen')">
                             <div class="settings-item-left">
                                 <div class="settings-icon display">
                                     <i class="fas fa-sun"></i>
                                 </div>
                                 <div>显示与亮度</div>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <div class="settings-item" onclick="showApp('appearance-screen')">
+                            <div class="settings-item-left">
+                                <div class="settings-icon display">
+                                    <i class="fas fa-mobile-alt"></i>
+                                </div>
+                                <div>
+                                    <div class="setting-label">外观设置</div>
+                                    <div class="setting-desc">手机边框、尺寸等设置</div>
+                                </div>
                             </div>
                             <i class="fas fa-chevron-right"></i>
                         </div>
@@ -6619,6 +7244,170 @@
                             <div class="about-title">iPhone 模拟器</div>
                             <div class="about-version">版本 1.0.0</div>
                             <div class="about-author">作者@EVE</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 显示与亮度设置 -->
+                <div id="display-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="app-header">
+                        <button class="back-button" onclick="backToSettings('display-screen')">‹</button>
+                        <div class="app-title">显示与亮度</div>
+                    </div>
+                    <div class="app-content">
+                        <div class="settings-item">
+                            <div class="settings-item-left">
+                                <div>
+                                    <div class="setting-label">自动亮度</div>
+                                    <div class="setting-desc">根据环境光线自动调节亮度</div>
+                                </div>
+                            </div>
+                            <label class="settings-toggle">
+                                <input type="checkbox" checked>
+                                <span class="settings-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-left">
+                                <div>
+                                    <div class="setting-label">原彩显示</div>
+                                    <div class="setting-desc">根据环境光线调节显示效果</div>
+                                </div>
+                            </div>
+                            <label class="settings-toggle">
+                                <input type="checkbox" checked>
+                                <span class="settings-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-left">
+                                <div>
+                                    <div class="setting-label">夜览</div>
+                                    <div class="setting-desc">减少蓝光以改善睡眠</div>
+                                </div>
+                            </div>
+                            <label class="settings-toggle">
+                                <input type="checkbox">
+                                <span class="settings-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 屏幕尺寸设置 -->
+                <div id="screen-size-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="app-header">
+                        <button class="back-button" onclick="backToSettings('screen-size-screen')">‹</button>
+                        <div class="app-title">屏幕尺寸</div>
+                    </div>
+                    <div class="app-content">
+                        <div class="size-option" onclick="changeScreenSize(320, 568, 'iPhone SE')">
+                            <div class="size-option-left">
+                                <div class="size-name">iPhone SE</div>
+                                <div class="size-desc">320×568 (小屏模式)</div>
+                            </div>
+                            <div class="size-preview">
+                                <div class="size-preview-rect" style="width: 20px; height: 35px;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="size-option" onclick="changeScreenSize(350, 740, '适中尺寸')" id="size-350-740">
+                            <div class="size-option-left">
+                                <div class="size-name">适中尺寸</div>
+                                <div class="size-desc">350×740 (推荐)</div>
+                            </div>
+                            <div class="size-preview">
+                                <div class="size-preview-rect" style="width: 25px; height: 52px;"></div>
+                            </div>
+                            <i class="fas fa-check check-icon"></i>
+                        </div>
+                        
+                        <div class="size-option" onclick="changeScreenSize(375, 812, 'iPhone 12/13')">
+                            <div class="size-option-left">
+                                <div class="size-name">iPhone 12/13</div>
+                                <div class="size-desc">375×812 (标准)</div>
+                            </div>
+                            <div class="size-preview">
+                                <div class="size-preview-rect" style="width: 27px; height: 58px;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="size-option" onclick="changeScreenSize(390, 844, 'iPhone 15')">
+                            <div class="size-option-left">
+                                <div class="size-name">iPhone 15</div>
+                                <div class="size-desc">390×844 (真实尺寸)</div>
+                            </div>
+                            <div class="size-preview">
+                                <div class="size-preview-rect" style="width: 28px; height: 60px;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="size-option" onclick="changeScreenSize(428, 926, 'iPhone 15 Plus')">
+                            <div class="size-option-left">
+                                <div class="size-name">iPhone 15 Plus</div>
+                                <div class="size-desc">428×926 (大屏)</div>
+                            </div>
+                            <div class="size-preview">
+                                <div class="size-preview-rect" style="width: 30px; height: 65px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 外观设置 -->
+                <div id="appearance-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="app-header">
+                        <button class="back-button" onclick="backToSettings('appearance-screen')">‹</button>
+                        <div class="app-title">外观设置</div>
+                    </div>
+                    <div class="app-content">
+                        <div class="settings-item">
+                            <div class="settings-item-left">
+                                <div>
+                                    <div class="setting-label">显示手机边框</div>
+                                    <div class="setting-desc">显示圆角边框和阴影效果</div>
+                                </div>
+                            </div>
+                            <label class="settings-toggle">
+                                <input type="checkbox" id="phone-border-toggle" checked onchange="togglePhoneBorder()">
+                                <span class="settings-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item" onclick="showScreenSizeOptions()">
+                            <div class="settings-item-left">
+                                <div>
+                                    <div class="setting-label">屏幕尺寸</div>
+                                    <div class="setting-desc" id="current-screen-size">当前：350×740 (适中尺寸)</div>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
                         </div>
                     </div>
                 </div>
@@ -6903,11 +7692,11 @@
                             <button class="modal-close" onclick="hideModal('wallpaper-picker-modal')">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <div class="wallpaper-options">
-                                <div class="wallpaper-option wallpaper-gradient1" onclick="selectWallpaper('gradient1')"></div>
-                                <div class="wallpaper-option wallpaper-gradient2" onclick="selectWallpaper('gradient2')"></div>
-                                <div class="wallpaper-option wallpaper-gradient3" onclick="selectWallpaper('gradient3')"></div>
-                                <div class="wallpaper-option wallpaper-gradient4" onclick="selectWallpaper('gradient4')"></div>
+                            <div class="wallpaper-preview-container" id="wallpaper-preview-container">
+                                <div class="wallpaper-preview-placeholder">
+                                    <i class="fas fa-image"></i>
+                                    <div>选择本地图片后可在此预览</div>
+                                </div>
                             </div>
                             <div class="settings-item upload-custom-item" onclick="uploadCustomWallpaper()">
                                 <div class="settings-item-left">
@@ -7638,7 +8427,13 @@
             chatMessages: '&id, characterId, timestamp',
             apiSettings: '&id',
             customEmojis: '&id, description',
-            photos: '&id, timestamp'
+            photos: '&id, timestamp',
+            wallpapers: '&id, type',
+            worldbooks: '&id, name',
+            groupChats: '&id, name',
+            personas: '&id, name',
+            globalSettings: '&id',
+            appIcons: '&id, appId'
         });
 
         // 全局变量
@@ -7706,20 +8501,23 @@
                 loadCustomEmojis()
             ]);
             
-            // 加载其他不需要数据库的设置
-            loadWallpaper();
-            loadAppIcons();
+            // 加载外观设置
+            loadPhoneBorderSetting();
+            loadScreenSize();
+            
+            // 加载其他设置（包括需要数据库的壁纸设置）
+            await loadWallpaper();
+            await loadAppIcons();
             loadSavedTheme();
-            loadWorldbooks();
+            await loadWorldbooks();
             loadMusicData();
-            loadPersonas();
-            loadGroupChats();
+            await loadPersonas();
+            await loadGroupChats();
             
             // 渲染界面
             renderMessageList();
             renderContactList();
             renderCharacterList();
-            renderAlbum();
             renderPersonaList();
             
             // 初始化时设置正确的按钮显示状态 - 延迟执行确保DOM加载完成
@@ -7794,11 +8592,14 @@
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         selectedWallpaper = event.target.result;
-                        // 立即预览
-                        document.querySelector('.wallpaper').style.backgroundImage = `url(${selectedWallpaper})`;
-                        document.querySelector('.wallpaper').style.backgroundSize = '100% 100%';
-                        document.querySelector('.wallpaper').style.backgroundPosition = 'center';
-                        // 不在这里保存，等用户点击应用时再保存
+                        
+                        // 更新预览容器
+                        const previewContainer = document.getElementById('wallpaper-preview-container');
+                        if (previewContainer) {
+                            previewContainer.innerHTML = `<img src="${selectedWallpaper}" class="wallpaper-preview-image" alt="壁纸预览">`;
+                        }
+                        
+                        // 不在这里立即应用到主界面，等用户点击应用时再应用
                     };
                     reader.readAsDataURL(e.target.files[0]);
                 }
@@ -7841,10 +8642,6 @@
             // 如果是聊天界面，刷新消息列表
             if (appId === 'chat-screen') {
                 renderMessageList();
-            }
-            // 如果是相册界面，刷新相册
-            else if (appId === 'album-screen') {
-                renderAlbum();
             }
         }
         
@@ -7913,10 +8710,15 @@
                     if (tabs.length > 1 && tabs[1] && tabs[1].classList) {
                         tabs[1].classList.add('active');
                     }
-                } else if (tabId === 'profile-page') {
+                } else if (tabId === 'moments-page') {
                     const tabs = document.querySelectorAll('.wechat-tab');
                     if (tabs.length > 2 && tabs[2] && tabs[2].classList) {
                         tabs[2].classList.add('active');
+                    }
+                } else if (tabId === 'profile-page') {
+                    const tabs = document.querySelectorAll('.wechat-tab');
+                    if (tabs.length > 3 && tabs[3] && tabs[3].classList) {
+                        tabs[3].classList.add('active');
                     }
                 }
             }
@@ -7925,11 +8727,13 @@
             const messageListEl = document.getElementById('message-list');
             const contactListEl = document.getElementById('contact-list');
             const profilePageEl = document.getElementById('profile-page');
+            const momentsPageEl = document.getElementById('moments-page');
             const targetEl = document.getElementById(tabId);
             
             if (messageListEl) messageListEl.style.display = 'none';
             if (contactListEl) contactListEl.style.display = 'none';
             if (profilePageEl) profilePageEl.style.display = 'none';
+            if (momentsPageEl) momentsPageEl.style.display = 'none';
             
             // 显示选中的内容
             if (targetEl) targetEl.style.display = 'block';
@@ -7943,6 +8747,9 @@
                 } else if (tabId === 'contact-list') {
                     appTitle.classList.remove('chat-mode');
                     appTitle.textContent = '角色';
+                } else if (tabId === 'moments-page') {
+                    appTitle.classList.remove('chat-mode');
+                    appTitle.textContent = '朋友圈';
                 } else if (tabId === 'profile-page') {
                     appTitle.classList.remove('chat-mode');
                     appTitle.textContent = '我';
@@ -7964,6 +8771,11 @@
                     addContactBtn.style.display = 'none';
                     addChatBtn.style.display = 'none';
                 }
+            }
+            
+            // 如果是动态页面，加载动态内容
+            if (tabId === 'moments-page') {
+                loadMoments();
             }
         }
         
@@ -8212,19 +9024,63 @@
             }
         }
         
-        // 保存聊天消息 - 使用IndexedDB
-        async function saveChatMessages() {
+        // 防抖保存计时器
+        let saveMessagesTimer = null;
+        let isSaving = false; // 防止并发保存
+        
+        // 防抖版本的保存函数
+        function saveChatMessages() {
+            // 清除之前的计时器
+            if (saveMessagesTimer) {
+                clearTimeout(saveMessagesTimer);
+            }
+            
+            // 设置新的计时器，500ms后执行保存
+            saveMessagesTimer = setTimeout(async () => {
+                if (isSaving) {
+                    console.log('正在保存中，跳过此次保存请求');
+                    return;
+                }
+                await saveChatMessagesImmediate();
+            }, 500);
+        }
+        
+        // 立即保存聊天消息 - 使用IndexedDB
+        async function saveChatMessagesImmediate() {
+            if (isSaving) {
+                console.log('保存操作正在进行中，跳过');
+                return;
+            }
+            
+            isSaving = true;
+            
             try {
                 console.log('保存聊天消息到IndexedDB');
                 
                 // 将chatMessages对象转换为数组格式存储
                 const messageArray = [];
+                let globalSequentialId = 0; // 全局顺序ID确保唯一性
+                const usedIds = new Set(); // 用于检测ID重复
+                
                 for (const [characterId, messages] of Object.entries(chatMessages)) {
-                    for (const message of messages) {
+                    for (let i = 0; i < messages.length; i++) {
+                        const message = messages[i];
+                        
+                        // 生成唯一的主键
+                        let uniqueId = `${characterId}_${globalSequentialId++}`;
+                        
+                        // 确保ID绝对唯一
+                        while (usedIds.has(uniqueId)) {
+                            uniqueId = `${characterId}_${globalSequentialId++}`;
+                        }
+                        usedIds.add(uniqueId);
+                        
                         messageArray.push({
-                            id: `${characterId}_${message.id || message.timestamp}`,
+                            id: uniqueId,
                             characterId: characterId,
                             timestamp: message.timestamp,
+                            messageOrder: i,
+                            originalMessageId: message.id, // 保留原始消息ID作为数据
                             messageData: message
                         });
                     }
@@ -8238,9 +9094,58 @@
                     await db.chatMessages.bulkAdd(messageArray);
                 }
                 
-                console.log('聊天消息保存成功');
+                console.log('聊天消息保存成功，共保存', messageArray.length, '条消息');
             } catch (error) {
                 console.error('保存聊天消息失败:', error);
+                
+                // 如果批量保存失败，使用简化的重试机制
+                try {
+                    console.log('使用简化保存策略重试...');
+                    await db.chatMessages.clear();
+                    
+                    // 只保存最近的1000条消息，避免过大的数据集
+                    const messageArray = [];
+                    let globalSequentialId = 0;
+                    let totalMessages = 0;
+                    
+                    // 先计算总消息数
+                    for (const messages of Object.values(chatMessages)) {
+                        totalMessages += messages.length;
+                    }
+                    
+                    const maxMessages = 1000;
+                    const skipCount = Math.max(0, totalMessages - maxMessages);
+                    let currentSkip = 0;
+                    
+                    for (const [characterId, messages] of Object.entries(chatMessages)) {
+                        for (let i = 0; i < messages.length; i++) {
+                            if (currentSkip < skipCount) {
+                                currentSkip++;
+                                continue;
+                            }
+                            
+                            const message = messages[i];
+                            messageArray.push({
+                                id: `${characterId}_${globalSequentialId++}`,
+                                characterId: characterId,
+                                timestamp: message.timestamp,
+                                messageOrder: i,
+                                originalMessageId: message.id,
+                                messageData: message
+                            });
+                        }
+                    }
+                    
+                    if (messageArray.length > 0) {
+                        await db.chatMessages.bulkAdd(messageArray);
+                    }
+                    
+                    console.log('简化保存成功，保存了', messageArray.length, '条消息');
+                } catch (fallbackError) {
+                    console.error('简化保存也失败:', fallbackError);
+                }
+            } finally {
+                isSaving = false;
             }
         }
         
@@ -8307,42 +9212,142 @@
             localStorage.setItem('chatSettings', JSON.stringify(chatSettings));
         }
         
-        // 加载壁纸
-        function loadWallpaper() {
-            const savedWallpaper = localStorage.getItem('wallpaper');
-            const wallpaperType = localStorage.getItem('wallpaperType');
-            
-            if (savedWallpaper) {
-                selectedWallpaper = savedWallpaper;
+
+
+        // 加载壁纸 - 使用IndexedDB（包含数据迁移）
+        async function loadWallpaper() {
+            try {
+                // 先从IndexedDB加载
+                const savedWallpaper = await db.wallpapers.get('main');
                 
-                if (wallpaperType === 'image' && savedWallpaper.startsWith('data:image')) {
-                    // 加载上传的图片
-                    document.querySelector('.wallpaper').style.backgroundImage = `url(${savedWallpaper})`;
-                } else if (wallpaperType === 'gradient' || savedWallpaper.startsWith('linear-gradient')) {
-                    // 加载渐变背景
-                    document.querySelector('.wallpaper').style.backgroundImage = savedWallpaper;
+                if (savedWallpaper) {
+                    selectedWallpaper = savedWallpaper.data;
+                    
+                    if (savedWallpaper.type === 'image' && savedWallpaper.data.startsWith('data:image')) {
+                        // 加载上传的图片
+                        document.querySelector('.wallpaper').style.backgroundImage = `url(${savedWallpaper.data})`;
+                    } else if (savedWallpaper.type === 'gradient' || savedWallpaper.data.startsWith('linear-gradient')) {
+                        // 加载渐变背景
+                        document.querySelector('.wallpaper').style.backgroundImage = savedWallpaper.data;
+                    } else {
+                        // 加载纯色背景
+                        document.querySelector('.wallpaper').style.backgroundColor = savedWallpaper.data;
+                        document.querySelector('.wallpaper').style.backgroundImage = 'none';
+                    }
+                    
+                    document.querySelector('.wallpaper').style.backgroundSize = '100% 100%';
+                    document.querySelector('.wallpaper').style.backgroundPosition = 'center';
                 } else {
-                    // 加载纯色背景
-                    document.querySelector('.wallpaper').style.backgroundColor = savedWallpaper;
-                    document.querySelector('.wallpaper').style.backgroundImage = 'none';
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localWallpaper = localStorage.getItem('wallpaper');
+                    const wallpaperType = localStorage.getItem('wallpaperType');
+                    
+                    if (localWallpaper) {
+                        console.log('检测到localStorage中的壁纸数据，开始迁移...');
+                        selectedWallpaper = localWallpaper;
+                        
+                        // 迁移到IndexedDB
+                        await db.wallpapers.add({
+                            id: 'main',
+                            type: wallpaperType || 'gradient',
+                            data: localWallpaper
+                        });
+                        
+                        if (wallpaperType === 'image' && localWallpaper.startsWith('data:image')) {
+                            document.querySelector('.wallpaper').style.backgroundImage = `url(${localWallpaper})`;
+                        } else if (wallpaperType === 'gradient' || localWallpaper.startsWith('linear-gradient')) {
+                            document.querySelector('.wallpaper').style.backgroundImage = localWallpaper;
+                        } else {
+                            document.querySelector('.wallpaper').style.backgroundColor = localWallpaper;
+                            document.querySelector('.wallpaper').style.backgroundImage = 'none';
+                        }
+                        
+                        document.querySelector('.wallpaper').style.backgroundSize = '100% 100%';
+                        document.querySelector('.wallpaper').style.backgroundPosition = 'center';
+                        
+                        console.log('壁纸数据迁移完成');
+                    }
                 }
+            } catch (error) {
+                console.error('加载壁纸失败:', error);
+                // 如果IndexedDB失败，回退到localStorage
+                const localWallpaper = localStorage.getItem('wallpaper');
+                const wallpaperType = localStorage.getItem('wallpaperType');
                 
-                document.querySelector('.wallpaper').style.backgroundSize = '100% 100%';
-                document.querySelector('.wallpaper').style.backgroundPosition = 'center';
+                if (localWallpaper) {
+                    selectedWallpaper = localWallpaper;
+                    
+                    if (wallpaperType === 'image' && localWallpaper.startsWith('data:image')) {
+                        document.querySelector('.wallpaper').style.backgroundImage = `url(${localWallpaper})`;
+                    } else if (wallpaperType === 'gradient' || localWallpaper.startsWith('linear-gradient')) {
+                        document.querySelector('.wallpaper').style.backgroundImage = localWallpaper;
+                    } else {
+                        document.querySelector('.wallpaper').style.backgroundColor = localWallpaper;
+                        document.querySelector('.wallpaper').style.backgroundImage = 'none';
+                    }
+                    
+                    document.querySelector('.wallpaper').style.backgroundSize = '100% 100%';
+                    document.querySelector('.wallpaper').style.backgroundPosition = 'center';
+                }
             }
         }
         
-        // 加载应用图标
-        function loadAppIcons() {
-            const savedIcons = localStorage.getItem('appIcons');
-            if (savedIcons) {
-                const icons = JSON.parse(savedIcons);
-                Object.keys(icons).forEach(appId => {
-                    const iconElement = document.querySelector(`.app[onclick="showApp('${appId}')"] .app-icon i`);
-                    if (iconElement) {
-                        iconElement.className = icons[appId];
+        // 加载应用图标 - 使用IndexedDB（包含数据迁移）
+        async function loadAppIcons() {
+            try {
+                // 先从IndexedDB加载
+                const savedIcons = await db.appIcons.toArray();
+                
+                if (savedIcons.length === 0) {
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localStorageData = localStorage.getItem('appIcons');
+                    if (localStorageData) {
+                        console.log('检测到localStorage中的应用图标数据，开始迁移...');
+                        const localIcons = JSON.parse(localStorageData);
+                        
+                        // 转换为数组格式存储到IndexedDB
+                        const iconArray = Object.keys(localIcons).map(appId => ({
+                            id: appId,
+                            appId: appId,
+                            iconClass: localIcons[appId]
+                        }));
+                        
+                        if (iconArray.length > 0) {
+                            await db.appIcons.bulkAdd(iconArray);
+                            console.log('应用图标数据迁移完成:', iconArray);
+                        }
+                        
+                        // 应用图标
+                        Object.keys(localIcons).forEach(appId => {
+                            const iconElement = document.querySelector(`.app[onclick="showApp('${appId}')"] .app-icon i`);
+                            if (iconElement) {
+                                iconElement.className = localIcons[appId];
+                            }
+                        });
                     }
-                });
+                } else {
+                    // IndexedDB中有数据，直接使用
+                    console.log('从IndexedDB加载应用图标数据:', savedIcons);
+                    savedIcons.forEach(iconData => {
+                        const iconElement = document.querySelector(`.app[onclick="showApp('${iconData.appId}')"] .app-icon i`);
+                        if (iconElement) {
+                            iconElement.className = iconData.iconClass;
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('加载应用图标失败:', error);
+                // 如果IndexedDB失败，回退到localStorage
+                const localStorageData = localStorage.getItem('appIcons');
+                if (localStorageData) {
+                    const icons = JSON.parse(localStorageData);
+                    Object.keys(icons).forEach(appId => {
+                        const iconElement = document.querySelector(`.app[onclick="showApp('${appId}')"] .app-icon i`);
+                        if (iconElement) {
+                            iconElement.className = icons[appId];
+                        }
+                    });
+                }
             }
         }
         
@@ -8404,26 +9409,60 @@
             }
         }
         
-        // 保存应用图标
-        function saveAppIcons() {
-            const icons = {
-                'chat-screen': 'fas fa-comment-dots',
-                'weibo-screen': 'fab fa-weibo',
-                'music-screen': 'fas fa-music',
-                'album-screen': 'fas fa-images',
-                'characters-screen': 'fas fa-user-friends',
-                'shop-screen': 'fas fa-shopping-bag',
-                'settings-screen': 'fas fa-cog'
-            };
-            
-            if (selectedAppIcon) {
-                icons[selectedAppIcon.appId] = selectedAppIcon.iconClass;
+        // 保存应用图标 - 使用IndexedDB
+        async function saveAppIcons() {
+            try {
+                console.log('保存应用图标数据到IndexedDB...');
+                
+                const defaultIcons = {
+                    'chat-screen': 'fas fa-comment-dots',
+                    'forum-screen': 'fas fa-comments',
+                    'music-screen': 'fas fa-music',
+                    'game-screen': 'fas fa-gamepad',
+                    'characters-screen': 'fas fa-user-friends',
+                    'shop-screen': 'fas fa-shopping-bag',
+                    'settings-screen': 'fas fa-cog'
+                };
+                
+                if (selectedAppIcon) {
+                    defaultIcons[selectedAppIcon.appId] = selectedAppIcon.iconClass;
+                }
+                
+                // 转换为数组格式
+                const iconArray = Object.keys(defaultIcons).map(appId => ({
+                    id: appId,
+                    appId: appId,
+                    iconClass: defaultIcons[appId]
+                }));
+                
+                // 清空现有数据并插入新数据
+                await db.appIcons.clear();
+                await db.appIcons.bulkAdd(iconArray);
+                
+                console.log('应用图标数据保存成功');
+                
+                // 刷新图标显示
+                await loadAppIcons();
+            } catch (error) {
+                console.error('保存应用图标时发生错误:', error);
+                // 如果IndexedDB失败，回退到localStorage
+                const icons = {
+                    'chat-screen': 'fas fa-comment-dots',
+                    'weibo-screen': 'fab fa-weibo',
+                    'music-screen': 'fas fa-music',
+                    'album-screen': 'fas fa-images',
+                    'characters-screen': 'fas fa-user-friends',
+                    'shop-screen': 'fas fa-shopping-bag',
+                    'settings-screen': 'fas fa-cog'
+                };
+                
+                if (selectedAppIcon) {
+                    icons[selectedAppIcon.appId] = selectedAppIcon.iconClass;
+                }
+                
+                localStorage.setItem('appIcons', JSON.stringify(icons));
+                loadAppIcons();
             }
-            
-            localStorage.setItem('appIcons', JSON.stringify(icons));
-            
-            // 刷新图标显示
-            loadAppIcons();
         }
         
         // 渲染消息列表
@@ -8703,17 +9742,61 @@
             let lastTimestamp = 0;
             
             messagesToShow.forEach((message, index) => {
-                // 处理系统消息（如戳一戳）
-                if (message.sender === 'system' && message.isPoke) {
-                    const systemContainer = document.createElement('div');
-                    systemContainer.className = 'poke-system-container';
-                    
-                    const systemMessage = document.createElement('div');
-                    systemMessage.className = 'poke-system-message';
-                    systemMessage.textContent = message.content;
-                    
-                    systemContainer.appendChild(systemMessage);
-                    messagesContainer.appendChild(systemContainer);
+                // 处理系统消息（如戳一戳、头像更换、撤回等）
+                if (message.sender === 'system') {
+                    if (message.isPoke) {
+                        const systemContainer = document.createElement('div');
+                        systemContainer.className = 'poke-system-container';
+                        const systemMessage = document.createElement('div');
+                        systemMessage.className = 'poke-system-message';
+                        systemMessage.textContent = message.content;
+                        systemContainer.appendChild(systemMessage);
+                        messagesContainer.appendChild(systemContainer);
+                    } else if (message.type === 'recalled_message') {
+                        // 🔥【新增】处理撤回消息的显示
+                        const centerContainer = document.createElement('div');
+                        centerContainer.style.display = 'flex';
+                        centerContainer.style.justifyContent = 'center';
+                        centerContainer.style.margin = '4px 0';
+                        centerContainer.dataset.messageId = message.id; // 🔥【修复】添加消息ID以支持选择
+                        
+                        const recallElement = document.createElement('div');
+                        recallElement.className = 'recalled-message';
+                        
+                        // 解析撤回消息内容（格式：xxx 撤回了一条消息\n原文：xxx）
+                        const lines = message.content.split('\n');
+                        const mainText = lines[0]; // 主要提示文字
+                        const originalText = lines[1]; // 原文部分
+                        
+                        recallElement.textContent = mainText;
+                        
+                        // 如果有原文，添加原文显示
+                        if (originalText && originalText.startsWith('原文：')) {
+                            const originalDiv = document.createElement('div');
+                            originalDiv.className = 'original-text';
+                            originalDiv.textContent = originalText;
+                            recallElement.appendChild(originalDiv);
+                        }
+                        
+                        centerContainer.appendChild(recallElement);
+                        messagesContainer.appendChild(centerContainer);
+                        
+                        // 🔥【修复】为撤回消息添加选择功能
+                        addMessageLongPressListener(centerContainer, message.id);
+                    } else {
+                        // 🔥【修复】其他系统消息（如头像更换）- 使用居中容器
+                        const centerContainer = document.createElement('div');
+                        centerContainer.style.display = 'flex';
+                        centerContainer.style.justifyContent = 'center';
+                        centerContainer.style.margin = '4px 0';
+                        
+                        const systemContainer = document.createElement('div');
+                        systemContainer.className = 'system-message';
+                        systemContainer.textContent = message.content;
+                        
+                        centerContainer.appendChild(systemContainer);
+                        messagesContainer.appendChild(centerContainer);
+                    }
                     return;
                 }
                 
@@ -8733,7 +9816,9 @@
                 }
                 
                 const messageContainer = document.createElement('div');
-                messageContainer.className = `message-container ${message.sender}${chatSettings.hideAvatars ? ' no-avatar' : ''}`;
+                // 检查是否是纯表情包消息
+                const isEmojiOnly = message.isEmoji && !message.content;
+                messageContainer.className = `message-container ${message.sender}${chatSettings.hideAvatars ? ' no-avatar' : ''}${isEmojiOnly ? ' emoji-only' : ''}`;
                 messageContainer.dataset.messageId = message.id; // 添加消息ID数据属性
                 
                 if (message.sender === 'received') {
@@ -8932,29 +10017,81 @@
             for (let i = historicalMessages.length - 1; i >= 0; i--) {
                 const message = historicalMessages[i];
                 
-                // 处理系统消息（如戳一戳）
-                if (message.sender === 'system' && message.isPoke) {
-                    const systemContainer = document.createElement('div');
-                    systemContainer.className = 'poke-system-container';
+                // 处理系统消息（如戳一戳、头像更换、撤回等）
+                if (message.sender === 'system') {
+                    let containerToInsert;
                     
-                    const systemMessage = document.createElement('div');
-                    systemMessage.className = 'poke-system-message';
-                    systemMessage.textContent = message.content;
-                    
-                    systemContainer.appendChild(systemMessage);
+                    if (message.isPoke) {
+                        const systemContainer = document.createElement('div');
+                        systemContainer.className = 'poke-system-container';
+                        const systemMessage = document.createElement('div');
+                        systemMessage.className = 'poke-system-message';
+                        systemMessage.textContent = message.content;
+                        systemContainer.appendChild(systemMessage);
+                        containerToInsert = systemContainer;
+                    } else if (message.type === 'recalled_message') {
+                        // 🔥【新增】处理撤回消息的显示
+                        const centerContainer = document.createElement('div');
+                        centerContainer.style.display = 'flex';
+                        centerContainer.style.justifyContent = 'center';
+                        centerContainer.style.margin = '4px 0';
+                        centerContainer.dataset.messageId = message.id; // 🔥【修复】添加消息ID以支持选择
+                        
+                        const recallElement = document.createElement('div');
+                        recallElement.className = 'recalled-message';
+                        
+                        // 解析撤回消息内容（格式：xxx 撤回了一条消息\n原文：xxx）
+                        const lines = message.content.split('\n');
+                        const mainText = lines[0]; // 主要提示文字
+                        const originalText = lines[1]; // 原文部分
+                        
+                        recallElement.textContent = mainText;
+                        
+                        // 如果有原文，添加原文显示
+                        if (originalText && originalText.startsWith('原文：')) {
+                            const originalDiv = document.createElement('div');
+                            originalDiv.className = 'original-text';
+                            originalDiv.textContent = originalText;
+                            recallElement.appendChild(originalDiv);
+                        }
+                        
+                        centerContainer.appendChild(recallElement);
+                        containerToInsert = centerContainer;
+                    } else {
+                        // 🔥【修复】其他系统消息（如头像更换）- 使用居中容器
+                        const centerContainer = document.createElement('div');
+                        centerContainer.style.display = 'flex';
+                        centerContainer.style.justifyContent = 'center';
+                        centerContainer.style.margin = '4px 0';
+                        
+                        const systemContainer = document.createElement('div');
+                        systemContainer.className = 'system-message';
+                        systemContainer.textContent = message.content;
+                        
+                        centerContainer.appendChild(systemContainer);
+                        containerToInsert = centerContainer;
+                    }
                     
                     // 插入到按钮后面（如果有按钮的话）
                     const insertAfter = messagesContainer.querySelector('.load-more-messages');
                     if (insertAfter) {
-                        insertAfter.parentNode.insertBefore(systemContainer, insertAfter.nextSibling);
+                        insertAfter.parentNode.insertBefore(containerToInsert, insertAfter.nextSibling);
                     } else {
-                        messagesContainer.insertBefore(systemContainer, messagesContainer.firstChild);
+                        messagesContainer.insertBefore(containerToInsert, messagesContainer.firstChild);
                     }
+                    
+                    // 🔥【修复】为撤回消息添加选择功能
+                    if (message.type === 'recalled_message') {
+                        addMessageLongPressListener(containerToInsert, message.id);
+                    }
+                    
                     continue;
                 }
                 
                 const messageContainer = document.createElement('div');
-                messageContainer.className = `message-container ${message.sender}${chatSettings.hideAvatars ? ' no-avatar' : ''}`;
+                // 检查是否是纯表情包消息
+                const isEmojiOnly = message.isEmoji && !message.content;
+                messageContainer.className = `message-container ${message.sender}${chatSettings.hideAvatars ? ' no-avatar' : ''}${isEmojiOnly ? ' emoji-only' : ''}`;
                 messageContainer.dataset.messageId = message.id;
                 
                 if (message.sender === 'received') {
@@ -9044,22 +10181,7 @@
                 messagesContainer.scrollTop = scrollTop + (newScrollHeight - scrollHeight);
             }, 50);
         }
-        
-        // 渲染相册
-        function renderAlbum() {
-            const albumGrid = document.getElementById('album-grid');
-            albumGrid.innerHTML = '';
-            
-            photos.forEach(photo => {
-                const albumItem = document.createElement('div');
-                albumItem.className = 'album-item';
-                albumItem.style.backgroundImage = `url(${photo.image})`;
-                albumItem.setAttribute('data-description', photo.description);
-                albumItem.setAttribute('data-time', formatFullDate(new Date(photo.timestamp)));
-                albumItem.onclick = () => showPhotoDetail(photo);
-                albumGrid.appendChild(albumItem);
-            });
-        }
+
         
         // 显示角色表单
         function showCharacterForm(characterId = null) {
@@ -9420,133 +10542,7 @@
             showApp('settings-screen');
         }
         
-        // 发送API消息 - 原来的版本（已被新版本替代）
-        /*
-        async function sendApiMessage() {
-            const input = document.getElementById('api-chat-input');
-            const message = input.value.trim();
-            
-            if (!message) return;
-            
-            // 添加用户消息
-            const messageId = Date.now().toString();
-            const userMessage = {
-                id: messageId,
-                sender: 'sent',
-                content: message,
-                timestamp: Date.now()
-            };
-            
-            if (!chatMessages[currentChatCharacter.id]) {
-                chatMessages[currentChatCharacter.id] = [];
-            }
-            
-            chatMessages[currentChatCharacter.id].push(userMessage);
-            saveChatMessages();
-            
-            // 清空输入框
-            input.value = '';
-            
-            // 渲染消息
-            renderChatMessages(currentChatCharacter.id);
-            
-            // 显示正在输入提示
-            showTypingIndicator();
-            
-            // 添加1-3秒的随机延迟，让聊天更真实
-            const delay = Math.random() * 2000 + 1000; // 1-3秒
-            await new Promise(resolve => setTimeout(resolve, delay));
-            
-            try {
-                // 调用API
-                const response = await callChatAPI(message, currentChatCharacter);
-                
-                // 解析AI回复（可能是JSON数组格式）
-                const aiMessages = parseAiResponse(response);
-                
-                // 隐藏正在输入提示
-                hideTypingIndicator();
-                
-                // 逐条发送消息，模拟真实聊天
-                for (let i = 0; i < aiMessages.length; i++) {
-                    const msgData = aiMessages[i];
-                    let aiMessage;
-                    
-                    if (typeof msgData === 'object' && msgData.type === 'voice_message') {
-                        aiMessage = { 
-                            id: (Date.now() + i).toString(),
-                            sender: 'received',
-                            type: 'voice_message', 
-                            content: msgData.content, 
-                            timestamp: Date.now() + i * 100
-                        };
-                    } else if (typeof msgData === 'object' && msgData.type === 'ai_image') {
-                        aiMessage = { 
-                            id: (Date.now() + i).toString(),
-                            sender: 'received',
-                            type: 'ai_image', 
-                            content: '',
-                            image: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#f0f0f0"/><text x="100" y="75" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">[AI描述的图片]</text></svg>')}`,
-                            imageDescription: msgData.description,
-                            timestamp: Date.now() + i * 100
-                        };
-                    } else if (typeof msgData === 'object' && msgData.type === 'transfer') {
-                        aiMessage = { 
-                            id: (Date.now() + i).toString(),
-                            sender: 'received',
-                            type: 'transfer', 
-                            amount: msgData.amount, 
-                            note: msgData.note, 
-                            timestamp: Date.now() + i * 100
-                        };
-                    } else {
-                        aiMessage = { 
-                            id: (Date.now() + i).toString(),
-                            sender: 'received',
-                            content: String(msgData), 
-                            timestamp: Date.now() + i * 100
-                        };
-                    }
-                    
-                    // 添加消息到数组
-                    chatMessages[currentChatCharacter.id].push(aiMessage);
-                    saveChatMessages();
-                    
-                    // 立即渲染这条新消息
-                    renderChatMessages(currentChatCharacter.id);
-                    
-                    // 如果不是最后一条消息，等待一段时间再发下一条
-                    if (i < aiMessages.length - 1) {
-                        // 每条消息间隔0.5-1.5秒，模拟真实打字速度
-                        const delay = Math.random() * 1000 + 500;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        
-                        // 在发送下一条消息前短暂显示正在输入（如果还有更多消息）
-                        if (i < aiMessages.length - 1) {
-                            showTypingIndicator();
-                            await new Promise(resolve => setTimeout(resolve, Math.random() * 800 + 400));
-                            hideTypingIndicator();
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('API调用失败:', error);
-                
-                // 添加错误消息
-                const errorMessage = {
-                    id: Date.now().toString(),
-                    sender: 'received',
-                    content: `[出错了: ${error.message}]`,
-                    timestamp: Date.now()
-                };
-                
-                chatMessages[currentChatCharacter.id].push(errorMessage);
-                saveChatMessages();
-                hideTypingIndicator();
-                renderChatMessages(currentChatCharacter.id);
-            }
-        }
-        */
+
         
         // 显示正在输入提示
         function showTypingIndicator() {
@@ -9565,6 +10561,210 @@
             if (indicator) {
                 indicator.classList.remove('show');
             }
+        }
+        
+        // 🔥【新增】添加系统消息到聊天界面（不重新渲染整个列表）
+        function addSystemMessageToChat(systemMessage) {
+            const messagesContainer = document.getElementById('api-chat-messages');
+            if (!messagesContainer) return;
+            
+            // 创建外层容器，用于居中
+            const centerContainer = document.createElement('div');
+            centerContainer.style.display = 'flex';
+            centerContainer.style.justifyContent = 'center';
+            centerContainer.style.margin = '4px 0';
+            
+            // 创建系统消息容器
+            const systemContainer = document.createElement('div');
+            systemContainer.className = 'system-message';
+            systemContainer.textContent = systemMessage.content;
+            
+            // 将系统消息放入居中容器
+            centerContainer.appendChild(systemContainer);
+            
+            // 插入到消息容器的最后（正在输入提示之前）
+            const typingIndicator = messagesContainer.querySelector('#typing-indicator');
+            if (typingIndicator) {
+                messagesContainer.insertBefore(centerContainer, typingIndicator);
+            } else {
+                messagesContainer.appendChild(centerContainer);
+            }
+            
+            // 滚动到底部
+            setTimeout(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 100);
+        }
+
+        // 🔥【新增】处理AI撤回消息功能
+        async function handleRecalledMessage(messageContent, targetMessageId = null) {
+            if (!currentChatCharacter) return;
+            
+            console.log('处理撤回消息:', messageContent, '目标消息ID:', targetMessageId);
+            
+            const messagesContainer = document.getElementById('api-chat-messages');
+            if (!messagesContainer) return;
+            
+            const character = characters.find(c => c.id === currentChatCharacter.id);
+            const chatSettings = getCurrentChatSettings();
+            const displayName = chatSettings.aiChatNickname || character.name;
+            
+            let messageContainer = null;
+            
+            // 如果提供了目标消息ID，查找并撤回现有消息
+            if (targetMessageId) {
+                messageContainer = messagesContainer.querySelector(`[data-message-id="${targetMessageId}"]`);
+                if (messageContainer) {
+                    console.log('找到要撤回的现有消息，准备撤回');
+                    
+                    // 等待1.2秒后撤回
+                    await new Promise(resolve => setTimeout(resolve, 1200));
+                    
+                    // 添加淡出动画
+                    messageContainer.style.animation = 'fadeOut 0.5s ease-in-out forwards';
+                    
+                    // 等待动画完成
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // 从聊天记录中移除这条消息
+                    if (chatMessages[currentChatCharacter.id]) {
+                        const messageIndex = chatMessages[currentChatCharacter.id].findIndex(msg => msg.id === targetMessageId);
+                        if (messageIndex !== -1) {
+                            chatMessages[currentChatCharacter.id].splice(messageIndex, 1);
+                            saveChatMessages();
+                        }
+                    }
+                } else {
+                    console.warn('未找到要撤回的消息，创建临时消息');
+                    // 如果找不到消息，回退到创建临时消息的方式
+                    messageContainer = await createTemporaryMessage(messageContent);
+                }
+            } else {
+                // 没有提供目标ID，创建临时消息
+                messageContainer = await createTemporaryMessage(messageContent);
+            }
+            
+            if (!messageContainer) return;
+            
+            // 创建撤回提醒的居中容器
+            const centerContainer = document.createElement('div');
+            centerContainer.style.display = 'flex';
+            centerContainer.style.justifyContent = 'center';
+            centerContainer.style.margin = '4px 0';
+            
+            // 创建撤回消息元素
+            const recallElement = document.createElement('div');
+            recallElement.className = 'recalled-message';
+            
+            // 主要提醒文字
+            const mainText = document.createElement('div');
+            mainText.style.marginBottom = '2px';
+            mainText.textContent = `${displayName} 撤回了一条消息`;
+            
+            // 原文显示
+            const originalText = document.createElement('div');
+            originalText.className = 'original-text';
+            originalText.textContent = `原文：${messageContent}`;
+            
+            recallElement.appendChild(mainText);
+            recallElement.appendChild(originalText);
+            centerContainer.appendChild(recallElement);
+            
+            // 在原消息位置替换为撤回提醒
+            messageContainer.parentNode.insertBefore(centerContainer, messageContainer);
+            messageContainer.remove();
+            
+            // 添加撤回消息到聊天历史
+            const recalledMessage = {
+                id: `recalled_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                sender: 'system',
+                type: 'recalled_message',
+                content: `${displayName} 撤回了一条消息\n原文：${messageContent}`,
+                originalContent: messageContent,
+                timestamp: Date.now()
+            };
+            
+            if (!chatMessages[currentChatCharacter.id]) {
+                chatMessages[currentChatCharacter.id] = [];
+            }
+            chatMessages[currentChatCharacter.id].push(recalledMessage);
+            saveChatMessages();
+            
+            // 滚动到底部
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // 创建临时消息的辅助函数
+            async function createTemporaryMessage(content) {
+                const messageId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                
+                const tempContainer = document.createElement('div');
+                const isEmojiOnly = false;
+                tempContainer.className = `message-container received${isEmojiOnly ? ' emoji-only' : ''}`;
+                tempContainer.dataset.messageId = messageId;
+                
+                const bubbleColor = chatSettings.aiBubbleColor || '#f0f0f0';
+                const bubbleOpacity = chatSettings.aiBubbleOpacity || '1';
+                const textColor = isLightColor(bubbleColor) ? '#333' : '#fff';
+                const bubblePadding = chatSettings.bubblePadding || '12';
+                const displayAvatar = chatSettings.aiChatAvatar || character.avatarUrl;
+                
+                let avatarHtml = '';
+                if (!chatSettings.hideAvatars) {
+                    avatarHtml = `
+                        <div class="message-avatar" style="background-color: ${character.color}; ${displayAvatar ? `background-image: url(${displayAvatar}); background-size: cover; background-position: center;` : ''}" onclick="pokeCharacter('${character.id}')" title="戳一戳">
+                            ${displayAvatar ? '' : displayName.charAt(0)}
+                        </div>
+                    `;
+                }
+                
+                let bubbleHtml = `
+                    <div class="message-bubble" style="background-color: ${bubbleColor}; opacity: ${bubbleOpacity}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">
+                        ${content}
+                    </div>
+                `;
+                
+                tempContainer.innerHTML = avatarHtml + bubbleHtml;
+                
+                // 添加到消息容器
+                const typingIndicator = messagesContainer.querySelector('#typing-indicator');
+                if (typingIndicator) {
+                    messagesContainer.insertBefore(tempContainer, typingIndicator);
+                } else {
+                    messagesContainer.appendChild(tempContainer);
+                }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                // 等待1.2秒后撤回
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                
+                // 添加淡出动画
+                tempContainer.style.animation = 'fadeOut 0.5s ease-in-out forwards';
+                
+                // 等待动画完成
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                return tempContainer;
+            }
+        }
+        
+        // 🔥【新增】获取用户最近发送的图片URL
+        function getRecentUserImage() {
+            if (!currentChatCharacter || !chatMessages[currentChatCharacter.id]) {
+                return null;
+            }
+            
+            const messages = chatMessages[currentChatCharacter.id];
+            // 从最新消息开始向前查找用户发送的图片
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                if (msg.sender === 'sent' && msg.image && !msg.isEmoji) {
+                    console.log('找到用户最近发送的图片:', msg.image);
+                    return msg.image;
+                }
+            }
+            
+            console.log('没有找到用户发送的图片');
+            return null;
         }
         
         // 解析AI回复 - 按照index.html的逻辑，新增表情包支持和格式修正
@@ -9601,6 +10801,32 @@
                                 console.warn('AI尝试使用不存在的表情包:', item.description);
                                 processedMessages.push(`[错误: 表情包"${item.description}"不存在]`);
                             }
+                        } else if (typeof item === 'object' && item.type === 'change_avatar') {
+                            // 处理头像更换对象
+                            console.log('解析到头像更换指令:', item);
+                            
+                            // 🔥【新增】处理各种错误的占位符
+                            if (item.avatar_url === 'CURRENT_USER_IMAGE' || 
+                                item.avatar_url === 'CURRENT_USER_IMAGE' || 
+                                item.avatar_url === '用户发送的图片URL' ||
+                                item.avatar_url === '图片URL') {
+                                // 获取最近用户发送的图片URL
+                                const recentUserImage = getRecentUserImage();
+                                if (recentUserImage) {
+                                    item.avatar_url = recentUserImage;
+                                    console.log('将占位符替换为实际图片URL:', recentUserImage);
+                                } else {
+                                    console.warn('没有找到用户最近发送的图片，忽略头像更换请求');
+                                    processedMessages.push(`[系统：无法更换头像，没有找到可用的图片]`);
+                                    // 不要return，继续处理其他消息
+                                }
+                            }
+                            
+                            processedMessages.push(item);
+                        } else if (typeof item === 'object' && item.type === 'recalled_message') {
+                            // 🔥【新增】处理撤回消息
+                            console.log('解析到撤回消息指令:', item);
+                            processedMessages.push(item);
                         } else if (typeof item === 'string') {
                             // 🚨 【新增】检查并修复合并消息问题
                             if (item.includes('\n')) {
@@ -9656,6 +10882,32 @@
                                     console.warn('AI尝试使用不存在的表情包:', item.description);
                                     processedMessages.push(`[错误: 表情包"${item.description}"不存在]`);
                                 }
+                            } else if (typeof item === 'object' && item.type === 'change_avatar') {
+                                // 处理头像更换对象
+                                console.log('解析到头像更换指令(第二处):', item);
+                                
+                                // 🔥【新增】处理各种错误的占位符
+                                if (item.avatar_url === 'CURRENT_USER_IMAGE' || 
+                                    item.avatar_url === 'CURRENT_USER_IMAGE' || 
+                                    item.avatar_url === '用户发送的图片URL' ||
+                                    item.avatar_url === '图片URL') {
+                                    // 获取最近用户发送的图片URL
+                                    const recentUserImage = getRecentUserImage();
+                                    if (recentUserImage) {
+                                        item.avatar_url = recentUserImage;
+                                        console.log('将占位符替换为实际图片URL(第二处):', recentUserImage);
+                                    } else {
+                                        console.warn('没有找到用户最近发送的图片，忽略头像更换请求(第二处)');
+                                        processedMessages.push(`[系统：无法更换头像，没有找到可用的图片]`);
+                                        // 不要return，继续处理其他消息
+                                    }
+                                }
+                                
+                                processedMessages.push(item);
+                            } else if (typeof item === 'object' && item.type === 'recalled_message') {
+                                // 🔥【新增】处理撤回消息(第二处)
+                                console.log('解析到撤回消息指令(第二处):', item);
+                                processedMessages.push(item);
                             } else if (typeof item === 'string') {
                                 // 🚨 【新增】检查并修复合并消息问题
                                 if (item.includes('\n')) {
@@ -9770,6 +11022,7 @@
         
         // 显示图片
         function showImage(imageUrl) {
+            // 首先检查是否是相册中的照片
             const photo = photos.find(p => p.image === imageUrl);
             if (photo) {
                 document.getElementById('photo-image').style.backgroundImage = `url(${imageUrl})`;
@@ -9777,6 +11030,19 @@
                 document.getElementById('photo-time').textContent = `拍摄于: ${formatFullDate(new Date(photo.timestamp))}`;
                 document.getElementById('photo-location').textContent = `地点: ${photo.location}`;
                 showApp('photo-detail-screen');
+            } else {
+                // 如果不是相册照片，显示通用的图片预览模态框
+                let modal = document.getElementById('image-preview-modal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'image-preview-modal';
+                    modal.className = 'image-preview-modal';
+                    modal.onclick = () => modal.style.display = 'none';
+                    modal.innerHTML = `<img src="" alt="预览图片">`;
+                    document.body.appendChild(modal);
+                }
+                modal.querySelector('img').src = imageUrl;
+                modal.style.display = 'flex';
             }
         }
         
@@ -10080,58 +11346,46 @@
             showModal('wallpaper-picker-modal');
         }
         
-        // 选择壁纸
+        // 选择壁纸（保留函数以防其他地方调用，但现在主要通过文件上传选择）
         function selectWallpaper(wallpaperId) {
-            document.querySelectorAll('.wallpaper-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            event.target.classList.add('selected');
-            
-            // 设置选中的壁纸
+            console.log('选择壁纸:', wallpaperId);
             selectedWallpaper = wallpaperId;
+            console.log('selectedWallpaper已设置为:', selectedWallpaper);
         }
         
         // 应用壁纸选择
-        function applyWallpaperSelection() {
-            if (selectedWallpaper) {
-                let wallpaperStyle = '';
-                
-                if (selectedWallpaper.startsWith('data:image')) {
-                    // 如果是上传的图片
-                    wallpaperStyle = `url(${selectedWallpaper})`;
-                    document.querySelector('.wallpaper').style.backgroundImage = wallpaperStyle;
-                    document.querySelector('.wallpaper').style.backgroundSize = '100% 100%';
-                    document.querySelector('.wallpaper').style.backgroundPosition = 'center';
-                    localStorage.setItem('wallpaper', selectedWallpaper);
-                    localStorage.setItem('wallpaperType', 'image');
-                } else {
-                    // 如果是预设渐变
-                    switch (selectedWallpaper) {
-                        case 'gradient1':
-                            wallpaperStyle = 'linear-gradient(135deg, #6e8efb, #a777e3)';
-                            break;
-                        case 'gradient2':
-                            wallpaperStyle = 'linear-gradient(135deg, #FF9A9E, #FAD0C4)';
-                            break;
-                        case 'gradient3':
-                            wallpaperStyle = 'linear-gradient(135deg, #A1C4FD, #C2E9FB)';
-                            break;
-                        case 'gradient4':
-                            wallpaperStyle = 'linear-gradient(135deg, #FFECD2, #FCB69F)';
-                            break;
-                        default:
-                            wallpaperStyle = '#a8d4a8'; // 默认颜色
-                    }
-                    
-                    document.querySelector('.wallpaper').style.backgroundImage = wallpaperStyle;
-                    document.querySelector('.wallpaper').style.backgroundSize = '100% 100%';
-                    document.querySelector('.wallpaper').style.backgroundPosition = 'center';
-                    localStorage.setItem('wallpaper', wallpaperStyle);
-                    localStorage.setItem('wallpaperType', 'gradient');
-                }
+        async function applyWallpaperSelection() {
+            console.log('应用壁纸被调用，selectedWallpaper:', selectedWallpaper);
+            
+            if (!selectedWallpaper) {
+                alert('请先从相册选择一张图片作为壁纸');
+                return;
             }
             
-            hideModal('wallpaper-picker-modal');
+            if (selectedWallpaper.startsWith('data:image')) {
+                // 应用上传的图片壁纸
+                console.log('应用图片壁纸');
+                document.querySelector('.wallpaper').style.backgroundImage = `url(${selectedWallpaper})`;
+                document.querySelector('.wallpaper').style.backgroundSize = '100% 100%';
+                document.querySelector('.wallpaper').style.backgroundPosition = 'center';
+                
+                // 使用IndexedDB保存壁纸，避免localStorage空间限制
+                try {
+                    await db.wallpapers.clear();
+                    await db.wallpapers.add({
+                        id: 'main',
+                        type: 'image',
+                        data: selectedWallpaper
+                    });
+                    console.log('壁纸保存成功到IndexedDB');
+                    hideModal('wallpaper-picker-modal');
+                } catch (e) {
+                    console.error('保存壁纸失败:', e);
+                    alert('保存壁纸失败，请重试');
+                }
+            } else {
+                alert('请先从相册选择一张图片作为壁纸');
+            }
         }
         
         // 上传自定义壁纸
@@ -10309,21 +11563,128 @@
             hideModal('message-menu-modal');
         }
         
+        // 验证头像来源是否有效
+        async function validateAvatarSource(avatarUrl) {
+            console.log('验证头像来源:', avatarUrl);
+            if (!avatarUrl) return false;
+            
+            // 检查是否是用户发送的图片（在聊天记录中）
+            if (currentChatCharacter && chatMessages[currentChatCharacter.id]) {
+                const userImages = chatMessages[currentChatCharacter.id]
+                    .filter(msg => msg.sender === 'sent' && msg.image)
+                    .map(msg => msg.image);
+                
+                console.log('用户发送的图片列表:', userImages);
+                console.log('检查头像URL是否在用户图片中:', userImages.includes(avatarUrl));
+                
+                if (userImages.includes(avatarUrl)) {
+                    console.log('头像来源验证通过：用户发送的图片');
+                    return true;
+                }
+            }
+            
+            // 检查是否是世界书中提供的头像URL
+            const chatSettings = getCurrentChatSettings();
+            if (chatSettings.worldbookMountEnabled && chatSettings.selectedWorldbooks) {
+                for (const worldbookId of chatSettings.selectedWorldbooks) {
+                    const worldbook = worldbooks.find(w => w.id === worldbookId);
+                    if (worldbook && worldbook.content && worldbook.content.includes(avatarUrl)) {
+                        console.log('头像来源验证通过：世界书中的URL');
+                        return true;
+                    }
+                }
+            }
+            
+            console.log('头像来源验证失败');
+            return false;
+        }
+        
+        // 角色主动更换头像功能
+        async function changeCharacterAvatarByAI(newAvatarUrl, reason = '') {
+            if (!currentChatCharacter || !newAvatarUrl) return false;
+            
+            try {
+                // 更新角色头像
+                const characterIndex = characters.findIndex(c => c.id === currentChatCharacter.id);
+                if (characterIndex !== -1) {
+                    characters[characterIndex].avatarUrl = newAvatarUrl;
+                    await saveCharacters();
+                    
+                    // 更新当前聊天角色引用
+                    currentChatCharacter.avatarUrl = newAvatarUrl;
+                    
+                    // 刷新界面
+                    renderCharacterList();
+                    renderContactList();
+                    renderMessageList();
+                    renderChatMessages(currentChatCharacter.id);
+                    
+                    // 发送系统提示消息
+                    const systemMessage = {
+                        id: Date.now().toString(),
+                        sender: 'system',
+                        content: `${currentChatCharacter.name} 更换了头像${reason ? ': ' + reason : ''}`,
+                        timestamp: Date.now(),
+                        isAvatarChange: true
+                    };
+                    
+                    if (!chatMessages[currentChatCharacter.id]) {
+                        chatMessages[currentChatCharacter.id] = [];
+                    }
+                    chatMessages[currentChatCharacter.id].push(systemMessage);
+                    await saveChatMessages();
+                    
+                    // 🔥【修复】添加头像更换系统消息到当前聊天界面，不重新渲染整个列表
+                    addSystemMessageToChat(systemMessage);
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('角色更换头像失败:', error);
+                return false;
+            }
+            
+            return false;
+        }
+        
         // 删除消息
         function deleteMessage() {
             if (!selectedMessageId) return;
             
-            if (confirm('确定要删除这条消息吗？')) {
-                const messages = chatMessages[currentChatCharacter.id] || [];
-                const messageIndex = messages.findIndex(msg => msg.id === selectedMessageId);
+            const messages = chatMessages[currentChatCharacter.id] || [];
+            const messageIndex = messages.findIndex(msg => msg.id === selectedMessageId);
+            
+            if (messageIndex === -1) {
+                hideMessageMenu();
+                return;
+            }
+            
+            const messageToDelete = messages[messageIndex];
+            
+            if (confirm('确定要撤回这条消息吗？')) {
+                // 保存原始消息内容
+                const originalContent = messageToDelete.content || '[图片]';
                 
-                if (messageIndex !== -1) {
-                    messages.splice(messageIndex, 1);
-                    saveChatMessages();
-                    renderChatMessages(currentChatCharacter.id);
-                    // 更新消息列表中的最后一条消息
-                    renderMessageList();
-                }
+                // 删除原消息
+                messages.splice(messageIndex, 1);
+                
+                // 🔥【新增】创建撤回消息系统提醒
+                const whoRecalled = messageToDelete.sender === 'received' ? currentChatCharacter.name : '你';
+                const recallSystemMessage = {
+                    id: Date.now().toString(),
+                    sender: 'system',
+                    content: `${whoRecalled} 撤回了一条消息\n原文：${originalContent}`,
+                    timestamp: messageToDelete.timestamp || Date.now(),
+                    isRecall: true
+                };
+                
+                // 在原位置插入撤回提醒
+                messages.splice(messageIndex, 0, recallSystemMessage);
+                
+                saveChatMessages();
+                renderChatMessages(currentChatCharacter.id);
+                // 更新消息列表中的最后一条消息
+                renderMessageList();
             }
             
             hideMessageMenu();
@@ -10790,20 +12151,80 @@
         let worldbooks = [];
         let editingWorldbook = null;
         
-        function loadWorldbooks() {
-            const savedWorldbooks = localStorage.getItem('worldbooks');
-            if (savedWorldbooks) {
-                try {
-                    worldbooks = JSON.parse(savedWorldbooks);
-                } catch (e) {
+        // 加载世界书数据 - 使用IndexedDB（包含数据迁移）
+        async function loadWorldbooks() {
+            try {
+                // 先从IndexedDB加载
+                const savedWorldbooks = await db.worldbooks.toArray();
+                
+                if (savedWorldbooks.length === 0) {
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localStorageData = localStorage.getItem('worldbooks');
+                    if (localStorageData) {
+                        console.log('检测到localStorage中的世界书数据，开始迁移...');
+                        const localWorldbooks = JSON.parse(localStorageData);
+                        
+                        if (localWorldbooks.length > 0) {
+                            // 确保每个世界书都有id字段
+                            const migrationData = localWorldbooks.map(wb => ({
+                                id: wb.id || Date.now().toString() + Math.random(),
+                                title: wb.title,
+                                content: wb.content,
+                                createdAt: wb.createdAt || new Date().toISOString(),
+                                updatedAt: wb.updatedAt || new Date().toISOString()
+                            }));
+                            
+                            // 迁移到IndexedDB
+                            await db.worldbooks.bulkAdd(migrationData);
+                            worldbooks = migrationData;
+                            console.log('世界书数据迁移完成:', worldbooks);
+                        } else {
+                            worldbooks = [];
+                        }
+                    } else {
+                        worldbooks = [];
+                    }
+                } else {
+                    // IndexedDB中有数据，直接使用
+                    worldbooks = savedWorldbooks;
+                    console.log('从IndexedDB加载世界书数据:', worldbooks);
+                }
+            } catch (error) {
+                console.error('加载世界书失败:', error);
+                // 如果IndexedDB失败，回退到localStorage
+                const localStorageData = localStorage.getItem('worldbooks');
+                if (localStorageData) {
+                    try {
+                        worldbooks = JSON.parse(localStorageData);
+                    } catch (e) {
+                        worldbooks = [];
+                    }
+                } else {
                     worldbooks = [];
                 }
             }
             renderWorldbookList();
         }
         
-        function saveWorldbooks() {
-            localStorage.setItem('worldbooks', JSON.stringify(worldbooks));
+        // 保存世界书数据 - 使用IndexedDB
+        async function saveWorldbooks() {
+            try {
+                console.log('保存世界书数据到IndexedDB:', worldbooks);
+                
+                // 清空现有数据
+                await db.worldbooks.clear();
+                
+                // 批量插入新数据
+                if (worldbooks.length > 0) {
+                    await db.worldbooks.bulkAdd(worldbooks);
+                }
+                
+                console.log('世界书数据保存成功');
+            } catch (error) {
+                console.error('保存世界书时发生错误:', error);
+                // 如果IndexedDB失败，回退到localStorage
+                localStorage.setItem('worldbooks', JSON.stringify(worldbooks));
+            }
         }
         
         function showWorldbookForm() {
@@ -10818,7 +12239,7 @@
             hideApp('worldbook-form-screen');
         }
         
-        function saveWorldbook() {
+        async function saveWorldbook() {
             const title = document.getElementById('worldbook-title').value.trim();
             const content = document.getElementById('worldbook-content').value.trim();
             
@@ -10849,7 +12270,7 @@
                 worldbooks.push(worldbook);
             }
             
-            saveWorldbooks();
+            await saveWorldbooks();
             renderWorldbookList();
             hideWorldbookForm();
         }
@@ -10865,10 +12286,10 @@
             }
         }
         
-        function deleteWorldbook(id) {
+        async function deleteWorldbook(id) {
             if (confirm('确定要删除这个世界书吗？')) {
                 worldbooks = worldbooks.filter(w => w.id !== id);
-                saveWorldbooks();
+                await saveWorldbooks();
                 renderWorldbookList();
             }
         }
@@ -11144,38 +12565,102 @@
         
         // ================== 面具系统相关功能 ==================
         
-        // 加载面具数据
-        function loadPersonas() {
-            const savedPersonas = localStorage.getItem('personas');
-            if (savedPersonas) {
-                try {
-                    personas = JSON.parse(savedPersonas);
-                } catch (e) {
+        // 加载面具数据 - 使用IndexedDB（包含数据迁移）
+        async function loadPersonas() {
+            try {
+                // 先从IndexedDB加载
+                const savedPersonas = await db.personas.toArray();
+                
+                if (savedPersonas.length === 0) {
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localStorageData = localStorage.getItem('personas');
+                    if (localStorageData) {
+                        console.log('检测到localStorage中的面具数据，开始迁移...');
+                        const localPersonas = JSON.parse(localStorageData);
+                        
+                        if (localPersonas.length > 0) {
+                            // 确保每个面具都有必要字段
+                            const migrationData = localPersonas.map(persona => ({
+                                id: persona.id || Date.now().toString() + Math.random(),
+                                name: persona.name,
+                                description: persona.description || '',
+                                avatarUrl: persona.avatarUrl || '',
+                                isDefault: persona.isDefault || false,
+                                createdAt: persona.createdAt || new Date().toISOString(),
+                                updatedAt: persona.updatedAt || new Date().toISOString()
+                            }));
+                            
+                            // 迁移到IndexedDB
+                            await db.personas.bulkAdd(migrationData);
+                            personas = migrationData;
+                            console.log('面具数据迁移完成:', personas);
+                        } else {
+                            personas = [];
+                        }
+                    } else {
+                        personas = [];
+                    }
+                } else {
+                    // IndexedDB中有数据，直接使用
+                    personas = savedPersonas;
+                    console.log('从IndexedDB加载面具数据:', personas);
+                }
+                
+                // 设置当前面具（暂时保持localStorage，因为这是一个小数据）
+                const savedCurrentPersona = localStorage.getItem('currentPersona');
+                if (savedCurrentPersona) {
+                    currentPersona = personas.find(p => p.id === savedCurrentPersona) || personas[0];
+                } else {
+                    currentPersona = personas[0];
+                }
+                
+            } catch (error) {
+                console.error('加载面具失败:', error);
+                // 如果IndexedDB失败，回退到localStorage
+                const localStorageData = localStorage.getItem('personas');
+                if (localStorageData) {
+                    try {
+                        personas = JSON.parse(localStorageData);
+                    } catch (e) {
+                        personas = [];
+                    }
+                } else {
                     personas = [];
                 }
-            } else {
-                // 初始化为空面具列表
-                personas = [];
-                savePersonas();
-            }
-            
-            // 设置当前面具
-            const savedCurrentPersona = localStorage.getItem('currentPersona');
-            if (savedCurrentPersona) {
-                currentPersona = personas.find(p => p.id === savedCurrentPersona) || personas[0];
-            } else {
-                currentPersona = personas[0];
+                
+                const savedCurrentPersona = localStorage.getItem('currentPersona');
+                if (savedCurrentPersona) {
+                    currentPersona = personas.find(p => p.id === savedCurrentPersona) || personas[0];
+                } else {
+                    currentPersona = personas[0];
+                }
             }
             
             updateCurrentPersonaDisplay();
         }
         
-        // 保存面具数据
-        function savePersonas() {
-            localStorage.setItem('personas', JSON.stringify(personas));
+        // 保存面具数据 - 使用IndexedDB
+        async function savePersonas() {
+            try {
+                console.log('保存面具数据到IndexedDB:', personas);
+                
+                // 清空现有数据
+                await db.personas.clear();
+                
+                // 批量插入新数据
+                if (personas.length > 0) {
+                    await db.personas.bulkAdd(personas);
+                }
+                
+                console.log('面具数据保存成功');
+            } catch (error) {
+                console.error('保存面具时发生错误:', error);
+                // 如果IndexedDB失败，回退到localStorage
+                localStorage.setItem('personas', JSON.stringify(personas));
+            }
         }
         
-        // 保存当前使用的面具
+        // 保存当前使用的面具（保持localStorage，因为数据量小）
         function saveCurrentPersona() {
             if (currentPersona) {
                 localStorage.setItem('currentPersona', currentPersona.id);
@@ -11233,7 +12718,7 @@
         }
         
         // 保存面具
-        function savePersona() {
+        async function savePersona() {
             const name = document.getElementById('persona-name').value.trim();
             const description = document.getElementById('persona-description').value.trim();
             const avatarData = window.selectedPersonaAvatarData;
@@ -11269,14 +12754,14 @@
                 personas.push(newPersona);
             }
             
-            savePersonas();
+            await savePersonas();
             renderPersonaList();
             hidePersonaForm();
             alert('面具保存成功！');
         }
         
         // 删除面具
-        function deletePersona(personaId) {
+        async function deletePersona(personaId) {
             const persona = personas.find(p => p.id === personaId);
             if (!persona) return;
             
@@ -11290,7 +12775,7 @@
                     updateCurrentPersonaDisplay();
                 }
                 
-                savePersonas();
+                await savePersonas();
                 renderPersonaList();
             }
         }
@@ -11533,6 +13018,9 @@
                 
                 characterPrompt += `\n## 表情包使用规则：\n- **严格限制**：你只能使用上述列表中的表情包，绝对禁止虚构或创造不存在的表情包\n- **发送格式**：要发送表情包时，请在JSON数组中使用特殊格式：{"type": "emoji", "description": "具体的表情包描述"}\n- **使用时机**：根据你的角色性格决定发送频率，在合适的情绪时刻使用\n- **描述匹配**：必须使用表情包列表中完全一致的描述文字\n\n示例格式：["你好！", {"type": "emoji", "description": "笑哭的表情"}, "今天心情真好~"]`;
             }
+            
+            // 🔥【新增】加入头像更换功能说明
+            characterPrompt += `\n\n# 头像更换功能 (重要！)：\n你可以根据自己的心情、用户的要求，或者合适的情境来更换自己的头像。这能让对话更加生动和个性化。\n\n## 可用头像来源：\n1. **用户发送的图片**：用户在聊天中发送给你的任何图片都可以作为你的新头像\n2. **世界书头像库**：如果世界书中提供了头像图片的URL链接，你也可以使用\n\n## 头像更换规则：\n- **使用格式**：在你的回复JSON数组中，单独发送一个特殊的对象：{"type": "change_avatar", "avatar_url": "图片URL", "reason": "更换原因"}\n- **来源限制**：只能使用用户发送过的图片或世界书中明确提供的头像URL，禁止捏造不存在的头像\n- **更换时机**：根据你的角色性格和当前情境决定，比如：\n  - 用户发了一张你喜欢的图片，你可以说想用它作头像\n  - 心情变化时想换个头像\n  - 用户直接要求你换头像\n- **说明内容**：可以在reason字段中添加你更换头像的原因或感受\n\n## 示例格式：\n- ["这张图片太可爱了，我想用它做头像！", {"type": "change_avatar", "avatar_url": "CURRENT_USER_IMAGE", "reason": "这张图片太可爱了"}]\n- [{"type": "change_avatar", "avatar_url": "世界书中的URL", "reason": "今天心情很好，换个开心的头像"}]\n- 可以只更换头像不说其他话：[{"type": "change_avatar", "avatar_url": "图片URL", "reason": "心情变化"}]\n\n**重要提醒**：头像更换是可选功能，根据你的角色设定和当前情境自然地使用，不要强制使用。`;
             
             characterPrompt += taskInstructions;
             
@@ -11799,6 +13287,9 @@
                 characterPrompt += `\n## 表情包使用规则：\n- **严格限制**：你只能使用上述列表中的表情包，绝对禁止虚构或创造不存在的表情包\n- **发送格式**：要发送表情包时，请在JSON数组中使用特殊格式：{"type": "emoji", "description": "具体的表情包描述"}\n- **使用时机**：根据你的角色性格决定发送频率，在合适的情绪时刻使用\n- **描述匹配**：必须使用表情包列表中完全一致的描述文字\n\n示例格式：["你好！", {"type": "emoji", "description": "笑哭的表情"}, "今天心情真好~"]`;
             }
             
+            // 🔥【新增】加入头像更换功能说明
+            characterPrompt += `\n\n# 头像更换功能 (重要！)：\n你可以根据自己的心情、用户的要求，或者合适的情境来更换自己的头像。这能让对话更加生动和个性化。\n\n## 可用头像来源：\n1. **用户发送的图片**：用户在聊天中发送给你的任何图片都可以作为你的新头像\n2. **世界书头像库**：如果世界书中提供了头像图片的URL链接，你也可以使用\n\n## 头像更换规则：\n- **使用格式**：在你的回复JSON数组中，单独发送一个特殊的对象：{"type": "change_avatar", "avatar_url": "图片URL", "reason": "更换原因"}\n- **来源限制**：只能使用用户发送过的图片或世界书中明确提供的头像URL，禁止捏造不存在的头像\n- **更换时机**：根据你的角色性格和当前情境决定，比如：\n  - 用户发了一张你喜欢的图片，你可以说想用它作头像\n  - 心情变化时想换个头像\n  - 用户直接要求你换头像\n- **说明内容**：可以在reason字段中添加你更换头像的原因或感受\n\n## 示例格式：\n- ["这张图片太可爱了，我想用它做头像！", {"type": "change_avatar", "avatar_url": "CURRENT_USER_IMAGE", "reason": "这张图片太可爱了"}]\n- [{"type": "change_avatar", "avatar_url": "世界书中的URL", "reason": "今天心情很好，换个开心的头像"}]\n- 可以只更换头像不说其他话：[{"type": "change_avatar", "avatar_url": "图片URL", "reason": "心情变化"}]\n\n**重要提醒**：头像更换是可选功能，根据你的角色设定和当前情境自然地使用，不要强制使用。\n\n# 消息撤回功能 (重要！)：\n当你说了某些话后突然感到后悔、觉得不合适、害羞、或者觉得说错了话时，你可以撤回消息。这能让对话更加真实，体现角色的真实情绪。\n\n## 撤回使用规则：\n- **使用格式**：在你的回复JSON数组中，单独发送一个特殊的对象：{"type": "recalled_message", "content": "你想撤回的消息内容"}\n- **撤回时机**：根据你的角色性格和当前情境决定，比如：\n  - 说了比较直接或暧昧的话后觉得害羞\n  - 说错了话或表达不当\n  - 情绪冲动说了不合适的话\n  - 觉得刚才的话太露骨或太直白\n- **真实性体现**：撤回功能能很好地表现角色的真实感和情感变化\n\n## 撤回效果：\n- 撤回的消息会先正常显示1.2秒，然后消失\n- 显示"${character.name} 撤回了一条消息"的系统提醒\n- 用户仍能看到撤回的原文内容\n\n## 示例格式：\n- ["我...我喜欢你", {"type": "recalled_message", "content": "我...我喜欢你"}]\n- [{"type": "recalled_message", "content": "刚才说错话了，有点尴尬"}]\n- ["你长得真好看", {"type": "recalled_message", "content": "你长得真好看"}, "不好意思，刚才太直接了"]\n\n**重要提醒**：撤回功能是可选的，要根据角色性格自然地使用，不要强制使用。撤回后可以继续正常对话。`;
+            
             characterPrompt += taskInstructions;
             
             // 🔥 【重要】加入历史记忆功能
@@ -12045,37 +13536,62 @@
         
         // ================== 记忆设置相关功能 ==================
         
-        // 加载记忆设置（已废弃 - 现在使用每个聊天独立的设置）
-        // function loadMemorySettings() {
-        //     const savedSettings = localStorage.getItem('memorySettings');
-        //     if (savedSettings) {
-        //         try {
-        //             memorySettings = JSON.parse(savedSettings);
-        //         } catch (e) {
-        //             console.error('记忆设置加载失败:', e);
-        //         }
-        //     }
-        // }
-        
-        // 加载群聊数据
-        function loadGroupChats() {
-            const savedGroupChats = localStorage.getItem('groupChats');
-            if (savedGroupChats) {
-                try {
-                    groupChats = JSON.parse(savedGroupChats);
-                } catch (e) {
-                    console.error('群聊数据加载失败:', e);
+        // 加载群聊数据 - 使用IndexedDB（包含数据迁移）
+        async function loadGroupChats() {
+            try {
+                // 先从IndexedDB加载
+                const savedGroupChats = await db.groupChats.toArray();
+                
+                if (savedGroupChats.length === 0) {
+                    // IndexedDB中没有数据，尝试从localStorage迁移
+                    const localStorageData = localStorage.getItem('groupChats');
+                    if (localStorageData) {
+                        console.log('检测到localStorage中的群聊数据，开始迁移...');
+                        const localGroupChats = JSON.parse(localStorageData);
+                        
+                        if (localGroupChats.length > 0) {
+                            // 确保每个群聊都有必要字段
+                            const migrationData = localGroupChats.map(group => ({
+                                id: group.id || Date.now().toString() + Math.random(),
+                                name: group.name,
+                                description: group.description || '',
+                                members: group.members || [],
+                                settings: group.settings || {},
+                                createdAt: group.createdAt || new Date().toISOString(),
+                                updatedAt: group.updatedAt || new Date().toISOString()
+                            }));
+                            
+                            // 迁移到IndexedDB
+                            await db.groupChats.bulkAdd(migrationData);
+                            groupChats = migrationData;
+                            console.log('群聊数据迁移完成:', groupChats);
+                        } else {
+                            groupChats = [];
+                        }
+                    } else {
+                        groupChats = [];
+                    }
+                } else {
+                    // IndexedDB中有数据，直接使用
+                    groupChats = savedGroupChats;
+                    console.log('从IndexedDB加载群聊数据:', groupChats);
+                }
+            } catch (error) {
+                console.error('加载群聊失败:', error);
+                // 如果IndexedDB失败，回退到localStorage
+                const localStorageData = localStorage.getItem('groupChats');
+                if (localStorageData) {
+                    try {
+                        groupChats = JSON.parse(localStorageData);
+                    } catch (e) {
+                        console.error('群聊数据加载失败:', e);
+                        groupChats = [];
+                    }
+                } else {
                     groupChats = [];
                 }
-            } else {
-                groupChats = [];
             }
         }
-        
-        // 保存记忆设置（已废弃 - 现在使用每个聊天独立的设置）
-        // function saveMemorySettings() {
-        //     localStorage.setItem('memorySettings', JSON.stringify(memorySettings));
-        // }
         
         // 显示历史消息设置
         function showHistorySettings() {
@@ -13719,7 +15235,7 @@
         }
         
         // 创建群聊
-        function createGroupChat() {
+        async function createGroupChat() {
             const groupName = document.getElementById('group-chat-name').value.trim();
             
             if (!groupName) {
@@ -13756,16 +15272,32 @@
             // 添加到群聊列表
             if (!groupChats) groupChats = [];
             groupChats.push(groupChat);
-            localStorage.setItem('groupChats', JSON.stringify(groupChats));
+            await saveGroupChats();
             
             hideModal('group-chat-modal');
             renderMessageList();
             alert(`群聊"${groupName}"创建成功！`);
         }
         
-        // 保存群聊数据
-        function saveGroupChats() {
-            localStorage.setItem('groupChats', JSON.stringify(groupChats));
+        // 保存群聊数据 - 使用IndexedDB
+        async function saveGroupChats() {
+            try {
+                console.log('保存群聊数据到IndexedDB:', groupChats);
+                
+                // 清空现有数据
+                await db.groupChats.clear();
+                
+                // 批量插入新数据
+                if (groupChats.length > 0) {
+                    await db.groupChats.bulkAdd(groupChats);
+                }
+                
+                console.log('群聊数据保存成功');
+            } catch (error) {
+                console.error('保存群聊时发生错误:', error);
+                // 如果IndexedDB失败，回退到localStorage
+                localStorage.setItem('groupChats', JSON.stringify(groupChats));
+            }
         }
         
         // 渲染定时发布时间点
@@ -14204,8 +15736,8 @@
                 chatScreen.classList.remove('selection-mode');
             }
             
-            // 清除所有选中状态
-            const selectedContainers = document.querySelectorAll('.message-container.selected');
+            // 🔥【修复】清除所有选中状态，包括撤回消息
+            const selectedContainers = document.querySelectorAll('[data-message-id].selected');
             selectedContainers.forEach(container => {
                 container.classList.remove('selected');
             });
@@ -14218,9 +15750,10 @@
         
         // 更新消息选择UI
         function updateMessageSelectionUI() {
-            const messageContainers = document.querySelectorAll('.message-container');
+            // 🔥【修复】查找所有带有messageId的容器，包括撤回消息
+            const allContainers = document.querySelectorAll('[data-message-id]');
             
-            messageContainers.forEach(container => {
+            allContainers.forEach(container => {
                 const messageId = container.dataset.messageId;
                 if (messageId) {
                     if (selectedMessages.has(messageId)) {
@@ -14248,10 +15781,34 @@
                 const characterId = currentChatCharacter.id;
                 
                 if (chatMessages[characterId]) {
-                    // 过滤掉选中的消息
-                    chatMessages[characterId] = chatMessages[characterId].filter(message => 
-                        !selectedMessages.has(message.id)
-                    );
+                    // 🔥【修复】过滤掉选中的消息，同时删除相关的撤回提示
+                    const messagesToDelete = new Set(selectedMessages);
+                    
+                    // 查找所有要删除的消息内容，用于匹配相关的撤回提示
+                    const deleteContentSet = new Set();
+                    chatMessages[characterId].forEach(message => {
+                        if (selectedMessages.has(message.id) && message.content) {
+                            deleteContentSet.add(message.content);
+                        }
+                    });
+                    
+                    // 过滤消息：删除选中消息 + 相关的撤回提示
+                    chatMessages[characterId] = chatMessages[characterId].filter(message => {
+                        // 删除选中的消息
+                        if (selectedMessages.has(message.id)) {
+                            return false;
+                        }
+                        
+                        // 删除相关的撤回提示（系统消息类型，且原文匹配要删除的消息）
+                        if (message.sender === 'system' && message.type === 'recalled_message' && message.originalContent) {
+                            if (deleteContentSet.has(message.originalContent)) {
+                                console.log('删除相关的撤回提示:', message.content);
+                                return false;
+                            }
+                        }
+                        
+                        return true;
+                    });
                     
                     saveChatMessages();
                     renderChatMessages(characterId);
@@ -14388,6 +15945,65 @@
                             url: msgData.url,
                             description: msgData.description
                         });
+                    } else if (typeof msgData === 'object' && msgData.type === 'change_avatar') {
+                        // 🔥【新增】处理头像更换对象
+                        console.log('处理头像更换消息(重新生成):', msgData);
+                        if (msgData.avatar_url) {
+                            // 验证头像URL是否来自用户发送的图片或世界书中的URL
+                            const isValidAvatar = await validateAvatarSource(msgData.avatar_url);
+                            console.log('头像来源验证结果(重新生成):', isValidAvatar, '头像URL:', msgData.avatar_url);
+                            
+                            if (isValidAvatar) {
+                                // 执行头像更换
+                                const success = await changeCharacterAvatarByAI(msgData.avatar_url, msgData.reason || '心情变化');
+                                console.log('头像更换执行结果(重新生成):', success);
+                                if (success) {
+                                    // 跳过这条消息，只执行头像更换，系统消息已在changeCharacterAvatarByAI中添加
+                                    continue;
+                                } else {
+                                    aiMessage = { 
+                                        id: (Date.now() + i).toString(),
+                                        sender: 'received',
+                                        content: '[头像更换失败]', 
+                                        timestamp: Date.now() + i * 100
+                                    };
+                                }
+                            } else {
+                                aiMessage = { 
+                                    id: (Date.now() + i).toString(),
+                                    sender: 'received',
+                                    content: '[无效的头像来源，头像更换失败]', 
+                                    timestamp: Date.now() + i * 100
+                                };
+                            }
+                        } else {
+                            console.log('头像更换消息缺少avatar_url(重新生成)');
+                            continue; // 如果没有有效的头像URL，跳过此消息
+                        }
+                    } else if (typeof msgData === 'object' && msgData.type === 'recalled_message') {
+                        // 🔥【新增】处理AI撤回消息(重新生成)
+                        console.log('处理撤回消息(重新生成):', msgData);
+                        if (msgData.content) {
+                            // 查找刚刚添加的匹配消息ID
+                            let targetMessageId = null;
+                            const messages = chatMessages[currentChatCharacter.id];
+                            
+                            // 从最后开始查找内容匹配的消息
+                            for (let j = messages.length - 1; j >= 0; j--) {
+                                if (messages[j].sender === 'received' && messages[j].content === msgData.content) {
+                                    targetMessageId = messages[j].id;
+                                    console.log('找到要撤回的消息ID(重新生成):', targetMessageId);
+                                    break;
+                                }
+                            }
+                            
+                            // 调用撤回消息处理函数
+                            await handleRecalledMessage(msgData.content, targetMessageId);
+                            continue; // 撤回消息不需要保存到聊天记录，已在handleRecalledMessage中处理
+                        } else {
+                            console.log('撤回消息缺少content(重新生成)');
+                            continue; // 如果没有内容，跳过此消息
+                        }
                     } else {
                         aiMessage = { 
                             id: (Date.now() + i).toString(),
@@ -14622,6 +16238,65 @@
                             url: msgData.url,
                             description: msgData.description
                         });
+                    } else if (typeof msgData === 'object' && msgData.type === 'change_avatar') {
+                        // 🔥【新增】处理头像更换对象
+                        console.log('处理头像更换消息(续写):', msgData);
+                        if (msgData.avatar_url) {
+                            // 验证头像URL是否来自用户发送的图片或世界书中的URL
+                            const isValidAvatar = await validateAvatarSource(msgData.avatar_url);
+                            console.log('头像来源验证结果(续写):', isValidAvatar, '头像URL:', msgData.avatar_url);
+                            
+                            if (isValidAvatar) {
+                                // 执行头像更换
+                                const success = await changeCharacterAvatarByAI(msgData.avatar_url, msgData.reason || '心情变化');
+                                console.log('头像更换执行结果(续写):', success);
+                                if (success) {
+                                    // 跳过这条消息，只执行头像更换，系统消息已在changeCharacterAvatarByAI中添加
+                                    continue;
+                                } else {
+                                    aiMessage = { 
+                                        id: (Date.now() + i).toString(),
+                                        sender: 'received',
+                                        content: '[头像更换失败]', 
+                                        timestamp: Date.now() + i * 100
+                                    };
+                                }
+                            } else {
+                                aiMessage = { 
+                                    id: (Date.now() + i).toString(),
+                                    sender: 'received',
+                                    content: '[无效的头像来源，头像更换失败]', 
+                                    timestamp: Date.now() + i * 100
+                                };
+                            }
+                        } else {
+                            console.log('头像更换消息缺少avatar_url(续写)');
+                            continue; // 如果没有有效的头像URL，跳过此消息
+                        }
+                    } else if (typeof msgData === 'object' && msgData.type === 'recalled_message') {
+                        // 🔥【新增】处理AI撤回消息(续写)
+                        console.log('处理撤回消息(续写):', msgData);
+                        if (msgData.content) {
+                            // 查找刚刚添加的匹配消息ID
+                            let targetMessageId = null;
+                            const messages = chatMessages[currentChatCharacter.id];
+                            
+                            // 从最后开始查找内容匹配的消息
+                            for (let j = messages.length - 1; j >= 0; j--) {
+                                if (messages[j].sender === 'received' && messages[j].content === msgData.content) {
+                                    targetMessageId = messages[j].id;
+                                    console.log('找到要撤回的消息ID(续写):', targetMessageId);
+                                    break;
+                                }
+                            }
+                            
+                            // 调用撤回消息处理函数
+                            await handleRecalledMessage(msgData.content, targetMessageId);
+                            continue; // 撤回消息不需要保存到聊天记录，已在handleRecalledMessage中处理
+                        } else {
+                            console.log('撤回消息缺少content(续写)');
+                            continue; // 如果没有内容，跳过此消息
+                        }
                     } else {
                         aiMessage = { 
                             id: (Date.now() + i).toString(),
@@ -14773,6 +16448,41 @@
                             url: msgData.url,
                             description: msgData.description
                         });
+                    } else if (typeof msgData === 'object' && msgData.type === 'change_avatar') {
+                        // 🔥【新增】处理头像更换对象
+                        console.log('处理头像更换消息:', msgData);
+                        if (msgData.avatar_url) {
+                            // 验证头像URL是否来自用户发送的图片或世界书中的URL
+                            const isValidAvatar = await validateAvatarSource(msgData.avatar_url);
+                            console.log('头像来源验证结果:', isValidAvatar, '头像URL:', msgData.avatar_url);
+                            
+                            if (isValidAvatar) {
+                                // 执行头像更换
+                                const success = await changeCharacterAvatarByAI(msgData.avatar_url, msgData.reason || '心情变化');
+                                console.log('头像更换执行结果:', success);
+                                if (success) {
+                                    // 跳过这条消息，只执行头像更换，系统消息已在changeCharacterAvatarByAI中添加
+                                    continue;
+                                } else {
+                                    aiMessage = { 
+                                        id: (Date.now() + i).toString(),
+                                        sender: 'received',
+                                        content: '[头像更换失败]', 
+                                        timestamp: Date.now() + i * 100
+                                    };
+                                }
+                            } else {
+                                aiMessage = { 
+                                    id: (Date.now() + i).toString(),
+                                    sender: 'received',
+                                    content: '[无效的头像来源，头像更换失败]', 
+                                    timestamp: Date.now() + i * 100
+                                };
+                            }
+                        } else {
+                            console.log('头像更换消息缺少avatar_url');
+                            continue; // 如果没有有效的头像URL，跳过此消息
+                        }
                     } else {
                         aiMessage = { 
                             id: (Date.now() + i).toString(),
@@ -14922,7 +16632,178 @@
                 smartReplyBtn.title = '点击获取AI回复';
             }
         }
+        
+        // 加载朋友圈动态
+        function loadMoments() {
+            // TODO: 实现朋友圈动态加载逻辑
+            console.log('加载朋友圈动态');
+        }
+        
+        // 显示发布动态界面
+        function showPublishMoment() {
+            // TODO: 实现发布动态功能
+            alert('发布动态功能正在开发中...');
+        }
+        
+        // 开始游戏
+        function startGame(gameName) {
+            if (gameName === 'witchPotion') {
+                // TODO: 实现女巫的解药游戏
+                alert('女巫的解药游戏正在开发中...\n\n这将是一个与AI角色互动的解谜游戏！');
+            } else {
+                alert('游戏功能正在开发中...');
+            }
+        }
+        
+                // 切换手机边框显示
+        function togglePhoneBorder() {
+            const phoneFrame = document.getElementById('phone-frame');
+            const phoneScreen = document.getElementById('phone-screen');
+            const toggle = document.getElementById('phone-border-toggle');
+            const body = document.body;
+            
+            if (toggle.checked) {
+                // 显示真实手机边框
+                phoneFrame.style.display = 'block';
+                phoneFrame.style.padding = '12px';
+                phoneFrame.style.backgroundColor = '#fff';
+                phoneFrame.style.borderRadius = '50px';
+                phoneFrame.style.boxShadow = '0 20px 50px rgba(0,0,0,0.25), inset 0 2px 4px rgba(0,0,0,0.1)';
+                phoneScreen.style.borderRadius = '40px';
+                phoneScreen.style.border = '2px solid #333';
+                body.style.background = 'var(--body-bg, #dcdcdc)';
+                body.style.padding = '20px';
+            } else {
+                // 隐藏边框，但保持phone-screen的圆角和阴影
+                phoneFrame.style.display = 'block';
+                phoneFrame.style.padding = '0';
+                phoneFrame.style.backgroundColor = 'transparent';
+                phoneFrame.style.borderRadius = '0';
+                phoneFrame.style.boxShadow = 'none';
+                phoneScreen.style.borderRadius = '25px';
+                phoneScreen.style.border = 'none';
+                phoneScreen.style.boxShadow = 'var(--shadow-phone)';
+                body.style.background = 'var(--body-bg, #1a1a1a)';
+                body.style.padding = '0';
+            }
+            
+            // 保存设置到localStorage
+            localStorage.setItem('phoneBorderEnabled', toggle.checked);
+        }
+        
+        // 显示屏幕尺寸选择
+        function showScreenSizeOptions() {
+            showApp('screen-size-screen');
+        }
+        
+        // 改变屏幕尺寸
+        function changeScreenSize(width, height, name) {
+            const phoneScreen = document.getElementById('phone-screen');
+            
+            // 应用新尺寸
+            phoneScreen.style.width = width + 'px';
+            phoneScreen.style.height = height + 'px';
+            
+            // 更新外观设置中的显示文本
+            const currentSizeDesc = document.getElementById('current-screen-size');
+            if (currentSizeDesc) {
+                currentSizeDesc.textContent = `当前：${width}×${height} (${name})`;
+            }
+            
+            // 更新选中状态
+            document.querySelectorAll('.size-option .check-icon').forEach(icon => {
+                icon.style.display = 'none';
+            });
+            document.querySelectorAll('.size-option').forEach(option => {
+                option.style.backgroundColor = '';
+            });
+            
+            // 显示当前选中项的勾选图标
+            const currentOption = event.target.closest('.size-option');
+            if (currentOption) {
+                const checkIcon = currentOption.querySelector('.check-icon');
+                if (checkIcon) {
+                    checkIcon.style.display = 'block';
+                } else {
+                    // 如果没有勾选图标，创建一个
+                    const newCheckIcon = document.createElement('i');
+                    newCheckIcon.className = 'fas fa-check check-icon';
+                    newCheckIcon.style.display = 'block';
+                    currentOption.appendChild(newCheckIcon);
+                }
+                currentOption.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+            }
+            
+            // 保存到localStorage
+            localStorage.setItem('screenSize', JSON.stringify({width, height, name}));
+            
+            // 延迟一点再返回，让用户看到选择效果
+            setTimeout(() => {
+                showApp('appearance-screen');
+            }, 300);
+        }
+        
+        // 加载屏幕尺寸设置
+        function loadScreenSize() {
+            const saved = localStorage.getItem('screenSize');
+            if (saved) {
+                const {width, height, name} = JSON.parse(saved);
+                const phoneScreen = document.getElementById('phone-screen');
+                phoneScreen.style.width = width + 'px';
+                phoneScreen.style.height = height + 'px';
+                
+                const currentSizeDesc = document.getElementById('current-screen-size');
+                if (currentSizeDesc) {
+                    currentSizeDesc.textContent = `当前：${width}×${height} (${name})`;
+                }
+            }
+        }
+        
+        // 加载边框设置
+        function loadPhoneBorderSetting() {
+            const saved = localStorage.getItem('phoneBorderEnabled');
+            const toggle = document.getElementById('phone-border-toggle');
+            
+            // 默认关闭边框
+            const enabled = saved !== null ? saved === 'true' : false;
+            
+            if (toggle) {
+                toggle.checked = enabled;
+            }
+            
+            // 应用设置
+            const phoneFrame = document.getElementById('phone-frame');
+            const phoneScreen = document.getElementById('phone-screen');
+            const body = document.body;
+            
+            if (enabled) {
+                // 显示真实手机边框
+                phoneFrame.style.display = 'block';
+                phoneFrame.style.padding = '12px';
+                phoneFrame.style.backgroundColor = '#fff';
+                phoneFrame.style.borderRadius = '50px';
+                phoneFrame.style.boxShadow = '0 20px 50px rgba(0,0,0,0.25), inset 0 2px 4px rgba(0,0,0,0.1)';
+                phoneScreen.style.borderRadius = '40px';
+                phoneScreen.style.border = '2px solid #333';
+                body.style.background = 'var(--body-bg, #dcdcdc)';
+                body.style.padding = '20px';
+            } else {
+                // 隐藏边框，但保持phone-screen的圆角和阴影
+                phoneFrame.style.display = 'block';
+                phoneFrame.style.padding = '0';
+                phoneFrame.style.backgroundColor = 'transparent';
+                phoneFrame.style.borderRadius = '0';
+                phoneFrame.style.boxShadow = 'none';
+                phoneScreen.style.borderRadius = '25px';
+                phoneScreen.style.border = 'none';
+                phoneScreen.style.boxShadow = 'var(--shadow-phone)';
+                body.style.background = 'var(--body-bg, #1a1a1a)';
+                body.style.padding = '0';
+            }
+        }
+ 
     </script>
+    </div>
 </body>
 </html>
         
