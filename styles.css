@@ -1,5 +1,14 @@
         /* 主题系统 - 简约风格 (默认) */
         :root {
+            /* 🔥【关键修复】手机屏幕尺寸变量 - 控制手机大小 */
+            --screen-width: 350px;
+            --screen-height: 740px;
+            --secondary-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --text-primary: #1f1f1f;
+            --text-secondary: #8a8a8a;
+            --accent-color: #007bff;
+            
             --theme-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             --theme-font-weight: 400;
             --theme-line-height: 1.5;
@@ -1254,8 +1263,8 @@
 
         
         #phone-screen { 
-            width: 350px; 
-            height: 740px; 
+            width: var(--screen-width); 
+            height: var(--screen-height); 
             background-color: var(--color-black); 
             position: relative; 
             overflow: hidden; 
