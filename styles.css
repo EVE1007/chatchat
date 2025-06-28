@@ -1,3 +1,22 @@
+        /* 🔥【关键修复】基础页面样式 - 确保手机显示正确 */
+        html { 
+            height: 100%; 
+            overflow: hidden; 
+        }
+        body { 
+            height: 100%; 
+            overflow: hidden; 
+            margin: 0; 
+            padding: 20px; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-weight: normal; 
+            background-color: #dcdcdc; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            box-sizing: border-box; 
+        }
+        
         /* 主题系统 - 简约风格 (默认) */
         :root {
             /* 🔥【关键修复】手机屏幕尺寸变量 - 控制手机大小 */
