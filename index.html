@@ -7,45 +7,6 @@
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Comic+Neue:wght@400;700&family=Fredoka+One&family=Nunito:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&family=Roboto:wght@400;500&family=Raleway:wght@400;500;600&family=Lato:wght@400;700&family=Poppins:wght@400;500;600&family=Quicksand:wght@400;500;600&family=Varela+Round&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .message-container {
-            display: flex;
-            align-items: flex-start !important;
-        }
-        
-        .message-avatar {
-            margin-right: 8px;
-            flex-shrink: 0;
-        }
-        
-        .bubble-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            min-width: 0;
-        }
-        
-        .sender-name {
-            font-size: 12px;
-            color: #8e8e93;
-            margin-bottom: 2px;
-            margin-left: 12px; /* 关键：和气泡padding-left一致 */
-            font-weight: normal;
-            text-align: left;
-            align-self: flex-start;
-            line-height: 1.2;
-            max-width: 220px;
-            word-break: break-all;
-        }
-        
-        .message-bubble {
-            max-width: 80vw;
-            min-width: 40px;
-            word-break: break-word;
-            box-sizing: border-box;
-            padding: 12px; /* 关键：和昵称margin-left一致 */
-        }
-        </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -5342,7 +5303,8 @@ ${chatContext}${momentsContext}
                     }
                     
       // 🔥【新增】群聊昵称显示 
-if (isGroup && group && displayName !== '群成员') {
+      if (isGroup && group && displayName !== '群成员') {
+    messageContainer.classList.add('group-message-item'); // <-- 添加这一行
     const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
     messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
 } else {
@@ -5799,7 +5761,8 @@ if (isGroup && group && displayName !== '群成员') {
                     }
                     
                    // 🔥【新增】群聊昵称显示 （loadMoreMessages版本）
-if (isGroup && group && displayName !== '群成员') {
+                   if (isGroup && group && displayName !== '群成员') {
+    messageContainer.classList.add('group-message-item'); // <-- 添加这一行
     const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
     messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
 } else {
@@ -17123,7 +17086,8 @@ if (isGroup && group && displayName !== '群成员') {
                 }
                 
           // 🔥【新增】群聊昵称显示 （第三个渲染函数版本）
-if (isGroup && group && displayName !== '群成员') {
+          if (isGroup && group && displayName !== '群成员') {
+    messageContainer.classList.add('group-message-item'); // <-- 添加这一行
     const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
     messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
 } else {
@@ -19043,17 +19007,25 @@ if (isGroup && group && displayName !== '群成员') {
             
             // 更新我在群里的昵称 - 使用当前选择的面具名称作为默认值
             const currentMyGroupNickname = document.getElementById('current-my-group-nickname');
-            if (currentMyGroupNickname) {
-                let defaultNickname = '未选择';
-                // 如果用户选择了面具，使用面具名称
-                if (currentPersona && currentPersona.name) {
-                    defaultNickname = currentPersona.name;
-                }
-                currentMyGroupNickname.textContent = currentChatCharacter.myNickname || defaultNickname;
-            }
-            
-            // 渲染群成员网格
-            renderGroupMembersGrid();
+    if (currentMyGroupNickname) {
+        let defaultNickname = '未选择';
+        
+        // --- 新增代码开始 ---
+        const chatSettings = getCurrentChatSettings();
+        const selectedPersona = personas.find(p => p.id === chatSettings.selectedIdentityId);
+        // --- 新增代码结束 ---
+
+        // 如果用户选择了面具，使用面具名称
+        if (selectedPersona && selectedPersona.name) { // <--- 修改这里
+            defaultNickname = selectedPersona.name;
+        }
+        
+        // 优先显示用户在群聊中自己设置的昵称，如果没有，则显示创建群聊时选择的身份昵称
+        currentMyGroupNickname.textContent = chatSettings.myChatNickname || defaultNickname;
+    }
+
+    // 渲染群成员网格
+    renderGroupMembersGrid();
         }
         
         function changeGroupAvatar() {
@@ -19135,37 +19107,44 @@ if (isGroup && group && displayName !== '群成员') {
         
         // 渲染群成员网格
         function renderGroupMembersGrid() {
-            const groupMembersGrid = document.getElementById('group-members-grid');
-            if (!groupMembersGrid || !currentChatCharacter || !currentChatCharacter.isGroup) return;
-            
-            // 清空现有内容
-            groupMembersGrid.innerHTML = '';
-            
-            // 首先添加用户自己（排在第一位）
-            const userItem = document.createElement('div');
-            userItem.className = 'member-item user-member';
-            userItem.onclick = () => showUserProfile();
-            
-            // 获取用户显示信息
-            let userName = '用户';
-            let userAvatar = '';
-            
-            // 如果有选择面具，使用面具信息
-            if (currentPersona) {
-                userName = currentPersona.name;
-                userAvatar = currentPersona.avatarUrl;
-            } else {
-                // 如果在群里设置了昵称，使用群昵称
-                if (currentChatCharacter.myNickname) {
-                    userName = currentChatCharacter.myNickname;
-                }
-            }
-            
-            userItem.innerHTML = `
-                <img class="member-avatar" src="${userAvatar || createDefaultAvatar(userName)}" alt="${userName}">
-                <div class="member-name">${userName}</div>
-            `;
-            groupMembersGrid.appendChild(userItem);
+    const groupMembersGrid = document.getElementById('group-members-grid');
+    if (!groupMembersGrid || !currentChatCharacter || !currentChatCharacter.isGroup) return;
+
+    // 清空现有内容
+    groupMembersGrid.innerHTML = '';
+
+    // 首先添加用户自己（排在第一位）
+    const userItem = document.createElement('div');
+    userItem.className = 'member-item user-member';
+    userItem.onclick = () => showUserProfile();
+
+    // 获取用户显示信息
+    let userName = '用户';
+    let userAvatar = '';
+    
+    // --- 新增代码开始 ---
+    // 获取当前群聊的专属设置
+    const chatSettings = getCurrentChatSettings();
+    // 根据专属设置里的身份ID，找到对应的身份信息
+    const selectedPersona = personas.find(p => p.id === chatSettings.selectedIdentityId);
+    // --- 新增代码结束 ---
+
+    // 如果有选择面具，使用面具信息
+    if (selectedPersona) { // <--- 修改这里，使用当前群聊的专属身份
+        userName = selectedPersona.name;
+        userAvatar = selectedPersona.avatarUrl;
+    } else {
+        // 如果在群里设置了昵称，使用群昵称
+        if (currentChatCharacter.myNickname) {
+            userName = currentChatCharacter.myNickname;
+        }
+    }
+
+    userItem.innerHTML = `
+        <img class="member-avatar" src="${userAvatar || createDefaultAvatar(userName)}" alt="${userName}">
+        <div class="member-name">${userName}</div>
+    `;
+    groupMembersGrid.appendChild(userItem);
             
             // 然后添加群内现有角色
             if (currentChatCharacter.members && currentChatCharacter.members.length > 0) {
