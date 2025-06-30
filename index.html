@@ -5144,20 +5144,52 @@ ${chatContext}${momentsContext}
                 messageContainer.dataset.messageId = message.id; // 添加消息ID数据属性
                 
                 if (message.sender === 'received') {
-                    const character = characters.find(c => c.id === characterId);
-                    
-                    // 获取显示用的头像和昵称 - 优先级：动态头像 > 聊天设置头像 > 角色卡头像
-                    const displayAvatar = chatSettings.aiDynamicAvatar || chatSettings.aiChatAvatar || character.avatarUrl;
-                    
-                    // 🔥【调试】记录头像选择过程
-                    if (chatSettings.aiDynamicAvatar) {
-                        console.log(`使用动态头像: ${chatSettings.aiDynamicAvatar.substring(0, 30)}...`);
-                    } else if (chatSettings.aiChatAvatar) {
-                        console.log(`使用聊天设置头像: ${chatSettings.aiChatAvatar.substring(0, 30)}...`);
-                    } else {
-                        console.log(`使用角色卡头像: ${character.avatarUrl ? character.avatarUrl.substring(0, 30) + '...' : '无头像'}`);
+                    // ==== 群聊支持 ====
+                    let character = characters.find(c => c.id === characterId);
+                    let isGroup = false;
+                    let group = null;
+                    if (!character) {
+                        group = groupChats.find(g => g.id === characterId);
+                        if (group) {
+                            isGroup = true;
+                        }
                     }
-                    const displayName = chatSettings.aiChatNickname || character.name;
+                    
+                    let displayAvatar = '';
+                    let displayName = '';
+                    let color = '#4CAF50';
+                    
+                    if (isGroup && group) {
+                        // 群聊：根据消息的senderId或name查找成员
+                        let member = null;
+                        if (message.senderId) {
+                            member = group.members.find(m => m.id === message.senderId);
+                        } else if (message.name) {
+                            member = group.members.find(m => m.name === message.name);
+                        }
+                        displayAvatar = member?.avatarUrl || '';
+                        displayName = member?.name || '群成员';
+                        color = member?.color || '#4CAF50';
+                    } else if (character) {
+                        // 单聊
+                        displayAvatar = chatSettings.aiDynamicAvatar || chatSettings.aiChatAvatar || character.avatarUrl;
+                        displayName = chatSettings.aiChatNickname || character.name;
+                        color = character.color || '#4CAF50';
+                        
+                        // 🔥【调试】记录头像选择过程
+                        if (chatSettings.aiDynamicAvatar) {
+                            console.log(`使用动态头像: ${chatSettings.aiDynamicAvatar.substring(0, 30)}...`);
+                        } else if (chatSettings.aiChatAvatar) {
+                            console.log(`使用聊天设置头像: ${chatSettings.aiChatAvatar.substring(0, 30)}...`);
+                        } else {
+                            console.log(`使用角色卡头像: ${character.avatarUrl ? character.avatarUrl.substring(0, 30) + '...' : '无头像'}`);
+                        }
+                    } else {
+                        // 兜底，防止报错
+                        displayAvatar = '';
+                        displayName = '未知';
+                        color = '#4CAF50';
+                    }
                     
                     // 获取气泡样式
                     const bubbleColor = chatSettings.aiBubbleColor || '#f0f0f0';
@@ -5247,7 +5279,7 @@ ${chatContext}${momentsContext}
                     let avatarHtml = '';
                     if (!chatSettings.hideAvatars) {
                         avatarHtml = `
-                            <div class="message-avatar" style="background-color: ${character.color}; ${displayAvatar ? `background-image: url(${displayAvatar}); background-size: cover; background-position: center;` : ''}" onclick="pokeCharacter('${character.id}')" title="戳一戳">
+                            <div class="message-avatar" style="background-color: ${color}; ${displayAvatar ? `background-image: url(${displayAvatar}); background-size: cover; background-position: center;` : ''}" ${character ? `onclick="pokeCharacter('${character.id}')" title="戳一戳"` : `title="${displayName}"`}>
                                 ${displayAvatar ? '' : displayName.charAt(0)}
                                 ${timestampEnabled && timestampPosition === 'avatar' ? `<div class="timestamp timestamp-avatar">${formatTimeOnly(message.timestamp)}</div>` : ''}
                             </div>
@@ -5270,7 +5302,13 @@ ${chatContext}${momentsContext}
                     `;
                     }
                     
-                    messageContainer.innerHTML = avatarHtml + bubbleHtml;
+                    // 🔥【新增】群聊昵称显示 - 参考zhangyu.html
+                    let senderNameHtml = '';
+                    if (isGroup && group && displayName !== '群成员') {
+                        senderNameHtml = `<div class="sender-name" style="font-size: 12px; color: #666; margin-bottom: 4px; margin-left: 60px;">${displayName}</div>`;
+                    }
+                    
+                    messageContainer.innerHTML = senderNameHtml + avatarHtml + bubbleHtml;
                 } else {
                     // 获取我的显示头像和气泡样式
                     let myDisplayAvatar = chatSettings.myChatAvatar;
@@ -5611,9 +5649,43 @@ ${chatContext}${momentsContext}
                 messageContainer.dataset.messageId = message.id;
                 
                 if (message.sender === 'received') {
-                    const character = characters.find(c => c.id === characterId);
-                    const displayAvatar = chatSettings.aiDynamicAvatar || chatSettings.aiChatAvatar || character.avatarUrl;
-                    const displayName = chatSettings.aiChatNickname || character.name;
+                    // ==== 群聊支持 ====
+                    let character = characters.find(c => c.id === characterId);
+                    let isGroup = false;
+                    let group = null;
+                    if (!character) {
+                        group = groupChats.find(g => g.id === characterId);
+                        if (group) {
+                            isGroup = true;
+                        }
+                    }
+                    
+                    let displayAvatar = '';
+                    let displayName = '';
+                    let color = '#4CAF50';
+                    
+                    if (isGroup && group) {
+                        // 群聊：根据消息的senderId或name查找成员
+                        let member = null;
+                        if (message.senderId) {
+                            member = group.members.find(m => m.id === message.senderId);
+                        } else if (message.name) {
+                            member = group.members.find(m => m.name === message.name);
+                        }
+                        displayAvatar = member?.avatarUrl || '';
+                        displayName = member?.name || '群成员';
+                        color = member?.color || '#4CAF50';
+                    } else if (character) {
+                        // 单聊
+                        displayAvatar = chatSettings.aiDynamicAvatar || chatSettings.aiChatAvatar || character.avatarUrl;
+                        displayName = chatSettings.aiChatNickname || character.name;
+                        color = character.color || '#4CAF50';
+                    } else {
+                        // 兜底，防止报错
+                        displayAvatar = '';
+                        displayName = '未知';
+                        color = '#4CAF50';
+                    }
                     const bubbleColor = chatSettings.aiBubbleColor || '#f0f0f0';
                     const bubbleOpacity = chatSettings.aiBubbleOpacity || '1';
                     const textColor = isLightColor(bubbleColor) ? '#333' : '#fff';
@@ -5675,7 +5747,7 @@ ${chatContext}${momentsContext}
                     
                     let avatarHtml = '';
                     if (!chatSettings.hideAvatars) {
-                        avatarHtml = `<div class="message-avatar" style="background-color: ${character.color}; ${displayAvatar ? `background-image: url(${displayAvatar}); background-size: cover; background-position: center;` : ''}" onclick="pokeCharacter('${character.id}')" title="戳一戳">${displayAvatar ? '' : displayName.charAt(0)}${timestampEnabled && timestampPosition === 'avatar' ? `<div class="timestamp timestamp-avatar">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
+                        avatarHtml = `<div class="message-avatar" style="background-color: ${color}; ${displayAvatar ? `background-image: url(${displayAvatar}); background-size: cover; background-position: center;` : ''}" ${character ? `onclick="pokeCharacter('${character.id}')" title="戳一戳"` : `title="${displayName}"`}>${displayAvatar ? '' : displayName.charAt(0)}${timestampEnabled && timestampPosition === 'avatar' ? `<div class="timestamp timestamp-avatar">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
                     }
                     
                     let bubbleHtml = '';
@@ -5687,7 +5759,13 @@ ${chatContext}${momentsContext}
                         bubbleHtml = `<div class="message-bubble" style="background-color: ${transparentBubbleColor}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">${messageContent}${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
                     }
                     
-                    messageContainer.innerHTML = avatarHtml + bubbleHtml;
+                    // 🔥【新增】群聊昵称显示 - 参考zhangyu.html（loadMoreMessages版本）
+                    let senderNameHtml = '';
+                    if (isGroup && group && displayName !== '群成员') {
+                        senderNameHtml = `<div class="sender-name" style="font-size: 12px; color: #666; margin-bottom: 4px; margin-left: 60px;">${displayName}</div>`;
+                    }
+                    
+                    messageContainer.innerHTML = senderNameHtml + avatarHtml + bubbleHtml;
                 } else {
                     let myDisplayAvatar = chatSettings.myChatAvatar;
                     if (!myDisplayAvatar && chatSettings.selectedIdentityId) {
@@ -8878,7 +8956,7 @@ ${chatContext}${momentsContext}
             
             // 加入挂载的世界书内容
             if (chatSettings.worldbookMountEnabled && chatSettings.selectedWorldbooks && chatSettings.selectedWorldbooks.length > 0) {
-                characterPrompt += `\n【背景知识】以下是相关的世界设定信息，你可以在对话中适当引用：\n`;
+                characterPrompt += `\n【当前场景/世界观】以下是相关的世界设定信息：\n`;
                 
                 chatSettings.selectedWorldbooks.forEach(worldbookId => {
                     const worldbook = worldbooks.find(w => w.id === worldbookId);
@@ -8887,7 +8965,7 @@ ${chatContext}${momentsContext}
                     }
                 });
                 
-                characterPrompt += `\n请根据这些背景知识来丰富对话内容，但不要生硬地引用，要自然地融入到角色的回答中。`;
+                characterPrompt += `\n请不要生硬地引用世界观、世界设定，要自然地融入到角色的回复和行动中。`;
             }
             
             // 根据聊天模式设置不同的提示词
@@ -8897,7 +8975,7 @@ ${chatContext}${momentsContext}
             let taskInstructions = '';
             
             if (chatMode === 'online') {
-                modeInstructions = `\n# 聊天模式：线上模式\n- 你必须按照手机聊天或面对面对话的格式进行输出\n- **严格禁止**任何动作描写、神态描写、心理描写\n- 只能进行纯语言交流，不能描述任何身体动作、表情、环境等\n- 模拟真实的手机聊天，你们不在同一个地点\n- 每条消息都应该是可以通过文字直接表达的内容`;
+                modeInstructions = `\n# 聊天模式：线上模式\n- 你必须按照手机聊天或面对面对话的格式进行输出\n- **严格禁止**任何动作描写、神态描写、心理描写\n- 只能进行纯语言交流，不能描述任何身体动作、表情、环境等\n- 每条消息都应该是可以通过文字直接表达的内容`;
                 
                 if (isGroupChat) {
                     const membersList = character.members.map(member => 
@@ -8906,7 +8984,7 @@ ${chatContext}${momentsContext}
                     
                     taskInstructions = `\n# 你的任务：\n你需要扮演以下群成员角色，在群聊中进行自然对话：\n${membersList}\n\n1. 你可以扮演任何一个群成员角色进行回复，但不能扮演用户。\n2. 你的回复必须是一个JSON数组格式的字符串，每个元素是一个对象：{"name": "角色名", "message": "消息内容"}。\n3. 你可以生成1~8条消息，模拟群聊中多个角色的互动。\n4. 每条消息不能超过25字，要简短有力。\n5. 禁止进行任何有关线下面对面互动的神态描写、动作描写。\n6. 自然地演绎各个角色，让他们有不同的说话风格。\n7. 绝对不能使用用户的名字发言。\n\n# JSON输出格式示例:\n[{"name": "小明", "message": "大家好呀！"}, {"name": "小红", "message": "今天天气真好"}, {"name": "小明", "message": "想出去走走吗？"}]`;
                 } else {
-                    taskInstructions = `\n# 你的任务：\n1. 请用你的角色设定自然地进行单聊对话，按照角色设定扮演角色进行回复。\n2. 你的回复必须是一个JSON数组格式的字符串，每个元素是一条消息。\n3. 你必须一次性生成1~15条消息，模拟真人在聊天中连续发送多条信息的情景。\n4. 每条消息不能超过25字，要简短有力。\n5. 禁止进行任何有关线下面对面互动的神态描写、动作描写。\n6. 自然地演绎角色，不要解释自己是AI。\n\n# JSON输出格式示例:\n["很高兴认识你呀，在干嘛呢？", "今天天气真好", "想出去走走吗？"]`;
+                    taskInstructions = `\n1. 请你以你的角色的身份，严格按照角色设定进行回复和行动，不要跳出角色。自然地推进剧情。\n2. 你可以一次性生成多条消息，模拟真人在聊天中连续发送多条信息的情景。\n3. 你的回复必须是一个JSON数组格式的字符串，每个元素是一条消息。\n\n# JSON输出格式示例:\n["很高兴认识你呀，在干嘛呢？", "今天天气真好", "想出去走走吗？"]`;
                 }
             } else {
                 modeInstructions = `\n# 聊天模式：线下模式\n- 你可以进行线下剧情互动，包含动作、神态、心理描写\n- 使用第三人称"他/她"或你的角色名字"${character.name}"来称呼自己\n- 使用第二人称"你"来称呼用户\n- **重要格式要求**：所有内容合并为一条消息，对话部分用「」包裹，描写部分直接书写\n- 每条消息总长度不少于100个字符\n- 可以描述动作、表情、环境、心理活动等\n- 输出格式示例：\n  ["「我想你了。」${character.name}凑近了些，低声说着，语气里满是眷念，像一只许久未见主人的宠物犬。他轻轻握住你的手，放在脸颊边蹭了蹭。「真的…很想你。」"]`;
@@ -11550,33 +11628,14 @@ ${chatContext}${momentsContext}
             document.body.insertAdjacentHTML('beforeend', modalHTML);
             
             // 绑定点击事件
-            setTimeout(() => {
-                const items = document.querySelectorAll('#persona-selection-group-modal .persona-selection-item');
-                console.log('绑定群聊身份选择事件，找到', items.length, '个身份选项');
-                
-                items.forEach(item => {
-                    item.addEventListener('click', function() {
-                        console.log('选择群聊身份:', this.dataset.personaId);
-                        
-                        // 移除所有选中状态
-                        document.querySelectorAll('#persona-selection-group-modal .persona-selection-item').forEach(i => {
-                            i.classList.remove('selected');
-                        });
-                        
-                        // 设置当前选中
-                        this.classList.add('selected');
-                        window.selectedPersonaForGroupChat = this.dataset.personaId;
-                        
-                        // 启用确认按钮
-                        const confirmBtn = document.getElementById('confirm-group-persona-btn');
-                        if (confirmBtn) {
-                            confirmBtn.disabled = false;
-                        }
-                        
-                        console.log('群聊身份已设置为:', window.selectedPersonaForGroupChat);
-                    });
+            document.querySelectorAll('#persona-selection-group-modal .persona-selection-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('#persona-selection-group-modal .persona-selection-item').forEach(i => i.classList.remove('selected'));
+                    this.classList.add('selected');
+                    window.selectedPersonaForGroupChat = this.dataset.personaId;
+                    document.getElementById('confirm-group-persona-btn').disabled = false;
                 });
-            }, 100);
+            });
         }
         
         // 隐藏群聊身份选择模态框
@@ -11585,26 +11644,14 @@ ${chatContext}${momentsContext}
             if (modal) {
                 modal.remove();
             }
-            // 注意：不在这里清空selectedPersonaForGroupChat，而是在createGroupChat完成后清空
+            window.selectedPersonaForGroupChat = null;
         }
         
         // 确认身份选择并显示群聊设置
         function confirmPersonaAndShowGroupSettings() {
-            if (!window.selectedPersonaForGroupChat) {
-                console.error('未选择身份，无法继续');
-                alert('请先选择一个身份');
-                return;
-            }
-            
-            console.log('确认群聊身份选择:', window.selectedPersonaForGroupChat);
-            const savedPersonaId = window.selectedPersonaForGroupChat;
+            if (!window.selectedPersonaForGroupChat) return;
             
             hidePersonaSelectionGroupModal();
-            
-            // 恢复身份ID（防止在隐藏模态框时被清空）
-            window.selectedPersonaForGroupChat = savedPersonaId;
-            console.log('恢复后的群聊身份ID:', window.selectedPersonaForGroupChat);
-            
             showGroupChatMemberSelection();
         }
         
@@ -11669,8 +11716,6 @@ ${chatContext}${momentsContext}
         
         // 创建群聊
         async function createGroupChat() {
-            console.log('开始创建群聊，当前选择的身份ID:', window.selectedPersonaForGroupChat);
-            
             const groupName = document.getElementById('group-chat-name').value.trim();
             
             if (!groupName) {
@@ -11683,124 +11728,157 @@ ${chatContext}${momentsContext}
                 return;
             }
             
-            try {
-                // 获取选中成员的详细信息
-                const memberDetails = selectedGroupMembers.map(memberId => {
-                    const character = characters.find(c => c.id === memberId);
-                    return {
-                        id: character.id,
-                        name: character.name,
-                        bio: character.bio,
-                        avatarUrl: character.avatarUrl,
-                        color: character.color
-                    };
-                });
-                
-                // 创建群聊对象
-                const groupChat = {
-                    id: 'group_' + Date.now().toString(),
-                    name: groupName,
-                    members: memberDetails,
-                    isGroup: true,
-                    createdAt: new Date().toISOString()
+            // 获取选中成员的详细信息
+            const memberDetails = selectedGroupMembers.map(memberId => {
+                const character = characters.find(c => c.id === memberId);
+                return {
+                    id: character.id,
+                    name: character.name,
+                    bio: character.bio,
+                    avatarUrl: character.avatarUrl,
+                    color: character.color
                 };
-                
-                console.log('创建的群聊对象:', groupChat);
-                
-                // 处理身份设置
-                if (window.selectedPersonaForGroupChat) {
-                    const selectedPersona = personas.find(p => p.id === window.selectedPersonaForGroupChat);
-                    if (selectedPersona) {
-                        // 创建聊天设置对象
-                        const settings = {
-                            selectedIdentityId: window.selectedPersonaForGroupChat,
-                            myChatAvatar: selectedPersona.avatarUrl,
-                            myChatNickname: selectedPersona.name
-                        };
-                        
-                        console.log('保存群聊身份设置:', settings);
-                        
-                        // 立即保存到全局chatSettings
-                        if (!chatSettings) {
-                            chatSettings = {};
+            });
+            
+            // 创建群聊对象
+            const groupChat = {
+                id: 'group_' + Date.now().toString(),
+                name: groupName,
+                members: memberDetails,
+                isGroup: true,
+                createdAt: new Date().toISOString()
+            };
+            
+            // 如果选择了身份，保存到群聊设置中
+            if (window.selectedPersonaForGroupChat) {
+                const selectedPersona = personas.find(p => p.id === window.selectedPersonaForGroupChat);
+                if (selectedPersona) {
+                    // 🔧【修复】保存完整的身份信息，包括头像和昵称
+                    const chatSettings = {
+                        selectedIdentityId: window.selectedPersonaForGroupChat,
+                        myChatAvatar: selectedPersona.avatarUrl,
+                        myChatNickname: selectedPersona.name,
+                        // 保存身份的完整信息
+                        selectedPersonaData: {
+                            id: selectedPersona.id,
+                            name: selectedPersona.name,
+                            avatarUrl: selectedPersona.avatarUrl,
+                            description: selectedPersona.description
                         }
-                        chatSettings[groupChat.id] = settings;
-                        
-                        // 保存到localStorage
-                        localStorage.setItem(`chatSettings_${groupChat.id}`, JSON.stringify(settings));
-                        
-                        // 保存到IndexedDB
-                        try {
-                            await db.chatSettings.put({
-                                id: groupChat.id,
-                                chatId: groupChat.id,
-                                settings: settings
-                            });
-                            console.log('群聊身份设置已保存到IndexedDB');
-                        } catch (dbError) {
-                            console.warn('保存群聊设置到IndexedDB失败:', dbError);
-                        }
-                    } else {
-                        console.error('未找到选中的身份:', window.selectedPersonaForGroupChat);
-                        alert('身份信息错误，请重新选择');
-                        return;
+                    };
+                    
+                    console.log('保存群聊身份设置:', chatSettings);
+                    localStorage.setItem(`chatSettings_${groupChat.id}`, JSON.stringify(chatSettings));
+                    
+                    // 🔧【关键修复】立即将设置加载到内存中，避免后续读取失败
+                    window.chatSettings[groupChat.id] = chatSettings;
+                    
+                    // 🔧【新增】同时保存到IndexedDB
+                    try {
+                        await db.chatSettings.put({
+                            id: groupChat.id,
+                            chatId: groupChat.id,
+                            settings: chatSettings
+                        });
+                        console.log('群聊身份设置已保存到IndexedDB');
+                    } catch (dbError) {
+                        console.warn('保存群聊设置到IndexedDB失败:', dbError);
                     }
                 } else {
-                    console.log('未选择身份，使用默认设置');
+                    console.error('未找到选中的身份:', window.selectedPersonaForGroupChat);
                 }
-                
-                // 添加到群聊列表
-                if (!groupChats) groupChats = [];
-                groupChats.push(groupChat);
-                
-                // 保存群聊数据
-                await saveGroupChats();
-                
-                // 更新界面
-                hideModal('group-chat-modal');
-                renderMessageList();
-                
-                console.log('群聊创建成功:', groupName);
-                alert(`群聊"${groupName}"创建成功！`);
-                
-            } catch (error) {
-                console.error('创建群聊失败:', error);
-                alert('创建群聊失败，请重试');
-            } finally {
-                // 清理临时变量
-                window.selectedPersonaForGroupChat = null;
-                selectedGroupMembers = [];
             }
+            
+            // 添加到群聊列表
+            if (!groupChats) groupChats = [];
+            groupChats.push(groupChat);
+            await saveGroupChats();
+            
+            hideModal('group-chat-modal');
+            renderMessageList();
+            alert(`群聊"${groupName}"创建成功！`);
+            
+            // 清理临时变量
+            window.selectedPersonaForGroupChat = null;
         }
         
-        // 保存群聊数据
+        // 保存群聊数据 - 使用IndexedDB
         async function saveGroupChats() {
             try {
-                console.log('保存群聊数据，共', groupChats.length, '个群聊');
+                console.log('保存群聊数据到IndexedDB:', groupChats);
                 
-                // 保存到IndexedDB
+                // 检查数据完整性
+                if (!groupChats || !Array.isArray(groupChats)) {
+                    console.error('群聊数据无效:', groupChats);
+                    groupChats = [];
+                }
+                
+                // 验证每个群聊对象的完整性
+                const validGroupChats = groupChats.filter(chat => {
+                    if (!chat || !chat.id || !chat.name) {
+                        console.warn('发现无效的群聊对象:', chat);
+                        return false;
+                    }
+                    return true;
+                });
+                
+                // 如果有无效数据，更新数组
+                if (validGroupChats.length !== groupChats.length) {
+                    groupChats = validGroupChats;
+                    console.log('已过滤无效数据，有效群聊数量:', groupChats.length);
+                }
+                
+                // 使用事务来确保数据一致性
                 await db.transaction('rw', db.groupChats, async () => {
-                    await db.groupChats.clear();
+                // 清空现有数据
+                await db.groupChats.clear();
+                
+                    // 逐个插入数据以避免批量插入的ID冲突问题
                     for (const chat of groupChats) {
-                        await db.groupChats.put(chat);
+                        try {
+                            await db.groupChats.add(chat);
+                        } catch (addError) {
+                            console.warn('插入群聊失败，尝试更新:', chat.id, addError);
+                            // 如果添加失败，尝试更新
+                            await db.groupChats.put(chat);
+                        }
                     }
                 });
                 
-                // 保存到localStorage备份
-                localStorage.setItem('groupChats', JSON.stringify(groupChats));
+                console.log('群聊数据保存成功到IndexedDB');
                 
-                console.log('群聊数据保存成功');
+                // 同时保存到localStorage作为备份
+                try {
+                    localStorage.setItem('groupChats', JSON.stringify(groupChats));
+                    console.log('群聊数据备份到localStorage成功');
+                } catch (storageError) {
+                    console.warn('localStorage备份失败:', storageError);
+                    // localStorage失败不应该阻止IndexedDB的成功保存
+                }
                 
             } catch (error) {
-                console.error('保存群聊数据失败:', error);
+                console.error('保存群聊到IndexedDB失败:', error);
+                console.error('错误详情:', error.name, error.message);
                 
-                // 如果失败，至少尝试保存到localStorage
+                // 如果IndexedDB失败，回退到localStorage
                 try {
                     localStorage.setItem('groupChats', JSON.stringify(groupChats || []));
-                    console.log('群聊数据已保存到localStorage备份');
-                } catch (backupError) {
-                    console.error('localStorage备份也失败:', backupError);
-                    throw new Error('保存群聊数据完全失败');
+                    console.log('群聊数据回退保存到localStorage成功');
+                    showToast('群聊已保存到本地存储', 'info');
+                } catch (localError) {
+                    console.error('localStorage保存也失败:', localError);
+                    console.error('localStorage错误详情:', localError.name, localError.message);
+                    
+                    // 检查是否是存储空间不足
+                    if (localError.name === 'QuotaExceededError') {
+                        alert('存储空间不足，请清理一些数据后重试');
+                    } else {
+                        alert('保存群聊失败，请尝试刷新页面重新操作');
+                    }
+                    
+                    // 恢复到之前的状态
+                    groupChats.pop(); // 移除刚添加的群聊
+                    throw localError;
                 }
             }
         }
@@ -12802,7 +12880,29 @@ ${chatContext}${momentsContext}
                             console.log('头像更换消息缺少avatar_url(重新生成)');
                             continue; // 如果没有有效的头像URL，跳过此消息
                         }
-                                            } else {
+                    } else if (typeof msgData === 'object' && msgData !== null && msgData.name && msgData.message) {
+                        // 🔥【群聊消息关键修复】群聊消息格式: {name: "角色名", message: "消息内容"}
+                        console.log('🔥 [修复regenerate] 发现群聊消息:', msgData);
+                        
+                        // 查找群成员ID
+                        let senderId = null;
+                        if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                            const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                            if (member) {
+                                senderId = member.id;
+                            }
+                        }
+                        
+                        aiMessage = { 
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            name: msgData.name,          // 保存发言者名字
+                            senderId: senderId,          // 保存发言者ID
+                            content: msgData.message,    // 使用message字段作为内容
+                            timestamp: Date.now() + i * 100
+                        };
+                        console.log('✅ [修复regenerate] 群聊消息已正确解析:', aiMessage);
+                    } else {
                         aiMessage = { 
                             id: (Date.now() + i).toString(),
                             sender: 'received',
@@ -13085,7 +13185,29 @@ ${chatContext}${momentsContext}
                             console.log('头像更换消息缺少avatar_url(续写)');
                             continue; // 如果没有有效的头像URL，跳过此消息
                         }
-                                            } else {
+                    } else if (typeof msgData === 'object' && msgData !== null && msgData.name && msgData.message) {
+                        // 🔥【群聊消息关键修复】群聊消息格式: {name: "角色名", message: "消息内容"}
+                        console.log('🔥 [修复continuation] 发现群聊消息:', msgData);
+                        
+                        // 查找群成员ID
+                        let senderId = null;
+                        if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                            const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                            if (member) {
+                                senderId = member.id;
+                            }
+                        }
+                        
+                        aiMessage = { 
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            name: msgData.name,          // 保存发言者名字
+                            senderId: senderId,          // 保存发言者ID
+                            content: msgData.message,    // 使用message字段作为内容
+                            timestamp: Date.now() + i * 100
+                        };
+                        console.log('✅ [修复continuation] 群聊消息已正确解析:', aiMessage);
+                    } else {
                         aiMessage = { 
                             id: (Date.now() + i).toString(),
                             sender: 'received',
@@ -13383,6 +13505,28 @@ ${chatContext}${momentsContext}
                                         timestamp: Date.now() + i * 100
                                     };
                                 }
+                            } else if (msgData.name && msgData.message) {
+                                // 🔥【群聊消息关键修复】群聊消息格式: {name: "角色名", message: "消息内容"}
+                                console.log('🔥 [修复] 发现群聊消息:', msgData);
+                                
+                                // 查找群成员ID
+                                let senderId = null;
+                                if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                                    const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                                    if (member) {
+                                        senderId = member.id;
+                                    }
+                                }
+                                
+                                aiMessage = { 
+                                    id: (Date.now() + i).toString(),
+                                    sender: 'received',
+                                    name: msgData.name,          // 保存发言者名字
+                                    senderId: senderId,          // 保存发言者ID
+                                    content: msgData.message,    // 使用message字段作为内容
+                                    timestamp: Date.now() + i * 100
+                                };
+                                console.log('✅ [修复] 群聊消息已正确解析:', aiMessage);
                             } else {
                                 // 其他未处理的对象，尝试提取内容或转换为字符串
                                 console.warn('⚠️ 发现未处理的对象:', msgData);
@@ -16739,28 +16883,8 @@ ${chatContext}${momentsContext}
 
         // 添加单个消息并应用动画效果
         function addMessageWithAnimation(message, characterId) {
-            console.log('addMessageWithAnimation调用', {
-                message: message,
-                characterId: characterId,
-                currentChatCharacter: currentChatCharacter ? currentChatCharacter.id : '无',
-                charactersLength: characters.length
-            });
-            
             const messagesContainer = document.getElementById('api-chat-messages');
-            if (!messagesContainer) {
-                console.error('消息容器未找到');
-                return;
-            }
-            
-            if (!currentChatCharacter) {
-                console.error('当前聊天角色未设置');
-                return;
-            }
-            
-            if (characterId !== currentChatCharacter.id) {
-                console.warn('角色ID不匹配', characterId, '!=', currentChatCharacter.id);
-                return;
-            }
+            if (!messagesContainer || !currentChatCharacter || characterId !== currentChatCharacter.id) return;
             
             const chatSettings = getCurrentChatSettings();
             const typingIndicator = document.getElementById('typing-indicator');
@@ -16838,38 +16962,43 @@ ${chatContext}${momentsContext}
             messageContainer.dataset.messageId = message.id;
             
             if (message.sender === 'received') {
-                console.log('查找角色ID:', characterId, '在', characters.length, '个角色中');
-                console.log('角色列表:', characters.map(c => ({id: c.id, name: c.name})));
-                
-                const character = characters.find(c => c.id === characterId);
-                
-                // 如果找不到角色，使用默认值
+                // ==== 群聊支持 ====
+                let character = characters.find(c => c.id === characterId);
+                let isGroup = false;
+                let group = null;
                 if (!character) {
-                    console.error('❌ 找不到角色ID:', characterId);
-                    console.error('可用的角色:', characters.map(c => `${c.id}(${c.name})`));
-                    console.error('当前聊天角色:', currentChatCharacter);
-                    
-                    const errorMessage = document.createElement('div');
-                    errorMessage.className = 'message-container received';
-                    errorMessage.innerHTML = `
-                        <div class="message-bubble" style="background-color: #ffebee; color: #c62828; padding: 12px;">
-                            [错误: 找不到角色信息 ID:${characterId}]
-                        </div>
-                    `;
-                    
-                    const typingIndicator = document.getElementById('typing-indicator');
-                    if (typingIndicator) {
-                        messagesContainer.insertBefore(errorMessage, typingIndicator);
-                    } else {
-                        messagesContainer.appendChild(errorMessage);
+                    group = groupChats.find(g => g.id === characterId);
+                    if (group) {
+                        isGroup = true;
                     }
-                    return;
                 }
                 
-                console.log('✅ 找到角色:', character.name);
+                let displayAvatar = '';
+                let displayName = '';
+                let color = '#4CAF50';
                 
-                const displayAvatar = chatSettings.aiDynamicAvatar || chatSettings.aiChatAvatar || character.avatarUrl;
-                const displayName = chatSettings.aiChatNickname || character.name;
+                if (isGroup && group) {
+                    // 群聊：根据消息的senderId或name查找成员
+                    let member = null;
+                    if (message.senderId) {
+                        member = group.members.find(m => m.id === message.senderId);
+                    } else if (message.name) {
+                        member = group.members.find(m => m.name === message.name);
+                    }
+                    displayAvatar = member?.avatarUrl || '';
+                    displayName = member?.name || '群成员';
+                    color = member?.color || '#4CAF50';
+                } else if (character) {
+                    // 单聊
+                    displayAvatar = chatSettings.aiDynamicAvatar || chatSettings.aiChatAvatar || character.avatarUrl;
+                    displayName = chatSettings.aiChatNickname || character.name;
+                    color = character.color || '#4CAF50';
+                } else {
+                    // 兜底，防止报错
+                    displayAvatar = '';
+                    displayName = '未知';
+                    color = '#4CAF50';
+                }
                 const bubbleColor = chatSettings.aiBubbleColor || '#f0f0f0';
                 const bubbleOpacity = chatSettings.aiBubbleOpacity || '1';
                 const textColor = isLightColor(bubbleColor) ? '#333' : '#fff';
@@ -16932,7 +17061,7 @@ ${chatContext}${momentsContext}
                 let avatarHtml = '';
                 if (!chatSettings.hideAvatars) {
                     avatarHtml = `
-                        <div class="message-avatar" style="background-color: ${character.color}; ${displayAvatar ? `background-image: url(${displayAvatar}); background-size: cover; background-position: center;` : ''}" onclick="pokeCharacter('${character.id}')" title="戳一戳">
+                        <div class="message-avatar" style="background-color: ${color}; ${displayAvatar ? `background-image: url(${displayAvatar}); background-size: cover; background-position: center;` : ''}" ${character ? `onclick="pokeCharacter('${character.id}')" title="戳一戳"` : `title="${displayName}"`}>
                             ${displayAvatar ? '' : displayName.charAt(0)}
                         </div>
                     `;
@@ -16954,7 +17083,13 @@ ${chatContext}${momentsContext}
                 `;
                 }
                 
-                messageContainer.innerHTML = avatarHtml + bubbleHtml;
+                // 🔥【新增】群聊昵称显示 - 参考zhangyu.html（第三个渲染函数版本）
+                let senderNameHtml = '';
+                if (isGroup && group && displayName !== '群成员') {
+                    senderNameHtml = `<div class="sender-name" style="font-size: 12px; color: #666; margin-bottom: 4px; margin-left: 60px;">${displayName}</div>`;
+                }
+                
+                messageContainer.innerHTML = senderNameHtml + avatarHtml + bubbleHtml;
                 
                 // 如果是语音消息，按照renderChatMessages的结构创建
                 if (message.type === 'voice_message') {
@@ -19897,45 +20032,153 @@ ${chatContext}${momentsContext}
         });
     </script>
 
-
-
-    <!-- 🔧【群聊创建修复】确保变量正确初始化 -->
+    <!-- 🔥【永久修复】身份选择功能自动修复脚本 -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔧 群聊创建功能初始化...');
+            console.log('🔧 开始应用身份选择功能永久修复...');
             
-            // 确保必要的全局变量存在
-            if (typeof window.selectedPersonaForGroupChat === 'undefined') {
-                window.selectedPersonaForGroupChat = null;
+            // 修复1: 重写showPersonaSelectionForSingleChat函数
+            if (typeof showPersonaSelectionForSingleChat === 'function') {
+                const originalShowPersonaSelectionForSingleChat = showPersonaSelectionForSingleChat;
+                showPersonaSelectionForSingleChat = function() {
+                    originalShowPersonaSelectionForSingleChat();
+                    
+                    // 延迟修复事件绑定，确保DOM已生成
+                    setTimeout(() => {
+                        const items = document.querySelectorAll('#persona-selection-modal .persona-selection-item');
+                        console.log('🔧 修复身份选择事件绑定，找到元素:', items.length);
+                        
+                        items.forEach(item => {
+                            // 移除旧的事件监听器
+                            item.onclick = null;
+                            
+                            // 添加新的点击事件
+                            item.addEventListener('click', function() {
+                                console.log('身份选择点击:', this.dataset.personaId);
+                                
+                                // 移除所有选中状态
+                                document.querySelectorAll('#persona-selection-modal .persona-selection-item').forEach(i => {
+                                    i.classList.remove('selected');
+                                });
+                                
+                                // 设置当前元素为选中
+                                this.classList.add('selected');
+                                
+                                // 保存身份ID
+                                window.selectedPersonaForChat = this.dataset.personaId;
+                                console.log('设置selectedPersonaForChat:', window.selectedPersonaForChat);
+                                
+                                // 启用确认按钮
+                                const confirmBtn = document.getElementById('confirm-persona-btn');
+                                if (confirmBtn) {
+                                    confirmBtn.disabled = false;
+                                }
+                            });
+                        });
+                    }, 100);
+                };
             }
             
-            if (typeof window.selectedGroupMembers === 'undefined') {
-                window.selectedGroupMembers = [];
+            // 修复2: 重写confirmPersonaAndShowCharacters函数
+            if (typeof confirmPersonaAndShowCharacters === 'function') {
+                confirmPersonaAndShowCharacters = function() {
+                    console.log('confirmPersonaAndShowCharacters调用，身份ID:', window.selectedPersonaForChat);
+                    
+                    if (!window.selectedPersonaForChat) {
+                        console.error('身份ID为空！');
+                        return;
+                    }
+                    
+                    // 保存身份ID
+                    const savedPersonaId = window.selectedPersonaForChat;
+                    
+                    // 隐藏模态框
+                    const modal = document.getElementById('persona-selection-modal');
+                    if (modal) {
+                        modal.remove();
+                    }
+                    
+                    // 恢复身份ID
+                    window.selectedPersonaForChat = savedPersonaId;
+                    console.log('保护后的身份ID:', window.selectedPersonaForChat);
+                    
+                    showCharacterSelectionForSingleChat();
+                };
             }
             
-            console.log('✅ 群聊创建功能初始化完成');
+            // 修复3: 重写buildCharacterPrompt函数
+            if (typeof buildCharacterPrompt === 'function') {
+                const originalBuildCharacterPrompt = buildCharacterPrompt;
+                buildCharacterPrompt = function(character, hasImage = false) {
+                    // 调用原函数获取基础prompt
+                    let characterPrompt = originalBuildCharacterPrompt(character, hasImage);
+                    
+                    // 移除原有的currentPersona逻辑，替换为从聊天设置读取
+                    const chatSettings = getCurrentChatSettings();
+                    if (chatSettings.selectedIdentityId) {
+                        const selectedPersona = personas.find(p => p.id === chatSettings.selectedIdentityId);
+                        if (selectedPersona) {
+                            console.log('🔧 为角色', character.name, '使用身份:', selectedPersona.name);
+                            
+                            // 移除旧的身份信息（如果有）
+                            const personaRegex = /\n\n# 对话者的角色设定：[\s\S]*?请根据用户的这个面具身份来进行对话。/;
+                            characterPrompt = characterPrompt.replace(personaRegex, '');
+                            
+                            // 添加新的身份信息
+                            const personaInfo = `\n\n# 对话者的角色设定：\n用户当前使用的面具是"${selectedPersona.name}"${selectedPersona.description ? `：${selectedPersona.description}` : ''}\n请根据用户的这个面具身份来进行对话。`;
+                            
+                            // 在角色设定后插入身份信息
+                            const insertPoint = characterPrompt.indexOf('\n# 🔥【修复】表情包库信息');
+                            if (insertPoint !== -1) {
+                                characterPrompt = characterPrompt.slice(0, insertPoint) + personaInfo + characterPrompt.slice(insertPoint);
+                            } else {
+                                characterPrompt += personaInfo;
+                            }
+                        }
+                    }
+                    
+                    return characterPrompt;
+                };
+            }
             
-            // 添加测试函数
-            window.testGroupChatCreation = function() {
-                console.log('🧪 测试群聊创建流程...');
-                console.log('personas数组长度:', personas.length);
-                console.log('characters数组长度:', characters.length);
-                console.log('groupChats数组长度:', groupChats ? groupChats.length : 'undefined');
-                console.log('chatSettings对象:', typeof chatSettings);
-                
-                if (personas.length === 0) {
-                    console.warn('⚠️ 没有可用身份，请先创建身份');
-                    return false;
-                }
-                
-                if (characters.length < 2) {
-                    console.warn('⚠️ 角色数量不足，至少需要2个角色才能创建群聊');
-                    return false;
-                }
-                
-                console.log('✅ 群聊创建前置条件检查通过');
-                return true;
-            };
+            console.log('✅ 身份选择功能永久修复已应用');
+        });
+    </script>
+
+    <!-- 🔧【简单修复】群聊身份设置直接修复 -->
+    <script>
+        // 简单直接的群聊身份修复
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 [简单修复] 群聊身份设置修复启动...');
+            
+            // 重写createGroupChat函数，确保身份设置立即生效
+            if (typeof window.createGroupChat === 'function') {
+                const originalCreateGroupChat = window.createGroupChat;
+                window.createGroupChat = async function() {
+                    console.log('🔧 [修复] createGroupChat被调用，身份ID:', window.selectedPersonaForGroupChat);
+                    
+                    // 调用原函数
+                    await originalCreateGroupChat.call(this);
+                    
+                    // 如果有选择身份，立即加载到内存
+                    if (window.selectedPersonaForGroupChat && groupChats && groupChats.length > 0) {
+                        const latestGroup = groupChats[groupChats.length - 1];
+                        const savedSettings = localStorage.getItem(`chatSettings_${latestGroup.id}`);
+                        
+                        if (savedSettings) {
+                            try {
+                                const settings = JSON.parse(savedSettings);
+                                window.chatSettings[latestGroup.id] = settings;
+                                console.log('🔧 [修复] 群聊身份设置已加载到内存:', settings);
+                            } catch (error) {
+                                console.error('🔧 [修复] 解析群聊设置失败:', error);
+                            }
+                        }
+                    }
+                };
+            }
+            
+            console.log('🔧 [简单修复] 群聊身份设置修复完成');
         });
     </script>
 
