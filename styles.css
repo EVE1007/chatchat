@@ -1223,32 +1223,7 @@
             letter-spacing: var(--global-letter-spacing, 0px) !important;
         }
 
-        /* 绿色自然主题 */
-        
-        /* 自然主题的特殊效果 */
-        
-        
-        
-        
-
-
-        /* 蓝色科技主题 */
-        
-        /* 科技主题的特殊效果 */
-        
-        
-        
-        
-        
-
-        /* 紫色梦幻主题 */
-        
-        /* 梦幻主题的特殊效果 */
-        
-        
-        
-        
-        
+       
 
         html { 
             height: 100%; 
@@ -3850,59 +3825,6 @@
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
-        }
-        
-        /* 社交动态界面 (已移除，改为论坛) */
-        .weibo-post {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .weibo-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .weibo-user {
-            flex: 1;
-        }
-        
-        .weibo-name {
-            font-weight: bold;
-        }
-        
-        .weibo-time {
-            color: #888;
-            font-size: 12px;
-        }
-        
-        .weibo-content {
-            margin-bottom: 10px;
-        }
-        
-        .weibo-images {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        
-        .weibo-image {
-            aspect-ratio: 1;
-            background-color: #eee;
-        }
-        
-        .weibo-actions {
-            display: flex;
-            justify-content: space-around;
-            color: #888;
-        }
-        
-        .weibo-action {
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
         
         /* 音乐应用样式 */
@@ -8588,4 +8510,48 @@
         width: 80px;
         height: 80px;
     }
+}
+/* --- 您之前为了显示昵称添加的样式 --- */
+.message-container {
+    display: flex;
+    align-items: flex-start !important;
+}
+
+.message-avatar {
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.bubble-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.sender-name {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-bottom: 2px;
+    margin-left: 10px; /* 关键：和气泡padding-left一致 */
+    font-weight: normal;
+    text-align: left;
+    align-self: flex-start;
+    line-height: 1.2;
+    max-width: 220px;
+    word-break: break-all;
+}
+
+.message-bubble {
+    max-width: 80vw;
+    min-width: 40px;
+    word-break: break-word;
+    box-sizing: border-box;
+    padding: 12px; /* 关键：和昵称margin-left一致 */
+}
+
+/* --- 新增的CSS规则，用于对齐群聊头像和气泡顶部 --- */
+.message-container.group-message-item .message-avatar {
+    /* 16px 大约是昵称的高度 (12px * 1.2 行高 + 2px margin) */
+    margin-top: 16px; 
 }
