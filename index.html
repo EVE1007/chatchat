@@ -7,6 +7,45 @@
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Comic+Neue:wght@400;700&family=Fredoka+One&family=Nunito:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&family=Roboto:wght@400;500&family=Raleway:wght@400;500;600&family=Lato:wght@400;700&family=Poppins:wght@400;500;600&family=Quicksand:wght@400;500;600&family=Varela+Round&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .message-container {
+            display: flex;
+            align-items: flex-start !important;
+        }
+        
+        .message-avatar {
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        
+        .bubble-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-width: 0;
+        }
+        
+        .sender-name {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-bottom: 2px;
+            margin-left: 12px; /* 关键：和气泡padding-left一致 */
+            font-weight: normal;
+            text-align: left;
+            align-self: flex-start;
+            line-height: 1.2;
+            max-width: 220px;
+            word-break: break-all;
+        }
+        
+        .message-bubble {
+            max-width: 80vw;
+            min-width: 40px;
+            word-break: break-word;
+            box-sizing: border-box;
+            padding: 12px; /* 关键：和昵称margin-left一致 */
+        }
+        </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -5302,13 +5341,13 @@ ${chatContext}${momentsContext}
                     `;
                     }
                     
-                    // 🔥【新增】群聊昵称显示 - 参考zhangyu.html
-                    let senderNameHtml = '';
-                    if (isGroup && group && displayName !== '群成员') {
-                        senderNameHtml = `<div class="sender-name" style="font-size: 12px; color: #666; margin-bottom: 4px; margin-left: 60px;">${displayName}</div>`;
-                    }
-                    
-                    messageContainer.innerHTML = senderNameHtml + avatarHtml + bubbleHtml;
+      // 🔥【新增】群聊昵称显示 
+if (isGroup && group && displayName !== '群成员') {
+    const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
+    messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
+} else {
+    messageContainer.innerHTML = avatarHtml + bubbleHtml;
+}
                 } else {
                     // 获取我的显示头像和气泡样式
                     let myDisplayAvatar = chatSettings.myChatAvatar;
@@ -5759,13 +5798,13 @@ ${chatContext}${momentsContext}
                         bubbleHtml = `<div class="message-bubble" style="background-color: ${transparentBubbleColor}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">${messageContent}${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
                     }
                     
-                    // 🔥【新增】群聊昵称显示 - 参考zhangyu.html（loadMoreMessages版本）
-                    let senderNameHtml = '';
-                    if (isGroup && group && displayName !== '群成员') {
-                        senderNameHtml = `<div class="sender-name" style="font-size: 12px; color: #666; margin-bottom: 4px; margin-left: 60px;">${displayName}</div>`;
-                    }
-                    
-                    messageContainer.innerHTML = senderNameHtml + avatarHtml + bubbleHtml;
+                   // 🔥【新增】群聊昵称显示 （loadMoreMessages版本）
+if (isGroup && group && displayName !== '群成员') {
+    const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
+    messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
+} else {
+    messageContainer.innerHTML = avatarHtml + bubbleHtml;
+}
                 } else {
                     let myDisplayAvatar = chatSettings.myChatAvatar;
                     if (!myDisplayAvatar && chatSettings.selectedIdentityId) {
@@ -17083,13 +17122,13 @@ ${chatContext}${momentsContext}
                 `;
                 }
                 
-                // 🔥【新增】群聊昵称显示 - 参考zhangyu.html（第三个渲染函数版本）
-                let senderNameHtml = '';
-                if (isGroup && group && displayName !== '群成员') {
-                    senderNameHtml = `<div class="sender-name" style="font-size: 12px; color: #666; margin-bottom: 4px; margin-left: 60px;">${displayName}</div>`;
-                }
-                
-                messageContainer.innerHTML = senderNameHtml + avatarHtml + bubbleHtml;
+          // 🔥【新增】群聊昵称显示 （第三个渲染函数版本）
+if (isGroup && group && displayName !== '群成员') {
+    const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
+    messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
+} else {
+    messageContainer.innerHTML = avatarHtml + bubbleHtml;
+}
                 
                 // 如果是语音消息，按照renderChatMessages的结构创建
                 if (message.type === 'voice_message') {
