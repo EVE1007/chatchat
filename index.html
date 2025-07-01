@@ -1855,8 +1855,8 @@
                                         </div>
                                         <div style="background: var(--theme-button-bg, rgba(74, 132, 193, 0.9)); color: white; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; box-shadow: 0 2px 8px rgba(74, 132, 193, 0.3);">点击配置</div>
                                     </div>
-                                </div>
-                                
+                            </div>
+                            
                                 <!-- HuggingFace反代卡片 -->
                                 <div style="margin-bottom: 15px; padding: 18px; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%); border: 2px solid rgba(255, 193, 7, 0.2); border-radius: 16px; color: #333; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);" onclick="setHuggingFaceProxy()">
                                     <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -1866,8 +1866,8 @@
                                         </div>
                                         <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);">点击配置</div>
                                     </div>
-                                </div>
-                                
+                            </div>
+                            
                                 <div style="font-size: 12px; color: #666; text-align: center; margin-top: 10px;">
                                     ⚠️ 使用前请确保有对应的API密钥
                                 </div>
@@ -1881,8 +1881,8 @@
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--theme-text-primary, #333); font-size: 15px;">API地址</label>
                                     <input type="text" id="api-base" placeholder="例如: https://api.openai.com 或 @https://xxx-xxx.hf.space/v1" style="width: 100%; padding: 12px 15px; border: 2px solid var(--theme-input-border, rgba(0, 0, 0, 0.08)); border-radius: 12px; font-size: 16px; background: var(--theme-form-bg, rgba(255, 255, 255, 0.9)); backdrop-filter: blur(10px); transition: all 0.3s ease; color: var(--theme-text-primary, #333); box-sizing: border-box;">
                                     <div style="font-size: 12px; color: #666; margin-top: 5px;">支持标准API和HuggingFace反代（格式：@https://xxx.hf.space/v1）</div>
-                                </div>
-                                
+                            </div>
+                            
                                 <!-- API密钥 -->
                                 <div style="margin-bottom: 20px;">
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--theme-text-primary, #333); font-size: 15px;">API密钥</label>
@@ -1895,11 +1895,11 @@
                                     <div style="display: flex; gap: 10px; align-items: center;">
                                         <select id="model-select" style="flex: 1; padding: 12px 15px; border: 2px solid var(--theme-input-border, rgba(0, 0, 0, 0.08)); border-radius: 12px; font-size: 16px; background: var(--theme-form-bg, rgba(255, 255, 255, 0.9)); backdrop-filter: blur(10px); transition: all 0.3s ease; color: var(--theme-text-primary, #333);">
                                             <!-- 模型选项将通过JS动态填充 -->
-                                        </select>
+                                    </select>
                                         <button id="fetch-models-btn" onclick="fetchModels()" style="padding: 10px 16px; background: var(--theme-button-secondary-bg, rgba(255, 255, 255, 0.8)); color: var(--theme-button-secondary-color, #666); border: 2px solid var(--theme-button-secondary-border, rgba(0, 0, 0, 0.1)); border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; backdrop-filter: blur(10px); transition: all 0.3s ease; white-space: nowrap;">拉取模型</button>
-                                    </div>
                                 </div>
-                                
+                            </div>
+                            
                                 <!-- 温度参数 -->
                                 <div style="margin-bottom: 25px;">
                                     <label style="display: block; margin-bottom: 12px; font-weight: 600; color: var(--theme-text-primary, #333); font-size: 15px;">温度参数 (<span id="temperature-value" style="color: var(--theme-button-bg, #4a84c1); font-weight: 700;">0.75</span>)</label>
@@ -1912,8 +1912,8 @@
                                         </div>
                                         <div style="font-size: 12px; color: #666; margin-top: 8px; text-align: center;">温度越低，回答越保守稳定；温度越高，回答越有创意多样</div>
                                     </div>
-                                </div>
-                                
+                            </div>
+                            
                                 <!-- 操作按钮 -->
                                 <div style="display: flex; gap: 12px; margin-top: 25px;">
                                     <button id="test-api-connection-btn" onclick="testApiConnection()" style="flex: 1; padding: 14px 20px; background: linear-gradient(135deg, #34c759 0%, #30d158 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3); transition: all 0.3s ease;">测试连接</button>
@@ -1933,7 +1933,7 @@
                                     <div style="display: flex; gap: 10px; margin-bottom: 12px;">
                                         <input type="text" id="config-name-input" placeholder="输入配置名称 (如: OpenAI、Gemini、Claude等)" style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.9);">
                                         <button id="save-current-config-btn" onclick="saveCurrentConfig()" style="padding: 10px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">💾 保存配置</button>
-                                    </div>
+                        </div>
                                     <div style="font-size: 12px; color: #888;">当前配置将保存为: <span style="color: #333; font-weight: 500;">URL + 模型 + 温度设置</span></div>
                                 </div>
                                 
@@ -2925,8 +2925,8 @@
             const temperatureSlider = document.getElementById('temperature-slider');
             if (temperatureSlider) {
                 temperatureSlider.addEventListener('input', function() {
-                    document.getElementById('temperature-value').textContent = parseFloat(this.value).toFixed(2);
-                });
+                document.getElementById('temperature-value').textContent = parseFloat(this.value).toFixed(2);
+            });
             }
             
             // 初始化API设置界面
@@ -5403,7 +5403,7 @@ ${chatContext}${momentsContext}
     
     if (message.type === 'voice_message' || message.type === 'transfer') {
         // 🔥【修复】对于语音消息和转账消息，昵称需要在容器外部
-        messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
+    messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
     } else {
         // 普通消息的处理
         messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
@@ -5549,7 +5549,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                             }
                         } else {
                             // 普通文本消息或旧格式
-                            myMessageContent = message.content;
+                        myMessageContent = message.content;
                         }
                     }
                     
@@ -5889,7 +5889,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
     
     if (message.type === 'voice_message' || message.type === 'transfer') {
         // 🔥【修复】对于语音消息和转账消息，昵称需要在容器外部
-        messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
+    messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
     } else {
         // 普通消息的处理
         messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
@@ -6009,7 +6009,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                             }
                         } else {
                             // 普通文本消息或旧格式
-                            myMessageContent = message.content;
+                        myMessageContent = message.content;
                         }
                     }
                     
@@ -7163,7 +7163,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
         // 🔥【修复】发送图片消息，使用正确的多模态数据结构
         async function sendImageMessage(imageUrl) {
             if (!currentChatCharacter) return;
-
+            
             const chatInput = document.getElementById('api-chat-input');
             const textContent = chatInput ? chatInput.value.trim() : '';
 
@@ -7189,7 +7189,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                 content: messageContent, // 使用新的数组格式
                 timestamp: Date.now()
             };
-
+            
 
 
             // 添加到聊天记录
@@ -7198,14 +7198,14 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
             }
             chatMessages[currentChatCharacter.id].push(message);
             await saveChatMessages();
-
+            
             // 清空输入框并刷新UI
             if (chatInput) {
                 chatInput.value = '';
             }
             addMessageWithAnimation(message, currentChatCharacter.id);
             renderMessageList();
-
+            
             // 设置为待回复消息，并更新智能回复按钮状态
             pendingUserMessage = message;
             
@@ -9945,7 +9945,7 @@ ${character.bio}
             if (!apiSettings.key) {
                 throw new Error('请先设置API密钥');
             }
-
+            
 
 
             // 核心修复：现在这个函数能理解 message 参数可能是一个包含图片和文字的数组
@@ -9954,27 +9954,27 @@ ${character.bio}
             const recentHistory = (chatMessages[character.id] || []).slice(-historyCount);
 
             const messages = [{ role: 'system', content: characterPrompt }];
-
+            
             // 处理历史消息
             recentHistory.forEach(msg => {
                 let role = msg.sender === 'sent' ? 'user' : 'assistant';
-                let content = msg.content;
-                
+                        let content = msg.content;
+                        
                 // 将历史消息中的特殊格式转换为AI能理解的文本
-                if (msg.type === 'user_photo') {
+                        if (msg.type === 'user_photo') {
                     content = `[用户发送了一张照片，描述是：'${msg.content}']`;
                 } else if (msg.type === 'location') {
                     // 处理位置消息，使用我们添加的content字段
                     content = msg.content || `[用户分享了位置信息：${msg.locationName}]`;
-                } else if (msg.type === 'voice_message') {
-                    content = `[用户发来一条语音消息，内容是：'${msg.content}']`;
-                } else if (msg.type === 'transfer') {
+                        } else if (msg.type === 'voice_message') {
+                            content = `[用户发来一条语音消息，内容是：'${msg.content}']`;
+                        } else if (msg.type === 'transfer') {
                     content = `[用户发起了转账：${msg.amount}元，备注：${msg.note || '无'}]`;
                 } else if (Array.isArray(msg.content)) {
                     const textPart = msg.content.find(p => p.type === 'text')?.text || '';
                     content = `[用户发送了一张图片和文字：'${textPart}']`;
-                } else if (msg.image) {
-                     content = `[用户发送了一张图片]`;
+                        } else if (msg.image) {
+                                content = `[用户发送了一张图片]`;
                 }
                 
                 messages.push({ role, content });
@@ -9989,7 +9989,7 @@ ${character.bio}
             let requestBody;
             let url;
             let headers;
-
+            
             if (isGemini) {
                 // Gemini API 格式
                 url = `${apiSettings.base}/models/${apiSettings.model}:generateContent?key=${apiSettings.key}`;
@@ -10009,9 +10009,9 @@ ${character.bio}
                                 if (mimeMatch && mimeMatch[2] && mimeMatch[2].length > 0) {
                                     parts.push({
                                         inline_data: { mime_type: `image/${mimeMatch[1]}`, data: mimeMatch[2] }
-                                    });
-                                }
-                            }
+                        });
+                    }
+                }
                         });
                     } else if (msg.content) {
                         parts.push({ text: msg.content });
@@ -10023,7 +10023,7 @@ ${character.bio}
                     }
                     return { role, parts };
                 });
-
+                
                 requestBody = {
                     contents: geminiContents,
                     generationConfig: {
@@ -10044,19 +10044,19 @@ ${character.bio}
                     messages: messages,
                     temperature: apiSettings.temperature
                 };
-            }
-
+        }
+            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify(requestBody)
             });
-
+            
             if (!response.ok) {
-                const errorData = await response.json();
+                    const errorData = await response.json();
                 throw new Error(`API Error: ${response.status} - ${errorData.error?.message || '未知错误'}`);
             }
-
+            
             const data = await response.json();
             return isGemini ? data.candidates?.[0]?.content?.parts?.[0]?.text : data.choices?.[0]?.message?.content;
         }
@@ -13390,7 +13390,7 @@ async function createGroupChat(personaId) {
                         { type: 'image_url', image_url: { url: userMessage.image } }
                     ];
                     response = await callChatAPI(messageContent, currentChatCharacter);
-                } else {
+                    } else {
                     // 普通文本消息
                     response = await callChatAPI(userMessage.content, currentChatCharacter);
                 }
@@ -13767,14 +13767,14 @@ async function createGroupChat(personaId) {
                             };
                         } else {
                             // 对于普通的文本消息
-                            aiMessage = {
-                                id: (Date.now() + i).toString(),
-                                sender: 'received',
-                                name: msgData.name,          // 保存发言者名字
-                                senderId: senderId,          // 保存发言者ID
-                                content: msgData.message,    // 使用message字段作为内容
-                                timestamp: Date.now() + i * 100
-                            };
+                        aiMessage = { 
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            name: msgData.name,          // 保存发言者名字
+                            senderId: senderId,          // 保存发言者ID
+                            content: msgData.message,    // 使用message字段作为内容
+                            timestamp: Date.now() + i * 100
+                        };
                         }
                         // --- 修复结束 ---
                         console.log('✅ [修复continuation] 群聊消息已正确解析:', aiMessage);
@@ -13899,7 +13899,7 @@ async function createGroupChat(personaId) {
                         { type: 'image_url', image_url: { url: pendingUserMessage.image } }
                     ];
                     response = await callChatAPI(messageContent, currentChatCharacter);
-                } else {
+                        } else {
                     // 普通文本消息、位置消息、语音消息等
                     response = await callChatAPI(pendingUserMessage.content, currentChatCharacter);
                 }
@@ -17533,7 +17533,7 @@ async function createGroupChat(personaId) {
     
     if (message.type === 'voice_message' || message.type === 'transfer') {
         // 🔥【修复】对于语音消息和转账消息，昵称需要在容器外部
-        messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
+    messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
     } else {
         // 普通消息的处理
         messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
@@ -17572,7 +17572,7 @@ async function createGroupChat(personaId) {
                         const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
                         messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${voiceMessageHTML}</div>`;
                     } else {
-                        messageContainer.innerHTML = avatarHtml + voiceMessageHTML;
+                    messageContainer.innerHTML = avatarHtml + voiceMessageHTML;
                     }
                 }
             } else {
