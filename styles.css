@@ -8530,6 +8530,7 @@
 .message-container {
     display: flex;
     align-items: flex-start !important;
+    width: 100%; /* 确保消息容器占满可用宽度 */
 }
 
 .message-avatar {
@@ -8537,11 +8538,22 @@
     flex-shrink: 0;
 }
 
+/* 为发送的消息添加右对齐 */
+.message-container.sent {
+    justify-content: flex-end;
+}
+
+.message-container.sent .bubble-wrapper {
+    align-items: flex-end;
+}
+
 .bubble-wrapper {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     min-width: 0;
+    max-width: 65%; /* 确保bubble-wrapper也有65%的最大宽度限制 */
+    width: 100%; /* 让wrapper能够充分利用可用空间 */
 }
 
 .sender-name {
