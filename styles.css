@@ -948,11 +948,18 @@
         }
         
         .worldbook-desc-text {
-            font-size: var(--font-size-md);
-            color: var(--color-gray);
-            line-height: var(--line-height-normal);
-            margin-bottom: var(--spacing-sm);
-        }
+    font-size: var(--font-size-md);
+    color: var(--color-gray);
+    line-height: var(--line-height-normal);
+    margin-bottom: var(--spacing-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    max-height: 4.2em;
+}
         
         .worldbook-date-text {
             font-size: var(--font-size-xs);
@@ -1612,6 +1619,11 @@
             flex: 1;
             padding: 15px;
             overflow-y: auto;
+        }
+
+        /* 世界书应用特殊处理：移除内边距 */
+        #worldbook-screen .app-content {
+            padding: 0;
         }
         
         /* 设置应用样式 */
@@ -8554,4 +8566,70 @@
 .message-container.group-message-item .message-avatar {
     /* 16px 大约是昵称的高度 (12px * 1.2 行高 + 2px margin) */
     margin-top: 16px; 
+}
+/* --- 世界书新布局样式 (美化版) --- */
+.worldbook-content-pane {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.worldbook-tabs {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0; /* 与chat-tabs一致 */
+    border-top: 1px solid var(--color-border-light);
+    background-color: var(--color-gray-bg-light); /* 与chat-tabs一致 */
+    flex-shrink: 0;
+}
+
+.worldbook-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--color-text-light); /* 与chat-tab一致 */
+    font-size: 12px; /* 与chat-tab一致 */
+    cursor: pointer;
+}
+
+.worldbook-tab.active {
+    color: var(--color-primary-green);
+}
+
+.worldbook-tab i {
+    font-size: 24px;
+    margin-bottom: 3px;
+}
+
+.worldbook-section {
+    padding: 0;
+    margin-top: 0; /* 移除上边距，让内容贴着顶部 */
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 0 15px; /* 为标题添加左右内边距 */
+}
+
+/* 为世界书项目添加适当的内边距 */
+.worldbook-item {
+    padding: 15px; /* 确保世界书项目有内边距 */
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+}
+
+.worldbook-item:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #007AFF;
+    font-size: 16px;
+    padding: 5px 8px;
+    margin-left: 8px;
 }

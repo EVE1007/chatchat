@@ -13,7 +13,7 @@
     <div id="phone-frame">
     <div id="phone-screen">
         <div class="wallpaper" id="wallpaper-element">
-            <!-- 状态栏 -->
+            <!-- 主屏幕状态栏 -->
             <div id="status-bar">
                 <span id="status-bar-time">14:25</span>
                 <div id="status-bar-battery" class="battery-container">
@@ -23,11 +23,48 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- 时钟容器 -->
             <div id="clock-container">
                 <div id="main-time">14:25</div>
                 <div id="main-date">12月18日 星期一</div>
+            </div>
+            
+            <div id="worldbook-screen" class="app-screen">
+                <div class="app-status-bar">
+                    <div class="app-status-time"></div>
+                    <div class="app-battery-container">
+                        <span class="battery-text">ᰔᩚ</span>
+                        <div class="app-battery-icon">
+                            <div class="app-battery-level"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="app-header">
+                    <button class="back-button" onclick="hideApp('worldbook-screen')">‹</button>
+                    <div class="app-title">世界书</div>
+                    <div class="add-worldbook-btn worldbook-add-btn" onclick="onWorldbookAddClick()">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                </div>
+
+                <div class="app-content">
+                    <div id="global-worldbooks-content" class="worldbook-content-pane">
+                        </div>
+                    <div id="local-worldbooks-content" class="worldbook-content-pane" style="display: none;">
+                        </div>
+                </div>
+
+                <div class="worldbook-tabs">
+                    <div class="worldbook-tab active" onclick="switchWorldbookTab('global')">
+                        <i class="fas fa-globe-asia"></i>
+                        <span>全局设定</span>
+                    </div>
+                    <div class="worldbook-tab" onclick="switchWorldbookTab('local')">
+                        <i class="fas fa-comment-dots"></i>
+                        <span>局部设定</span>
+                    </div>
+                </div>
             </div>
                 
                 <!-- 应用图标 -->
@@ -39,7 +76,7 @@
                             </div>
                             <span>Chat</span>
                         </a>
-                        <a href="#" class="app" onclick="showApp('worldbook-screen')">
+                        <a href="#" class="app" onclick="showApp('worldbook-screen'); switchWorldbookTab('global');">
                             <div class="app-icon">
                                 <img src="https://i.postimg.cc/Xqz3zPz7/IMG-3080.jpg" alt="世界书" class="app-icon-img">
                             </div>
@@ -295,31 +332,6 @@
                     </div>
                 </div>
                 
-                <!-- 世界书界面 -->
-                <div id="worldbook-screen" class="app-screen">
-                    <div class="app-status-bar">
-                        <div class="app-status-time"></div>
-                        <div class="app-battery-container">
-                            <span class="battery-text">ᰔᩚ</span>
-                            <div class="app-battery-icon">
-                                <div class="app-battery-level"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="app-header">
-                        <button class="back-button" onclick="hideApp('worldbook-screen')">‹</button>
-                        <div class="app-title">世界书</div>
-                        <div class="add-worldbook-btn worldbook-add-btn" onclick="showWorldbookForm()">
-                            <i class="fas fa-plus"></i>
-                        </div>
-                    </div>
-                    <div class="app-content">
-                        <div class="worldbook-list" id="worldbook-list">
-                            <!-- 世界书列表将通过JS动态生成 -->
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- 世界书编辑表单 -->
                 <div id="worldbook-form-screen" class="app-screen">
                     <div class="app-status-bar">
@@ -340,11 +352,11 @@
                         <div class="worldbook-form">
                             <div class="form-group">
                                 <label class="form-label">标题</label>
-                                <input type="text" class="form-input" id="worldbook-title" placeholder="输入世界书标题">
+                                <input type="text" id="worldbook-title" class="form-input" placeholder="请输入世界书标题">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">内容</label>
-                                <textarea class="form-textarea textarea-large" id="worldbook-content" placeholder="输入世界书内容..."></textarea>
+                                <textarea id="worldbook-content" class="form-textarea textarea-large" placeholder="请输入世界书内容，这里可以描述角色背景、世界观设定等..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -2657,6 +2669,7 @@
     <script>
         // 初始化Dexie数据库
         const db = new Dexie('PhoneChatDB');
+        let activeGlobalWorldbooks = []; // 用于存储当前激活的全局世界书ID
         
         // 版本1：原始表结构
         db.version(1).stores({
@@ -2695,14 +2708,14 @@
         });
 
         // 版本3：添加最近使用表情包表
-        db.version(3).stores({
+        db.version(4).stores({
             characters: '&id, name',
             contacts: '&id, characterId', 
             chatMessages: '&id, characterId, timestamp',
             apiSettings: '&id',
             customEmojis: '&id, description',
             wallpapers: '&id, type',
-            worldbooks: '&id, name',
+            worldbooks: '&id, name, isGlobal',
             groupChats: '&id, name',
             personas: '&id, name',
             globalSettings: '&id',
@@ -2732,6 +2745,7 @@
         let currentEditingCharacterId = null; // 当前正在编辑的角色ID
         let groupChats = []; // 群聊列表
         let selectedGroupMembers = []; // 群聊成员选择
+        let currentWorldbookTab = 'global';
         
         // 自定义表情包相关变量
         let customEmojis = []; // 用户上传的表情包
@@ -2791,6 +2805,10 @@
                 loadApiSettings(),
                 loadCustomEmojis()
             ]);
+            const globalSettings = await db.globalSettings.get('main');
+            if (globalSettings && globalSettings.activeGlobalWorldbooks) {
+                activeGlobalWorldbooks = globalSettings.activeGlobalWorldbooks;
+            }
             
             // 加载外观设置
             loadPhoneBorderSetting();
@@ -2966,6 +2984,12 @@
                 app.style.display = 'none';
             });
             
+            // 隐藏主屏幕组件
+            const clockContainer = document.getElementById('clock-container');
+            const appGrid = document.getElementById('app-grid');
+            if (clockContainer) clockContainer.style.display = 'none';
+            if (appGrid) appGrid.style.display = 'none';
+            
             // 显示目标界面
             document.getElementById(appId).style.display = 'flex';
             
@@ -3000,6 +3024,20 @@
         
         function hideApp(appId) {
             document.getElementById(appId).style.display = 'none';
+            
+            // 检查是否所有应用都已隐藏，如果是，显示主屏幕组件
+            const allApps = document.querySelectorAll('.app-screen');
+            const hasVisibleApp = Array.from(allApps).some(app => 
+                app.style.display === 'flex' || app.style.display === 'block'
+            );
+            
+            if (!hasVisibleApp) {
+                // 显示主屏幕组件
+                const clockContainer = document.getElementById('clock-container');
+                const appGrid = document.getElementById('app-grid');
+                if (clockContainer) clockContainer.style.display = 'block';
+                if (appGrid) appGrid.style.display = 'flex';
+            }
         }
         
         // 显示/隐藏模态框
@@ -8049,15 +8087,25 @@ ${chatContext}${momentsContext}
         
         // 电池管理功能
         async function initBatteryManager() {
+            console.log('开始初始化电池管理器...');
+            
             // 首先设置默认显示为 ᰔᩚ
             const allBatteryTexts = document.querySelectorAll('.battery-text');
-            allBatteryTexts.forEach(element => {
+            console.log('找到的电池文本元素数量:', allBatteryTexts.length);
+            
+            allBatteryTexts.forEach((element, index) => {
+                console.log(`设置电池文本 ${index}:`, element);
                 element.textContent = 'ᰔᩚ';
             });
             
             if ('getBattery' in navigator) {
                 try {
+                    console.log('浏览器支持电池API，正在获取电池信息...');
                     const battery = await navigator.getBattery();
+                    console.log('电池信息:', {
+                        level: battery.level,
+                        charging: battery.charging
+                    });
                     updateBatteryDisplay(battery);
                     
                     battery.addEventListener('levelchange', () => updateBatteryDisplay(battery));
@@ -8082,15 +8130,22 @@ ${chatContext}${momentsContext}
             const level = Math.floor(battery.level * 100);
             const isCharging = battery.charging;
             
+            console.log(`更新电池显示: ${level}%, 充电中: ${isCharging}`);
+            
             // 更新主状态栏电池
             const batteryContainer = document.getElementById('status-bar-battery');
+            console.log('主状态栏电池容器:', batteryContainer);
+            
             if (batteryContainer) {
                 const batteryLevelEl = batteryContainer.querySelector('.battery-level');
                 const batteryTextEl = batteryContainer.querySelector('.battery-text');
                 
+                console.log('电池元素:', { batteryLevelEl, batteryTextEl });
+                
                 if (batteryLevelEl && batteryTextEl) {
                     batteryLevelEl.style.width = `${level}%`;
                     batteryTextEl.textContent = `${level}%`;
+                    console.log(`设置主屏幕电池文本为: ${level}%`);
                     
                     if (isCharging) {
                         batteryContainer.classList.add('charging');
@@ -8122,6 +8177,47 @@ ${chatContext}${momentsContext}
                     container.classList.remove('charging');
                 }
             });
+        }
+        
+        // 手动测试电池显示功能 - 您可以在浏览器控制台中调用这个函数
+        function testBatteryDisplay() {
+            console.log('=== 电池显示测试开始 ===');
+            
+            // 检查电池文本元素
+            const allBatteryTexts = document.querySelectorAll('.battery-text');
+            console.log('所有电池文本元素:', allBatteryTexts);
+            
+            allBatteryTexts.forEach((element, index) => {
+                console.log(`电池文本 ${index}:`, element, '当前内容:', element.textContent);
+            });
+            
+            // 检查主屏幕电池容器
+            const mainBattery = document.getElementById('status-bar-battery');
+            console.log('主屏幕电池容器:', mainBattery);
+            
+            if (mainBattery) {
+                const batteryText = mainBattery.querySelector('.battery-text');
+                console.log('主屏幕电池文本元素:', batteryText);
+                console.log('主屏幕电池文本内容:', batteryText ? batteryText.textContent : 'null');
+            }
+            
+            // 测试设置为百分比
+            console.log('测试设置为77%...');
+            allBatteryTexts.forEach((element, index) => {
+                element.textContent = '77%';
+                console.log(`电池文本 ${index} 设置为 77%`);
+            });
+            
+            // 3秒后恢复为爱心
+            setTimeout(() => {
+                console.log('恢复为爱心符号...');
+                allBatteryTexts.forEach((element, index) => {
+                    element.textContent = 'ᰔᩚ';
+                    console.log(`电池文本 ${index} 恢复为 ᰔᩚ`);
+                });
+            }, 3000);
+            
+            console.log('=== 电池显示测试结束 ===');
         }
         
         // 主题切换功能
@@ -8240,65 +8336,103 @@ ${chatContext}${momentsContext}
             }
         }
         
-        function showWorldbookForm() {
-            editingWorldbook = null;
-            document.getElementById('worldbook-form-title').textContent = '新建世界书';
-            document.getElementById('worldbook-title').value = '';
-            document.getElementById('worldbook-content').value = '';
-            showApp('worldbook-form-screen');
-        }
+        function showWorldbookForm(isGlobal) {
+    // 根据传入的类型（全局/局部）来决定表单标题
+    const title = isGlobal ? '新建全局设定' : '新建局部设定';
+    document.getElementById('worldbook-form-title').textContent = title;
+
+    editingWorldbook = null; // 清除编辑状态
+    document.getElementById('worldbook-title').value = '';
+    document.getElementById('worldbook-content').value = '';
+
+    // 将创建类型暂存起来，以便保存时使用
+    window.newWorldbookIsGlobal = isGlobal;
+
+    showApp('worldbook-form-screen');
+}
         
         function hideWorldbookForm() {
             hideApp('worldbook-form-screen');
+            // 确保返回到世界书应用，而不是主屏幕
+            showApp('worldbook-screen');
         }
         
         async function saveWorldbook() {
-            const title = document.getElementById('worldbook-title').value.trim();
-            const content = document.getElementById('worldbook-content').value.trim();
-            
-            if (!title) {
-                alert('请输入世界书标题');
-                return;
-            }
-            
-            if (!content) {
-                alert('请输入世界书内容');
-                return;
-            }
-            
-            const worldbook = {
-                id: editingWorldbook ? editingWorldbook.id : Date.now().toString(),
-                title: title,
-                content: content,
-                createdAt: editingWorldbook ? editingWorldbook.createdAt : new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            
-            if (editingWorldbook) {
-                const index = worldbooks.findIndex(w => w.id === editingWorldbook.id);
-                if (index !== -1) {
-                    worldbooks[index] = worldbook;
-                }
-            } else {
-                worldbooks.push(worldbook);
-            }
-            
-            await saveWorldbooks();
-            renderWorldbookList();
-            showToast(editingWorldbook ? '世界书已更新！' : '世界书已创建！', 'success');
-            hideWorldbookForm();
+    const title = document.getElementById('worldbook-title').value.trim();
+    const content = document.getElementById('worldbook-content').value.trim();
+
+    if (!title || !content) {
+        alert('请输入标题和内容');
+        return;
+    }
+    
+    let isGlobal;
+    if (editingWorldbook) {
+        // 如果是编辑模式，保持其原有的类型不变
+        isGlobal = editingWorldbook.isGlobal;
+    } else {
+        // 如果是新建模式，读取我们暂存的类型
+        isGlobal = window.newWorldbookIsGlobal;
+    }
+
+    const worldbook = {
+        id: editingWorldbook ? editingWorldbook.id : Date.now().toString(),
+        title: title,
+        content: content,
+        isGlobal: isGlobal, // 根据正确的状态设置
+        createdAt: editingWorldbook ? editingWorldbook.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+    if (editingWorldbook) {
+        const index = worldbooks.findIndex(w => w.id === editingWorldbook.id);
+        if (index !== -1) worldbooks[index] = worldbook;
+    } else {
+        worldbooks.push(worldbook);
+    }
+    
+    await saveWorldbooks();
+    renderWorldbookList();
+    showToast(editingWorldbook ? '世界书已更新！' : '世界书已创建！', 'success');
+    hideWorldbookForm();
+}
+// --- 新增函数 ---
+async function toggleGlobalWorldbook(bookId, isEnabled) {
+    if (isEnabled) {
+        // 如果开启，添加到激活列表（如果不存在）
+        if (!activeGlobalWorldbooks.includes(bookId)) {
+            activeGlobalWorldbooks.push(bookId);
         }
+    } else {
+        // 如果关闭，从激活列表中移除
+        activeGlobalWorldbooks = activeGlobalWorldbooks.filter(id => id !== bookId);
+    }
+    
+    // 保存激活状态到数据库的 globalSettings 表
+    try {
+        await db.globalSettings.put({
+            id: 'main',
+            activeGlobalWorldbooks: activeGlobalWorldbooks
+        });
+        showToast('全局设定已更新', 'success');
+    } catch (error) {
+        console.error("保存全局世界书设置失败:", error);
+        showToast('设置保存失败', 'error');
+    }
+}
         
-        function editWorldbook(id) {
-            const worldbook = worldbooks.find(w => w.id === id);
-            if (worldbook) {
-                editingWorldbook = worldbook;
-                document.getElementById('worldbook-form-title').textContent = '编辑世界书';
-                document.getElementById('worldbook-title').value = worldbook.title;
-                document.getElementById('worldbook-content').value = worldbook.content;
-                showApp('worldbook-form-screen');
-            }
-        }
+function editWorldbook(id) {
+    const worldbook = worldbooks.find(w => w.id === id);
+    if (worldbook) {
+        editingWorldbook = worldbook;
+        // 编辑时不显示“新建”，而是“编辑”
+        const title = worldbook.isGlobal ? '编辑全局设定' : '编辑局部设定';
+        document.getElementById('worldbook-form-title').textContent = title;
+        document.getElementById('worldbook-title').value = worldbook.title;
+        document.getElementById('worldbook-content').value = worldbook.content;
+        showApp('worldbook-form-screen');
+    }
+}
         
         async function deleteWorldbook(id) {
             if (confirm('确定要删除这个世界书吗？')) {
@@ -8308,37 +8442,108 @@ ${chatContext}${momentsContext}
             }
         }
         
-        function renderWorldbookList() {
-            const listContainer = document.getElementById('worldbook-list');
-            if (!listContainer) return;
-            
-            if (worldbooks.length === 0) {
-                listContainer.innerHTML = '<div class="empty-worldbook">还没有世界书，点击右上角+号创建一个吧！</div>';
-                return;
-            }
-            
-            const html = worldbooks.map(worldbook => {
-                const date = new Date(worldbook.updatedAt).toLocaleDateString();
-                const preview = worldbook.content.substring(0, 100) + (worldbook.content.length > 100 ? '...' : '');
-                
-                return `
-                    <div class="worldbook-item">
-                        <div class="worldbook-header">
-                            <div class="worldbook-content-flex" onclick="editWorldbook('${worldbook.id}')">
-                                <div class="worldbook-title">${worldbook.title}</div>
-                                <div class="worldbook-desc-text">${preview}</div>
-                                <div class="worldbook-date-text">更新于 ${date}</div>
-                            </div>
-                            <button onclick="deleteWorldbook('${worldbook.id}')" class="delete-worldbook-btn">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+// 用这段新代码，完整替换掉旧的 renderWorldbookList 函数
+function renderWorldbookList() {
+    const globalContainer = document.getElementById('global-worldbooks-content');
+    const localContainer = document.getElementById('local-worldbooks-content');
+    if (!globalContainer || !localContainer) return;
+
+    const globalBooks = worldbooks.filter(w => w.isGlobal);
+    const localBooks = worldbooks.filter(w => !w.isGlobal);
+
+    let globalHtml = '';
+    let localHtml = '';
+
+    // --- 渲染全局世界书 ---
+    globalHtml += `
+        <div class="worldbook-section">
+
+    `;
+    if (globalBooks.length > 0) {
+        globalBooks.forEach(book => {
+            const isChecked = window.activeGlobalWorldbooks && window.activeGlobalWorldbooks.includes(book.id) ? 'checked' : '';
+                        globalHtml += `
+                <div class="setting-item" onclick="editWorldbook('${book.id}')">
+                    <div class="setting-left">
+                        <div class="setting-label">${book.title}</div>
+                        <div class="setting-desc">${truncateText(book.content, 60)}</div>
                     </div>
-                `;
-            }).join('');
-            
-            listContainer.innerHTML = html;
+                    <div class="setting-right">
+                        <label class="toggle-switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" onchange="toggleGlobalWorldbook('${book.id}', this.checked)" ${isChecked}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        globalHtml += '<div class="empty-message">暂无全局设定</div>';
+    }
+    globalHtml += '</div>';
+
+    // --- 渲染局部世界书 ---
+    localHtml += `
+        <div class="worldbook-section">
+
+    `;
+    if (localBooks.length > 0) {
+        localBooks.forEach(book => {
+            const date = new Date(book.updatedAt).toLocaleDateString();
+            const preview = truncateText(book.content, 60);
+            localHtml += `
+                <div class="worldbook-item" onclick="editWorldbook('${book.id}')">
+                    <div class="worldbook-header">
+                        <div class="worldbook-content-flex">
+                            <div class="worldbook-title">${book.title}</div>
+                            <div class="worldbook-desc-text">${preview}</div>
+                            <div class="worldbook-date-text">更新于 ${date}</div>
+                        </div>
+                        <button onclick="event.stopPropagation(); deleteWorldbook('${book.id}')" class="delete-worldbook-btn">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        localHtml += '<div class="empty-message">暂无局部设定</div>';
+    }
+    localHtml += '</div>';
+
+    globalContainer.innerHTML = globalHtml;
+    localContainer.innerHTML = localHtml;
+}
+function switchWorldbookTab(tabName) {
+    currentWorldbookTab = tabName; // <--- 核心修改：记录当前标签页
+
+    const globalContent = document.getElementById('global-worldbooks-content');
+    const localContent = document.getElementById('local-worldbooks-content');
+    const tabs = document.querySelectorAll('.worldbook-tab');
+
+    tabs.forEach(tab => {
+        if (tab.getAttribute('onclick').includes(tabName)) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
         }
+    });
+
+    if (tabName === 'global') {
+        globalContent.style.display = 'block';
+        localContent.style.display = 'none';
+    } else {
+        globalContent.style.display = 'none';
+        localContent.style.display = 'block';
+    }
+}
+function onWorldbookAddClick() {
+    if (currentWorldbookTab === 'global') {
+        showWorldbookForm(true); // 创建全局设定
+    } else {
+        showWorldbookForm(false); // 创建局部设定
+    }
+}
         
         // 音乐应用相关功能
         let playlist = [];
@@ -8997,17 +9202,17 @@ ${character.bio}
         characterPrompt += `\n- **任务:** 根据对话上下文，以你的角色身份进行自然回应。`;
     }
 
-    // --- 保留您原有的所有功能逻辑 ---
-    // (这部分代码与您原文件一致，无需担心功能丢失)
-    if (chatSettings.worldbookMountEnabled && chatSettings.selectedWorldbooks && chatSettings.selectedWorldbooks.length > 0) {
-        characterPrompt += `\n\n【当前场景/世界观】以下是相关的世界设定信息：\n`;
-        chatSettings.selectedWorldbooks.forEach(worldbookId => {
-            const worldbook = worldbooks.find(w => w.id === worldbookId);
+    const localBookIds = chatSettings.selectedWorldbooks || [];
+    const allBookIds = [...new Set([...activeGlobalWorldbooks, ...localBookIds])]; // 合并并去重
+
+    if (allBookIds.length > 0) {
+        characterPrompt += `\n\n【背景知识/世界观】以下是相关的设定信息，请在对话中自然地运用：\n`;
+        allBookIds.forEach(bookId => {
+            const worldbook = worldbooks.find(w => w.id === bookId);
             if (worldbook) {
-                characterPrompt += `\n《${worldbook.title}》：\n${worldbook.content}\n`;
+                characterPrompt += `\n--- ${worldbook.title} ---\n${worldbook.content}\n`;
             }
         });
-        characterPrompt += `\n请不要生硬地引用世界观、世界设定，要自然地融入到角色的回复和行动中。`;
     }
 
     const chatMode = chatSettings.chatMode || 'online';
