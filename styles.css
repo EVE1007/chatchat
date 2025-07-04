@@ -305,6 +305,29 @@
             font-size: var(--font-size-xxl);
             color: var(--color-gray-dark);
         }
+
+        .header-action-btn {
+            position: absolute;
+            right: 60px; /* 在加号按钮左边 */
+            top: 41px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            color: #666;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .header-action-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+            transform: scale(1.05);
+        }
         
         .hide {
             display: none;
@@ -407,17 +430,7 @@
             background: linear-gradient(135deg, #ffe6f0, #ffb6c1);
         }
         
-        .theme-preview-nature {
-            background: linear-gradient(135deg, #c8e6c9, #a5d6a7);
-        }
-        
-        .theme-preview-tech {
-            background: linear-gradient(135deg, #b3e5fc, #81d4fa);
-        }
-        
-        .theme-preview-dream {
-            background: linear-gradient(135deg, #e1bee7, #ce93d8);
-        }
+
         
         .check-icon {
             color: var(--color-blue);
@@ -1612,6 +1625,35 @@
             align-items: center;
             justify-content: center;
         }
+
+        /* 角色卡导入导出按钮样式 */
+        .import-character-btn,
+        .export-character-btn {
+            position: absolute;
+            right: 20px;
+            top: 39.5px;
+            width: 30px;
+            height: 30px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #000000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 完全移除导入导出按钮的所有效果 */
+        .import-character-btn:hover,
+        .export-character-btn:hover,
+        .import-character-btn:active,
+        .export-character-btn:active {
+            transform: none !important;
+            background: none !important;
+            box-shadow: none !important;
+            scale: none !important;
+        }
         
 
         
@@ -1623,8 +1665,114 @@
 
         /* 世界书应用特殊处理：移除内边距 */
         #worldbook-screen .app-content {
-            padding: 0;
-        }
+    padding: 0;
+}
+
+/* 世界书分类选择器样式 */
+.worldbook-category-selector {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.category-selector-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 300px;
+    width: 90%;
+    max-height: 70%;
+    display: flex;
+    flex-direction: column;
+}
+
+.category-selector-title {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.category-options {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+.category-option {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.category-option:hover {
+    background-color: #f8f9fa;
+}
+
+.category-option:last-child {
+    border-bottom: none;
+}
+
+.category-name {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.category-count {
+    font-size: 12px;
+    color: #666;
+}
+
+.empty-category-message {
+    padding: 40px 20px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.category-selector-actions {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: center;
+}
+
+.category-cancel-btn {
+    padding: 8px 24px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    color: #666;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.category-cancel-btn:hover {
+    background: #e9ecef;
+    border-color: #ccc;
+}
+
+/* 世界书来源标识样式 */
+.worldbook-source-text {
+    font-size: 11px;
+    color: #007AFF;
+    margin-top: 2px;
+    background: rgba(0, 122, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+}
         
         /* 设置应用样式 */
         .settings-item {
@@ -3318,27 +3466,53 @@
         .chat-tabs {
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
+            padding: 12px 0 8px 0;
             border-top: 1px solid var(--color-border-light);
-            background-color: var(--color-gray-bg-light);
+            background: linear-gradient(180deg, rgba(248, 249, 250, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
         
         .chat-tab {
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: var(--color-text-light);
-            font-size: 12px;
+            color: #8E8E93;
+            font-size: 11px;
             cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 12px;
+            position: relative;
+            min-width: 50px;
         }
         
         .chat-tab.active {
-            color: var(--color-primary-green);
+            color: rgb(74, 132, 193);
+        }
+        
+        /* 可爱主题下的激活颜色 */
+        body[data-theme="cute"] .chat-tab.active {
+            color: #FF69B4;
         }
         
         .chat-tab i {
-            font-size: 24px;
-            margin-bottom: 3px;
+            font-size: 22px;
+            margin-bottom: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-tab:hover {
+            transform: translateY(-2px);
+        }
+        
+        .chat-tab:hover i {
+            transform: scale(1.1);
+        }
+        
+        .chat-tab span {
+            font-weight: 500;
+            letter-spacing: 0.3px;
         }
         
         /* 消息列表 */
@@ -3412,7 +3586,11 @@
             padding: 10px 15px;
             border-bottom: 1px solid var(--color-border-light);
             cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
         }
+
+
         
         .contact-info {
             flex: 1;
@@ -5361,6 +5539,7 @@
             border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
             transition: background-color 0.2s ease;
+            position: relative;
         }
         
         .chat-option-item:hover {
@@ -5369,6 +5548,604 @@
         
         .chat-option-item:last-child {
             border-bottom: none;
+        }
+        
+        /* 已存在对话的角色样式 */
+        .chat-option-item.has-existing-chat {
+            background-color: #fff8e1;
+            border-left: 3px solid #ff9800;
+        }
+        
+        .chat-option-item.has-existing-chat:hover {
+            background-color: #fff3c4;
+        }
+        
+        /* 已有对话标记 */
+        .chat-exists-badge {
+            background-color: #ff9800;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        /* === 分组样式 === */
+
+        .group-header {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e6f0ff 100%);
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0, 122, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 122, 255, 0.08);
+        }
+
+        .group-header::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #007AFF, #5AC8FA);
+            border-radius: 0 2px 2px 0;
+        }
+
+
+
+
+
+        .group-title-area {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            flex: 1;
+            padding: 2px 0;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+
+
+        .group-chevron {
+            margin-right: 10px;
+            color: #007AFF;
+            font-size: 11px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .group-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: #1a1a1a;
+            margin-right: 8px;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+        }
+
+
+
+        .group-count {
+            font-size: 11px;
+            color: #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 500;
+            margin-left: auto;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .group-interaction-icon {
+            color: #FF6B35;
+            font-size: 12px;
+            margin-left: 6px;
+        }
+
+        .group-manage-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .edit-group-btn, .delete-group-btn {
+            background: rgba(108, 117, 125, 0.1);
+            border: none;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #6C757D;
+            transition: all 0.3s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .edit-group-btn:hover {
+            background: rgba(0, 123, 255, 0.15);
+            color: #007AFF;
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+        }
+
+        .delete-group-btn:hover {
+            background: rgba(255, 59, 48, 0.15);
+            color: #FF3B30;
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(255, 59, 48, 0.2);
+        }
+
+        .group-characters {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+        }
+
+
+
+        .group-manage-header, .multiselect-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--color-border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .multiselect-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .multiselect-icon {
+            color: #007AFF;
+            font-size: 16px;
+        }
+
+        .multiselect-text {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .multiselect-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .multiselect-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 60px;
+            justify-content: center;
+        }
+
+        .multiselect-btn i {
+            font-size: 11px;
+        }
+
+        .multiselect-btn span {
+            font-size: 12px;
+        }
+
+        .move-btn {
+            background: #007AFF;
+            color: white;
+        }
+
+        .move-btn:hover {
+            background: #0056CC;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+        }
+
+        .delete-btn {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #D12B20;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(255, 59, 48, 0.3);
+        }
+
+        .cancel-btn {
+            background: #6C757D;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #545B62;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(108, 117, 125, 0.3);
+        }
+
+        .group-manage-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .group-manage-icon {
+            color: #6C757D;
+            font-size: 16px;
+        }
+
+        .group-manage-text {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .group-manage-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .create-btn {
+            background: #28A745;
+            color: white;
+        }
+
+        .create-btn:hover {
+            background: #1E7E34;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+        }
+
+        .done-btn {
+            background: #007AFF;
+            color: white;
+        }
+
+        .done-btn:hover {
+            background: #0056CC;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+        }
+
+        /* 小屏幕适配 */
+        @media (max-width: 480px) {
+            .multiselect-header, .group-manage-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+
+            .multiselect-actions, .group-manage-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .multiselect-btn {
+                flex: 1;
+                min-width: 80px;
+                max-width: 100px;
+            }
+
+            .multiselect-text, .group-manage-text {
+                font-size: 13px;
+            }
+        }
+
+        .move-group-btn, .create-group-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .move-group-btn:hover, .create-group-btn:hover {
+            background: #e0e0e0;
+            border-color: #ccc;
+        }
+
+        .move-character-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+
+        .move-character-btn:hover {
+            background: rgba(0, 123, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .move-character-btn i {
+            color: #007AFF;
+            font-size: 12px;
+        }
+
+        .empty-group-message {
+            padding: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+            background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
+            border: 1px dashed #ddd;
+            border-radius: 8px;
+            margin: 10px;
+            position: relative;
+        }
+
+        .empty-group-message::before {
+            content: '📝';
+            display: block;
+            font-size: 24px;
+            margin-bottom: 8px;
+            opacity: 0.6;
+        }
+
+        /* 梦幻照片样式 */
+        .dreamy-photo-container {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            max-width: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .dreamy-photo {
+            position: relative;
+            width: 200px;
+            height: 150px;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dreamy-photo:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .photo-misty-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.9) 0%, 
+                rgba(240, 248, 255, 0.8) 30%, 
+                rgba(230, 235, 250, 0.7) 60%, 
+                rgba(255, 255, 255, 0.9) 100%);
+            backdrop-filter: blur(2px);
+        }
+        
+        .photo-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            backdrop-filter: none;
+            border-radius: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+            transition: all 0.3s ease;
+            box-shadow: none;
+        }
+        
+        .photo-badge i {
+            font-size: 12px;
+            color: #666;
+            opacity: 0.7;
+        }
+        
+        .dreamy-photo:hover .photo-badge {
+            background: transparent;
+            transform: scale(1.1);
+        }
+        
+        .dreamy-photo:hover .photo-badge i {
+            opacity: 1;
+            color: #555;
+        }
+        
+        .sparkle-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 2;
+            transition: opacity 0.3s ease;
+        }
+        
+        .sparkle {
+            position: absolute;
+            font-size: 14px;
+            opacity: 0.6;
+        }
+        
+        .sparkle-1 {
+            top: 20%;
+            left: 25%;
+        }
+        
+        .sparkle-2 {
+            top: 30%;
+            right: 20%;
+        }
+        
+        .sparkle-3 {
+            bottom: 35%;
+            left: 15%;
+        }
+        
+        .sparkle-4 {
+            bottom: 25%;
+            right: 30%;
+        }
+        
+        .sparkle-5 {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .photo-text-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+        }
+        
+        .photo-description {
+            padding: 16px;
+            text-align: center;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.4;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        /* 分组选项样式 */
+        .group-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .group-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .group-option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .group-option:last-child {
+            border-bottom: none;
+        }
+
+        .group-name {
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        .group-option i {
+            color: #ccc;
+            font-size: 12px;
+        }
+
+        /* 表单样式增强 */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--color-text);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+        }
+
+        .form-checkbox {
+            margin-right: 8px;
+        }
+
+        .form-help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            margin-bottom: 0;
+        }
+        
+        /* 对话状态指示器 */
+        .chat-status-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 10px;
+            color: #ff9800;
+            margin-left: auto;
+            text-align: center;
+        }
+        
+        .chat-status-indicator i {
+            font-size: 16px;
+            margin-bottom: 2px;
         }
         
         .chat-option-icon {
@@ -6902,148 +7679,7 @@
             word-spacing: 2px;
             letter-spacing: 0px;
         }
-        
-        /* 梦幻照片样式 */
-        .dreamy-photo-container {
-            position: relative;
-            display: inline-block;
-            cursor: pointer;
-            max-width: 200px;
-            border-radius: 12px;
-            overflow: hidden;
-            margin: 8px 0;
-        }
-        
-        .dreamy-photo {
-            position: relative;
-            width: 200px;
-            height: 150px;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .dreamy-photo:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        
-        .photo-misty-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, 
-                rgba(255, 255, 255, 0.9) 0%, 
-                rgba(240, 248, 255, 0.8) 30%, 
-                rgba(230, 235, 250, 0.7) 60%, 
-                rgba(255, 255, 255, 0.9) 100%);
-            backdrop-filter: blur(2px);
-        }
-        
-        .photo-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: transparent;
-            backdrop-filter: none;
-            border-radius: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 4;
-            transition: all 0.3s ease;
-            box-shadow: none;
-        }
-        
-        .photo-badge i {
-            font-size: 12px;
-            color: #666;
-            opacity: 0.7;
-        }
-        
-        .dreamy-photo:hover .photo-badge {
-            background: transparent;
-            transform: scale(1.1);
-        }
-        
-        .dreamy-photo:hover .photo-badge i {
-            opacity: 1;
-            color: #555;
-        }
-        
-        .sparkle-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-            z-index: 2;
-            transition: opacity 0.3s ease;
-        }
-        
-        .sparkle {
-            position: absolute;
-            font-size: 14px;
-            opacity: 0.6;
-        }
-        
-        .sparkle-1 {
-            top: 20%;
-            left: 25%;
-        }
-        
-        .sparkle-2 {
-            top: 30%;
-            right: 20%;
-        }
-        
-        .sparkle-3 {
-            bottom: 35%;
-            left: 15%;
-        }
-        
-        .sparkle-4 {
-            bottom: 25%;
-            right: 30%;
-        }
-        
-        .sparkle-5 {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        .photo-text-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 3;
-            transition: all 0.3s ease;
-            border-radius: 12px;
-        }
-        
-        .photo-description {
-            padding: 16px;
-            text-align: center;
-            color: #333;
-            font-size: 14px;
-            line-height: 1.4;
-            max-height: 90%;
-            overflow-y: auto;
-        }
+
         
         /* 转账功能样式 */
         #transfer-modal, #transfer-confirm-modal {
@@ -8987,21 +9623,21 @@
         }
 
         .notification-title {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
-            margin: 0 0 1px 0;
+            margin: 0 0 2px 0;
             color: #333;
-            line-height: 1.1;
+            line-height: 1.2;
         }
 
         .notification-message {
-            font-size: 11px;
+            font-size: 12px;
             color: #666;
             margin: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            line-height: 1.2;
+            line-height: 1.3;
         }
 
         .notification-time {
@@ -9017,14 +9653,14 @@
             right: -1px;
             width: 14px;
             height: 14px;
-            background: #007AFF;
+            background: transparent;
             border-radius: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 7px;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.95);
+            font-size: 8px;
+            color: #666;
+            border: none;
         }
 
         @keyframes notificationSlide {
