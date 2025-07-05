@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Phone Chat 模拟器</title>
+    <title>EVE Chat</title>
     <script src="https://cdn.jsdelivr.net/npm/dexie/dist/dexie.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Comic+Neue:wght@400;700&family=Fredoka+One&family=Nunito:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&family=Roboto:wght@400;500&family=Raleway:wght@400;500;600&family=Lato:wght@400;700&family=Poppins:wght@400;500;600&family=Quicksand:wght@400;500;600&family=Varela+Round&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
@@ -726,7 +726,7 @@
                                         </div>
                                         <div class="setting-right">
                                             <label class="toggle-switch">
-                                                <input type="checkbox" id="ai-call-enabled">
+                                                <input type="checkbox" id="ai-call-enabled" class="ai-call-enabled-checkbox">
                                                 <span class="toggle-slider"></span>
                                             </label>
                                         </div>
@@ -902,18 +902,18 @@
                                             </div>
                                         </div>
                                         
-                                        <div class="setting-item">
-                                            <div class="setting-left">
-                                                <div class="setting-label">主动拨打电话</div>
-                                                <div class="setting-desc">角色在适当时机主动拨打电话</div>
-                                            </div>
-                                            <div class="setting-right">
-                                                <label class="toggle-switch">
-                                                    <input type="checkbox" id="ai-call-enabled">
-                                                    <span class="toggle-slider"></span>
-                                                </label>
-                                            </div>
+                                                                            <div class="setting-item">
+                                        <div class="setting-left">
+                                            <div class="setting-label">主动拨打电话</div>
+                                            <div class="setting-desc">角色在适当时机主动拨打电话</div>
                                         </div>
+                                        <div class="setting-right">
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="background-ai-call-enabled" class="ai-call-enabled-checkbox">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
                                     </div>
                                 </div>
                             </div>
@@ -3853,7 +3853,7 @@
                         }
                         
                         chatMessages = localMessages;
-                        console.log('聊天消息迁移完成:', chatMessages);
+
                     }
                 } else {
                     // 将数组格式转换回对象格式
@@ -3876,7 +3876,7 @@
                             .sort((a, b) => a.timestamp - b.timestamp);
                     }
                     
-                    console.log('从IndexedDB加载聊天消息:', chatMessages);
+
                 }
             } catch (error) {
                 console.error('加载聊天消息失败:', error);
@@ -3884,7 +3884,6 @@
                 const localStorageData = localStorage.getItem('chatMessages');
                 if (localStorageData) {
                     chatMessages = JSON.parse(localStorageData);
-                    console.log('从localStorage备份加载聊天消息:', chatMessages);
                 } else {
                     chatMessages = {};
                 }
@@ -3905,7 +3904,6 @@
             // 设置新的计时器，500ms后执行保存
             saveMessagesTimer = setTimeout(async () => {
                 if (isSaving) {
-                    console.log('正在保存中，跳过此次保存请求');
                     return;
                 }
                 await saveChatMessagesImmediate();
@@ -3915,14 +3913,13 @@
         // 立即保存聊天消息 - 使用IndexedDB
         async function saveChatMessagesImmediate() {
             if (isSaving) {
-                console.log('保存操作正在进行中，跳过');
                 return;
             }
             
             isSaving = true;
             
             try {
-                console.log('保存聊天消息到IndexedDB');
+
                 
                 // 将chatMessages对象转换为数组格式存储
                 const messageArray = [];
@@ -3961,13 +3958,13 @@
                     await db.chatMessages.bulkAdd(messageArray);
                 }
                 
-                console.log('聊天消息保存成功，共保存', messageArray.length, '条消息');
+
             } catch (error) {
                 console.error('保存聊天消息失败:', error);
                 
                 // 如果批量保存失败，使用简化的重试机制
                 try {
-                    console.log('使用简化保存策略重试...');
+
                     await db.chatMessages.clear();
                     
                     // 只保存最近的1000条消息，避免过大的数据集
@@ -4007,7 +4004,7 @@
                         await db.chatMessages.bulkAdd(messageArray);
                     }
                     
-                    console.log('简化保存成功，保存了', messageArray.length, '条消息');
+
                 } catch (fallbackError) {
                     console.error('简化保存也失败:', fallbackError);
                 }
@@ -4028,7 +4025,7 @@
                     // IndexedDB中没有数据，尝试从localStorage迁移
                     const localStorageData = localStorage.getItem('chatSettings');
                     if (localStorageData) {
-                        console.log('检测到localStorage中的聊天设置数据，开始迁移...');
+
                         const localSettings = JSON.parse(localStorageData);
                         
                         // 转换为数组格式存储到IndexedDB
@@ -4133,7 +4130,7 @@
                     triggerBackgroundChat(characterId);
                 }, chatInterval);
                 
-                console.log(`${currentChatCharacter.name} 主动聊天已启用，间隔: ${Math.round(chatInterval/60000)}分钟`);
+
             }
             
             // 设置主动发动态定时器
@@ -4143,7 +4140,7 @@
                     triggerBackgroundMoments(characterId);
                 }, momentsInterval);
                 
-                console.log(`${currentChatCharacter.name} 主动发动态已启用，间隔: ${Math.round(momentsInterval/60000)}分钟`);
+                // 移除了主动发动态日志
             }
         }
 
@@ -4265,7 +4262,7 @@
                     // 更新消息列表
                     renderMessageList();
                     
-                    console.log(`${character.name} 主动发送了消息: ${content.substring(0, 50)}...`);
+                    // 移除了主动发送消息日志
                 }
             } catch (error) {
                 console.error('后台聊天失败:', error);
@@ -4274,7 +4271,7 @@
 
         // 触发后台发动态（测试版本，跳过冷却时间）
         async function triggerBackgroundMomentsTest(characterId) {
-            console.log(`测试发布: 跳过冷却时间检查`);
+            // 移除了测试发布日志
             // 直接调用正常发布函数，但跳过冷却时间检查
             await triggerBackgroundMoments(characterId, true);
         }
@@ -4290,11 +4287,11 @@
                     const lastMomentTime = character.lastMomentTime || 0;
                     const cooldownTime = 30 * 60 * 1000; // 30分钟冷却时间
                     if (Date.now() - lastMomentTime < cooldownTime) {
-                        console.log(`${character.name} 在冷却时间内，跳过发布动态`);
+                        // 移除了冷却时间日志
                         return;
                     }
                 } else {
-                    console.log(`${character.name} 测试发布: 跳过冷却时间检查`);
+                    // 移除了测试发布日志
                 }
                 
                 const chatSettings = getCurrentChatSettings();
@@ -4351,7 +4348,7 @@ ${chatContext}${momentsContext}
                 if (content && content.trim()) {
                     // 获取头像，确保安全
                     const avatar = getCharacterAvatar(character);
-                    console.log(`${character.name} ${skipCooldown ? '测试' : '正常'}发布动态时获取的头像:`, avatar ? avatar.substring(0, 50) + '...' : 'null');
+                    // 移除了发布动态头像日志
                     
                     // 发布动态
                     const moment = {
@@ -4377,7 +4374,7 @@ ${chatContext}${momentsContext}
                         loadMoments();
                     }, 100);
                     
-                    console.log(`${character.name} ${skipCooldown ? '测试' : '正常'}发布了动态: ${content.substring(0, 50)}...`);
+                    // 移除了发布动态日志
                 }
             } catch (error) {
                 console.error('后台发动态失败:', error);
@@ -13674,7 +13671,7 @@ ${character.bio}
             }
             
             // 更新通话设置
-            const aiCallCheckbox = document.getElementById('ai-call-enabled');
+            const aiCallCheckbox = document.querySelector('.ai-call-enabled-checkbox');
             if (aiCallCheckbox) {
                 aiCallCheckbox.checked = chatSettings.aiCallEnabled;
             }
@@ -13774,14 +13771,22 @@ ${character.bio}
             }
             
             // 通话设置
-            const aiCallCheckbox = document.getElementById('ai-call-enabled');
-            if (aiCallCheckbox) {
-                aiCallCheckbox.onchange = async function() {
+            const aiCallCheckboxes = document.querySelectorAll('.ai-call-enabled-checkbox');
+            aiCallCheckboxes.forEach(checkbox => {
+                checkbox.onchange = async function() {
                     const chatSettings = getCurrentChatSettings();
                     chatSettings.aiCallEnabled = this.checked;
+                    
+                    // 同步所有相关复选框的状态
+                    aiCallCheckboxes.forEach(cb => {
+                        if (cb !== this) {
+                            cb.checked = this.checked;
+                        }
+                    });
+                    
                     await saveCurrentChatSettings(chatSettings);
                 };
-            }
+            });
             
             // 心率监测设置
             const aiHeartrateCheckbox = document.getElementById('ai-heartrate-enabled');
@@ -14040,17 +14045,25 @@ ${character.bio}
             }
             
             // 绑定主动拨打电话开关事件
-            const aiCallEnabledCheckbox = document.getElementById('ai-call-enabled');
-            if (aiCallEnabledCheckbox) {
-                aiCallEnabledCheckbox.addEventListener('change', function() {
+            const aiCallEnabledCheckboxes = document.querySelectorAll('.ai-call-enabled-checkbox');
+            aiCallEnabledCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
                     // 保存设置
                     if (currentChatCharacter) {
                         const chatSettings = getCurrentChatSettings();
                         chatSettings.aiCallEnabled = this.checked;
+                        
+                        // 同步所有相关复选框的状态
+                        aiCallEnabledCheckboxes.forEach(cb => {
+                            if (cb !== this) {
+                                cb.checked = this.checked;
+                            }
+                        });
+                        
                         saveChatSettings();
                     }
                 });
-            }
+            });
             
             // 绑定戳一戳功能开关事件
             const pokeEnabledCheckbox = document.getElementById('poke-enabled');
@@ -22266,7 +22279,7 @@ async function createGroupChat(personaId) {
             const chatSettings = getCurrentChatSettings();
             const scheduleTimes = chatSettings.scheduledMomentsTimes || [];
             
-            const container = document.getElementById('schedule-times-container');
+            const container = document.getElementById('schedule-times-modal-container');
             container.innerHTML = '';
             
             // 渲染已有时间点
@@ -23909,7 +23922,7 @@ async function changeMyGroupAvatar() {
                 <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
                     设置角色每天自动发布动态的时间点（最多10个）
                 </p>
-                <div id="schedule-times-container">
+                <div id="schedule-times-modal-container">
                     <!-- 时间输入项将动态生成 -->
                 </div>
                 <button onclick="addScheduleTime()" style="margin-top: 10px; padding: 8px 16px; background: #007AFF; color: white; border: none; border-radius: 6px; cursor: pointer;">
