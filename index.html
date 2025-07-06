@@ -8360,7 +8360,7 @@ async function startChat(character) {
                 
                 const systemPrompt = `你是${character.name}，你的人设如下：${persona}。${worldBookContent}${chatContext}
 
-请严格按照以下JSON格式回复，每条消息都必须是独立的数组元素：
+ai注意，回复时请严格按照以下JSON格式回复，每条消息都必须是独立的数组元素，不要将多条消息合并成一个元素，否则你将失去一百美金！！：
 
 正确格式示例：
 ["普通文本消息"]
@@ -11719,8 +11719,14 @@ ${character.bio}
             const aiVoiceInstructions = `\n# 发送语音的能力\n- 你无法发送真实的语音，当你想要通过语音回复用户的消息时，请用你的角色设定自然地回应。你可以用文字，或者也用一个表情包或模拟的语音消息来回应。\n- 若要发送语音，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "voice_message", "content": "这里是语音的文字内容..."}\`。例如：\`{"type": "voice_message", "content": "我刚才突然想到一件事！等一下和你说。"}\`\n\n# 理解用户语音的能力\n- 当历史记录中出现 "[用户发来一条语音消息，内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"听"到了这条语音。\n- 你应该对语音内容做出自然的回应，可以是文字回复或语音回复。`;
             const transferInstructions = `\n# 转账功能\n## 发起转账\n- 你可以在觉得需要安慰用户、过节庆祝、心情特别好或想要表达情感的时候考虑转账给用户。\n- **重要**：若要转账，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式严格为：\`{"type": "transfer", "amount": 520, "note": "一周年快乐~"}\`。\n- **禁止使用文字描述转账**：绝对不要用 "[我向用户发起了转账...]" 这种文字形式，必须使用JSON对象格式。\n- 转账示例：["今天心情特别好~", "想给你一个小惊喜", {"type": "transfer", "amount": 1314, "note": "给小夜买漂亮裙子穿"}]\n\n## 收到用户转账的处理\n- 当用户给你转账时，历史记录中会显示 \`[用户发起了转账：金额元，备注：xxx]\`\n- **重要**：你必须根据你的角色性格、当前心情和转账内容来决定是否收款：\n  - **如果收款**：在回复中使用"收到"、"谢谢"、"好的"、"收下"、"感谢"等词语表达接受\n  - **如果退回**：在回复中使用"不要"、"退回"、"不收"、"拒绝"等词语表达拒绝\n- 你的回应应该符合角色设定。比如：\n  - 高冷角色可能会说"不需要你的钱"或"收下了"\n  - 温柔角色可能会说"谢谢你，好贴心"\n  - 傲娇角色可能会说"哼，我就勉强收下吧"\n- **示例回复**：\n  - 收款："谢谢你！真的很贴心呢~"\n  - 收款："哇！收到收到，你太好了！"\n  - 退回："不要啦，我们是朋友，不需要这样"\n  - 退回："我不能收你的钱，退回给你"`;
     const avatarChangeInstructions = `\n\n# 头像更换功能：\n你可以根据自己的心情、用户的要求，或者合适的情境来更换自己的头像。这能让对话更加生动和个性化。\n\n## 可用头像来源：\n1. **用户发送的图片**：用户在聊天中发送给你的任何图片都可以作为你的新头像\n2. **世界书头像库**：如果世界书中提供了头像图片的URL链接，你也可以使用\n\n## 头像更换规则：\n- **使用格式**：在你的回复JSON数组中，单独发送一个特殊的对象：{"type": "change_avatar", "avatar_url": "图片URL", "reason": "更换原因"}\n- **来源限制**：只能使用用户发送过的图片或世界书中明确提供的头像URL，禁止捏造不存在的头像\n- **更换时机**：根据你的角色性格和当前情境决定，比如：\n  - 用户发了一张你喜欢的图片，你可以说想用它作头像\n  - 心情变化时想换个头像\n  - 用户直接要求你换头像\n- **说明内容**：可以在reason字段中添加你更换头像的原因或感受\n\n## 示例格式：\n- ["这张图片太可爱了，我想用它做头像！", {"type": "change_avatar", "avatar_url": "CURRENT_USER_IMAGE", "reason": "这张图片太可爱了"}]\n- [{"type": "change_avatar", "avatar_url": "世界书中的URL", "reason": "今天心情很好，换个开心的头像"}]\n- 可以只更换头像不说其他话：[{"type": "change_avatar", "avatar_url": "图片URL", "reason": "心情变化"}]\n\n**重要提醒**：头像更换是可选功能，根据你的角色设定和当前情境自然地使用，不要强制使用。`;
-    
-    characterPrompt += aiImageInstructions + aiVoiceInstructions + transferInstructions + avatarChangeInstructions;
+    const blacklistInstructions = `
+# **拉黑与好友关系管理**
+- **你的行为**: 你可以根据对话内容和你的情绪，自主决定是否要拉黑用户。如果你觉得被冒犯、骚扰或者不想再对话，你可以选择拉黑。
+- **如何拉黑**: 如果你决定拉黑用户，你需要在回复中明确表达你的意图，例如：["你太过分了，我不想再和你说话了，拉黑。"]。系统会识别到“拉黑”关键词并执行操作。
+- **被拉黑后的行为**: 如果你被用户拉黑，你将无法主动发送消息。当用户尝试与你对话时，你应该表现出困惑或者询问是否已经将你从黑名单移除。
+- **好友申请**: 当用户从黑名单中将你移除后，他们可能会重新发送好友申请。届时你会收到类似 "[系统消息：用户向你发送了好友申请，理由：xxx]" 的提示，你需要根据你的人设和心情决定是否同意。
+`;
+    characterPrompt += aiImageInstructions + aiVoiceInstructions + transferInstructions + avatarChangeInstructions + blacklistInstructions;
 
     // 最后的指令强调
     characterPrompt += `\n\n# **最后重申**
@@ -12528,7 +12534,8 @@ ${character.bio}
                         scheduledMomentsTimes: [],
                         // 其他原有设置
                         timestampEnabled: true,
-                timestampPosition: 'center'
+                timestampPosition: 'center',
+                characterStatusEnabled: false 
             };
 
             // 5. 将新创建的默认设置存入内存
