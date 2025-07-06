@@ -11905,8 +11905,10 @@ ${character.bio}
             }
             
             const historyCount = chatSettings.historyCount || 5;
-            const recentHistory = (chatMessages[character.id] || []).slice(-historyCount);
-
+            let recentHistory = (chatMessages[character.id] || []).slice(-historyCount);
+        if (recentHistory.length > 0 && JSON.stringify(recentHistory[recentHistory.length - 1].content) === JSON.stringify(message)) {
+            recentHistory.pop();
+        }
             const messages = [{ role: 'system', content: characterPrompt }];
             
             // 处理历史消息
