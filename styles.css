@@ -10065,77 +10065,162 @@ textarea.call-text-input {
         }
 
         .worldbook-global-info {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #0ea5e9;
             border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
         }
 
         .global-worldbook-note {
-            color: #666;
-            font-size: 14px;
-            text-align: center;
+            color: #0369a1;
+            font-size: 13px;
+            line-height: 1.4;
             margin: 0;
         }
-         /* ===== 角色状态显示修复样式 ===== */
-.character-status {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-top: 4px !important;
-    margin-bottom: 2px !important;
-    font-size: 12px !important;
-    color: #999 !important;
-    width: 100% !important;
-    gap: 6px !important;
-    line-height: 1.2 !important;
-  }
-  .status-indicator {
-    width: 8px !important;
-    height: 8px !important;
-    border-radius: 50% !important;
-    margin-right: 5px !important;
-    display: inline-block !important;
-    background: #bdbdbd !important;
-    box-shadow: 0 0 2px rgba(0,0,0,0.08) !important;
-    flex-shrink: 0 !important;
-    border: 1px solid #eee !important;
-  }
-  .status-indicator.online {
-    background: #34C759 !important;
-    border-color: #34C759 !important;
-  }
-  .status-indicator.busy {
-    background: #FFCC00 !important;
-    border-color: #FFCC00 !important;
-  }
-  .status-indicator.blocked {
-    background: #bbb !important;
-    border-color: #bbb !important;
-  }
-  .status-text {
-    color: #999 !important;
-    font-size: 12px !important;
-    font-weight: 400 !important;
-    letter-spacing: 0.2px !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    line-height: 1.2 !important;
-    white-space: pre-line !important;
-  }
-  body[data-theme="cute"] .character-status,
-  body[data-theme="cute"] .status-text {
-    color: #b48bb7 !important;
-  }
-  body[data-theme="cute"] .status-indicator.online {
-    background: #ffb6c1 !important;
-    border-color: #ffb6c1 !important;
-  }
-  body[data-theme="cute"] .status-indicator.busy {
-    background: #ffe066 !important;
-    border-color: #ffe066 !important;
-  }
-  body[data-theme="cute"] .status-indicator.blocked {
-    background: #e0e0e0 !important;
-    border-color: #e0e0e0 !important;
-  }
+
+        /* 🚫【拉黑系统】样式 */
+        .blacklist-settings-modal .modal-content {
+            max-width: 500px;
+        }
+
+        .blacklist-status-blocked {
+            color: #ff4d4f;
+            font-weight: 600;
+        }
+
+        .blacklist-status-normal {
+            color: #52c41a;
+            font-weight: 600;
+        }
+
+        .blacklist-action-item {
+            cursor: pointer;
+        }
+
+        .blacklist-action-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* 📱【角色状态显示】样式 */
+        .character-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+            font-size: 12px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-indicator.online {
+            background-color: #52c41a;
+            box-shadow: 0 0 4px rgba(82, 196, 26, 0.5);
+        }
+
+        .status-indicator.busy {
+            background-color: #faad14;
+            box-shadow: 0 0 4px rgba(250, 173, 20, 0.5);
+        }
+
+        .status-indicator.blocked {
+            background-color: #8c8c8c;
+        }
+
+        .status-text {
+            color: #666;
+            font-size: 11px;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .character-name-with-status {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        /* 在聊天界面显示状态 */
+        .api-chat-header .character-status {
+            margin-top: 4px;
+        }
+
+        .api-chat-header .status-text {
+            max-width: 200px;
+        }
+
+        /* 在联系人列表显示状态 */
+        .contact-item .character-status {
+            margin-top: 2px;
+        }
+
+        .contact-item .status-text {
+            max-width: 100px;
+        }
+
+        /* 状态设置开关 */
+        .status-display-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-display-toggle .toggle-switch {
+            margin: 0;
+        }
+
+        /* 🚫【拉黑状态覆盖层】样式 */
+        .blocked-status-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 33.33%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .blocked-status-content {
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .blocked-status-text {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #ff4d4f;
+        }
+
+        .blocked-status-button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .blocked-status-button:hover {
+            background: #0056CC;
+            transform: translateY(-1px);
+        }
+
+        .blocked-status-button:active {
+            transform: translateY(0);
+        }
