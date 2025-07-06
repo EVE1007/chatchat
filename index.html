@@ -614,10 +614,10 @@
                                             <div class="setting-desc">在聊天界面显示角色的在线状态和活动</div>
                                         </div>
                                         <div class="setting-right">
-                                            <div class="toggle-switch">
+                                            <label class="toggle-switch">
                                                 <input type="checkbox" id="character-status-enabled">
                                                 <span class="toggle-slider"></span>
-                                            </div>
+                                            </label>
                                         </div>
                                     </div>
                                 </div>
@@ -16542,17 +16542,16 @@ async function createGroupChat(personaId) {
                 
                 const aiMessages = parseAiResponse(response);
                 
-                // 🔥【新增】检测AI是否要拉黑用户
                 for (const msgData of aiMessages) {
-                    if (typeof msgData === 'string') {
-                        const content = msgData.toLowerCase();
-                        if (content.includes('拉黑') && (content.includes('你') || content.includes('用户') || content.includes('程序员'))) {
-                            console.log('🚫 检测到AI拉黑指令:', msgData);
-                            await aiBlockUser(currentChatCharacter.id, msgData);
-                            break;
-                        }
-                    }
-                }
+    // 检查是否是拉黑指令对象
+    if (typeof msgData === 'object' && msgData !== null && msgData.type === 'block_user') {
+        console.log('🚫 检测到AI拉黑指令对象:', msgData);
+        // 使用指令中的 reason 作为拉黑理由
+        await aiBlockUser(currentChatCharacter.id, msgData.reason || '对方未说明理由');
+        // 拉黑后，通常不需要再显示后续消息，直接跳出循环
+        break; 
+    }
+}
                 
                 // 🔥【修复转账处理】如果用户发的是转账消息，需要分析AI的回复来处理转账
                 if (pendingUserMessage && pendingUserMessage.type === 'transfer') {
@@ -25024,12 +25023,19 @@ async function changeMyGroupAvatar() {
 
         // 发送好友申请确认
         async function sendFriendRequestConfirm() {
-            if (!currentChatCharacter) return;
-            
-            const message = document.getElementById('friend-request-message').value.trim();
-            await sendFriendRequest(currentChatCharacter.id, message);
-            hideFriendRequestModal();
-        }
+    if (!currentChatCharacter) return;
+    
+    const message = document.getElementById('friend-request-message').value.trim();
+    const characterId = currentChatCharacter.id;
+
+    // 1. 先在数据库中记录这个申请事件
+    await sendFriendRequest(characterId, message);
+    hideFriendRequestModal();
+    
+    // 2. 🔥【核心新增】立刻调用API，让AI处理这个好友申请
+    showToast('申请已发送，等待对方回应...', 'info');
+    await processAIFriendRequestResponse(characterId, message); 
+}
 
         // 执行拉黑操作
         function performBlockAction() {
@@ -25183,6 +25189,110 @@ async function changeMyGroupAvatar() {
         });
 
         console.log('🚫 拉黑系统核心功能已加载');
+        /**
+ * 🔥【新增】处理AI对好友申请的回应
+ * @param {string} characterId - AI角色的ID
+ * @param {string} requestMessage - 用户发送的申请理由
+ */
+async function processAIFriendRequestResponse(characterId, requestMessage) {
+    const character = characters.find(c => c.id === characterId);
+    if (!character) return;
+
+    // 构建一个专门用于决策的Prompt
+    const decisionPrompt = `
+# 指令：好友申请决策
+你之前拉黑了用户。现在用户向你发来好友申请。
+- 你的身份: ${character.name}
+- 你的设定: ${character.bio}
+- 用户的申请理由: "${requestMessage || '对方没有填写理由。'}"
+
+# 你的任务:
+根据你的角色性格和用户给出的理由，决定是否同意加回好友。
+你的回答必须非常简洁，只能是以下两个词之一：
+- "同意"
+- "拒绝"
+
+请现在做出你的决定：
+`;
+
+    try {
+        // 使用通用的API调用函数
+        const response = await callChatAPI(decisionPrompt, character);
+        // AI的回复通常是 `["同意"]` 或 `["拒绝"]`，我们只需要第一个元素
+        const decision = Array.isArray(response) ? response[0].toLowerCase() : response.toLowerCase();
+
+        console.log(`🤖 AI对好友申请的决策: ${decision}`);
+
+        if (decision.includes('同意')) {
+            // AI同意了
+            await aiUnblockUser(characterId);
+            
+            const systemMsg = {
+                id: 'system_' + Date.now(),
+                sender: 'system',
+                content: `${character.name} 同意了你的好友申请，现在你们可以正常聊天了。`,
+                timestamp: Date.now()
+            };
+            addMessageToChat(systemMsg);
+            
+            showToast(`✅ ${character.name} 同意了你的好友申请`, 'success');
+            
+        } else {
+            // AI拒绝了
+            const systemMsg = {
+                id: 'system_' + Date.now(),
+                sender: 'system',
+                content: `${character.name} 拒绝了你的好友申请。`,
+                timestamp: Date.now()
+            };
+            addMessageToChat(systemMsg);
+            
+            showToast(`❌ ${character.name} 拒绝了你的好友申请`, 'warning');
+        }
+
+    } catch (error) {
+        console.error('处理AI好友申请回应失败:', error);
+        showToast('对方没有回应，请稍后再试', 'error');
+    }
+}
+
+
+/**
+ * 🔥【新增】AI解除对用户的拉黑
+ * @param {string} characterId - AI角色的ID（拉黑者）
+ */
+async function aiUnblockUser(characterId) {
+    try {
+        const blockRecord = blacklistData.find(r => 
+            r.blockerId === characterId && 
+            r.blockedId === 'user' && 
+            !r.unblocked
+        );
+
+        if (!blockRecord) {
+            console.warn('未找到该角色的拉黑记录');
+            return;
+        }
+
+        blockRecord.unblocked = true;
+        blockRecord.unblockTimestamp = new Date().toISOString();
+        
+        await db.blacklist.put(blockRecord);
+        console.log(`✅ ${characterId} 已解除对用户的拉黑`);
+
+        // 刷新聊天界面的拉黑状态
+        if (currentChatCharacter && currentChatCharacter.id === characterId) {
+            updateChatBlockedStatus();
+        }
+        
+        // 刷新联系人列表和消息列表的UI状态
+        renderContactList();
+        renderMessageList();
+
+    } catch (error) {
+        console.error('AI解除拉黑失败:', error);
+    }
+}
         console.log('📱 角色状态显示功能已加载');
     </script>
 </body>
