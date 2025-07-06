@@ -608,6 +608,18 @@
                                             <i class="fas fa-chevron-right"></i>
                                         </div>
                                     </div>
+                                    <div class="setting-item single-chat-only">
+                                        <div class="setting-left">
+                                            <div class="setting-label">显示角色状态</div>
+                                            <div class="setting-desc">在聊天界面显示角色的在线状态和活动</div>
+                                        </div>
+                                        <div class="setting-right">
+                                            <div class="toggle-switch">
+                                                <input type="checkbox" id="character-status-enabled">
+                                                <span class="toggle-slider"></span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -975,6 +987,15 @@
                 <span class="section-title danger-section-title">危险操作</span>
                                 </div>
                                 <div class="setting-card">
+                                    <div class="setting-item" onclick="showBlacklistSettings()">
+                                        <div class="setting-left">
+                                            <div class="setting-label">拉黑管理</div>
+                                            <div class="setting-desc">拉黑/解除拉黑，设置冷静时间</div>
+                                        </div>
+                                        <div class="setting-right">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
                                     <div class="setting-item danger-item" onclick="clearChatHistory()">
                                         <div class="setting-left">
                                             <div class="setting-label danger-color">清空聊天记录</div>
@@ -2952,6 +2973,31 @@
             recentEmojis: '&id, lastUsed'
         });
 
+        // 版本6：添加拉黑系统和角色状态
+        db.version(6).stores({
+            characters: '&id, name, groupId',
+            contacts: '++id, characterId', 
+            chatMessages: '&id, characterId, timestamp',
+            apiSettings: '&id',
+            customEmojis: '&id, description',
+            wallpapers: '&id, type',
+            worldbooks: '&id, name, isGlobal',
+            characterGroups: '&id, name, order',
+            groupChats: '&id, name',
+            personas: '&id, name',
+            globalSettings: '&id',
+            appIcons: '&id, appId',
+            chatSettings: '&id, chatId',
+            moments: '&id, authorId, timestamp',
+            momentLikes: '[momentId+authorId], momentId, authorId',
+            momentComments: '&id, momentId, authorId, timestamp',
+            recentEmojis: '&id, lastUsed',
+            // 🔥【新增】拉黑系统相关表
+            blacklist: '&id, blockerId, blockedId, timestamp, cooldownMinutes, reason',
+            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
+            characterStatus: '&id, characterId, status, activity, location, lastUpdate'
+        });
+
 
         // 全局变量
         let characters = [];
@@ -2990,6 +3036,8 @@
         
         // 动态评论对话轮次追踪
         let commentConversationRounds = new Map(); // 格式: "momentId-characterId" => 轮次数
+        
+        // 🔥【新增】拉黑系统相关变量已在后面声明
         
         let apiSettings = {
             type: 'openai',
@@ -3063,7 +3111,7 @@
             loadFontSizeSettings();
             
             // 加载动态图片设置
-            loadMomentsImages();
+            await loadMomentsImages();
             
             // 加载其他设置（包括需要数据库的壁纸设置）
             await loadWallpaper();
@@ -3522,6 +3570,8 @@
                 } else if (tabId === 'moments-page') {
                     appTitle.classList.remove('chat-mode');
                                             appTitle.textContent = '动态';
+                    // 🔥【新增】切换到动态页面时加载用户设置
+                    loadMomentsImages();
                 } else if (tabId === 'profile-page') {
                     appTitle.classList.remove('chat-mode');
                     appTitle.textContent = '我';
@@ -4391,6 +4441,59 @@ ${chatContext}${momentsContext}
                 console.error('获取最近动态失败:', error);
                 return [];
             }
+        }
+
+        // 🔥【新增】获取角色可见的动态（用于聊天记忆集成）
+        async function getVisibleMomentsForCharacter(characterId, count = 5) {
+            try {
+                // 获取所有最新动态
+                const allMoments = await db.moments.orderBy('timestamp').reverse().limit(count * 2).toArray();
+                
+                // 筛选角色可见的动态：
+                // 1. 用户发的动态（所有角色都能看到）
+                // 2. 角色自己发的动态
+                // 3. 同一个好友分组的其他角色发的动态
+                
+                const visibleMoments = [];
+                const character = characters.find(c => c.id === characterId);
+                
+                for (const moment of allMoments) {
+                    if (visibleMoments.length >= count) break;
+                    
+                    // 用户发的动态，所有角色都能看到
+                    if (moment.authorId === 'user') {
+                        visibleMoments.push(moment);
+                        continue;
+                    }
+                    
+                    // 角色自己发的动态
+                    if (moment.authorId === characterId) {
+                        visibleMoments.push(moment);
+                        continue;
+                    }
+                    
+                    // 检查是否是同一个好友分组的角色发的动态
+                    if (character && moment.characterId) {
+                        const momentAuthor = characters.find(c => c.id === moment.characterId);
+                        if (momentAuthor && areCharactersInSameGroup(character, momentAuthor)) {
+                            visibleMoments.push(moment);
+                            continue;
+                        }
+                    }
+                }
+                
+                return visibleMoments;
+            } catch (error) {
+                console.error('获取角色可见动态失败:', error);
+                return [];
+            }
+        }
+
+        // 🔥【新增】检查两个角色是否在同一个好友分组
+        function areCharactersInSameGroup(char1, char2) {
+            // 如果没有分组系统，默认所有角色都在同一组（都是好友）
+            // 这里可以根据实际的分组逻辑进行调整
+            return contacts.includes(char1.id) && contacts.includes(char2.id);
         }
 
         // 生成AI响应的包装函数，用于后台互动
@@ -7244,6 +7347,9 @@ async function startChat(character) {
             
             // 重置悬浮按钮状态
             resetFloatingButtonsState();
+            
+            // 🔥【新增】检查拉黑状态并更新界面
+            updateChatBlockedStatus();
             
             // 🔥【新增】如果设置界面是打开的，更新设置显示状态
             if (document.getElementById('api-chat-settings-screen').style.display === 'flex') {
@@ -11558,7 +11664,7 @@ ${character.bio}
     const globalBooks = window.activeGlobalWorldbooks || [];
     const allBookIds = [...new Set([...globalBooks, ...localBookIds])]; // 合并并去重
 
-    if (allBookIds.length > 0) {
+                if (allBookIds.length > 0) {
         characterPrompt += `\n\n【背景知识/世界观】以下是相关的设定信息，请在对话中自然地运用：\n`;
         allBookIds.forEach(bookId => {
             const worldbook = worldbooks.find(w => w.id === bookId);
@@ -11566,6 +11672,11 @@ ${character.bio}
                 characterPrompt += `\n--- ${worldbook.title} ---\n${worldbook.content}\n`;
                     }
                 });
+            }
+            
+            // 🔥【新增】集成动态记忆 - 占位符，将在callChatAPI中替换
+            if (chatSettings.enableDynamicMemory !== false) {
+                characterPrompt += `\n\n<!-- DYNAMIC_MEMORY_PLACEHOLDER -->`;
             }
             
             const chatMode = chatSettings.chatMode || 'online';
@@ -11764,9 +11875,36 @@ ${character.bio}
                 window.emergencyCleanupDone = true;
             }
 
+            // 🔥【新增】获取动态记忆数据
+            const chatSettings = getCurrentChatSettings();
+            let dynamicMemoryContent = '';
+            if (chatSettings.enableDynamicMemory !== false) {
+                try {
+                    // 获取最新5条动态（包括用户发的、角色发的、同组角色发的）
+                    const recentMoments = await getVisibleMomentsForCharacter(character.id, 5);
+                    if (recentMoments.length > 0) {
+                        dynamicMemoryContent = '\n\n【最新动态记忆】以下是最近的动态内容，你可以在对话中自然地提及：\n';
+                        recentMoments.forEach((moment, index) => {
+                            const authorName = moment.authorId === 'user' ? '用户' : moment.nickname;
+                            dynamicMemoryContent += `${index + 1}. ${authorName}: ${moment.text}\n`;
+                        });
+                    }
+                } catch (error) {
+                    console.error('获取动态记忆失败:', error);
+                }
+            }
+
             // 核心修复：现在这个函数能理解 message 参数可能是一个包含图片和文字的数组
-            const characterPrompt = buildCharacterPrompt(character, Array.isArray(message));
-            const historyCount = getCurrentChatSettings().historyCount || 5;
+            let characterPrompt = buildCharacterPrompt(character, Array.isArray(message));
+            // 将动态记忆添加到提示词中
+            if (dynamicMemoryContent) {
+                characterPrompt = characterPrompt.replace('<!-- DYNAMIC_MEMORY_PLACEHOLDER -->', dynamicMemoryContent);
+            } else {
+                // 如果没有动态记忆，移除占位符
+                characterPrompt = characterPrompt.replace('<!-- DYNAMIC_MEMORY_PLACEHOLDER -->', '');
+            }
+            
+            const historyCount = chatSettings.historyCount || 5;
             const recentHistory = (chatMessages[character.id] || []).slice(-historyCount);
 
             const messages = [{ role: 'system', content: characterPrompt }];
@@ -13682,6 +13820,12 @@ ${character.bio}
                 aiHeartrateCheckbox.checked = chatSettings.aiHeartrateEnabled;
             }
             
+            // 更新角色状态显示设置
+            const characterStatusCheckbox = document.getElementById('character-status-enabled');
+            if (characterStatusCheckbox) {
+                characterStatusCheckbox.checked = chatSettings.characterStatusEnabled || false;
+            }
+            
 
             
             // 更新后台互动设置
@@ -13911,6 +14055,31 @@ ${character.bio}
                         renderChatMessages(currentChatCharacter.id);
                     }
                 };
+            }
+            
+            // 角色状态显示设置
+            const characterStatusCheckbox = document.getElementById('character-status-enabled');
+            if (characterStatusCheckbox) {
+                characterStatusCheckbox.onchange = async function() {
+                    console.log('状态显示开关被点击:', this.checked);
+                    const chatSettings = getCurrentChatSettings();
+                    chatSettings.characterStatusEnabled = this.checked;
+                    await saveCurrentChatSettings(chatSettings);
+                    
+                    // 重新渲染聊天界面以显示/隐藏状态
+                    if (currentChatCharacter) {
+                        renderChatMessages(currentChatCharacter.id);
+                        // 更新聊天标题区域的状态显示
+                        const headerContainer = document.querySelector('#api-chat-title').parentNode;
+                        if (headerContainer) {
+                            renderCharacterStatus(currentChatCharacter.id, headerContainer);
+                        }
+                    }
+                    
+                    showToast(`角色状态显示已${this.checked ? '开启' : '关闭'}`, 'success');
+                };
+            } else {
+                console.warn('找不到character-status-enabled元素');
             }
         }
 
@@ -15531,6 +15700,13 @@ async function createGroupChat(personaId) {
                 return;
             }
 
+            // 防止重复调用
+            if (window._isRegenerating) {
+                console.log('重新生成正在进行中，忽略重复调用');
+                return;
+            }
+            window._isRegenerating = true;
+
             const characterId = currentChatCharacter.id;
             const messages = chatMessages[characterId] || [];
             
@@ -15829,6 +16005,9 @@ async function createGroupChat(personaId) {
                 chatMessages[characterId].push(errorMessage);
         await saveChatMessages();
                 renderChatMessages(characterId);
+            } finally {
+                // 重置重新生成标志
+                window._isRegenerating = false;
             }
             
             updateFloatingButtonsVisibility();
@@ -15943,6 +16122,12 @@ async function createGroupChat(personaId) {
         // 处理AI续写对话
         async function processAIContinuation() {
             if (!currentChatCharacter) return;
+
+            // 防止重复调用
+            if (isWaitingForReply) {
+                console.log('AI正在续写中，忽略重复调用');
+                return;
+            }
 
             isWaitingForReply = true;
             
@@ -16278,6 +16463,12 @@ async function createGroupChat(personaId) {
         async function processAIReply() {
             if (!currentChatCharacter) return;
             
+            // 防止重复调用
+            if (isWaitingForReply) {
+                console.log('AI正在回复中，忽略重复调用');
+                return;
+            }
+            
             // 智能选择最佳的用户消息（优先图片消息）
             const messages = chatMessages[currentChatCharacter.id] || [];
             const userMessages = messages.filter(msg => msg.sender === 'sent');
@@ -16341,6 +16532,18 @@ async function createGroupChat(personaId) {
                 }
                 
                 const aiMessages = parseAiResponse(response);
+                
+                // 🔥【新增】检测AI是否要拉黑用户
+                for (const msgData of aiMessages) {
+                    if (typeof msgData === 'string') {
+                        const content = msgData.toLowerCase();
+                        if (content.includes('拉黑') && (content.includes('你') || content.includes('用户') || content.includes('程序员'))) {
+                            console.log('🚫 检测到AI拉黑指令:', msgData);
+                            await aiBlockUser(currentChatCharacter.id, msgData);
+                            break;
+                        }
+                    }
+                }
                 
                 // 🔥【修复转账处理】如果用户发的是转账消息，需要分析AI的回复来处理转账
                 if (pendingUserMessage && pendingUserMessage.type === 'transfer') {
@@ -16621,6 +16824,12 @@ async function createGroupChat(personaId) {
                 return;
             }
 
+            // 🔥【新增】检查是否被拉黑，阻止发送消息
+            if (isBlocked(currentChatCharacter.id, 'user')) {
+                showToast('你被对方拉黑了，无法发送消息', 'warning');
+                return;
+            }
+
             // 防止重复发送
             if (input._isProcessing) return;
             input._isProcessing = true;
@@ -16817,6 +17026,12 @@ async function createGroupChat(personaId) {
                  // 发送语音消息
         function sendVoiceMessage(text) {
             console.log('开始发送语音消息:', text);
+            
+            // 🔥【新增】检查是否被拉黑，阻止发送消息
+            if (currentChatCharacter && isBlocked(currentChatCharacter.id, 'user')) {
+                showToast('你被对方拉黑了，无法发送消息', 'warning');
+                return;
+            }
             
             const messageId = Date.now().toString();
             const duration = Math.max(1, Math.ceil(text.length / 8)); // 根据文字长度计算"语音"时长
@@ -19516,11 +19731,11 @@ async function createGroupChat(personaId) {
             input.click();
         }
         
-        // 加载动态图片设置
-        function loadMomentsImages() {
+        // 🔥【修复】加载动态图片设置（异步版本）
+        async function loadMomentsImages() {
             try {
                 // 加载封面图片
-                const savedCover = getMomentsImage('coverImage');
+                const savedCover = await getMomentsImage('coverImage');
                 if (savedCover) {
                     const coverImage = document.getElementById('cover-image');
                     const coverPlaceholder = document.getElementById('cover-placeholder');
@@ -19533,7 +19748,7 @@ async function createGroupChat(personaId) {
                 }
                 
                 // 加载头像图片
-                const savedAvatar = getMomentsImage('avatarImage');
+                const savedAvatar = await getMomentsImage('avatarImage');
                 if (savedAvatar) {
                     const avatar = document.getElementById('moments-avatar');
                     const avatarIcon = avatar?.querySelector('.moments-avatar-icon');
@@ -19547,7 +19762,7 @@ async function createGroupChat(personaId) {
                 }
                 
                 // 加载用户名
-                const savedUsername = getMomentsImage('username');
+                const savedUsername = await getMomentsImage('username');
                 if (savedUsername) {
                     const usernameElement = document.getElementById('moments-username');
                     if (usernameElement) {
@@ -19616,31 +19831,60 @@ async function createGroupChat(personaId) {
             });
         }
         
-        // 保存动态图片（使用会话存储，避免空间问题）
-        function saveMomentsImage(imageType, imageData) {
+        // 🔥【修复】保存动态图片（使用IndexedDB持久化存储）
+        async function saveMomentsImage(imageType, imageData) {
             try {
-                // 使用sessionStorage暂存，页面会话期间有效
-                sessionStorage.setItem(`moments_${imageType}`, imageData);
-                console.log(`动态图片已保存: ${imageType}`);
+                // 压缩图片数据以节省存储空间
+                let compressedData = imageData;
+                if (imageData.startsWith('data:image/')) {
+                    try {
+                        compressedData = await compressImage(imageData, 800, 0.8);
+                    } catch (error) {
+                        console.warn('图片压缩失败，使用原图:', error);
+                    }
+                }
+                
+                // 保存到IndexedDB
+                await db.globalSettings.put({
+                    id: `moments_${imageType}`,
+                    type: 'moments_setting',
+                    data: compressedData
+                });
+                
+                console.log(`动态图片已保存到数据库: ${imageType}`);
             } catch (error) {
                 console.error('保存动态图片失败:', error);
-                // 如果sessionStorage也满了，只在内存中保存
-                window.momentsImages = window.momentsImages || {};
-                window.momentsImages[imageType] = imageData;
-                console.log(`动态图片已保存到内存: ${imageType}`);
+                // 如果数据库保存失败，回退到sessionStorage
+                try {
+                    sessionStorage.setItem(`moments_${imageType}`, imageData);
+                    console.log(`动态图片已保存到会话存储: ${imageType}`);
+                } catch (sessionError) {
+                    // 如果sessionStorage也满了，只在内存中保存
+                    window.momentsImages = window.momentsImages || {};
+                    window.momentsImages[imageType] = imageData;
+                    console.log(`动态图片已保存到内存: ${imageType}`);
+                }
             }
         }
         
-        // 获取动态图片
-        function getMomentsImage(imageType) {
+        // 🔥【修复】获取动态图片（从IndexedDB获取）
+        async function getMomentsImage(imageType) {
             try {
-                // 先从sessionStorage获取
+                // 先从IndexedDB获取
+                const dbData = await db.globalSettings.get(`moments_${imageType}`);
+                if (dbData && dbData.data) {
+                    return dbData.data;
+                }
+                
+                // 兼容性：从sessionStorage获取
                 const sessionData = sessionStorage.getItem(`moments_${imageType}`);
                 if (sessionData) {
+                    // 如果从sessionStorage获取到数据，迁移到IndexedDB
+                    await saveMomentsImage(imageType, sessionData);
                     return sessionData;
                 }
                 
-                // 然后从内存获取
+                // 最后从内存获取
                 if (window.momentsImages && window.momentsImages[imageType]) {
                     return window.momentsImages[imageType];
                 }
@@ -19648,7 +19892,12 @@ async function createGroupChat(personaId) {
                 return null;
             } catch (error) {
                 console.error('获取动态图片失败:', error);
-                return null;
+                // 回退到sessionStorage
+                try {
+                    return sessionStorage.getItem(`moments_${imageType}`);
+                } catch (sessionError) {
+                    return null;
+                }
             }
         }
         
@@ -24357,6 +24606,575 @@ async function changeMyGroupAvatar() {
             
             console.log('💰 [转账优化] AI将根据角色人设自然回应转账，不再自动收款');
         })();
+    </script>
+
+    <!-- 🚫【拉黑系统】模态框 -->
+    <div id="blacklist-settings-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">拉黑管理</h3>
+                <button class="modal-close" onclick="hideBlacklistSettings()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <i class="fas fa-user-slash section-icon"></i>
+                        <span class="section-title">当前状态</span>
+                    </div>
+                    <div class="setting-card">
+                        <div class="setting-item" id="current-blacklist-status">
+                            <div class="setting-left">
+                                <div class="setting-label">拉黑状态</div>
+                                <div class="setting-desc" id="blacklist-status-desc">正常聊天中</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="section-header">
+                        <i class="fas fa-cog section-icon"></i>
+                        <span class="section-title">拉黑设置</span>
+                    </div>
+                    <div class="setting-card">
+                        <div class="setting-item">
+                            <div class="setting-left">
+                                <div class="setting-label">冷静时间（分钟）</div>
+                                <div class="setting-desc">拉黑后需要等待的时间才能申请好友</div>
+                            </div>
+                            <div class="setting-right">
+                                <input type="number" id="cooldown-minutes" min="5" max="1440" value="30" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="section-header">
+                        <i class="fas fa-exclamation-triangle section-icon danger-section-icon"></i>
+                        <span class="section-title danger-section-title">操作</span>
+                    </div>
+                    <div class="setting-card">
+                        <div class="setting-item danger-item" id="block-action-item" onclick="performBlockAction()">
+                            <div class="setting-left">
+                                <div class="setting-label danger-color" id="block-action-label">拉黑此角色</div>
+                                <div class="setting-desc" id="block-action-desc">阻止该角色向你发送消息</div>
+                            </div>
+                            <div class="setting-right">
+                                <i class="fas fa-chevron-right danger-color"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-secondary" onclick="hideBlacklistSettings()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🚫【好友申请】模态框 -->
+    <div id="friend-request-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">好友申请</h3>
+                <button class="modal-close" onclick="hideFriendRequestModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">申请理由（可选）</label>
+                    <textarea id="friend-request-message" class="form-textarea" placeholder="请输入申请理由..." maxlength="200"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-secondary" onclick="hideFriendRequestModal()">取消</button>
+                <button class="modal-primary" onclick="sendFriendRequestConfirm()">发送申请</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🚫【拉黑系统】JavaScript核心功能 -->
+    <script>
+        // 拉黑系统全局变量 - 检查是否已存在，避免重复声明
+        if (typeof blacklistData === 'undefined') {
+            var blacklistData = []; 
+            var friendRequestsData = []; 
+            var characterStatusData = [];
+            var defaultCooldownMinutes = 30;
+        }
+
+        // 加载拉黑系统数据
+        async function loadBlacklistData() {
+            try {
+                blacklistData = await db.blacklist.orderBy('timestamp').reverse().toArray();
+                console.log('拉黑数据加载完成:', blacklistData);
+            } catch (error) {
+                console.error('加载拉黑数据失败:', error);
+                blacklistData = [];
+            }
+        }
+
+        // 检查是否被拉黑
+        function isBlocked(blockerId, blockedId) {
+            return blacklistData.some(record => 
+                record.blockerId === blockerId && 
+                record.blockedId === blockedId && 
+                !record.unblocked
+            );
+        }
+
+        // 检查是否在冷静期
+        function isInCooldown(blockerId, blockedId) {
+            const record = blacklistData.find(r => 
+                r.blockerId === blockerId && 
+                r.blockedId === blockedId && 
+                r.unblocked
+            );
+            
+            if (!record || !record.unblockTimestamp) return false;
+            
+            const cooldownEnd = new Date(new Date(record.unblockTimestamp).getTime() + (record.cooldownMinutes * 60 * 1000));
+            return new Date() < cooldownEnd;
+        }
+
+        // 拉黑角色
+        async function blockCharacter(characterId, reason = '', cooldownMinutes = null) {
+            try {
+                const now = new Date();
+                const cooldown = cooldownMinutes || defaultCooldownMinutes;
+                
+                if (isBlocked('user', characterId)) {
+                    showToast('该角色已被拉黑', 'warning');
+                    return;
+                }
+                
+                const blockRecord = {
+                    id: `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    blockerId: 'user',
+                    blockedId: characterId,
+                    timestamp: now.toISOString(),
+                    reason: reason,
+                    cooldownMinutes: cooldown,
+                    unblocked: false
+                };
+                
+                blacklistData.unshift(blockRecord);
+                await db.blacklist.add(blockRecord);
+                
+                const character = characters.find(c => c.id === characterId);
+                showToast(`已拉黑 ${character?.name || '角色'}`, 'success');
+                
+                // 立即更新聊天界面显示
+                if (currentChatCharacter && currentChatCharacter.id === characterId) {
+                    updateChatBlockedStatus();
+                }
+                
+                renderContactList();
+                renderMessageList();
+                
+            } catch (error) {
+                console.error('拉黑角色失败:', error);
+                showToast('拉黑失败', 'error');
+            }
+        }
+
+        // 解除拉黑
+        async function unblockCharacter(characterId) {
+            try {
+                const blockRecord = blacklistData.find(r => 
+                    r.blockerId === 'user' && 
+                    r.blockedId === characterId && 
+                    !r.unblocked
+                );
+                
+                if (!blockRecord) {
+                    showToast('该角色未被拉黑', 'warning');
+                    return;
+                }
+                
+                blockRecord.unblocked = true;
+                blockRecord.unblockTimestamp = new Date().toISOString();
+                
+                await db.blacklist.put(blockRecord);
+                
+                const character = characters.find(c => c.id === characterId);
+                showToast(`已解除对 ${character?.name || '角色'} 的拉黑`, 'success');
+                
+                // 刷新聊天界面显示
+                if (currentChatCharacter && currentChatCharacter.id === characterId) {
+                    renderChatMessages(currentChatCharacter.id);
+                    updateChatBlockedStatus();
+                }
+                
+                renderContactList();
+                renderMessageList();
+                
+            } catch (error) {
+                console.error('解除拉黑失败:', error);
+                showToast('解除拉黑失败', 'error');
+            }
+        }
+
+        // 更新角色状态
+        async function updateCharacterStatus(characterId, status, activity = '', location = '') {
+            try {
+                let statusRecord = characterStatusData.find(s => s.characterId === characterId);
+                
+                if (!statusRecord) {
+                    statusRecord = {
+                        id: `status_${characterId}`,
+                        characterId: characterId,
+                        status: status,
+                        activity: activity,
+                        location: location,
+                        lastUpdate: new Date().toISOString()
+                    };
+                    characterStatusData.push(statusRecord);
+                } else {
+                    statusRecord.status = status;
+                    statusRecord.activity = activity;
+                    statusRecord.location = location;
+                    statusRecord.lastUpdate = new Date().toISOString();
+                }
+                
+                await db.characterStatus.put(statusRecord);
+                
+            } catch (error) {
+                console.error('更新角色状态失败:', error);
+            }
+        }
+
+        // 获取角色状态
+        function getCharacterStatus(characterId) {
+            return characterStatusData.find(s => s.characterId === characterId) || {
+                status: 'online',
+                activity: '在线',
+                location: '',
+                lastUpdate: new Date().toISOString()
+            };
+        }
+
+        // 角色拉黑用户
+        async function aiBlockUser(characterId, reason = '') {
+            try {
+                const now = new Date();
+                
+                // 检查是否已经拉黑
+                if (isBlocked(characterId, 'user')) {
+                    return;
+                }
+                
+                const blockRecord = {
+                    id: `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    blockerId: characterId,
+                    blockedId: 'user',
+                    timestamp: now.toISOString(),
+                    reason: reason,
+                    cooldownMinutes: 0, // 角色拉黑用户不需要冷静时间
+                    unblocked: false
+                };
+                
+                blacklistData.unshift(blockRecord);
+                await db.blacklist.add(blockRecord);
+                
+                // 更新聊天界面显示
+                if (currentChatCharacter && currentChatCharacter.id === characterId) {
+                    updateChatBlockedStatus();
+                }
+                
+                const character = characters.find(c => c.id === characterId);
+                showToast(`${character?.name || '角色'} 已将你拉黑`, 'warning');
+                
+            } catch (error) {
+                console.error('角色拉黑用户失败:', error);
+            }
+        }
+
+        // 发送好友申请
+        async function sendFriendRequest(characterId, message = '') {
+            try {
+                const request = {
+                    id: `request_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    fromId: 'user',
+                    toId: characterId,
+                    timestamp: new Date().toISOString(),
+                    status: 'pending',
+                    type: 'friend',
+                    message: message
+                };
+                
+                friendRequestsData.unshift(request);
+                await db.friendRequests.add(request);
+                
+                showToast('好友申请已发送', 'success');
+                
+            } catch (error) {
+                console.error('发送好友申请失败:', error);
+                showToast('发送申请失败', 'error');
+            }
+        }
+
+        // 更新聊天界面的拉黑状态显示
+        function updateChatBlockedStatus() {
+            if (!currentChatCharacter) return;
+            
+            const characterId = currentChatCharacter.id;
+            const isUserBlocked = isBlocked('user', characterId);
+            const isCharacterBlocked = isBlocked(characterId, 'user');
+            
+            // 移除现有的拉黑提示
+            const existingBlockedUI = document.querySelector('.blocked-status-overlay');
+            if (existingBlockedUI) {
+                existingBlockedUI.remove();
+            }
+            
+            if (isUserBlocked || isCharacterBlocked) {
+                // 创建拉黑状态覆盖层
+                const chatScreen = document.getElementById('api-chat-screen');
+                const blockedOverlay = document.createElement('div');
+                blockedOverlay.className = 'blocked-status-overlay';
+                
+                let statusText, buttonText, buttonAction;
+                
+                if (isUserBlocked) {
+                    statusText = `你已将 ${currentChatCharacter.name} 拉黑`;
+                    buttonText = '解除拉黑';
+                    buttonAction = () => unblockCharacter(characterId);
+                } else {
+                    statusText = `你被 ${currentChatCharacter.name} 拉黑了`;
+                    buttonText = '重新申请添加好友';
+                    buttonAction = () => showFriendRequestModal();
+                }
+                
+                blockedOverlay.innerHTML = `
+                    <div class="blocked-status-content">
+                        <div class="blocked-status-text">${statusText}</div>
+                        <button class="blocked-status-button" onclick="this.clickHandler()">${buttonText}</button>
+                    </div>
+                `;
+                
+                // 绑定按钮事件
+                const button = blockedOverlay.querySelector('.blocked-status-button');
+                button.clickHandler = buttonAction;
+                
+                chatScreen.appendChild(blockedOverlay);
+            }
+        }
+
+        // 显示拉黑设置
+        function showBlacklistSettings() {
+            if (!currentChatCharacter) {
+                showToast('请先选择一个角色', 'warning');
+                return;
+            }
+            
+            const characterId = currentChatCharacter.id;
+            const isUserBlocked = isBlocked('user', characterId);
+            
+            const statusDesc = document.getElementById('blacklist-status-desc');
+            const actionLabel = document.getElementById('block-action-label');
+            const actionDesc = document.getElementById('block-action-desc');
+            
+            if (isUserBlocked) {
+                statusDesc.textContent = '你已拉黑此角色';
+                actionLabel.textContent = '解除拉黑';
+                actionDesc.textContent = '恢复与该角色的正常聊天';
+            } else {
+                statusDesc.textContent = '正常聊天中';
+                actionLabel.textContent = '拉黑此角色';
+                actionDesc.textContent = '阻止该角色向你发送消息';
+            }
+            
+            document.getElementById('cooldown-minutes').value = defaultCooldownMinutes;
+            document.getElementById('blacklist-settings-modal').style.display = 'flex';
+        }
+
+        // 隐藏拉黑设置
+        function hideBlacklistSettings() {
+            document.getElementById('blacklist-settings-modal').style.display = 'none';
+        }
+
+        // 显示好友申请模态框
+        function showFriendRequestModal() {
+            if (!currentChatCharacter) return;
+            
+            // 检查是否在冷静期
+            if (isInCooldown(currentChatCharacter.id, 'user')) {
+                showToast('还在冷静期内，请稍后再试', 'warning');
+                return;
+            }
+            
+            document.getElementById('friend-request-message').value = '';
+            document.getElementById('friend-request-modal').style.display = 'flex';
+        }
+
+        // 隐藏好友申请模态框
+        function hideFriendRequestModal() {
+            document.getElementById('friend-request-modal').style.display = 'none';
+        }
+
+        // 发送好友申请确认
+        async function sendFriendRequestConfirm() {
+            if (!currentChatCharacter) return;
+            
+            const message = document.getElementById('friend-request-message').value.trim();
+            await sendFriendRequest(currentChatCharacter.id, message);
+            hideFriendRequestModal();
+        }
+
+        // 执行拉黑操作
+        function performBlockAction() {
+            if (!currentChatCharacter) return;
+            
+            const characterId = currentChatCharacter.id;
+            const isUserBlocked = isBlocked('user', characterId);
+            const cooldownMinutes = parseInt(document.getElementById('cooldown-minutes').value) || 30;
+            
+            if (isUserBlocked) {
+                if (confirm(`确定要解除对 ${currentChatCharacter.name} 的拉黑吗？`)) {
+                    unblockCharacter(characterId);
+                    hideBlacklistSettings();
+                }
+            } else {
+                if (confirm(`确定要拉黑 ${currentChatCharacter.name} 吗？\n\n冷静时间：${cooldownMinutes}分钟`)) {
+                    blockCharacter(characterId, '', cooldownMinutes);
+                    hideBlacklistSettings();
+                }
+            }
+        }
+
+        // 在应用初始化时加载拉黑系统数据
+        document.addEventListener('DOMContentLoaded', async function() {
+            setTimeout(async () => {
+                try {
+                    await Promise.all([
+                        loadBlacklistData(),
+                        loadFriendRequestsData(),
+                        loadCharacterStatusData()
+                    ]);
+                    console.log('🚫 拉黑系统数据加载完成');
+                } catch (error) {
+                    console.error('拉黑系统数据加载失败:', error);
+                }
+            }, 1000);
+        });
+
+        // 加载好友申请数据
+        async function loadFriendRequestsData() {
+            try {
+                friendRequestsData = await db.friendRequests.orderBy('timestamp').reverse().toArray();
+                console.log('好友申请数据加载完成:', friendRequestsData);
+            } catch (error) {
+                console.error('加载好友申请数据失败:', error);
+                friendRequestsData = [];
+            }
+        }
+
+        // 加载角色状态数据
+        async function loadCharacterStatusData() {
+            try {
+                characterStatusData = await db.characterStatus.toArray();
+                console.log('角色状态数据加载完成:', characterStatusData);
+            } catch (error) {
+                console.error('加载角色状态数据失败:', error);
+                characterStatusData = [];
+            }
+        }
+
+        // 📱【角色状态显示】相关功能
+        // 渲染角色状态
+        function renderCharacterStatus(characterId, container) {
+            const chatSettings = getCurrentChatSettings();
+            if (!chatSettings.characterStatusEnabled) {
+                return; // 如果没有开启状态显示，直接返回
+            }
+            
+            const status = getCharacterStatus(characterId);
+            const isUserBlocked = isBlocked('user', characterId);
+            const isCharacterBlocked = isBlocked(characterId, 'user');
+            
+            let statusClass = 'online';
+            let statusText = status.activity || '在线';
+            
+            if (isUserBlocked || isCharacterBlocked) {
+                statusClass = 'blocked';
+                statusText = '已拉黑';
+            } else if (status.status === 'busy') {
+                statusClass = 'busy';
+            }
+            
+            const statusHtml = `
+                <div class="character-status">
+                    <div class="status-indicator ${statusClass}"></div>
+                    <span class="status-text">${statusText}</span>
+                </div>
+            `;
+            
+            // 如果容器存在，添加状态显示
+            if (container) {
+                const existingStatus = container.querySelector('.character-status');
+                if (existingStatus) {
+                    existingStatus.remove();
+                }
+                container.insertAdjacentHTML('beforeend', statusHtml);
+            }
+        }
+
+        // AI生成角色状态
+        async function generateCharacterStatus(characterId) {
+            try {
+                const character = characters.find(c => c.id === characterId);
+                if (!character) return;
+                
+                // 简单的状态生成逻辑
+                const activities = [
+                    '在基地休息',
+                    '在训练室锻炼',
+                    '在图书馆看书',
+                    '在咖啡厅小憩',
+                    '在公园散步',
+                    '在家整理房间',
+                    '在听音乐',
+                    '在思考问题'
+                ];
+                
+                const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+                await updateCharacterStatus(characterId, 'online', randomActivity);
+                
+            } catch (error) {
+                console.error('生成角色状态失败:', error);
+            }
+        }
+
+        // 定期更新角色状态
+        function startStatusUpdateTimer() {
+            setInterval(async () => {
+                // 为所有在线角色随机更新状态
+                for (const character of characters) {
+                    if (Math.random() < 0.1) { // 10%的概率更新状态
+                        await generateCharacterStatus(character.id);
+                    }
+                }
+                
+                // 刷新当前显示的状态
+                if (currentChatCharacter) {
+                    const headerContainer = document.querySelector('.api-chat-header');
+                    if (headerContainer) {
+                        renderCharacterStatus(currentChatCharacter.id, headerContainer);
+                    }
+                }
+            }, 60000); // 每分钟检查一次
+        }
+
+        // 在应用初始化时启动状态更新定时器
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                startStatusUpdateTimer();
+            }, 5000); // 延迟5秒启动
+        });
+
+        console.log('🚫 拉黑系统核心功能已加载');
+        console.log('📱 角色状态显示功能已加载');
     </script>
 </body>
 </html>
