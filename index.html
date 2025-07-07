@@ -7351,6 +7351,16 @@ async function startChat(character) {
             const headerContainer = document.querySelector('#api-chat-screen .header');
             if (headerContainer) {
                 renderCharacterStatus(character.id, headerContainer);
+                
+                // 🔥【新增】立即为这个角色生成一个初始状态（如果还没有的话）
+                setTimeout(async () => {
+                    const currentStatus = getCharacterStatus(character.id);
+                    if (!currentStatus.activity || currentStatus.activity === '在线') {
+                        await generateCharacterStatus(character.id);
+                        // 刷新状态显示
+                        renderCharacterStatus(character.id, headerContainer);
+                    }
+                }, 500);
             }
             
             // 初始化空的聊天记录（不自动发送消息）
@@ -8880,6 +8890,9 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
             }
             addMessageWithAnimation(message, currentChatCharacter.id);
             renderMessageList();
+            
+            // 🔥【新增】触发角色状态更新
+            triggerStatusUpdateAfterMessage(currentChatCharacter.id);
             
             // 设置为待回复消息，并更新智能回复按钮状态
             pendingUserMessage = message;
@@ -12482,20 +12495,21 @@ ${character.bio}
             showModal('schedule-settings-modal');
         }
         
-        // 异步函数，用于获取当前聊天窗口的专属设置
-        async function getAsyncChatSettings() {
-            // 1. 确保有当前聊天角色，否则返回空设置
-            if (!currentChatCharacter) {
-                console.warn("无法获取设置：currentChatCharacter 未定义，返回空设置");
+        // 异步函数，用于获取聊天窗口的专属设置
+        async function getAsyncChatSettings(characterId = null) {
+            // 1. 确定使用哪个角色ID
+            const chatId = characterId || (currentChatCharacter ? currentChatCharacter.id : null);
+            
+            if (!chatId) {
+                console.warn("无法获取设置：characterId 和 currentChatCharacter 都未定义，返回空设置");
                 return {
                     historyCount: 30,
                     timestampEnabled: true,
                     timestampPosition: 'center',
-                    bubbleStyle: 'default'
+                    bubbleStyle: 'default',
+                    characterStatusEnabled: false
                 };
             }
-            
-            const chatId = currentChatCharacter.id;
             
             // 2. 【性能优化】首先检查内存中是否已有该聊天的设置
             if (chatSettings[chatId]) {
@@ -12600,6 +12614,7 @@ ${character.bio}
                 timeAwarenessEnabled: true,
                 aiCallEnabled: false,
                 aiHeartrateEnabled: false,
+                characterStatusEnabled: false,
                 socialEnabled: false,
                 socialFrequency: 'medium',
                 backgroundInteractionEnabled: false,
@@ -13404,6 +13419,9 @@ ${character.bio}
             
             // 渲染消息
             renderChatMessages(currentChatCharacter.id);
+            
+            // 🔥【新增】触发角色状态更新
+            triggerStatusUpdateAfterMessage(currentChatCharacter.id);
             
             // 隐藏表情包面板
             hideCustomEmojiPanel();
@@ -16744,6 +16762,9 @@ async function createGroupChat(personaId) {
     await saveChatMessages();
                     addMessageWithAnimation(aiMessage, currentChatCharacter.id);
                     
+                    // 🔥【新增】触发角色状态更新
+                    triggerStatusUpdateAfterMessage(currentChatCharacter.id);
+                    
                     if (i < aiMessages.length - 1) {
                         const delay = Math.random() * 1000 + 500;
                         await new Promise(resolve => setTimeout(resolve, delay));
@@ -17080,6 +17101,9 @@ async function createGroupChat(personaId) {
             // 添加语音消息到界面
             addMessageWithAnimation(voiceMessage, currentChatCharacter.id);
             console.log('语音消息已添加到界面');
+            
+            // 🔥【新增】触发角色状态更新
+            triggerStatusUpdateAfterMessage(currentChatCharacter.id);
 
             // 设置待回复消息
             pendingUserMessage = voiceMessage;
@@ -25179,33 +25203,147 @@ async function changeMyGroupAvatar() {
                 const character = characters.find(c => c.id === characterId);
                 if (!character) return;
                 
-                // 简单的状态生成逻辑
-                const activities = [
-                    '在基地休息',
-                    '在训练室锻炼',
-                    '在图书馆看书',
-                    '在咖啡厅小憩',
-                    '在公园散步',
-                    '在家整理房间',
-                    '在听音乐',
-                    '在思考问题'
-                ];
+                // 获取聊天设置和最近聊天记录
+                const chatSettings = await getAsyncChatSettings(characterId);
+                const messages = chatMessages[characterId] || [];
+                const recentMessages = messages.slice(-5); // 最近5条消息
                 
-                const randomActivity = activities[Math.floor(Math.random() * activities.length)];
-                await updateCharacterStatus(characterId, 'online', randomActivity);
+                // 构建上下文信息
+                let chatContext = '';
+                if (recentMessages.length > 0) {
+                    chatContext = '最近的聊天记录：\n' + 
+                        recentMessages.map(msg => {
+                            if (msg.sender === 'user') return `用户：${msg.content}`;
+                            if (msg.sender === 'ai') return `${character.name}：${msg.content}`;
+                            return '';
+                        }).filter(Boolean).join('\n') + '\n\n';
+                }
+                
+                // 获取世界书内容作为背景
+                let worldBookContext = '';
+                if (chatSettings?.linkedWorldBookIds && chatSettings.linkedWorldBookIds.length > 0) {
+                    try {
+                        const worldBooks = await Promise.all(
+                            chatSettings.linkedWorldBookIds.map(id => db.worldbooks.get(id))
+                        );
+                        const validWorldBooks = worldBooks.filter(book => book && book.content);
+                        if (validWorldBooks.length > 0) {
+                            worldBookContext = '背景设定：\n' + 
+                                validWorldBooks.map(book => `${book.name}：${book.content}`).join('\n\n') + '\n\n';
+                        }
+                    } catch (error) {
+                        console.error('获取世界书内容失败:', error);
+                    }
+                }
+                
+                // 随机选择状态类型：活动或心情
+                const statusType = Math.random() < 0.5 ? 'activity' : 'mood';
+                
+                let prompt;
+                if (statusType === 'activity') {
+                    // 生成活动状态
+                    prompt = `你是${character.name}，人设如下：${character.bio}
+
+${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天记录，生成一个符合你当前状况的活动状态。要求：
+1. 10-20字内，简洁明了
+2. 符合你的性格和身份设定
+3. 基于最近的聊天内容或剧情发展
+4. 格式：在[地点][做什么]
+5. 要真实反映角色当下可能在做的事情
+6. 如果没有具体聊天记录，则根据人设推测合理的日常活动
+
+示例格式：在图书馆整理资料、在训练场练习剑术、在房间里沉思、在花园中散步等
+
+请生成一个活动状态：`;
+                } else {
+                    // 生成心情状态
+                    prompt = `你是${character.name}，人设如下：${character.bio}
+
+${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天记录，生成一个符合你当前心情的状态。要求：
+1. 10-20字内，简洁明了
+2. 符合你的性格特点
+3. 基于最近的对话内容或情感变化
+4. 表达你当下的真实情感状态
+5. 要有角色的个性色彩
+6. 如果没有具体聊天记录，则根据人设推测基本心情
+
+示例格式：心情愉悦、略感困惑、正在专注思考、感到有些疲惫、对未来充满期待等
+
+请生成一个心情状态：`;
+                }
+                
+                // 使用AI生成状态
+                const statusText = await generateAIResponse(prompt, character);
+                
+                if (statusText && statusText.trim()) {
+                    const cleanStatus = statusText.trim().replace(/^["""''「」『』【】]|["""''「」『』【】]$/g, '');
+                    await updateCharacterStatus(characterId, 'online', cleanStatus);
+                    console.log(`为${character.name}生成${statusType === 'activity' ? '活动' : '心情'}状态: ${cleanStatus}`);
+                } else {
+                    // 如果AI生成失败，使用基于人设的默认状态
+                    const fallbackStatus = generateFallbackStatus(character, statusType);
+                    await updateCharacterStatus(characterId, 'online', fallbackStatus);
+                    console.log(`为${character.name}使用默认${statusType === 'activity' ? '活动' : '心情'}状态: ${fallbackStatus}`);
+                }
                 
             } catch (error) {
                 console.error('生成角色状态失败:', error);
+                // 错误时使用简单的默认状态
+                const fallbackStatus = generateFallbackStatus(character, 'activity');
+                await updateCharacterStatus(characterId, 'online', fallbackStatus);
+            }
+        }
+        
+        // 生成基于人设的备用状态
+        function generateFallbackStatus(character, statusType) {
+            const bio = (character.bio || '').toLowerCase();
+            
+            if (statusType === 'activity') {
+                // 基于人设关键词的活动状态
+                if (bio.includes('学者') || bio.includes('研究') || bio.includes('书')) {
+                    return '在书房研读典籍';
+                } else if (bio.includes('战士') || bio.includes('剑') || bio.includes('战斗')) {
+                    return '在训练场练习';
+                } else if (bio.includes('医生') || bio.includes('治疗')) {
+                    return '在诊所整理药品';
+                } else if (bio.includes('商人') || bio.includes('买卖')) {
+                    return '在店铺忙碌';
+                } else if (bio.includes('艺术') || bio.includes('画') || bio.includes('音乐')) {
+                    return '在工作室创作';
+                } else if (bio.includes('厨') || bio.includes('料理')) {
+                    return '在厨房准备食材';
+                } else {
+                    return '在房间里休息';
+                }
+            } else {
+                // 基于人设关键词的心情状态
+                if (bio.includes('开朗') || bio.includes('活泼') || bio.includes('乐观')) {
+                    return '心情愉悦';
+                } else if (bio.includes('冷静') || bio.includes('理性') || bio.includes('沉着')) {
+                    return '内心平静';
+                } else if (bio.includes('严肃') || bio.includes('认真')) {
+                    return '专注思考中';
+                } else if (bio.includes('温柔') || bio.includes('善良')) {
+                    return '心境温和';
+                } else if (bio.includes('神秘') || bio.includes('深沉')) {
+                    return '若有所思';
+                } else {
+                    return '状态良好';
+                }
             }
         }
 
         // 定期更新角色状态
         function startStatusUpdateTimer() {
             setInterval(async () => {
-                // 为所有在线角色随机更新状态
+                // 为联系人中的角色智能更新状态
                 for (const character of characters) {
-                    if (Math.random() < 0.1) { // 10%的概率更新状态
-                        await generateCharacterStatus(character.id);
+                    if (contacts.includes(character.id)) {
+                        // 检查是否需要更新状态
+                        const shouldUpdate = await shouldUpdateCharacterStatus(character.id);
+                        if (shouldUpdate) {
+                            await generateCharacterStatus(character.id);
+                        }
                     }
                 }
                 
@@ -25217,6 +25355,70 @@ async function changeMyGroupAvatar() {
                     }
                 }
             }, 60000); // 每分钟检查一次
+        }
+        
+        // 判断是否应该更新角色状态
+        async function shouldUpdateCharacterStatus(characterId) {
+            try {
+                const currentStatus = getCharacterStatus(characterId);
+                const lastUpdate = new Date(currentStatus.lastUpdate);
+                const now = new Date();
+                const timeDiff = now - lastUpdate;
+                
+                // 如果状态超过15分钟没更新，有较高概率更新
+                if (timeDiff > 15 * 60 * 1000) {
+                    return Math.random() < 0.3; // 30%概率
+                }
+                
+                // 如果最近有聊天活动，提高更新概率
+                const messages = chatMessages[characterId] || [];
+                if (messages.length > 0) {
+                    const lastMessage = messages[messages.length - 1];
+                    const lastMessageTime = new Date(lastMessage.timestamp);
+                    const messageTimeDiff = now - lastMessageTime;
+                    
+                    // 如果最近5分钟内有聊天，有更高概率更新状态
+                    if (messageTimeDiff < 5 * 60 * 1000) {
+                        return Math.random() < 0.4; // 40%概率
+                    }
+                    
+                    // 如果最近30分钟内有聊天，有一定概率更新状态
+                    if (messageTimeDiff < 30 * 60 * 1000) {
+                        return Math.random() < 0.2; // 20%概率
+                    }
+                }
+                
+                // 默认概率
+                return Math.random() < 0.1; // 10%概率
+                
+            } catch (error) {
+                console.error('判断角色状态更新失败:', error);
+                return Math.random() < 0.05; // 5%概率
+            }
+        }
+        
+        // 在发送/接收消息后触发状态更新
+        async function triggerStatusUpdateAfterMessage(characterId) {
+            // 延迟更新，模拟角色响应聊天内容后的状态变化
+            setTimeout(async () => {
+                // 检查是否开启了角色状态显示
+                const chatSettings = await getAsyncChatSettings(characterId);
+                if (!chatSettings.characterStatusEnabled) {
+                    return;
+                }
+                
+                if (Math.random() < 0.7) { // 70%概率在聊天后更新状态
+                    await generateCharacterStatus(characterId);
+                    
+                    // 如果是当前聊天角色，刷新显示
+                    if (currentChatCharacter && currentChatCharacter.id === characterId) {
+                        const headerContainer = document.querySelector('#api-chat-screen .header');
+                        if (headerContainer) {
+                            renderCharacterStatus(characterId, headerContainer);
+                        }
+                    }
+                }
+            }, Math.random() * 8000 + 3000); // 3-11秒后随机更新
         }
 
         // 在应用初始化时启动状态更新定时器
