@@ -22978,34 +22978,62 @@ async function createGroupChat(personaId) {
         async function exportAllData() {
             try {
                 showToast('正在导出数据...', 'info');
+                
+                // 🔥【修复】导出所有重要数据表
                 const exportData = {
-                    version: '1.0',
+                    version: '2.0', // 更新版本号
                     exportTime: new Date().toISOString(),
                     characters: await db.characters.toArray(),
                     chatMessages: await db.chatMessages.toArray(),
                     chatSettings: await db.chatSettings.toArray(),
-                    customEmojis: await db.customEmojis.toArray()
+                    customEmojis: await db.customEmojis.toArray(),
+                    wallpapers: await db.wallpapers.toArray(),
+                    worldbooks: await db.worldbooks.toArray(),
+                    characterGroups: await db.characterGroups.toArray(),
+                    groupChats: await db.groupChats.toArray(),
+                    personas: await db.personas.toArray(),
+                    apiSettings: await db.apiSettings.toArray(),
+                    globalSettings: await db.globalSettings.toArray(),
+                    recentEmojis: await db.recentEmojis.toArray(),
+                    contacts: await db.contacts.toArray(),
+                    appIcons: await db.appIcons.toArray()
                 };
+
+                // 显示导出统计
+                const stats = [];
+                if (exportData.characters?.length) stats.push(`角色: ${exportData.characters.length}个`);
+                if (exportData.chatMessages?.length) stats.push(`消息: ${exportData.chatMessages.length}条`);
+                if (exportData.chatSettings?.length) stats.push(`设置: ${exportData.chatSettings.length}个`);
+                if (exportData.wallpapers?.length) stats.push(`壁纸: ${exportData.wallpapers.length}个`);
+                if (exportData.worldbooks?.length) stats.push(`世界书: ${exportData.worldbooks.length}个`);
+                if (exportData.characterGroups?.length) stats.push(`分组: ${exportData.characterGroups.length}个`);
+                if (exportData.groupChats?.length) stats.push(`群聊: ${exportData.groupChats.length}个`);
+                if (exportData.personas?.length) stats.push(`面具: ${exportData.personas.length}个`);
+                if (exportData.customEmojis?.length) stats.push(`表情: ${exportData.customEmojis.length}个`);
+                
+                console.log('导出数据统计:', stats.join(', '));
 
                 const dataStr = JSON.stringify(exportData, null, 2);
                 const dataBlob = new Blob([dataStr], { type: 'application/json' });
                 const url = URL.createObjectURL(dataBlob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `chat_backup_${new Date().toISOString().split('T')[0]}.json`;
+                link.download = `完整备份_${new Date().toISOString().split('T')[0]}.json`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                showToast('导出成功！', 'success');
+                
+                const statsText = stats.length > 0 ? `\n${stats.join('\n')}` : '';
+                showToast(`导出成功！${statsText}`, 'success');
             } catch (error) {
                 console.error('导出失败:', error);
-                showToast('导出失败', 'error');
+                showToast('导出失败: ' + error.message, 'error');
             }
         }
 
         // 导入数据
-        // 🔥【修复】导入数据 - 使用bulkPut避免主键冲突
+        // 🔥【修复】导入数据 - 增强错误处理和数据验证
         function importDataFromFile() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -23016,8 +23044,41 @@ async function createGroupChat(personaId) {
                 try {
                     showToast('正在导入...', 'info');
                     const text = await file.text();
-                    const data = JSON.parse(text);
-                    if (!confirm('导入将覆盖现有数据，确定继续？')) return;
+                    
+                    // 尝试解析JSON
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (parseError) {
+                        throw new Error('JSON格式错误：' + parseError.message);
+                    }
+                    
+                    // 检查数据格式
+                    if (!data || typeof data !== 'object') {
+                        throw new Error('无效的备份文件格式');
+                    }
+                    
+                    // 显示导入预览
+                    const dataPreview = [];
+                    if (data.characters?.length) dataPreview.push(`角色: ${data.characters.length}个`);
+                    if (data.chatMessages?.length) dataPreview.push(`聊天消息: ${data.chatMessages.length}条`);
+                    if (data.chatSettings?.length) dataPreview.push(`聊天设置: ${data.chatSettings.length}个`);
+                    if (data.worldbooks?.length) dataPreview.push(`世界书: ${data.worldbooks.length}个`);
+                    if (data.customEmojis?.length) dataPreview.push(`自定义表情: ${data.customEmojis.length}个`);
+                    if (data.wallpapers?.length) dataPreview.push(`壁纸: ${data.wallpapers.length}个`);
+                    if (data.characterGroups?.length) dataPreview.push(`角色分组: ${data.characterGroups.length}个`);
+                    if (data.groupChats?.length) dataPreview.push(`群聊: ${data.groupChats.length}个`);
+                    if (data.personas?.length) dataPreview.push(`用户面具: ${data.personas.length}个`);
+                    if (data.apiSettings?.length) dataPreview.push(`API设置: ${data.apiSettings.length}个`);
+                    if (data.globalSettings?.length) dataPreview.push(`全局设置: ${data.globalSettings.length}个`);
+                    if (data.contacts?.length) dataPreview.push(`联系人: ${data.contacts.length}个`);
+                    if (data.appIcons?.length) dataPreview.push(`应用图标: ${data.appIcons.length}个`);
+                    
+                    const previewText = dataPreview.length > 0 ? 
+                        `将导入以下数据：\n${dataPreview.join('\n')}\n\n导入将覆盖现有数据，确定继续？` : 
+                        '备份文件中没有找到有效数据，确定继续？';
+                    
+                    if (!confirm(previewText)) return;
                     
                     // 🔥【修复】使用bulkPut代替bulkAdd避免主键冲突
                     let importedTables = 0;
@@ -23109,13 +23170,174 @@ async function createGroupChat(personaId) {
                         }
                     }
                     
+                    // 导入壁纸
+                    if (data.wallpapers?.length) {
+                        try {
+                            await db.wallpapers.clear();
+                            const validWallpapers = data.wallpapers.map(wp => ({
+                                ...wp,
+                                id: wp.id || `wp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.wallpapers.bulkPut(validWallpapers);
+                            importedTables++;
+                            console.log(`导入了 ${validWallpapers.length} 个壁纸`);
+                        } catch (error) {
+                            console.error('导入壁纸失败:', error);
+                            showToast('壁纸导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入角色分组
+                    if (data.characterGroups?.length) {
+                        try {
+                            await db.characterGroups.clear();
+                            const validGroups = data.characterGroups.map(group => ({
+                                ...group,
+                                id: group.id || `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.characterGroups.bulkPut(validGroups);
+                            importedTables++;
+                            console.log(`导入了 ${validGroups.length} 个角色分组`);
+                        } catch (error) {
+                            console.error('导入角色分组失败:', error);
+                            showToast('角色分组导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入群聊
+                    if (data.groupChats?.length) {
+                        try {
+                            await db.groupChats.clear();
+                            const validGroups = data.groupChats.map(chat => ({
+                                ...chat,
+                                id: chat.id || `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.groupChats.bulkPut(validGroups);
+                            importedTables++;
+                            console.log(`导入了 ${validGroups.length} 个群聊`);
+                        } catch (error) {
+                            console.error('导入群聊失败:', error);
+                            showToast('群聊导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入用户面具
+                    if (data.personas?.length) {
+                        try {
+                            await db.personas.clear();
+                            const validPersonas = data.personas.map(persona => ({
+                                ...persona,
+                                id: persona.id || `persona_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.personas.bulkPut(validPersonas);
+                            importedTables++;
+                            console.log(`导入了 ${validPersonas.length} 个用户面具`);
+                        } catch (error) {
+                            console.error('导入用户面具失败:', error);
+                            showToast('用户面具导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入API设置
+                    if (data.apiSettings?.length) {
+                        try {
+                            await db.apiSettings.clear();
+                            const validApiSettings = data.apiSettings.map(setting => ({
+                                ...setting,
+                                id: setting.id || `api_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.apiSettings.bulkPut(validApiSettings);
+                            importedTables++;
+                            console.log(`导入了 ${validApiSettings.length} 个API设置`);
+                        } catch (error) {
+                            console.error('导入API设置失败:', error);
+                            showToast('API设置导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入全局设置
+                    if (data.globalSettings?.length) {
+                        try {
+                            await db.globalSettings.clear();
+                            const validGlobalSettings = data.globalSettings.map(setting => ({
+                                ...setting,
+                                id: setting.id || `global_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.globalSettings.bulkPut(validGlobalSettings);
+                            importedTables++;
+                            console.log(`导入了 ${validGlobalSettings.length} 个全局设置`);
+                        } catch (error) {
+                            console.error('导入全局设置失败:', error);
+                            showToast('全局设置导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入最近表情
+                    if (data.recentEmojis?.length) {
+                        try {
+                            await db.recentEmojis.clear();
+                            const validRecentEmojis = data.recentEmojis.map(emoji => ({
+                                ...emoji,
+                                id: emoji.id || `recent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.recentEmojis.bulkPut(validRecentEmojis);
+                            importedTables++;
+                            console.log(`导入了 ${validRecentEmojis.length} 个最近表情`);
+                        } catch (error) {
+                            console.error('导入最近表情失败:', error);
+                            showToast('最近表情导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入联系人
+                    if (data.contacts?.length) {
+                        try {
+                            await db.contacts.clear();
+                            const validContacts = data.contacts.map(contact => ({
+                                ...contact,
+                                id: contact.id || `contact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.contacts.bulkPut(validContacts);
+                            importedTables++;
+                            console.log(`导入了 ${validContacts.length} 个联系人`);
+                        } catch (error) {
+                            console.error('导入联系人失败:', error);
+                            showToast('联系人导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入应用图标
+                    if (data.appIcons?.length) {
+                        try {
+                            await db.appIcons.clear();
+                            const validAppIcons = data.appIcons.map(icon => ({
+                                ...icon,
+                                id: icon.id || `icon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.appIcons.bulkPut(validAppIcons);
+                            importedTables++;
+                            console.log(`导入了 ${validAppIcons.length} 个应用图标`);
+                        } catch (error) {
+                            console.error('导入应用图标失败:', error);
+                            showToast('应用图标导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+
+                    
                     // 重新加载所有数据
                     await loadCharacterGroups();
                     await loadCharacters();
                     await loadChatMessages();
                     await loadChatSettings();
+                    await loadPersonas();
+                    await loadGroupChats();
+                    await loadWallpaper();
+                    await loadAppIcons();
+                    await loadWorldbooks();
                     renderCharacterList();
                     renderMessageList();
+                    renderPersonaList();
                     calculateStorageUsage();
                     
                     showToast(`导入成功！共导入 ${importedTables} 个数据表`, 'success');
@@ -27309,6 +27531,175 @@ async function aiUnblockUser(characterId) {
         }
 
         console.log('🚫 角色拉黑/解除拉黑通知功能已加载');
+        
+        // 🔥【修复脚本】解决数据导入失败和引用消息刷新后消失的问题
+        console.log('🔧 正在应用系统修复...');
+        
+        // 修复数据导入问题
+        (function fixImportIssues() {
+            const originalImport = window.importDataFromFile;
+            window.importDataFromFile = function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = async function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    try {
+                        showToast('🔍 验证文件格式...', 'info');
+                        const text = await file.text();
+                        
+                        let data;
+                        try {
+                            data = JSON.parse(text);
+                        } catch (parseError) {
+                            throw new Error(`JSON格式错误: ${parseError.message}\n请确保文件是有效的备份文件`);
+                        }
+                        
+                        if (!data || typeof data !== 'object') {
+                            throw new Error('无效的备份文件格式');
+                        }
+                        
+                        const items = [];
+                        if (data.characters?.length) items.push(`角色: ${data.characters.length}个`);
+                        if (data.chatMessages?.length) items.push(`消息: ${data.chatMessages.length}条`);
+                        if (data.chatSettings?.length) items.push(`设置: ${data.chatSettings.length}个`);
+                        
+                        const msg = items.length ? `准备导入:\n${items.join('\n')}\n\n确定继续？` : '文件无有效数据，继续？';
+                        if (!confirm(msg)) return;
+                        
+                        showToast('⚡ 导入中...', 'info');
+                        let success = 0;
+                        let errors = [];
+                        
+                        // 修复角色导入
+                        if (data.characters?.length) {
+                            try {
+                                await db.characters.clear();
+                                const chars = data.characters.filter(c => c?.name).map(c => ({
+                                    ...c,
+                                    id: c.id || `char_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                    groupId: c.groupId || 'my_friends'
+                                }));
+                                await db.characters.bulkPut(chars);
+                                success++;
+                            } catch (e) {
+                                errors.push(`角色: ${e.message}`);
+                            }
+                        }
+                        
+                        // 修复消息导入（包含引用消息）
+                        if (data.chatMessages?.length) {
+                            try {
+                                await db.chatMessages.clear();
+                                const msgs = data.chatMessages.filter(m => m?.content).map(m => {
+                                    const msg = {
+                                        ...m,
+                                        id: m.id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                        characterId: m.characterId || 'unknown'
+                                    };
+                                    
+                                    // 修复引用消息
+                                    if (m.replyTo) {
+                                        msg.replyTo = {
+                                            id: m.replyTo.id || 'unknown',
+                                            content: m.replyTo.content || '[已删除]',
+                                            sender: m.replyTo.sender || 'unknown',
+                                            senderName: m.replyTo.senderName || '未知',
+                                            timestamp: m.replyTo.timestamp || Date.now(),
+                                            _fixed: true
+                                        };
+                                    }
+                                    return msg;
+                                });
+                                await db.chatMessages.bulkPut(msgs);
+                                success++;
+                            } catch (e) {
+                                errors.push(`消息: ${e.message}`);
+                            }
+                        }
+                        
+                        // 导入设置
+                        if (data.chatSettings?.length) {
+                            try {
+                                await db.chatSettings.clear();
+                                const settings = data.chatSettings.map(s => ({
+                                    ...s,
+                                    id: s.id || `set_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                                }));
+                                await db.chatSettings.bulkPut(settings);
+                                success++;
+                            } catch (e) {
+                                errors.push(`设置: ${e.message}`);
+                            }
+                        }
+                        
+                        // 重新加载
+                        await loadCharacters();
+                        await loadChatMessages();
+                        await loadChatSettings();
+                        renderCharacterList();
+                        renderMessageList();
+                        
+                        const result = success > 0 
+                            ? `🎉 导入成功 ${success} 项${errors.length ? `\n⚠️ ${errors.length} 项失败` : ''}`
+                            : `❌ 导入失败\n${errors.join('\n')}`;
+                        showToast(result, success > 0 ? 'success' : 'error');
+                        
+                    } catch (error) {
+                        showToast(`❌ 导入失败: ${error.message}`, 'error');
+                        if (error.message.includes('JSON')) {
+                            setTimeout(() => alert('文件格式错误！请确保是从"导出所有数据"生成的备份文件'), 1000);
+                        }
+                    }
+                };
+                input.click();
+            };
+        })();
+        
+        // 修复引用消息问题
+        (function fixReplyIssues() {
+            const originalGenerate = window.generateReplyHTML;
+            window.generateReplyHTML = function(replyTo) {
+                if (!replyTo) return '';
+                
+                let safe = {
+                    id: replyTo.id || 'unknown',
+                    senderName: replyTo.senderName || '未知',
+                    content: replyTo.content || '[已删除]'
+                };
+                
+                // 尝试恢复引用内容
+                if (replyTo.id !== 'unknown' && currentChatCharacter) {
+                    const msgs = chatMessages[currentChatCharacter.id] || [];
+                    const original = msgs.find(m => m.id === replyTo.id);
+                    if (original) {
+                        safe.content = original.content || '[图片]';
+                        safe.senderName = getSenderDisplayName(original);
+                    }
+                }
+                
+                const display = truncateText(safe.content, 40);
+                return `
+                    <div class="reply-reference" data-reply-id="${safe.id}">
+                        <div class="reply-reference-line"></div>
+                        <div class="reply-reference-content">
+                            <div class="reply-reference-sender">${safe.senderName}</div>
+                            <div class="reply-reference-message">${display}</div>
+                        </div>
+                    </div>
+                `;
+            };
+        })();
+        
+        console.log('✅ 修复已应用: 数据导入错误处理、引用消息恢复机制');
+        setTimeout(() => {
+            if (typeof showToast === 'function') {
+                showToast('🔧 系统已修复数据导入和引用消息问题', 'success');
+            }
+        }, 2000);
+        
     </script>
 </body>
 </html>
