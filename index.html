@@ -6540,6 +6540,14 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         }
                     }
                 });
+                
+                // 🔥【新增】渲染角色状态显示 - 在消息渲染完成后更新状态
+                if (currentChatCharacter) {
+                    const headerContainer = document.querySelector('#api-chat-screen .header');
+                    if (headerContainer) {
+                        renderCharacterStatus(currentChatCharacter.id, headerContainer);
+                    }
+                }
             }, 50);
         }
         
@@ -7338,6 +7346,12 @@ async function startChat(character) {
     const chatSettings = await getAsyncChatSettings();
             const displayTitle = chatSettings.aiChatNickname || character.name;
             document.getElementById('api-chat-title').textContent = displayTitle;
+            
+            // 🔥【新增】渲染角色状态显示
+            const headerContainer = document.querySelector('#api-chat-screen .header');
+            if (headerContainer) {
+                renderCharacterStatus(character.id, headerContainer);
+            }
             
             // 初始化空的聊天记录（不自动发送消息）
             if (!chatMessages[character.id]) {
@@ -14079,7 +14093,7 @@ ${character.bio}
                     if (currentChatCharacter) {
                         renderChatMessages(currentChatCharacter.id);
                         // 更新聊天标题区域的状态显示
-                        const headerContainer = document.querySelector('#api-chat-title').parentNode;
+                        const headerContainer = document.querySelector('#api-chat-screen .header');
                         if (headerContainer) {
                             renderCharacterStatus(currentChatCharacter.id, headerContainer);
                         }
@@ -25101,7 +25115,14 @@ async function changeMyGroupAvatar() {
         function renderCharacterStatus(characterId, container) {
             const chatSettings = getCurrentChatSettings();
             if (!chatSettings.characterStatusEnabled) {
-                return; // 如果没有开启状态显示，直接返回
+                // 如果关闭了状态显示，移除现有的状态元素
+                if (container) {
+                    const existingStatus = container.querySelector('.character-status');
+                    if (existingStatus) {
+                        existingStatus.remove();
+                    }
+                }
+                return; 
             }
             
             const status = getCharacterStatus(characterId);
@@ -25127,11 +25148,28 @@ async function changeMyGroupAvatar() {
             
             // 如果容器存在，添加状态显示
             if (container) {
+                // 先移除现有的状态显示
                 const existingStatus = container.querySelector('.character-status');
                 if (existingStatus) {
                     existingStatus.remove();
                 }
-                container.insertAdjacentHTML('beforeend', statusHtml);
+                
+                // 🔥【修复】判断容器类型，使用不同的插入策略
+                if (container.classList.contains('header')) {
+                    // 聊天界面的.header容器：直接添加到容器中，使用CSS绝对定位
+                    container.insertAdjacentHTML('beforeend', statusHtml);
+                } else if (container.classList.contains('app-header')) {
+                    // 其他界面的.app-header容器：添加到.app-title内部
+                    const titleElement = container.querySelector('.app-title');
+                    if (titleElement) {
+                        titleElement.insertAdjacentHTML('afterend', statusHtml);
+                    } else {
+                        container.insertAdjacentHTML('beforeend', statusHtml);
+                    }
+                } else {
+                    // 其他容器：默认添加到末尾
+                    container.insertAdjacentHTML('beforeend', statusHtml);
+                }
             }
         }
 
@@ -25173,7 +25211,7 @@ async function changeMyGroupAvatar() {
                 
                 // 刷新当前显示的状态
                 if (currentChatCharacter) {
-                    const headerContainer = document.querySelector('.api-chat-header');
+                    const headerContainer = document.querySelector('#api-chat-screen .header');
                     if (headerContainer) {
                         renderCharacterStatus(currentChatCharacter.id, headerContainer);
                     }

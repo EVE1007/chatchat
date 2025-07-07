@@ -1592,6 +1592,11 @@
             overflow: hidden;
         }
 
+        /* 🔥【新增】专门为聊天界面的header容器添加状态显示支持 */
+        #api-chat-screen .header {
+            overflow: visible;
+        }
+
         .app-title {
             font-weight: var(--theme-title-font-weight, bold);
             font-size: var(--theme-title-font-size, 18px);
@@ -4247,60 +4252,6 @@ textarea.call-text-input {
         .form-submit:active {
             transform: translateY(0);
             box-shadow: var(--theme-button-shadow, 0 2px 10px rgba(0, 123, 255, 0.3));
-        }
-        
-        .avatar-upload {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: var(--theme-form-bg, rgba(255, 255, 255, 0.6));
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 18px;
-            border: 1px solid var(--theme-input-border, rgba(0, 0, 0, 0.05));
-            text-align: center;
-        }
-        
-
-        /* 第二个重复的完整:root CSS变量定义块已安全删除 */
-        /* 该重复块与第一个:root块内容完全相同，包含约900行重复的CSS变量和工具类 */
-
-        html { 
-            height: 100%; 
-            overflow: hidden; 
-        }
-        
-        .battery-container {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 14px;
-        }
-        
-        .battery-icon {
-            width: 20px;
-            height: 10px;
-            border: 1px solid white;
-            border-radius: 4px;
-            position: relative;
-            padding: 1px;
-        }
-        
-        .battery-icon::after {
-            content: '';
-            position: absolute;
-            right: -2px;
-            top: 2px;
-            width: 1.5px;
-            height: 4px;
-            background-color: white;
-            border-radius: 0 1px 1px 0;
-        }
-        
-        .battery-level {
-            height: 100%;
-            background-color: white;
-            border-radius: 2px;
-            transition: width 0.5s ease;
         }
         
         .avatar-upload {
@@ -10065,162 +10016,100 @@ textarea.call-text-input {
         }
 
         .worldbook-global-info {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border: 1px solid #0ea5e9;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f5f5f5;
             border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 15px;
         }
 
         .global-worldbook-note {
-            color: #0369a1;
-            font-size: 13px;
-            line-height: 1.4;
+            color: #666;
+            font-size: 14px;
+            text-align: center;
             margin: 0;
         }
 
-        /* 🚫【拉黑系统】样式 */
-        .blacklist-settings-modal .modal-content {
-            max-width: 500px;
-        }
-
-        .blacklist-status-blocked {
-            color: #ff4d4f;
-            font-weight: 600;
-        }
-
-        .blacklist-status-normal {
-            color: #52c41a;
-            font-weight: 600;
-        }
-
-        .blacklist-action-item {
-            cursor: pointer;
-        }
-
-        .blacklist-action-item:hover {
-            background-color: #f5f5f5;
-        }
-
-        /* 📱【角色状态显示】样式 */
+        /* 角色状态显示样式 */
         .character-status {
             display: flex;
             align-items: center;
             gap: 6px;
-            margin-top: 2px;
+            margin-top: 4px;
             font-size: 12px;
+            color: #666;
         }
 
+        /* 状态指示灯 */
         .status-indicator {
             width: 8px;
             height: 8px;
             border-radius: 50%;
+            position: relative;
             flex-shrink: 0;
         }
 
+        /* 在线状态 - 小绿灯 */
         .status-indicator.online {
-            background-color: #52c41a;
-            box-shadow: 0 0 4px rgba(82, 196, 26, 0.5);
+            background-color: #4CAF50;
+            box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
         }
 
+        /* 忙碌状态 - 小黄灯 */
         .status-indicator.busy {
-            background-color: #faad14;
-            box-shadow: 0 0 4px rgba(250, 173, 20, 0.5);
+            background-color: #FF9800;
+            box-shadow: 0 0 6px rgba(255, 152, 0, 0.5);
         }
 
-        .status-indicator.blocked {
-            background-color: #8c8c8c;
+        /* 离线/拉黑状态 - 小灰灯 */
+        .status-indicator.blocked,
+        .status-indicator.offline {
+            background-color: #9E9E9E;
+            box-shadow: 0 0 6px rgba(158, 158, 158, 0.3);
         }
 
+        /* 状态文本 */
         .status-text {
-            color: #666;
             font-size: 11px;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            color: #888;
+            line-height: 1.2;
+            font-weight: 400;
         }
 
-        .character-name-with-status {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        /* 在聊天界面显示状态 */
-        .api-chat-header .character-status {
-            margin-top: 4px;
-        }
-
-        .api-chat-header .status-text {
-            max-width: 200px;
-        }
-
-        /* 在联系人列表显示状态 */
-        .contact-item .character-status {
+        /* 聊天标题区域的状态显示 - 针对.app-header */
+        .app-header .character-status {
             margin-top: 2px;
-        }
-
-        .contact-item .status-text {
-            max-width: 100px;
-        }
-
-        /* 状态设置开关 */
-        .status-display-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-display-toggle .toggle-switch {
-            margin: 0;
-        }
-
-        /* 🚫【拉黑状态覆盖层】样式 */
-        .blocked-status-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 33.33%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
             justify-content: center;
         }
 
-        .blocked-status-content {
+        /* 确保状态显示在聊天头部正确定位 - 针对.app-header */
+        .app-header .app-title {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 🔥【新增】聊天界面.header容器的状态显示样式 */
+        #api-chat-screen .header {
+            overflow: visible; /* 允许内容溢出 */
+        }
+
+        #api-chat-screen .header .character-status {
+            position: absolute;
+            top: 64px; /* 紧贴在昵称下方 */
+            left: 50%;
+            transform: translateX(-50%);
+            justify-content: center;
+            white-space: nowrap;
+            z-index: 10;
+            /* 移除所有背景装饰，保持干净 */
+        }
+
+
+
+        /* 🔥【新增】确保聊天界面标题居中显示 */
+        .header .header-title {
             text-align: center;
-            color: white;
-            padding: 20px;
-        }
-
-        .blocked-status-text {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #ff4d4f;
-        }
-
-        .blocked-status-button {
-            background: #007AFF;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .blocked-status-button:hover {
-            background: #0056CC;
-            transform: translateY(-1px);
-        }
-
-        .blocked-status-button:active {
-            transform: translateY(0);
+            flex: 1;
+            color: #000000;
+            position: relative; /* 为状态定位提供参考 */
         }
