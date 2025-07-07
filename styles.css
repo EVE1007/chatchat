@@ -1544,8 +1544,6 @@
             animation: charge-breath 2s infinite;
         }
         
-        .app-battery-container { display: flex; align-items: center; gap: 4px; font-size: 14px; }
-        
         .app-battery-container.charging .battery-text {
             color: var(--color-green);
         }
@@ -1630,7 +1628,7 @@
             z-index: 15; 
             flex-shrink: 0; 
             padding: 12px 32px; 
-            padding-top: 45px; 
+            padding-top: 45px;
             height: 84px;
             box-sizing: border-box;
             background-color: var(--theme-header-bg); 
@@ -3048,7 +3046,7 @@
             100% { opacity: 0; transform: translateY(10px); }
         }
         
-        /* 🔥【新增】手机端消息操作菜单样式 */
+        /* 🔥【重新设计】手机端消息操作菜单样式 - 毛玻璃中央显示风格 */
         .mobile-message-menu {
             position: fixed;
             top: 0;
@@ -3056,6 +3054,13 @@
             right: 0;
             bottom: 0;
             z-index: 10000;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
@@ -3072,79 +3077,139 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: transparent;
         }
         
         .mobile-menu-content {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            border-radius: 12px 12px 0 0;
-            padding: 20px;
-            max-width: 360px;
-            margin: 0 auto;
-            transform: translateY(100%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px 20px;
+            max-width: 280px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transform: scale(0.9);
             transition: transform 0.3s ease;
         }
         
         .mobile-message-menu.show .mobile-menu-content {
-            transform: translateY(0);
+            transform: scale(1);
         }
         
         .mobile-menu-header {
             text-align: center;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             color: #333;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+            margin-bottom: 18px;
+            opacity: 0.8;
         }
         
         .mobile-menu-item {
             display: flex;
             align-items: center;
-            padding: 15px 10px;
-            margin: 5px 0;
-            border-radius: 8px;
-            background: #f8f9fa;
+            padding: 16px 18px;
+            margin: 8px 0;
+            border-radius: 15px;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
-        .mobile-menu-item:hover,
-        .mobile-menu-item:active {
-            background: #e9ecef;
+        /* 雾霾蓝按钮 */
+        .mobile-menu-item.reply-btn {
+            background: linear-gradient(135deg, rgba(74, 132, 193, 0.2) 0%, rgba(74, 132, 193, 0.3) 100%);
+            color: #4a84c1;
+            border: 1px solid rgba(74, 132, 193, 0.3);
         }
         
-        .mobile-menu-item.danger {
-            background: #ffebee;
-            color: #d32f2f;
+        .mobile-menu-item.reply-btn:active {
+            background: linear-gradient(135deg, rgba(74, 132, 193, 0.3) 0%, rgba(74, 132, 193, 0.4) 100%);
+            transform: scale(0.98);
         }
         
-        .mobile-menu-item.danger:hover,
-        .mobile-menu-item.danger:active {
-            background: #ffcdd2;
+        /* 复制按钮 */
+        .mobile-menu-item.copy-btn {
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.2) 0%, rgba(52, 199, 89, 0.3) 100%);
+            color: #34c759;
+            border: 1px solid rgba(52, 199, 89, 0.3);
         }
         
-        .mobile-menu-item.cancel {
-            background: #e3f2fd;
-            color: #1976d2;
+        .mobile-menu-item.copy-btn:active {
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.3) 0%, rgba(52, 199, 89, 0.4) 100%);
+            transform: scale(0.98);
+        }
+        
+        /* 编辑按钮 */
+        .mobile-menu-item.edit-btn {
+            background: linear-gradient(135deg, rgba(255, 149, 0, 0.2) 0%, rgba(255, 149, 0, 0.3) 100%);
+            color: #ff9500;
+            border: 1px solid rgba(255, 149, 0, 0.3);
+        }
+        
+        .mobile-menu-item.edit-btn:active {
+            background: linear-gradient(135deg, rgba(255, 149, 0, 0.3) 0%, rgba(255, 149, 0, 0.4) 100%);
+            transform: scale(0.98);
+        }
+        
+        /* 雾霾粉撤回按钮 */
+        .mobile-menu-item.recall-btn {
+            background: linear-gradient(135deg, rgba(209, 71, 122, 0.2) 0%, rgba(209, 71, 122, 0.3) 100%);
+            color: #d1477a;
+            border: 1px solid rgba(209, 71, 122, 0.3);
+        }
+        
+        .mobile-menu-item.recall-btn:active {
+            background: linear-gradient(135deg, rgba(209, 71, 122, 0.3) 0%, rgba(209, 71, 122, 0.4) 100%);
+            transform: scale(0.98);
+        }
+        
+        /* 删除按钮 */
+        .mobile-menu-item.delete-btn {
+            background: linear-gradient(135deg, rgba(255, 87, 87, 0.2) 0%, rgba(255, 87, 87, 0.3) 100%);
+            color: #ff5757;
+            border: 1px solid rgba(255, 87, 87, 0.3);
+        }
+        
+        .mobile-menu-item.delete-btn:active {
+            background: linear-gradient(135deg, rgba(255, 87, 87, 0.3) 0%, rgba(255, 87, 87, 0.4) 100%);
+            transform: scale(0.98);
+        }
+        
+        /* 选择按钮 */
+        .mobile-menu-item.select-btn {
+            background: linear-gradient(135deg, rgba(138, 138, 138, 0.2) 0%, rgba(138, 138, 138, 0.3) 100%);
+            color: #8a8a8a;
+            border: 1px solid rgba(138, 138, 138, 0.3);
+        }
+        
+        .mobile-menu-item.select-btn:active {
+            background: linear-gradient(135deg, rgba(138, 138, 138, 0.3) 0%, rgba(138, 138, 138, 0.4) 100%);
+            transform: scale(0.98);
+        }
+        
+        /* 取消按钮 */
+        .mobile-menu-item.cancel-btn {
+            background: linear-gradient(135deg, rgba(120, 120, 120, 0.15) 0%, rgba(120, 120, 120, 0.25) 100%);
+            color: #666;
+            border: 1px solid rgba(120, 120, 120, 0.25);
             margin-top: 10px;
         }
         
-        .mobile-menu-item.cancel:hover,
-        .mobile-menu-item.cancel:active {
-            background: #bbdefb;
+        .mobile-menu-item.cancel-btn:active {
+            background: linear-gradient(135deg, rgba(120, 120, 120, 0.25) 0%, rgba(120, 120, 120, 0.35) 100%);
+            transform: scale(0.98);
         }
         
         .menu-icon {
             margin-right: 12px;
             font-size: 18px;
-            width: 24px;
+            width: 22px;
             text-align: center;
+            opacity: 0.9;
         }
         
         .menu-text {
@@ -3155,45 +3220,91 @@
         
         /* 深色主题适配 */
         .dark-theme .mobile-menu-content {
-            background: #2d2d2d;
-            color: white;
+            background: rgba(45, 45, 45, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .dark-theme .mobile-menu-header {
-            color: white;
-            border-bottom-color: #404040;
+            color: rgba(255, 255, 255, 0.9);
         }
         
-        .dark-theme .mobile-menu-item {
-            background: #404040;
-            color: white;
+        .dark-theme .mobile-menu-item.reply-btn {
+            background: linear-gradient(135deg, rgba(74, 132, 193, 0.3) 0%, rgba(74, 132, 193, 0.4) 100%);
+            color: #6fa4d9;
+            border-color: rgba(74, 132, 193, 0.4);
         }
         
-        .dark-theme .mobile-menu-item:hover,
-        .dark-theme .mobile-menu-item:active {
-            background: #4a4a4a;
+        .dark-theme .mobile-menu-item.copy-btn {
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.3) 0%, rgba(52, 199, 89, 0.4) 100%);
+            color: #4dd67d;
+            border-color: rgba(52, 199, 89, 0.4);
         }
         
-        .dark-theme .mobile-menu-item.danger {
-            background: #4a2c2a;
-            color: #ff6b6b;
+        .dark-theme .mobile-menu-item.edit-btn {
+            background: linear-gradient(135deg, rgba(255, 149, 0, 0.3) 0%, rgba(255, 149, 0, 0.4) 100%);
+            color: #ffb340;
+            border-color: rgba(255, 149, 0, 0.4);
         }
         
-        .dark-theme .mobile-menu-item.danger:hover,
-        .dark-theme .mobile-menu-item.danger:active {
-            background: #5a3533;
+        .dark-theme .mobile-menu-item.recall-btn {
+            background: linear-gradient(135deg, rgba(209, 71, 122, 0.3) 0%, rgba(209, 71, 122, 0.4) 100%);
+            color: #e06394;
+            border-color: rgba(209, 71, 122, 0.4);
         }
         
-        .dark-theme .mobile-menu-item.cancel {
-            background: #2a3a4a;
-            color: #64b5f6;
+        .dark-theme .mobile-menu-item.delete-btn {
+            background: linear-gradient(135deg, rgba(255, 87, 87, 0.3) 0%, rgba(255, 87, 87, 0.4) 100%);
+            color: #ff7575;
+            border-color: rgba(255, 87, 87, 0.4);
         }
         
-        .dark-theme .mobile-menu-item.cancel:hover,
-        .dark-theme .mobile-menu-item.cancel:active {
-            background: #334455;
+        .dark-theme .mobile-menu-item.select-btn {
+            background: linear-gradient(135deg, rgba(180, 180, 180, 0.3) 0%, rgba(180, 180, 180, 0.4) 100%);
+            color: #b4b4b4;
+            border-color: rgba(180, 180, 180, 0.4);
         }
         
+        .dark-theme .mobile-menu-item.cancel-btn {
+            background: linear-gradient(135deg, rgba(160, 160, 160, 0.2) 0%, rgba(160, 160, 160, 0.3) 100%);
+            color: #a0a0a0;
+            border-color: rgba(160, 160, 160, 0.3);
+        }
+
+        /* 消息编辑指示器样式 */
+        .message-edited-indicator {
+            position: absolute;
+            bottom: 4px;
+            right: 8px;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 6px;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 1;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        /* 用户消息的编辑指示器 */
+        .message-container.sent .message-edited-indicator {
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        /* AI消息的编辑指示器 */
+        .message-container.received .message-edited-indicator {
+            color: rgba(0, 0, 0, 0.6);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 深色主题适配 */
+        .dark-theme .message-container.received .message-edited-indicator {
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
         /* 电话通话界面样式 */
         .call-background {
     position: absolute;
@@ -3915,7 +4026,12 @@ textarea.call-text-input {
         }
 
         .message-container.sent .reply-reference-message {
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(0, 0, 0, 0.7); /* 🔥【修复】改为深色文字，更清楚 */
+        }
+
+        /* 🔥【新增】接收消息中的引用样式改进 */
+        .message-container.received .reply-reference-message {
+            color: #555; /* 🔥【修复】更清楚的灰色 */
         }
 
         /* 引用预览样式（输入时显示） */
@@ -5485,6 +5601,213 @@ textarea.call-text-input {
         
         .message-menu-item.danger {
             color: #ff3b30;
+        }
+
+        /* 编辑消息模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .edit-message-modal {
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 20px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            background: #f0f0f0;
+            color: #666;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px 20px;
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .edit-message-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .message-sender {
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+        }
+        
+        .message-time {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .edit-form-group {
+            margin-bottom: 20px;
+        }
+        
+        .edit-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .edit-message-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            font-family: inherit;
+            background: white;
+            color: #333;
+            transition: border-color 0.2s ease;
+            box-sizing: border-box;
+        }
+        
+        .edit-message-textarea:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+        }
+        
+        .edit-message-counter {
+            text-align: right;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .edit-message-image {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        
+        .edit-message-image img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        
+        .remove-image-btn {
+            padding: 6px 12px;
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .remove-image-btn:hover {
+            background: #e0261e;
+        }
+        
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .modal-cancel {
+            background: #f5f5f5;
+            color: #333;
+            margin-right: 10px;
+        }
+        
+        .modal-cancel:hover {
+            background: #e8e8e8;
+        }
+        
+        .modal-confirm {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .modal-confirm:hover {
+            background: #0056b3;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
         
         /* 关于我们页面 */
@@ -10608,7 +10931,7 @@ textarea.call-text-input {
             font-weight: 400;
         }
 
-        /* 聊天标题区域的状态显示 - 针对.app-header */
+        /* 聊天标题区域的状态显示样式 */
         .app-header .character-status {
             margin-top: 2px;
             justify-content: center;

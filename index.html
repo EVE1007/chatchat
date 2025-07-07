@@ -6264,6 +6264,7 @@ ${chatContext}${momentsContext}
                                             <div class="wave-bar"></div>
                                         </div>
                                         <div class="voice-duration">${voiceDuration}"</div>
+                                    ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ""}
                                     </div>
                                 </div>
                                 <div class="voice-text-content">${cleanVoiceContent}</div>
@@ -6336,12 +6337,13 @@ ${chatContext}${momentsContext}
                     } else {
                         // 普通消息用气泡包裹
                         bubbleHtml = `
-                        <div class="message-bubble" style="background-color: ${transparentBubbleColor}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">
-                            ${messageContent}
-                            ${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}
-                            ${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}
-                            ${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}
-                        </div>
+                                                    <div class="message-bubble" style="background-color: ${transparentBubbleColor}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">
+                                ${messageContent}
+                                ${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}
+                                ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ''}
+                                ${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}
+                                ${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}
+                            </div>
                     `;
                     }
                     
@@ -6422,6 +6424,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                                             <div class="wave-bar"></div>
                                         </div>
                                         <div class="voice-duration">${message.duration || Math.max(1, Math.ceil(message.content.length / 8))}"</div>
+                                    ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ""}
                                     </div>
                                     ${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}
                                     ${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}
@@ -6792,6 +6795,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                                             <div class="wave-bar"></div>
                                         </div>
                                         <div class="voice-duration">${voiceDuration}"</div>
+                                    ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ""}
                                     </div>
                                 </div>
                                 <div class="voice-text-content">${cleanVoiceContent}</div>
@@ -6843,7 +6847,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         bubbleHtml = messageContent;
                     } else {
                         // 普通消息用气泡包裹
-                        bubbleHtml = `<div class="message-bubble" style="background-color: ${transparentBubbleColor}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">${messageContent}${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
+                        bubbleHtml = `<div class="message-bubble" style="background-color: ${transparentBubbleColor}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">${messageContent}${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ''}${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
                     }
                     
                    // 🔥【修复】群聊昵称显示 （loadMoreMessages版本）- 特别处理语音消息和转账消息
@@ -6897,6 +6901,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                                             <div class="wave-bar"></div>
                                         </div>
                                         <div class="voice-duration">${message.duration || Math.max(1, Math.ceil(message.content.length / 8))}"</div>
+                                    ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ""}
                                     </div>
                                     ${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}
                                     ${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}
@@ -6998,7 +7003,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         myBubbleHtml = myMessageContent;
                     } else {
                         // 普通消息用气泡包裹
-                        myBubbleHtml = `<div class="message-bubble" style="background-color: ${transparentMyBubbleColor}; color: ${myTextColor}; position: relative; padding: ${myBubblePadding}px;">${myMessageContent}${message.image && !message.type && !Array.isArray(message.content) ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
+                        myBubbleHtml = `<div class="message-bubble" style="background-color: ${transparentMyBubbleColor}; color: ${myTextColor}; position: relative; padding: ${myBubblePadding}px;">${myMessageContent}${message.image && !message.type && !Array.isArray(message.content) ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ''}${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
                     }
                     
                     let myAvatarHtml = '';
@@ -7421,7 +7426,7 @@ async function startChat(character) {
             currentChatCharacter = character;
             
     // 🔥【修复】异步获取聊天设置
-                const chatSettings = await getAsyncChatSettings();
+    const chatSettings = await getAsyncChatSettings();
             const displayTitle = chatSettings.aiChatNickname || character.name;
             document.getElementById('api-chat-title').textContent = displayTitle;
             
@@ -7434,15 +7439,15 @@ async function startChat(character) {
             // 🔥【新增】更新心率显示
             updateAiHeartrate();
                 
-            // 🔥【新增】立即为这个角色生成一个初始状态（如果还没有的话）
-            setTimeout(async () => {
-                const currentStatus = getCharacterStatus(character.id);
-                if (!currentStatus.activity || currentStatus.activity === '在线') {
-                    await generateCharacterStatus(character.id);
-                    // 刷新状态显示
-                    renderCharacterStatus(character.id, headerContainer);
-                }
-            }, 500);
+                // 🔥【新增】立即为这个角色生成一个初始状态（如果还没有的话）
+                setTimeout(async () => {
+                    const currentStatus = getCharacterStatus(character.id);
+                    if (!currentStatus.activity || currentStatus.activity === '在线') {
+                        await generateCharacterStatus(character.id);
+                        // 刷新状态显示
+                        renderCharacterStatus(character.id, headerContainer);
+                    }
+                }, 500);
             
             // 🔥【新增】启动状态更新定时器
             startCharacterStatusTimer();
@@ -9996,24 +10001,132 @@ async function applyChatBackground(backgroundUrl) {
             hideMessageMenu();
         }
         
-        // 编辑消息
+        // 显示编辑消息模态框
+        function showEditMessageModal(messageId) {
+            if (!messageId) return;
+            
+            const messages = chatMessages[currentChatCharacter.id] || [];
+            const message = messages.find(msg => msg.id === messageId);
+            
+            if (!message) {
+                showToast('消息不存在', 'error');
+                return;
+            }
+            
+            // 创建编辑模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'edit-message-modal';
+            
+            const senderName = message.sender === 'sent' ? '你' : (message.name || currentChatCharacter.name);
+            
+            modal.innerHTML = `
+                <div class="modal-content edit-message-modal">
+                    <div class="modal-header">
+                        <h3>编辑消息</h3>
+                        <button class="modal-close" onclick="hideEditMessageModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="edit-message-info">
+                            <span class="message-sender">${senderName}</span>
+                            <span class="message-time">${formatTimestamp(message.timestamp)}</span>
+                        </div>
+                        <div class="edit-form-group">
+                            <label>消息内容：</label>
+                            <textarea 
+                                id="edit-message-content" 
+                                class="edit-message-textarea"
+                                placeholder="请输入消息内容..."
+                                maxlength="2000"
+                            >${message.content || ''}</textarea>
+                            <div class="edit-message-counter">
+                                <span id="edit-char-count">${(message.content || '').length}</span>/2000
+                            </div>
+                        </div>
+                        ${message.image ? `
+                            <div class="edit-form-group">
+                                <label>图片：</label>
+                                <div class="edit-message-image">
+                                    <img src="${message.image}" alt="消息图片" />
+                                    <button class="remove-image-btn" onclick="removeMessageImage()">删除图片</button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn modal-cancel" onclick="hideEditMessageModal()">取消</button>
+                        <button class="modal-btn modal-confirm" onclick="saveEditedMessage('${messageId}')">保存</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 添加字符计数功能
+            const textarea = document.getElementById('edit-message-content');
+            const charCount = document.getElementById('edit-char-count');
+            textarea.addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
+            
+            // 聚焦并选中文本
+            setTimeout(() => {
+                textarea.focus();
+                textarea.select();
+            }, 100);
+        }
+        
+        // 隐藏编辑消息模态框
+        function hideEditMessageModal() {
+            const modal = document.getElementById('edit-message-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // 保存编辑后的消息
+        function saveEditedMessage(messageId) {
+            const newContent = document.getElementById('edit-message-content').value.trim();
+            
+            if (!newContent) {
+                showToast('消息内容不能为空', 'error');
+                return;
+            }
+            
+            const messages = chatMessages[currentChatCharacter.id] || [];
+            const messageIndex = messages.findIndex(msg => msg.id === messageId);
+            
+            if (messageIndex !== -1) {
+                const oldContent = messages[messageIndex].content;
+                messages[messageIndex].content = newContent;
+                
+                // 添加编辑标记
+                messages[messageIndex].edited = true;
+                messages[messageIndex].editTime = Date.now();
+                
+                saveChatMessages();
+                renderChatMessages(currentChatCharacter.id);
+                hideEditMessageModal();
+                
+                showToast('消息已更新', 'success');
+                
+                console.log(`消息已编辑: "${oldContent}" -> "${newContent}"`);
+            } else {
+                showToast('消息不存在', 'error');
+            }
+        }
+        
+        // 移除消息图片
+        function removeMessageImage() {
+            // 这个功能可以在后续扩展
+            showToast('暂不支持移除图片', 'info');
+        }
+        
+        // 编辑消息（保留旧版本接口）
         function editMessage() {
             if (!selectedMessageId) return;
             
-            const messages = chatMessages[currentChatCharacter.id] || [];
-            const messageIndex = messages.findIndex(msg => msg.id === selectedMessageId);
-            
-            if (messageIndex !== -1 && messages[messageIndex].sender === 'sent') {
-                const newContent = prompt('编辑消息:', messages[messageIndex].content);
-                if (newContent !== null) {
-                    messages[messageIndex].content = newContent;
-                    saveChatMessages();
-                    renderChatMessages(currentChatCharacter.id);
-                }
-            } else {
-                alert('只能编辑自己发送的消息');
-            }
-            
+            showEditMessageModal(selectedMessageId);
             hideModal('message-menu-modal');
         }
         
@@ -16279,7 +16392,7 @@ async function createGroupChat(personaId) {
                     if (isMobile) {
                         showMobileMessageMenu(messageId, e);
                     } else {
-                        enterMessageSelectionMode(messageId);
+                    enterMessageSelectionMode(messageId);
                     }
                     e.preventDefault();
                 }, 500);
@@ -16342,14 +16455,15 @@ async function createGroupChat(personaId) {
             menu.className = 'mobile-message-menu';
             
             const menuItems = [
-                { text: '引用', action: 'replyToMessage(selectedMessageId)', icon: '↩️' },
-                { text: '复制', action: 'copyMessage()', icon: '📋' },
-                { text: '选择', action: 'enterMessageSelectionMode(selectedMessageId)', icon: '☑️' }
+                { text: '引用', action: 'replyToMessage(selectedMessageId)', icon: '↩️', className: 'reply-btn' },
+                { text: '复制', action: 'copyMessage()', icon: '📋', className: 'copy-btn' },
+                { text: '编辑', action: 'showEditMessageModal(selectedMessageId)', icon: '✏️', className: 'edit-btn' },
+                { text: '选择', action: 'enterMessageSelectionMode(selectedMessageId)', icon: '☑️', className: 'select-btn' }
             ];
             
             // 如果是用户消息，添加撤回选项
             if (isUserMessage) {
-                menuItems.splice(2, 0, { text: '撤回', action: 'deleteMessage()', icon: '↩️', danger: true });
+                menuItems.splice(3, 0, { text: '撤回', action: 'deleteMessage()', icon: '🗑️', className: 'recall-btn', danger: true });
             }
             
             menu.innerHTML = `
@@ -16357,12 +16471,12 @@ async function createGroupChat(personaId) {
                 <div class="mobile-menu-content">
                     <div class="mobile-menu-header">消息操作</div>
                     ${menuItems.map(item => `
-                        <div class="mobile-menu-item ${item.danger ? 'danger' : ''}" onclick="${item.action}; hideMobileMessageMenu();">
+                        <div class="mobile-menu-item ${item.className || ''} ${item.danger ? 'danger' : ''}" onclick="${item.action}; hideMobileMessageMenu();">
                             <span class="menu-icon">${item.icon}</span>
                             <span class="menu-text">${item.text}</span>
                         </div>
                     `).join('')}
-                    <div class="mobile-menu-item cancel" onclick="hideMobileMessageMenu()">
+                    <div class="mobile-menu-item cancel-btn" onclick="hideMobileMessageMenu()">
                         <span class="menu-icon">❌</span>
                         <span class="menu-text">取消</span>
                     </div>
@@ -18915,7 +19029,6 @@ async function createGroupChat(personaId) {
                 } else {
                     console.log('角色发布动态，同一分组下角色60%概率互动');
                     // 角色发动态：使用分组关系而不是群聊关系
-                    const characters = await getCharacters();
                     const publisherCharacter = characters.find(c => c.id === publisherCharacterId);
                     
                     // 获取与发布者在同一分组的角色
@@ -19229,7 +19342,6 @@ async function createGroupChat(personaId) {
                 const targetCharId = targetComment.characterId;
                 
                 // 获取角色信息
-                const characters = await getCharacters();
                 const responderChar = characters.find(c => c.id === responderCharId);
                 const targetChar = characters.find(c => c.id === targetCharId);
                 
@@ -19898,7 +20010,18 @@ async function createGroupChat(personaId) {
                     });
                 } else {
                     // 使用OpenAI格式
-                    response = await fetch(`${proxyUrl}/v1/chat/completions`, {
+                    // 智能处理URL拼接
+                    let apiUrl;
+                    if (proxyUrl.endsWith('/v1')) {
+                        apiUrl = `${proxyUrl}/chat/completions`;
+                    } else if (proxyUrl.includes('/v1/')) {
+                        // 如果URL中已经包含/v1/路径，直接添加chat/completions
+                        apiUrl = `${proxyUrl}/chat/completions`;
+                    } else {
+                        apiUrl = `${proxyUrl}/v1/chat/completions`;
+                    }
+                    
+                    response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -21203,7 +21326,7 @@ async function createGroupChat(personaId) {
                     if (message.replyTo) {
                         messageContent = generateReplyHTML(message.replyTo) + processedContent;
                     } else {
-                        messageContent = processedContent;
+                    messageContent = processedContent;
                     }
                 }
                 
@@ -21228,6 +21351,7 @@ async function createGroupChat(personaId) {
                     <div class="message-bubble" style="background-color: ${transparentBubbleColor}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">
                         ${messageContent}
                         ${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}
+                        ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ''}
                     </div>
                 `;
                 }
@@ -21267,6 +21391,7 @@ async function createGroupChat(personaId) {
                                         <div class="wave-bar"></div>
                                     </div>
                                     <div class="voice-duration">${durationFormatted}</div>
+                                    ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ""}
                                 </div>
                             </div>
                             <div class="voice-text-content">${cleanVoiceContent}</div>
@@ -21314,6 +21439,7 @@ async function createGroupChat(personaId) {
                                     <div class="wave-bar"></div>
                                 </div>
                                 <div class="voice-duration">${duration}"</div>
+                            ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ""}
                             </div>
                         </div>
                     `;
@@ -21413,6 +21539,7 @@ async function createGroupChat(personaId) {
                                         <div class="wave-bar"></div>
                                     </div>
                                     <div class="voice-duration">${message.duration || Math.max(1, Math.ceil(message.content.length / 8))}"</div>
+                                    ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ""}
                                 </div>
                             </div>
                             <div class="voice-text-content">${message.content}</div>
@@ -22878,6 +23005,7 @@ async function createGroupChat(personaId) {
         }
 
         // 导入数据
+        // 🔥【修复】导入数据 - 使用bulkPut避免主键冲突
         function importDataFromFile() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -22891,19 +23019,97 @@ async function createGroupChat(personaId) {
                     const data = JSON.parse(text);
                     if (!confirm('导入将覆盖现有数据，确定继续？')) return;
                     
+                    // 🔥【修复】使用bulkPut代替bulkAdd避免主键冲突
+                    let importedTables = 0;
+                    
+                    // 导入角色数据
                     if (data.characters?.length) {
+                        try {
                         await db.characters.clear();
-                        await db.characters.bulkAdd(data.characters);
-                    }
-                    if (data.chatMessages?.length) {
-                        await db.chatMessages.clear();
-                        await db.chatMessages.bulkAdd(data.chatMessages);
-                    }
-                    if (data.chatSettings?.length) {
-                        await db.chatSettings.clear();
-                        await db.chatSettings.bulkAdd(data.chatSettings);
+                            // 确保每个角色都有有效ID
+                            const validCharacters = data.characters.map(char => ({
+                                ...char,
+                                id: char.id || `char_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.characters.bulkPut(validCharacters);
+                            importedTables++;
+                            console.log(`导入了 ${validCharacters.length} 个角色`);
+                        } catch (error) {
+                            console.error('导入角色失败:', error);
+                            showToast('角色导入失败: ' + error.message, 'warning');
+                        }
                     }
                     
+                    // 导入聊天消息
+                    if (data.chatMessages?.length) {
+                        try {
+                        await db.chatMessages.clear();
+                            // 确保每条消息都有有效ID
+                            const validMessages = data.chatMessages.map(msg => ({
+                                ...msg,
+                                id: msg.id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.chatMessages.bulkPut(validMessages);
+                            importedTables++;
+                            console.log(`导入了 ${validMessages.length} 条聊天消息`);
+                        } catch (error) {
+                            console.error('导入聊天消息失败:', error);
+                            showToast('聊天消息导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入聊天设置
+                    if (data.chatSettings?.length) {
+                        try {
+                        await db.chatSettings.clear();
+                            // 确保每个设置都有有效ID
+                            const validSettings = data.chatSettings.map(setting => ({
+                                ...setting,
+                                id: setting.id || `setting_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.chatSettings.bulkPut(validSettings);
+                            importedTables++;
+                            console.log(`导入了 ${validSettings.length} 个聊天设置`);
+                        } catch (error) {
+                            console.error('导入聊天设置失败:', error);
+                            showToast('聊天设置导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 导入其他可能的数据
+                    if (data.worldbooks?.length) {
+                        try {
+                            await db.worldbooks.clear();
+                            const validWorldbooks = data.worldbooks.map(wb => ({
+                                ...wb,
+                                id: wb.id || `wb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.worldbooks.bulkPut(validWorldbooks);
+                            importedTables++;
+                            console.log(`导入了 ${validWorldbooks.length} 个世界书`);
+                        } catch (error) {
+                            console.error('导入世界书失败:', error);
+                            showToast('世界书导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    if (data.customEmojis?.length) {
+                        try {
+                            await db.customEmojis.clear();
+                            const validEmojis = data.customEmojis.map(emoji => ({
+                                ...emoji,
+                                id: emoji.id || `emoji_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.customEmojis.bulkPut(validEmojis);
+                            importedTables++;
+                            console.log(`导入了 ${validEmojis.length} 个自定义表情`);
+                        } catch (error) {
+                            console.error('导入自定义表情失败:', error);
+                            showToast('自定义表情导入失败: ' + error.message, 'warning');
+                        }
+                    }
+                    
+                    // 重新加载所有数据
                     await loadCharacterGroups();
                     await loadCharacters();
                     await loadChatMessages();
@@ -22911,8 +23117,11 @@ async function createGroupChat(personaId) {
                     renderCharacterList();
                     renderMessageList();
                     calculateStorageUsage();
-                    showToast('导入成功！', 'success');
+                    
+                    showToast(`导入成功！共导入 ${importedTables} 个数据表`, 'success');
+                    console.log(`数据导入完成，共导入 ${importedTables} 个数据表`);
                 } catch (error) {
+                    console.error('导入失败:', error);
                     showToast('导入失败：' + error.message, 'error');
                 }
             };
