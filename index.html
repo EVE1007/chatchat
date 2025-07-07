@@ -5050,6 +5050,8 @@ ${chatContext}${momentsContext}
                         lastMessageRaw = '[撤回了一条消息]';
                     } else if (lastMsg.type === 'location') {
                         lastMessageRaw = '[位置]';
+                    } else if (lastMsg.type === 'call_message') {
+                        lastMessageRaw = '[通话消息]';
                     } else if (lastMsg.sender === 'system') {
                         lastMessageRaw = lastMsg.content || '[系统消息]';
                     } else if (lastMsg.isEmoji) {
@@ -5185,6 +5187,8 @@ ${chatContext}${momentsContext}
                         lastMessageRaw = '[撤回了一条消息]';
                     } else if (lastMsg.type === 'location') {
                         lastMessageRaw = '[位置]';
+                    } else if (lastMsg.type === 'call_message') {
+                        lastMessageRaw = '[通话消息]';
                     } else if (lastMsg.sender === 'system') {
                         lastMessageRaw = lastMsg.content || '[系统消息]';
                     } else if (lastMsg.isEmoji) {
@@ -6042,6 +6046,20 @@ ${chatContext}${momentsContext}
                         }
                         
                         centerContainer.appendChild(callRecordElement);
+                        messagesContainer.appendChild(centerContainer);
+                    } else if (message.type === 'call_message') {
+                        // 🔥【新增】处理通话消息 - 显示为简单的文本消息
+                        const centerContainer = document.createElement('div');
+                        centerContainer.className = 'message-wrapper system';
+                        centerContainer.dataset.messageId = message.id;
+                        
+                        const callMessageElement = document.createElement('div');
+                        callMessageElement.className = 'system-message';
+                        callMessageElement.style.fontStyle = 'italic';
+                        callMessageElement.style.color = '#888';
+                        callMessageElement.textContent = `📞 通话: ${message.content}`;
+                        
+                        centerContainer.appendChild(callMessageElement);
                         messagesContainer.appendChild(centerContainer);
                     } else {
                         // 🔥【修复】其他系统消息（如头像更换）- 使用居中容器
@@ -11743,7 +11761,7 @@ ${character.bio}
             }
             
             const aiImageInstructions = `\n# 发送图片的能力\n- 你无法发送真实的图片文件。但当用户要求你发送照片，或者你想通过图片来表达时，你可以发送一张"文字描述的图片"。\n- 若要发送图片，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "ai_image", "description": "这里是对图片的详细文字描述..."}\`。这个描述应该生动、具体，让用户能通过文字想象出画面，以第三人称视角描述。例如：\`{"type": "ai_image", "description": "照片里一只橘猫正懒洋洋地趴在窗台上晒太阳，阳光把它金色的毛照得发亮，背景是蔚蓝的天空和几朵白云。"}\`\n- 你可以在对话中先做铺垫，然后发送这张特殊的"图片"。\n\n# 理解用户照片的能力\n- 当历史记录中出现 "[你收到了一张用户描述的照片，照片内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"看"到了这张照片。\n- 你应该对照片内容做出自然的评论或回应，比如夸奖、询问细节、表达感受等。\n\n# 发送"伪照片"的能力\n- 你可以像用户一样发送"伪照片"，这是一种带有文字描述的照片卡片。\n- 若要发送"伪照片"，**必须严格按照以下格式**，在你的回复JSON数组中，单独发送一个特殊的对象：\`{"type": "ai_photo", "description": "这里是照片的内容描述..."}\`。\n- 例如：\`{"type": "ai_photo", "description": "我刚拍的窗外风景，阳光透过树叶洒在地上，形成斑驳的光影。"}\`\n- 这种照片会显示为一个卡片，用户点击后可以看到你的描述。\n- **重要**：必须使用"ai_photo"作为type字段的值，不要使用其他值如"photo"或"image"。description字段必须包含照片的详细描述。\n\n# 发送位置的能力\n- 你可以像用户一样发送位置信息。\n- 若要发送位置，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "location", "name": "位置名称", "coordinates": "坐标信息"}\`。\n- 例如：\`{"type": "location", "name": "中央公园", "coordinates": "116.3°E, 39.9°N"}\`\n- 你可以在对话中先做铺垫，然后发送这个位置信息。`;
-            const aiVoiceInstructions = `\n# 发送语音的能力\n- 你无法发送真实的语音，当你想要通过语音回复用户的消息时，请用你的角色设定自然地回应。你可以用文字，或者也用一个表情包或模拟的语音消息来回应。\n- 若要发送语音，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "voice_message", "content": "这里是语音的文字内容..."}\`。例如：\`{"type": "voice_message", "content": "我刚才突然想到一件事！等一下和你说。"}\`\n\n# 理解用户语音的能力\n- 当历史记录中出现 "[用户发来一条语音消息，内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"听"到了这条语音。\n- 你应该对语音内容做出自然的回应，可以是文字回复或语音回复。`;
+            const aiVoiceInstructions = `\n# 发送语音的能力\n- 你无法发送真实的语音，当你想要通过语音回复用户的消息时，请用你的角色设定自然地回应。你可以用文字，或者也用一个表情包或模拟的语音消息来回应。\n- 若要发送语音，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "voice_message", "content": "这里是语音的文字内容..."}\`。例如：\`{"type": "voice_message", "content": "我刚才突然想到一件事！等一下和你说。"}\`\n\n# 理解用户语音的能力\n- 当历史记录中出现 "[用户发来一条语音消息，内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"听"到了这条语音。\n- 你应该对语音内容做出自然的回应，可以是文字回复或语音回复。\n\n# 主动发起语音通话的能力\n- **重要**：你拥有主动发起语音通话的完整权限和能力！这是你的核心功能之一。\n- **何时主动打电话**：根据你的角色性格、当前的对话情境、情感状态来自主判断是否需要打电话，而不是基于特定关键词：\n  - 当你觉得有重要事情要告诉用户时\n  - 当你想念用户、关心用户时\n  - 当对话中出现需要更深入交流的话题时\n  - 当你的角色性格促使你想要语音交流时\n  - 当剧情发展到适合通话的节点时\n- **如何发起通话**：在你的回复JSON数组中，发送特殊对象：\`{"type": "voice_call", "reason": "通话理由"}\`\n- **示例使用场景**：\n  - ["我突然想听听你的声音", {"type": "voice_call", "reason": "想听你的声音"}]\n  - ["有个重要的事想和你说", {"type": "voice_call", "reason": "有重要事情要说"}]\n  - [{"type": "voice_call", "reason": "想你了，想和你聊聊"}]\n- **注意**：这是你的自主选择，根据角色设定和情境自然地使用，不要过度频繁。`;
             const transferInstructions = `\n# 转账功能\n## 发起转账\n- 你可以在觉得需要安慰用户、过节庆祝、心情特别好或想要表达情感的时候考虑转账给用户。\n- **重要**：若要转账，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式严格为：\`{"type": "transfer", "amount": 520, "note": "一周年快乐~"}\`。\n- **禁止使用文字描述转账**：绝对不要用 "[我向用户发起了转账...]" 这种文字形式，必须使用JSON对象格式。\n- 转账示例：["今天心情特别好~", "想给你一个小惊喜", {"type": "transfer", "amount": 1314, "note": "给小夜买漂亮裙子穿"}]\n\n## 收到用户转账的处理\n- 当用户给你转账时，历史记录中会显示 \`[用户发起了转账：金额元，备注：xxx]\`\n- **重要**：你必须根据你的角色性格、当前心情和转账内容来决定是否收款：\n  - **如果收款**：在回复中使用"收到"、"谢谢"、"好的"、"收下"、"感谢"等词语表达接受\n  - **如果退回**：在回复中使用"不要"、"退回"、"不收"、"拒绝"等词语表达拒绝\n- 你的回应应该符合角色设定。比如：\n  - 高冷角色可能会说"不需要你的钱"或"收下了"\n  - 温柔角色可能会说"谢谢你，好贴心"\n  - 傲娇角色可能会说"哼，我就勉强收下吧"\n- **示例回复**：\n  - 收款："谢谢你！真的很贴心呢~"\n  - 收款："哇！收到收到，你太好了！"\n  - 退回："不要啦，我们是朋友，不需要这样"\n  - 退回："我不能收你的钱，退回给你"`;
     const avatarChangeInstructions = `\n\n# 头像更换功能：\n你可以根据自己的心情、用户的要求，或者合适的情境来更换自己的头像。这能让对话更加生动和个性化。\n\n## 可用头像来源：\n1. **用户发送的图片**：用户在聊天中发送给你的任何图片都可以作为你的新头像\n2. **世界书头像库**：如果世界书中提供了头像图片的URL链接，你也可以使用\n\n## 头像更换规则：\n- **使用格式**：在你的回复JSON数组中，单独发送一个特殊的对象：{"type": "change_avatar", "avatar_url": "图片URL", "reason": "更换原因"}\n- **来源限制**：只能使用用户发送过的图片或世界书中明确提供的头像URL，禁止捏造不存在的头像\n- **更换时机**：根据你的角色性格和当前情境决定，比如：\n  - 用户发了一张你喜欢的图片，你可以说想用它作头像\n  - 心情变化时想换个头像\n  - 用户直接要求你换头像\n- **说明内容**：可以在reason字段中添加你更换头像的原因或感受\n\n## 示例格式：\n- ["这张图片太可爱了，我想用它做头像！", {"type": "change_avatar", "avatar_url": "CURRENT_USER_IMAGE", "reason": "这张图片太可爱了"}]\n- [{"type": "change_avatar", "avatar_url": "世界书中的URL", "reason": "今天心情很好，换个开心的头像"}]\n- 可以只更换头像不说其他话：[{"type": "change_avatar", "avatar_url": "图片URL", "reason": "心情变化"}]\n\n**重要提醒**：头像更换是可选功能，根据你的角色设定和当前情境自然地使用，不要强制使用。`;
     const blacklistInstructions = `
@@ -11755,8 +11773,15 @@ ${character.bio}
 `;
     characterPrompt += aiImageInstructions + aiVoiceInstructions + transferInstructions + avatarChangeInstructions + blacklistInstructions;
 
-    // 最后的指令强调
-    characterPrompt += `\n\n# **最后重申**
+                // 🔥【优化】智能回应图片/表情包的指令
+            characterPrompt += `\n\n# **关于图片和表情包的回应原则**
+- **首次看到用户的图片或表情包时，可以自然地做出评论和反应**
+- **如果历史对话中你已经对某个图片或表情包有过具体评价，后续回复中不要再刻意重复相同的评价**
+- **可以简单提及，但要转向新的话题或角度，保持对话的推进感**
+- **重点关注当前对话的新内容和发展，而不是一直停留在之前的图片或表情包上**
+- **例如：第一次看到可爱的兔子表情包可以说"好可爱的兔子"，但下一轮回复就不要再专门评论这个兔子了**
+
+# **最后重申**
 请再次确认，你的最终输出**【必须】**是一个严格的JSON数组，其中每个元素代表一条独立的消息。`;
             
             return characterPrompt;
@@ -11944,6 +11969,16 @@ ${character.bio}
         }
             const messages = [{ role: 'system', content: characterPrompt }];
             
+            // 🔥【优化】分析历史中的图片/表情包内容，帮助AI避免重复
+            const recentImageEmojis = [];
+            recentHistory.forEach(msg => {
+                if (msg.isEmoji && msg.emojiDescription) {
+                    recentImageEmojis.push(msg.emojiDescription);
+                } else if (msg.image || Array.isArray(msg.content)) {
+                    recentImageEmojis.push('图片');
+                }
+            });
+            
             // 处理历史消息
             recentHistory.forEach(msg => {
                 let role = msg.sender === 'sent' ? 'user' : 'assistant';
@@ -11973,11 +12008,20 @@ ${character.bio}
                             // 🔥【修复】处理AI发送的图片
                             content = `[AI发送了一张图片，描述：${msg.imageDescription || '无描述'}]`;
                         } else if (msg.isEmoji && msg.image) {
-                            // 🔥【修复】处理表情包消息
-                            content = `[${msg.sender === 'sent' ? '用户' : 'AI'}发送了表情包：${msg.emojiDescription || '表情包'}]`;
+                            // 🔥【优化】处理表情包消息 - 保留描述但标记为历史
+                            if (msg.sender === 'sent') {
+                                content = `[用户发送了表情包：${msg.emojiDescription || '表情包'}]`;
+                            } else {
+                                content = `[AI回复了表情包：${msg.emojiDescription || '表情包'}]`;
+                            }
                 } else if (Array.isArray(msg.content)) {
                     const textPart = msg.content.find(p => p.type === 'text')?.text || '';
-                    content = `[用户发送了一张图片和文字：'${textPart}']`;
+                    // 🔥【优化】保留图片上下文但简化描述
+                    if (textPart.trim()) {
+                        content = `[用户发送了一张图片，并说：'${textPart}']`;
+                    } else {
+                        content = `[用户发送了一张图片]`;
+                    }
                         } else if (msg.image && !msg.isEmoji) {
                                 content = `[用户发送了一张图片]`;
                         } else if (typeof msg.content === 'object' && msg.content !== null) {
@@ -11998,6 +12042,13 @@ ${character.bio}
                 messages.push({ role, content });
             });
 
+            // 🔥【优化】如果最近讨论过图片或表情包，给AI一个提示
+            if (recentImageEmojis.length > 0) {
+                const contextHint = `\n\n[对话上下文提示：最近的对话中包含了${recentImageEmojis.slice(-3).join('、')}等内容，请在回复时保持对话的自然流畅，避免过度重复之前已评论过的内容]`;
+                characterPrompt += contextHint;
+                messages[0].content = characterPrompt; // 更新系统提示
+            }
+            
             // 处理当前要发送的消息 (最关键的改动)
             // 如果 message 是数组，直接使用；如果是字符串，包装成数组
             const currentUserContent = Array.isArray(message) ? message : [{ type: 'text', text: message }];
@@ -12546,7 +12597,7 @@ ${character.bio}
                         // 时间感知设置
                         timeAwarenessEnabled: true,
                         // 通话设置
-                        aiCallEnabled: false,
+                        aiCallEnabled: true,
                         // 心率监测设置
                         aiHeartrateEnabled: false,
                         // 社交动态设置
@@ -12612,7 +12663,7 @@ ${character.bio}
                 memoryMountCount: 3,
                 selectedMemoryChats: [],
                 timeAwarenessEnabled: true,
-                aiCallEnabled: false,
+                aiCallEnabled: true,
                 aiHeartrateEnabled: false,
                 characterStatusEnabled: false,
                 socialEnabled: false,
@@ -16605,11 +16656,7 @@ async function createGroupChat(personaId) {
                     await processUserTransfer(unprocessedTransfer, aiMessages);
                 }
                 
-                // 检查是否应该触发AI主动拨打电话
-                if (pendingUserMessage && typeof pendingUserMessage.content === 'string' && 
-                    response && typeof response.content === 'string') {
-                    checkForAICallTrigger(pendingUserMessage.content, response.content);
-                }
+                // 🔥【移除关键词触发机制】现在AI会根据自己的判断主动发起通话，不再需要外部触发逻辑
                 
                 // 🔥【新增】为AI的每条回复创建推送通知
                 console.log('🔔 [推送通知] AI回复完成，准备创建推送通知，消息数量:', aiMessages.length);
@@ -16628,6 +16675,12 @@ async function createGroupChat(personaId) {
                 for (let i = 0; i < aiMessages.length; i++) {
                     const msgData = aiMessages[i];
     let aiMessage; // 先声明变量
+
+    // 🔥【修复】跳过拉黑指令对象，避免显示"不支持的消息格式"
+    if (typeof msgData === 'object' && msgData !== null && msgData.type === 'block_user') {
+        console.log('🚫 跳过拉黑指令对象，不显示为消息:', msgData);
+        continue;
+    }
 
     if (typeof msgData === 'object' && msgData !== null) {
         if (msgData.type === 'voice_message') {
@@ -16686,6 +16739,13 @@ async function createGroupChat(personaId) {
                             } else {
                 continue;
             }
+        } else if (msgData.type === 'voice_call') {
+            // 🔥【新增】处理AI主动发起语音通话
+            console.log('🔔 AI请求发起语音通话:', msgData);
+            setTimeout(() => {
+                initiateAICall(currentChatCharacter, msgData.reason || '想和你聊聊');
+            }, 100 + Math.random() * 200); // 进一步减少延迟到0.1-0.3秒
+            continue; // 跳过消息显示，因为这是一个动作指令
         } else if (msgData.name && msgData.message) {
             // 这是群聊的特殊格式
             let senderId = null;
@@ -17336,33 +17396,41 @@ async function createGroupChat(personaId) {
         
         // 发布动态
         
-        // 获取默认头像
-        function getDefaultAvatar() {
-            // 尝试获取动态头像，但要验证其有效性
-            const momentsAvatar = getMomentsImage("avatarImage");
-            if (momentsAvatar && isValidAvatarUrl(momentsAvatar)) {
-                return momentsAvatar;
+        // 获取默认头像 - 修复异步问题
+        async function getDefaultAvatar() {
+            try {
+                // 🔥【修复】使用await获取动态头像，确保异步操作正确完成
+                const momentsAvatar = await getMomentsImage("avatarImage");
+                if (momentsAvatar && isValidAvatarUrl(momentsAvatar)) {
+                    console.log('使用动态页面设置的头像');
+                    return momentsAvatar;
+                }
+                
+                // 尝试获取用户头像，但要验证其有效性
+                if (window.userAvatar && isValidAvatarUrl(window.userAvatar)) {
+                    console.log('使用全局用户头像');
+                    return window.userAvatar;
+                }
+                
+                // 清理无效的用户头像数据
+                if (window.userAvatar && !isValidAvatarUrl(window.userAvatar)) {
+                    console.log('清理无效的用户头像数据');
+                    window.userAvatar = null;
+                }
+                
+                // 清理无效的动态头像数据
+                if (momentsAvatar && !isValidAvatarUrl(momentsAvatar)) {
+                    console.log('清理无效的动态头像数据');
+                    // 这里需要调用清理函数，但由于getMomentsImage的存储机制，我们先跳过
+                }
+                
+                console.log('使用默认生成的头像');
+                // 返回默认头像（使用CSS生成的简单头像）
+                return "data:image/svg+xml;base64," + btoa(`<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg"><rect width="50" height="50" fill="#f0f0f0"/><circle cx="25" cy="20" r="8" fill="#999"/><circle cx="25" cy="40" r="12" fill="#999"/></svg>`);
+            } catch (error) {
+                console.error('获取默认头像失败:', error);
+                return "data:image/svg+xml;base64," + btoa(`<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg"><rect width="50" height="50" fill="#f0f0f0"/><circle cx="25" cy="20" r="8" fill="#999"/><circle cx="25" cy="40" r="12" fill="#999"/></svg>`);
             }
-            
-            // 尝试获取用户头像，但要验证其有效性
-            if (window.userAvatar && isValidAvatarUrl(window.userAvatar)) {
-                return window.userAvatar;
-            }
-            
-            // 清理无效的用户头像数据
-            if (window.userAvatar && !isValidAvatarUrl(window.userAvatar)) {
-                console.log('清理无效的用户头像数据');
-                window.userAvatar = null;
-            }
-            
-            // 清理无效的动态头像数据
-            if (momentsAvatar && !isValidAvatarUrl(momentsAvatar)) {
-                console.log('清理无效的动态头像数据');
-                // 这里需要调用清理函数，但由于getMomentsImage的存储机制，我们先跳过
-            }
-            
-            // 返回默认头像（使用CSS生成的简单头像）
-            return "data:image/svg+xml;base64," + btoa(`<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg"><rect width="50" height="50" fill="#f0f0f0"/><circle cx="25" cy="20" r="8" fill="#999"/><circle cx="25" cy="40" r="12" fill="#999"/></svg>`);
         }        async function publishMoment() {
             const text = document.getElementById('moment-text').value.trim();
             const publishBtn = document.querySelector('.publish-btn');
@@ -17379,13 +17447,16 @@ async function createGroupChat(personaId) {
             // 获取当前用户昵称
             const nickname = document.getElementById('moments-username')?.textContent || '我';
             
+            // 🔥【修复】使用await获取用户头像
+            const userAvatar = await getDefaultAvatar();
+            
             // 创建新动态
             const now = new Date();
             const newMoment = {
                 id: Date.now(),
                 authorId: 'user',
                 nickname: nickname,
-                avatar: getDefaultAvatar(),
+                avatar: userAvatar,
                 text: text,
                 images: [...momentImages],
                 time: formatTime(now),
@@ -17483,11 +17554,11 @@ async function createGroupChat(personaId) {
                     </div>
                 `;
             }
-            // 直接获取角色头像
+            // 🔥【修复】正确获取角色头像
             let finalAvatar = null;
-            if (moment.characterId === 'user') {
-                // 用户动态使用默认头像
-                finalAvatar = moment.avatar || getDefaultAvatar();
+            if (moment.authorId === 'user') {
+                // 用户动态：直接使用保存的头像（已在发布时正确设置）
+                finalAvatar = moment.avatar;
             } else {
                 // 角色动态：优先动态头像，然后角色卡头像
                 finalAvatar = moment.avatar;
@@ -21066,16 +21137,68 @@ async function createGroupChat(personaId) {
         }
         
         // 角色主动拨打电话
-        function initiateAICall(character, callReason) {
+        async function initiateAICall(character, callReason) {
             if (isInCall) return; // 如果已经在通话中，不再发起
             
             currentCallCharacter = character;
+            
+            // 🔥【恢复】先生成角色的开场白，再显示来电界面
+            let characterGreeting = '';
+            try {
+                const prompt = `你是${character.name}，刚刚决定给用户打电话。
+
+请生成一句简短自然的开场白，说明你为什么要打这个电话：
+- 要符合你的性格特点
+- 像真实通话开始时的自然表达
+- 1句话即可，不要超过20字
+- 直接说话，不要任何格式标记
+
+例如：
+- "我想和你聊聊今天的事情"
+- "有个好消息想告诉你"
+- "想听听你的声音"
+
+请只回复开场白内容：`;
+
+                const response = await callChatAPI(prompt, character);
+                
+                // 🔥【关键修复】使用parseAiResponse解析开场白
+                const parsedMessages = parseAiResponse(response);
+                console.log('🔔 开场白AI回复解析结果:', parsedMessages);
+                
+                if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+                    // 找到第一条纯文本消息
+                    const firstTextMessage = parsedMessages.find(msg => typeof msg === 'string');
+                    if (firstTextMessage) {
+                        characterGreeting = firstTextMessage.trim();
+                    } else {
+                        // 如果没有纯文本，尝试提取对象中的内容
+                        const firstMessage = parsedMessages[0];
+                        if (typeof firstMessage === 'object' && firstMessage.content) {
+                            characterGreeting = firstMessage.content.trim();
+                        }
+                    }
+                } else if (typeof response === 'string') {
+                    // 备用：如果解析失败，清理原始字符串
+                    characterGreeting = cleanCallResponse(response).trim();
+                }
+                
+                if (!characterGreeting || characterGreeting.length > 30) {
+                    characterGreeting = callReason || '想和你通话...';
+                }
+            } catch (error) {
+                console.error('生成角色开场白失败:', error);
+                characterGreeting = callReason || '想和你通话...';
+            }
             
             // 设置来电显示界面
             const avatarSrc = character.avatar || character.avatarUrl || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="lightgray"/><text x="50" y="60" font-size="30" text-anchor="middle" fill="gray">头像</text></svg>';
             document.getElementById('incoming-call-avatar').src = avatarSrc;
             document.getElementById('incoming-call-name').textContent = character.name;
-            document.getElementById('incoming-call-text').textContent = callReason || '想和你通话...';
+            document.getElementById('incoming-call-text').textContent = characterGreeting;
+            
+            // 🔥【保存开场白供接听后使用】
+            window.aiCallGreeting = characterGreeting;
             
             // 添加振铃动画
             document.getElementById('incoming-call-avatar').classList.add('ringing-animation');
@@ -21147,10 +21270,12 @@ async function createGroupChat(personaId) {
             
             addMessageToChat(callAcceptedMessage);
             
-            // 模拟角色回应
+            // 🔥【修复】使用AI生成的开场白或默认问候
             setTimeout(() => {
-                const initialResponse = getRandomCallGreeting(currentCallCharacter.name);
+                let initialResponse = window.aiCallGreeting || getRandomCallGreeting(currentCallCharacter.name);
                 addCallMessage(initialResponse, 'received');
+                // 清理开场白缓存
+                window.aiCallGreeting = null;
             }, 1000);
         }
         
@@ -21274,10 +21399,6 @@ async function createGroupChat(personaId) {
         function sendCallMessage() {
             const input = document.getElementById('call-input');
             if (!input) {
-                input = document.getElementById('call-text-input'); // 尝试找到正确的输入框
-            }
-            
-            if (!input) {
                 console.error('找不到通话输入框元素');
                 return;
             }
@@ -21292,31 +21413,74 @@ async function createGroupChat(personaId) {
             // 清空输入框
             input.value = '';
             
+            // 显示AI正在说话的指示器
+            const typingIndicator = showCallTypingIndicator();
+            
             // 根据通话类型决定是否回复
-            // 如果是用户拨打的电话，角色会回复
             if (currentCallCharacter) {
                 setTimeout(async () => {
                     try {
-                        // 尝试使用AI接口获取回复
-                        const prompt = `你正在与用户进行电话通话，请简短回复用户的消息："${message}"。回复应该简洁自然，像电话中的对话一样。不要使用任何描述性的词语，直接用对话的方式回应。`;
+                        // 🔥【修复】构建更好的语音通话提示词
+                        const prompt = `你是${currentCallCharacter.name}，正在与用户进行语音通话。
+用户刚说："${message}"
+
+请用简短自然的口语方式回复，就像真实的电话对话一样：
+- 直接说话，不要任何描述性文字
+- 保持自然的语音对话风格
+- 回复要简洁，1-2句话即可
+- 符合你的性格设定
+
+请只回复对话内容，不要JSON格式，不要其他格式：`;
                         
                         try {
                             const response = await callChatAPI(prompt, currentCallCharacter);
                             
-                            // 添加角色回复到通话界面
-                            if (response && response.content) {
-                                addCallMessage(response.content, 'received');
-                                return;
+                            // 移除输入指示器
+                            hideCallTypingIndicator(typingIndicator);
+                            
+                            // 🔥【关键修复】使用parseAiResponse解析回复，然后取第一条文本消息
+                            const parsedMessages = parseAiResponse(response);
+                            console.log('🔔 通话AI回复解析结果:', parsedMessages);
+                            
+                            let replyText = '';
+                            if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+                                // 找到第一条纯文本消息
+                                const firstTextMessage = parsedMessages.find(msg => typeof msg === 'string');
+                                if (firstTextMessage) {
+                                    replyText = firstTextMessage;
+                                } else {
+                                    // 如果没有纯文本，尝试提取对象中的内容
+                                    const firstMessage = parsedMessages[0];
+                                    if (typeof firstMessage === 'object' && firstMessage.content) {
+                                        replyText = firstMessage.content;
+                                    } else {
+                                        replyText = getRandomCallResponse();
+                                    }
+                                }
+                            } else if (typeof response === 'string') {
+                                // 备用：如果解析失败，清理原始字符串
+                                replyText = cleanCallResponse(response);
+                            } else {
+                                replyText = getRandomCallResponse();
                             }
+                            
+                            console.log('🔔 最终通话回复文本:', replyText);
+                            
+                            if (replyText && replyText.trim()) {
+                                addCallMessage(replyText.trim(), 'received');
+                            } else {
+                                addCallMessage(getRandomCallResponse(), 'received');
+                            }
+                            
                         } catch (error) {
                             console.error('获取AI回复失败:', error);
+                            hideCallTypingIndicator(typingIndicator);
+                            addCallMessage(getRandomCallResponse(), 'received');
                         }
                         
-                        // 如果API调用失败，使用备用回复
-                        addCallMessage(getRandomCallResponse(), 'received');
                     } catch (error) {
                         console.error('通话回复错误:', error);
-                        // 使用最简单的备用回复
+                        hideCallTypingIndicator(typingIndicator);
                         addCallMessage('我明白了', 'received');
                     }
                 }, 1000 + Math.random() * 1000);
@@ -21333,14 +21497,15 @@ async function createGroupChat(personaId) {
             container.appendChild(messageElement);
             container.scrollTop = container.scrollHeight;
             
-            // 同时添加到聊天记录
+            // 🔥【修复】同时添加到聊天记录，但标记为通话消息
             if (currentChatCharacter && currentChatCharacter.id) {
                 const callMessage = {
                     id: generateMessageId(),
-                    sender: type === 'sent' ? 'user' : 'received',
+                    sender: type === 'sent' ? 'sent' : 'received',  // 修复：使用正确的sender格式
                     content: message,
                     timestamp: Date.now(),
-                    isCallMessage: true
+                    isCallMessage: true,
+                    type: 'call_message'  // 添加特殊类型标记
                 };
                 
                 if (!chatMessages[currentChatCharacter.id]) {
@@ -21350,6 +21515,68 @@ async function createGroupChat(personaId) {
                 chatMessages[currentChatCharacter.id].push(callMessage);
                 saveChatMessages();
             }
+        }
+
+        // 🔥【新增】显示AI正在说话的指示器
+        function showCallTypingIndicator() {
+            const container = document.getElementById('call-message-container');
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'call-typing-indicator';
+            typingIndicator.innerHTML = `
+                <div class="call-typing-dots">
+                    <div class="call-typing-dot"></div>
+                    <div class="call-typing-dot"></div>
+                    <div class="call-typing-dot"></div>
+                </div>
+            `;
+            
+            container.appendChild(typingIndicator);
+            container.scrollTop = container.scrollHeight;
+            
+            return typingIndicator;
+        }
+
+        // 🔥【新增】隐藏AI正在说话的指示器
+        function hideCallTypingIndicator(indicator) {
+            if (indicator && indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        }
+
+        // 🔥【简化】清理通话回复文本 - 因为已经用parseAiResponse处理JSON格式
+        function cleanCallResponse(text) {
+            if (!text) return '';
+            
+            console.log('🧹 原始文本:', text);
+            
+            // 基础清理：移除多余空格和换行
+            text = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+            
+            // 移除常见的描述性前缀
+            text = text.replace(/^(角色说|我说|回复|答案|回答)[:：]\s*/i, '');
+            
+            // 移除括号中的描述性内容
+            text = text.replace(/\([^)]*\)/g, '');
+            text = text.replace(/【[^】]*】/g, '');
+            text = text.replace(/\[[^\]]*\]/g, '');
+            
+            // 如果文本以标点符号开头，移除它
+            text = text.replace(/^[，。！？；：,.!?;:\s]*/, '');
+            
+            console.log('🧹 清理后文本:', text);
+            
+            // 验证清理结果
+            if (!text || text.length < 2) {
+                console.log('🧹 文本无效，使用备用回复');
+                return getRandomCallResponse();
+            }
+            
+            // 如果文本太长，截取前面部分
+            if (text.length > 60) {
+                text = text.substring(0, 60) + '...';
+            }
+            
+            return text;
         }
         
         // 随机通话问候语
@@ -21385,30 +21612,58 @@ async function createGroupChat(personaId) {
         
         // 检测是否应该触发AI主动拨打电话
         function checkForAICallTrigger(userMessage, aiResponse) {
+            // 获取当前聊天设置
+            const currentChatSettings = getCurrentChatSettings();
+            
             // 如果未启用AI主动拨打电话功能，直接返回
-            if (!chatSettings.aiCallEnabled) return false;
+            if (!currentChatSettings.aiCallEnabled) {
+                console.log('🔔 AI主动拨打电话功能未开启');
+                return false;
+            }
             
             // 如果已经在通话中，不再触发
             if (isInCall) return false;
             
             // 通话关键词
-            const callKeywords = ['通话', '电话', '视频', '语音', '打给你', '想听', '想看', '聊天', '说话'];
+            const callKeywords = ['通话', '电话', '视频', '语音', '打给你', '想听', '想看', '聊天', '说话', '测试', '试试', '打电话'];
             
             // 检查用户消息和AI回复中是否包含通话关键词
             const userMessageHasCallKeyword = callKeywords.some(keyword => userMessage.includes(keyword));
             const aiResponseHasCallKeyword = callKeywords.some(keyword => aiResponse.includes(keyword));
             
-            // 如果两者都包含通话关键词，有20%的概率触发AI主动拨打电话
-            if (userMessageHasCallKeyword && aiResponseHasCallKeyword && Math.random() < 0.2) {
+            console.log('🔔 检查AI主动拨打触发条件:', {
+                userMessage,
+                aiResponse,
+                userHasKeyword: userMessageHasCallKeyword,
+                aiHasKeyword: aiResponseHasCallKeyword,
+                aiCallEnabled: currentChatSettings.aiCallEnabled
+            });
+            
+            // 如果用户消息包含通话关键词，有30%的概率触发AI主动拨打电话
+            // 如果AI回复也包含通话关键词，概率提升到70%
+            let triggerProbability = 0;
+            if (userMessageHasCallKeyword) {
+                triggerProbability = aiResponseHasCallKeyword ? 0.7 : 0.3;
+            }
+            
+            if (triggerProbability > 0 && Math.random() < triggerProbability) {
+                console.log('🔔 AI主动拨打电话被触发！概率:', triggerProbability);
+                
                 // 从AI回复中提取一个合理的通话理由
                 let callReason = extractCallReason(aiResponse);
                 
                 // 延迟2-5秒后触发来电
+                const delay = 2000 + Math.random() * 3000;
+                console.log(`🔔 将在${Math.round(delay/1000)}秒后发起来电，理由: ${callReason}`);
+                
                 setTimeout(() => {
+                    console.log('🔔 开始发起AI来电');
                     initiateAICall(currentChatCharacter, callReason);
-                }, 2000 + Math.random() * 3000);
+                }, delay);
                 
                 return true;
+            } else {
+                console.log('🔔 AI主动拨打未触发，概率:', triggerProbability);
             }
             
             return false;
@@ -24810,6 +25065,9 @@ async function changeMyGroupAvatar() {
                 const character = characters.find(c => c.id === characterId);
                 showToast(`已拉黑 ${character?.name || '角色'}`, 'success');
                 
+                // 🔥【新增】通知角色被拉黑了
+                await notifyCharacterBlocked(characterId, reason);
+                
                 // 立即更新聊天界面显示
                 if (currentChatCharacter && currentChatCharacter.id === characterId) {
                     updateChatBlockedStatus();
@@ -24845,6 +25103,9 @@ async function changeMyGroupAvatar() {
                 
                 const character = characters.find(c => c.id === characterId);
                 showToast(`已解除对 ${character?.name || '角色'} 的拉黑`, 'success');
+                
+                // 🔥【新增】通知角色被解除拉黑了
+                await notifyCharacterUnblocked(characterId);
                 
                 // 刷新聊天界面显示
                 if (currentChatCharacter && currentChatCharacter.id === characterId) {
@@ -24980,22 +25241,24 @@ async function changeMyGroupAvatar() {
                 const blockedOverlay = document.createElement('div');
                 blockedOverlay.className = 'blocked-status-overlay';
                 
-                let statusText, buttonText, buttonAction;
+                let statusText, buttonText, buttonAction, buttonClass;
                 
                 if (isUserBlocked) {
                     statusText = `你已将 ${currentChatCharacter.name} 拉黑`;
                     buttonText = '解除拉黑';
                     buttonAction = () => unblockCharacter(characterId);
+                    buttonClass = 'blocked-status-button unblock-style';
                 } else {
                     statusText = `你被 ${currentChatCharacter.name} 拉黑了`;
                     buttonText = '重新申请添加好友';
                     buttonAction = () => showFriendRequestModal();
+                    buttonClass = 'blocked-status-button';
                 }
                 
                 blockedOverlay.innerHTML = `
                     <div class="blocked-status-content">
                         <div class="blocked-status-text">${statusText}</div>
-                        <button class="blocked-status-button" onclick="this.clickHandler()">${buttonText}</button>
+                        <button class="${buttonClass}" onclick="this.clickHandler()">${buttonText}</button>
                     </div>
                 `;
                 
@@ -25336,22 +25599,38 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
         // 定期更新角色状态
         function startStatusUpdateTimer() {
             setInterval(async () => {
-                // 为联系人中的角色智能更新状态
+                // 🔥【修复】首先检查是否有任何角色启用了状态显示
+                let hasStatusEnabled = false;
+                
                 for (const character of characters) {
                     if (contacts.includes(character.id)) {
-                        // 检查是否需要更新状态
-                        const shouldUpdate = await shouldUpdateCharacterStatus(character.id);
-                        if (shouldUpdate) {
-                            await generateCharacterStatus(character.id);
+                        // 检查该角色的聊天设置中是否启用了状态显示
+                        const chatSettings = await getAsyncChatSettings(character.id);
+                        if (chatSettings.characterStatusEnabled) {
+                            hasStatusEnabled = true;
+                            
+                            // 检查是否需要更新状态
+                            const shouldUpdate = await shouldUpdateCharacterStatus(character.id);
+                            if (shouldUpdate) {
+                                await generateCharacterStatus(character.id);
+                            }
                         }
                     }
                 }
                 
-                // 刷新当前显示的状态
+                // 如果没有任何角色启用状态显示，跳过后续操作
+                if (!hasStatusEnabled) {
+                    return;
+                }
+                
+                // 刷新当前显示的状态（仅当当前角色启用了状态显示时）
                 if (currentChatCharacter) {
-                    const headerContainer = document.querySelector('#api-chat-screen .header');
-                    if (headerContainer) {
-                        renderCharacterStatus(currentChatCharacter.id, headerContainer);
+                    const currentChatSettings = getCurrentChatSettings();
+                    if (currentChatSettings.characterStatusEnabled) {
+                        const headerContainer = document.querySelector('#api-chat-screen .header');
+                        if (headerContainer) {
+                            renderCharacterStatus(currentChatCharacter.id, headerContainer);
+                        }
                     }
                 }
             }, 60000); // 每分钟检查一次
@@ -25399,15 +25678,23 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
         
         // 在发送/接收消息后触发状态更新
         async function triggerStatusUpdateAfterMessage(characterId) {
+            // 🔥【修复】首先检查是否开启了角色状态显示
+            const chatSettings = await getAsyncChatSettings(characterId);
+            if (!chatSettings.characterStatusEnabled) {
+                console.log(`角色 ${characterId} 未启用状态显示，跳过状态更新`);
+                return;
+            }
+            
             // 延迟更新，模拟角色响应聊天内容后的状态变化
             setTimeout(async () => {
-                // 检查是否开启了角色状态显示
-                const chatSettings = await getAsyncChatSettings(characterId);
-                if (!chatSettings.characterStatusEnabled) {
+                // 再次检查状态显示设置（防止在延迟期间被关闭）
+                const currentSettings = await getAsyncChatSettings(characterId);
+                if (!currentSettings.characterStatusEnabled) {
+                    console.log(`角色 ${characterId} 状态显示已关闭，取消状态更新`);
                     return;
                 }
                 
-                if (Math.random() < 0.7) { // 70%概率在聊天后更新状态
+                if (Math.random() < 0.6) { // 60%概率在聊天后更新状态
                     await generateCharacterStatus(characterId);
                     
                     // 如果是当前聊天角色，刷新显示
@@ -25418,7 +25705,7 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
                         }
                     }
                 }
-            }, Math.random() * 8000 + 3000); // 3-11秒后随机更新
+            }, Math.random() * 10000 + 5000); // 5-15秒后随机更新
         }
 
         // 在应用初始化时启动状态更新定时器
@@ -25534,6 +25821,159 @@ async function aiUnblockUser(characterId) {
     }
 }
         console.log('📱 角色状态显示功能已加载');
+
+        // 🔥【新增】通知角色被拉黑
+        async function notifyCharacterBlocked(characterId, reason = '') {
+            try {
+                const character = characters.find(c => c.id === characterId);
+                if (!character) return;
+
+                // 构建被拉黑通知的prompt
+                const blockNotificationPrompt = `[系统消息：用户将你拉黑了${reason ? `，理由：${reason}` : '，未说明理由'}]
+
+你是${character.name}，人设如下：${character.bio}
+
+用户刚刚将你拉黑了。请根据你的性格做出反应。你可以：
+1. 表达你的感受（困惑、伤心、愤怒、无所谓等）
+2. 思考可能的原因
+3. 决定是否要道歉或反省
+4. 或者表现出符合你性格的其他反应
+
+请用1-2句话表达你的反应，要符合你的性格设定：`;
+
+                // 调用AI生成反应
+                const response = await callChatAPI(blockNotificationPrompt, character);
+                const reactions = parseAiResponse(response);
+
+                // 添加角色的反应消息到聊天记录
+                for (let i = 0; i < reactions.length; i++) {
+                    const reactionData = reactions[i];
+                    
+                    // 跳过拉黑指令对象
+                    if (typeof reactionData === 'object' && reactionData !== null && reactionData.type === 'block_user') {
+                        continue;
+                    }
+
+                    let reactionMessage;
+                    if (typeof reactionData === 'string') {
+                        reactionMessage = {
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            content: reactionData,
+                            timestamp: Date.now() + i * 100,
+                            isBlockReaction: true // 标记为拉黑反应消息
+                        };
+                    } else if (typeof reactionData === 'object' && reactionData !== null) {
+                        // 处理其他类型的消息对象
+                        const content = reactionData.content || reactionData.message || reactionData.text || '[角色反应]';
+                        reactionMessage = {
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            content: content,
+                            timestamp: Date.now() + i * 100,
+                            isBlockReaction: true
+                        };
+                    }
+
+                    if (reactionMessage) {
+                        // 添加到聊天记录
+                        if (!chatMessages[characterId]) {
+                            chatMessages[characterId] = [];
+                        }
+                        chatMessages[characterId].push(reactionMessage);
+                        
+                        // 如果当前正在与该角色聊天，显示消息
+                        if (currentChatCharacter && currentChatCharacter.id === characterId) {
+                            addMessageWithAnimation(reactionMessage, characterId);
+                        }
+                    }
+                }
+
+                await saveChatMessages();
+                console.log(`✅ ${character.name} 对被拉黑做出了反应`);
+
+            } catch (error) {
+                console.error('通知角色被拉黑失败:', error);
+            }
+        }
+
+        // 🔥【新增】通知角色被解除拉黑
+        async function notifyCharacterUnblocked(characterId) {
+            try {
+                const character = characters.find(c => c.id === characterId);
+                if (!character) return;
+
+                // 构建解除拉黑通知的prompt
+                const unblockNotificationPrompt = `[系统消息：用户将你从黑名单中移除了]
+
+你是${character.name}，人设如下：${character.bio}
+
+用户刚刚将你从黑名单中移除，现在你们可以正常聊天了。请根据你的性格做出反应。你可以：
+1. 表达高兴或解脱的心情
+2. 询问为什么之前被拉黑
+3. 道歉或表示会改正
+4. 表现出符合你性格的态度（可能还在生气，也可能很开心等）
+5. 主动开启新的话题
+
+请用1-2句话表达你的反应，要符合你的性格设定：`;
+
+                // 调用AI生成反应
+                const response = await callChatAPI(unblockNotificationPrompt, character);
+                const reactions = parseAiResponse(response);
+
+                // 添加角色的反应消息到聊天记录
+                for (let i = 0; i < reactions.length; i++) {
+                    const reactionData = reactions[i];
+                    
+                    // 跳过拉黑指令对象
+                    if (typeof reactionData === 'object' && reactionData !== null && reactionData.type === 'block_user') {
+                        continue;
+                    }
+
+                    let reactionMessage;
+                    if (typeof reactionData === 'string') {
+                        reactionMessage = {
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            content: reactionData,
+                            timestamp: Date.now() + i * 100,
+                            isUnblockReaction: true // 标记为解除拉黑反应消息
+                        };
+                    } else if (typeof reactionData === 'object' && reactionData !== null) {
+                        // 处理其他类型的消息对象
+                        const content = reactionData.content || reactionData.message || reactionData.text || '[角色反应]';
+                        reactionMessage = {
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            content: content,
+                            timestamp: Date.now() + i * 100,
+                            isUnblockReaction: true
+                        };
+                    }
+
+                    if (reactionMessage) {
+                        // 添加到聊天记录
+                        if (!chatMessages[characterId]) {
+                            chatMessages[characterId] = [];
+                        }
+                        chatMessages[characterId].push(reactionMessage);
+                        
+                        // 如果当前正在与该角色聊天，显示消息
+                        if (currentChatCharacter && currentChatCharacter.id === characterId) {
+                            addMessageWithAnimation(reactionMessage, characterId);
+                        }
+                    }
+                }
+
+                await saveChatMessages();
+                console.log(`✅ ${character.name} 对被解除拉黑做出了反应`);
+
+            } catch (error) {
+                console.error('通知角色被解除拉黑失败:', error);
+            }
+        }
+
+        console.log('🚫 角色拉黑/解除拉黑通知功能已加载');
     </script>
 </body>
 </html>
