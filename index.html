@@ -620,6 +620,23 @@
                                             </label>
                                         </div>
                                     </div>
+                                    
+                                    <!-- 🔥【新增】状态更新频率设置 -->
+                                    <div class="setting-item single-chat-only" id="status-frequency-setting" style="display: none;">
+                                        <div class="setting-left">
+                                            <div class="setting-label">状态更新频率</div>
+                                            <div class="setting-desc">控制角色状态的检查和更新频率</div>
+                                        </div>
+                                        <div class="setting-right">
+                                            <select class="setting-select" id="status-update-frequency">
+                                                <option value="high">高频 (目前频率)</option>
+                                                <option value="medium-high">中高频 (1分钟)</option>
+                                                <option value="medium">中频 (3分钟)</option>
+                                                <option value="medium-low">中低频 (5分钟)</option>
+                                                <option value="low">低频 (10分钟)</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1106,6 +1123,7 @@
                 <div id="api-chat-screen" class="app-screen">
                     <div class="app-status-bar">
                         <div class="app-status-time"></div>
+                        <div id="ai-heartrate-display" style="display: none;">♥️ 72 bpm</div>
                         <div class="app-battery-container">
                             <span class="battery-text">ᰔᩚ</span>
                             <div class="app-battery-icon">
@@ -4394,37 +4412,58 @@ ${chatContext}${momentsContext}
 
 请生成一条符合你人设的动态内容：`;
 
-                const content = await generateAIResponse(prompt, character);
-                if (content && content.trim()) {
-                    // 获取头像，确保安全
-                    const avatar = getCharacterAvatar(character);
-                    // 移除了发布动态头像日志
+                const response = await generateAIResponse(prompt, character);
+                if (response && response.trim()) {
+                    // 🔥【修复】使用parseAiResponse解析AI回复的JSON格式
+                    const parsedMessages = parseAiResponse(response);
+                    let content = '';
                     
-                    // 发布动态
-                    const moment = {
-                        id: Date.now(),  // 使用数字ID而不是字符串
-                        authorId: characterId,
-                        nickname: character.name,
-                        avatar: avatar, // 角色头像
-                        text: content.trim(),
-                        time: formatTime(new Date()),
-                        timestamp: Date.now(),
-                        characterId: characterId
-                    };
+                    if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+                        // 如果有多条消息，合并为一条动态
+                        content = parsedMessages.map(msg => {
+                            if (typeof msg === 'string') {
+                                return msg.trim();
+                            } else if (typeof msg === 'object' && msg.content) {
+                                return msg.content.trim();
+                            }
+                            return '';
+                        }).filter(text => text).join('\n\n');
+                    } else if (typeof response === 'string') {
+                        // 备用：如果解析失败，使用原始文本
+                        content = response.trim();
+                    }
                     
-                    // 保存到数据库
-                    await db.moments.add(moment);
+                    if (content) {
+                        // 获取头像，确保安全
+                        const avatar = getCharacterAvatar(character);
+                        // 移除了发布动态头像日志
+                        
+                        // 发布动态
+                        const moment = {
+                            id: Date.now(),  // 使用数字ID而不是字符串
+                            authorId: characterId,
+                            nickname: character.name,
+                            avatar: avatar, // 角色头像
+                            text: content,
+                            time: formatTime(new Date()),
+                            timestamp: Date.now(),
+                            characterId: characterId
+                        };
                     
-                    // 记录发布时间
-                    character.lastMomentTime = Date.now();
-                    saveCharacters();
-                    
-                    // 强制刷新动态显示（无论当前在哪个页面）
-                    setTimeout(() => {
-                        loadMoments();
-                    }, 100);
-                    
-                    // 移除了发布动态日志
+                                                                    // 保存到数据库
+                        await db.moments.add(moment);
+                        
+                        // 记录发布时间
+                        character.lastMomentTime = Date.now();
+                        saveCharacters();
+                        
+                        // 强制刷新动态显示（无论当前在哪个页面）
+                        setTimeout(() => {
+                            loadMoments();
+                        }, 100);
+                        
+                        // 移除了发布动态日志
+                    }
                 }
             } catch (error) {
                 console.error('后台发动态失败:', error);
@@ -6783,7 +6822,14 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         messageContent = `<div class="transfer-message-container received"><div class="transfer-card ${cardClass}" data-transfer-id="${message.timestamp}" ${clickHandler}><div class="transfer-title">${heartIcon} ${titleText}</div><div class="transfer-amount">¥ ${Number(message.amount).toFixed(2)}</div><div class="transfer-note">${message.note || '转账'}</div>${statusHtml}</div></div>`;
                     } else {
                         const chatMode = chatSettings.chatMode || 'online';
-                        messageContent = chatMode === 'offline' ? processOfflineContent(message.content) : message.content;
+                        let baseContent = chatMode === 'offline' ? processOfflineContent(message.content) : message.content;
+                        
+                        // 如果有引用消息，在内容前添加引用显示
+                        if (message.replyTo) {
+                            messageContent = generateReplyHTML(message.replyTo) + baseContent;
+                        } else {
+                            messageContent = baseContent;
+                        }
                     }
                     
                     let avatarHtml = '';
@@ -6916,7 +6962,14 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                             const textPart = message.content.find(p => p.type === 'text');
                             const imagePart = message.content.find(p => p.type === 'image_url');
                             
-                            myMessageContent = textPart?.text || '';
+                            let baseContent = textPart?.text || '';
+                            
+                            // 如果有引用消息，在内容前添加引用显示
+                            if (message.replyTo) {
+                                myMessageContent = generateReplyHTML(message.replyTo) + baseContent;
+                            } else {
+                                myMessageContent = baseContent;
+                            }
                             
                             // 如果有图片，添加图片显示
                             if (imagePart?.image_url?.url) {
@@ -6926,8 +6979,15 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                                 myMessageContent += `<img src="${imagePart.image_url.url}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${imagePart.image_url.url}')">`;
                             }
                         } else {
-                            // 普通文本消息或旧格式
-                        myMessageContent = message.content;
+                            // 普通文本消息或旧格式 (loadMoreMessages版本)
+                            let baseContent = message.content;
+                            
+                            // 如果有引用消息，在内容前添加引用显示
+                            if (message.replyTo) {
+                                myMessageContent = generateReplyHTML(message.replyTo) + baseContent;
+                            } else {
+                                myMessageContent = baseContent;
+                            }
                         }
                     }
                     
@@ -7361,7 +7421,7 @@ async function startChat(character) {
             currentChatCharacter = character;
             
     // 🔥【修复】异步获取聊天设置
-    const chatSettings = await getAsyncChatSettings();
+                const chatSettings = await getAsyncChatSettings();
             const displayTitle = chatSettings.aiChatNickname || character.name;
             document.getElementById('api-chat-title').textContent = displayTitle;
             
@@ -7369,17 +7429,23 @@ async function startChat(character) {
             const headerContainer = document.querySelector('#api-chat-screen .header');
             if (headerContainer) {
                 renderCharacterStatus(character.id, headerContainer);
-                
-                // 🔥【新增】立即为这个角色生成一个初始状态（如果还没有的话）
-                setTimeout(async () => {
-                    const currentStatus = getCharacterStatus(character.id);
-                    if (!currentStatus.activity || currentStatus.activity === '在线') {
-                        await generateCharacterStatus(character.id);
-                        // 刷新状态显示
-                        renderCharacterStatus(character.id, headerContainer);
-                    }
-                }, 500);
             }
+            
+            // 🔥【新增】更新心率显示
+            updateAiHeartrate();
+                
+            // 🔥【新增】立即为这个角色生成一个初始状态（如果还没有的话）
+            setTimeout(async () => {
+                const currentStatus = getCharacterStatus(character.id);
+                if (!currentStatus.activity || currentStatus.activity === '在线') {
+                    await generateCharacterStatus(character.id);
+                    // 刷新状态显示
+                    renderCharacterStatus(character.id, headerContainer);
+                }
+            }, 500);
+            
+            // 🔥【新增】启动状态更新定时器
+            startCharacterStatusTimer();
             
             // 初始化空的聊天记录（不自动发送消息）
             if (!chatMessages[character.id]) {
@@ -7430,6 +7496,10 @@ async function startChat(character) {
         function backToChatApp() {
             // 清除当前角色的后台定时器
             clearAllBackgroundTimers();
+            // 🔥【新增】清除状态更新定时器
+            clearCharacterStatusTimer();
+            // 隐藏心率显示
+            hideAiHeartrate();
             hideApp('api-chat-screen');
             showApp('chat-screen');
         }
@@ -9097,20 +9167,326 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
         
 
         
-        // 导出聊天记录
+        // 🔥【修复】导出聊天记录 - 完整HTML格式
         function exportChatHistory() {
-            const messages = chatMessages[currentChatCharacter.id] || [];
-            let history = `与 ${currentChatCharacter.name} 的聊天记录\n\n`;
+            if (!currentChatCharacter) {
+                showToast('请先选择一个聊天', 'warning');
+                return;
+            }
             
-            messages.forEach(msg => {
-                const time = formatTime(msg.timestamp);
-                const sender = msg.sender === 'sent' ? '我' : currentChatCharacter.name;
-                history += `${time} ${sender}: ${msg.content}\n`;
+            const messages = chatMessages[currentChatCharacter.id] || [];
+            if (messages.length === 0) {
+                showToast('没有聊天记录可导出', 'warning');
+                return;
+            }
+            
+            const chatSettings = getCurrentChatSettings();
+            const characterName = chatSettings.aiChatNickname || currentChatCharacter.name;
+            const userName = chatSettings.myChatNickname || '我';
+            const exportTime = new Date();
+            const totalMessages = messages.length;
+            
+            // 获取时间范围
+            const firstMessageTime = new Date(messages[0].timestamp);
+            const lastMessageTime = new Date(messages[messages.length - 1].timestamp);
+            
+            // 构建HTML内容
+            let htmlContent = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>与 ${characterName} 的聊天记录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Helvetica, Arial, sans-serif;
+            background: #f0f0f0;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: #007AFF;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .header .info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .chat-content {
+            padding: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        .message.ai {
+            flex-direction: row;
+        }
+        .message.system {
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            position: relative;
+        }
+        .message.user .message-bubble {
+            background: #007AFF;
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+        .message.ai .message-bubble {
+            background: #e5e5ea;
+            color: #333;
+            border-bottom-left-radius: 6px;
+        }
+        .message.system .message-bubble {
+            background: #f0f0f0;
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+            border-radius: 12px;
+            padding: 6px 12px;
+            margin: 0 auto;
+            max-width: 60%;
+        }
+        .sender-name {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+            padding: 0 16px;
+        }
+        .message.user .sender-name {
+            text-align: right;
+        }
+        .timestamp {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+            padding: 0 16px;
+        }
+        .message.user .timestamp {
+            text-align: right;
+        }
+        .quote-block {
+            background: rgba(0,0,0,0.05);
+            border-left: 3px solid #007AFF;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+        }
+        .message.user .quote-block {
+            border-left-color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.2);
+        }
+        .quote-sender {
+            font-weight: 600;
+            color: #007AFF;
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+        .message.user .quote-sender {
+            color: rgba(255,255,255,0.9);
+        }
+        .special-message {
+            font-style: italic;
+            color: #666;
+        }
+        .footer {
+            background: #f8f8f8;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+        }
+        .stats {
+            background: #f8f8f8;
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                box-shadow: none;
+            }
+            .message-bubble {
+                max-width: 85%;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .chat-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>与 ${characterName} 的聊天记录</h1>
+            <div class="info">
+                导出时间：${exportTime.toLocaleString('zh-CN')}<br>
+                共 ${totalMessages} 条消息 | ${firstMessageTime.toLocaleDateString('zh-CN')} - ${lastMessageTime.toLocaleDateString('zh-CN')}
+            </div>
+        </div>
+        <div class="chat-content">`;
+            
+            // 处理每条消息
+            messages.forEach((message, index) => {
+                const time = formatTime(message.timestamp);
+                const isUser = message.sender === 'sent';
+                const isSystem = message.sender === 'system';
+                
+                if (isSystem) {
+                    // 系统消息
+                    htmlContent += `
+            <div class="message system">
+                <div class="message-bubble">${escapeHtml(message.content)}</div>
+            </div>`;
+                } else {
+                    // 用户或AI消息
+                    const messageClass = isUser ? 'user' : 'ai';
+                    const senderName = isUser ? userName : characterName;
+                    let messageContent = '';
+                    
+                    // 处理引用消息
+                    if (message.replyTo) {
+                        const quoteSender = message.replyTo.senderName || (message.replyTo.sender === 'sent' ? userName : characterName);
+                        const quoteContent = truncateText(message.replyTo.content || '[消息已删除]', 50);
+                        messageContent += `
+                <div class="quote-block">
+                    <div class="quote-sender">${escapeHtml(quoteSender)}</div>
+                    <div>${escapeHtml(quoteContent)}</div>
+                </div>`;
+                    }
+                    
+                    // 处理消息内容
+                    let content = message.content || '';
+                    let specialClass = '';
+                    
+                    if (message.type === 'voice_message') {
+                        content = `🎵 语音消息：${content}`;
+                        specialClass = ' special-message';
+                    } else if (message.type === 'transfer') {
+                        content = `💰 转账：${message.amount}元${message.note ? ` (${message.note})` : ''}`;
+                        specialClass = ' special-message';
+                    } else if (message.type === 'location') {
+                        content = `📍 位置：${message.locationName || '位置信息'}`;
+                        specialClass = ' special-message';
+                    } else if (message.type === 'user_photo') {
+                        content = `📷 图片：${content}`;
+                        specialClass = ' special-message';
+                    } else if (message.isEmoji) {
+                        content = `😊 表情包：${message.emojiDescription || content}`;
+                        specialClass = ' special-message';
+                    } else if (Array.isArray(content)) {
+                        // 处理图片+文字消息
+                        const textPart = content.find(part => part.type === 'text')?.text || '';
+                        content = textPart ? `📷📝 图片+文字：${textPart}` : '📷 图片消息';
+                        specialClass = ' special-message';
+                    }
+                    
+                    messageContent += `<div class="${specialClass.trim()}">${escapeHtml(content)}</div>`;
+                    
+                    htmlContent += `
+            <div class="message ${messageClass}">
+                <div class="message-bubble">
+                    ${messageContent}
+                </div>
+            </div>
+            <div class="timestamp">${time}</div>`;
+                }
+                
+                // 每50条消息添加一个分页标记（便于长聊天记录的查看）
+                if ((index + 1) % 50 === 0 && index !== messages.length - 1) {
+                    htmlContent += `
+            <div class="message system">
+                <div class="message-bubble">--- 第 ${Math.floor((index + 1) / 50)} 页 ---</div>
+            </div>`;
+                }
             });
             
-            // 在实际应用中，这里可以实现导出文件功能
-            console.log(history);
-            alert('聊天记录已导出到控制台');
+            htmlContent += `
+        </div>
+        <div class="stats">
+            📊 聊天统计<br>
+            总消息数：${totalMessages} 条 | 
+            我的消息：${messages.filter(m => m.sender === 'sent').length} 条 | 
+            ${characterName} 的消息：${messages.filter(m => m.sender === 'received').length} 条 | 
+            系统消息：${messages.filter(m => m.sender === 'system').length} 条
+        </div>
+        <div class="footer">
+            此聊天记录由手机聊天应用自动生成<br>
+            导出时间：${exportTime.toLocaleString('zh-CN')}
+        </div>
+    </div>
+</body>
+</html>`;
+            
+            // 创建下载链接
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const fileName = `与${characterName}的聊天记录_${exportTime.getFullYear()}-${(exportTime.getMonth() + 1).toString().padStart(2, '0')}-${exportTime.getDate().toString().padStart(2, '0')}.html`;
+            
+            link.href = url;
+            link.download = fileName;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // 清理URL对象
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 1000);
+            
+            showToast(`聊天记录已导出：${fileName}`, 'success');
+        }
+        
+        // 🔥【新增】HTML转义函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 🔥【新增】文本截断函数
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
         }
         
 
@@ -9443,6 +9819,7 @@ async function applyChatBackground(backgroundUrl) {
                 menu.id = 'message-context-menu';
                 menu.className = 'message-menu';
                 menu.innerHTML = `
+                    <div class="message-menu-item" onclick="replyToMessage()">引用</div>
                     <div class="message-menu-item" onclick="copyMessage()">复制</div>
                     <div class="message-menu-item danger" onclick="deleteMessage()">删除</div>
                 `;
@@ -9472,6 +9849,133 @@ async function applyChatBackground(backgroundUrl) {
             }
             document.removeEventListener('click', hideMessageMenu);
             document.removeEventListener('touchstart', hideMessageMenu);
+        }
+        
+        // 引用消息功能
+        let currentReplyTo = null;
+        
+        // 🔥【修复】引用消息 - 支持传入消息ID
+        function replyToMessage(messageId = null) {
+            const targetMessageId = messageId || selectedMessageId;
+            if (!targetMessageId) return;
+            
+            const messages = chatMessages[currentChatCharacter.id] || [];
+            const message = messages.find(msg => msg.id === targetMessageId);
+            
+            if (message) {
+                // 设置引用信息
+                currentReplyTo = {
+                    id: message.id,
+                    content: message.content || '[图片]',
+                    sender: message.sender,
+                    timestamp: message.timestamp,
+                    senderName: getSenderDisplayName(message)
+                };
+                
+                // 显示引用预览
+                showReplyPreview();
+                
+                // 聚焦到输入框
+                const inputBox = document.getElementById('api-chat-input');
+                if (inputBox) {
+                    inputBox.focus();
+                }
+            }
+            
+            hideMessageMenu();
+        }
+        
+        // 获取发送者显示名称
+        function getSenderDisplayName(message) {
+            if (message.sender === 'sent') {
+                const chatSettings = getCurrentChatSettings();
+                if (chatSettings.selectedIdentityId) {
+                    const persona = personas.find(p => p.id === chatSettings.selectedIdentityId);
+                    if (persona) return persona.name;
+                }
+                return chatSettings.myChatNickname || '我';
+            } else if (message.sender === 'received') {
+                // 检查是否是群聊
+                const group = groupChats.find(g => g.id === currentChatCharacter.id);
+                if (group) {
+                    // 群聊中，根据消息的senderId或name查找成员
+                    let member = null;
+                    if (message.senderId) {
+                        member = group.members.find(m => m.id === message.senderId);
+                    } else if (message.name) {
+                        member = group.members.find(m => m.name === message.name);
+                    }
+                    return member?.name || '群成员';
+                } else {
+                    // 单聊
+                    const chatSettings = getCurrentChatSettings();
+                    return chatSettings.aiChatNickname || currentChatCharacter.name;
+                }
+            }
+            return '未知';
+        }
+        
+        // 显示引用预览
+        function showReplyPreview() {
+            if (!currentReplyTo) return;
+            
+            // 移除已存在的引用预览
+            const existingPreview = document.getElementById('reply-preview');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+            
+            // 创建引用预览元素
+            const replyPreview = document.createElement('div');
+            replyPreview.id = 'reply-preview';
+            replyPreview.className = 'reply-preview';
+            
+            // 截断显示内容
+            const displayContent = truncateText(currentReplyTo.content, 50);
+            
+            replyPreview.innerHTML = `
+                <div class="reply-preview-content">
+                    <div class="reply-preview-line"></div>
+                    <div class="reply-preview-text">
+                        <div class="reply-preview-sender">${currentReplyTo.senderName}</div>
+                        <div class="reply-preview-message">${displayContent}</div>
+                    </div>
+                    <button class="reply-preview-close" onclick="cancelReply()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            // 插入到输入区域上方
+            const inputArea = document.querySelector('.chat-input-area');
+            if (inputArea) {
+                inputArea.parentNode.insertBefore(replyPreview, inputArea);
+            }
+        }
+        
+        // 取消引用
+        function cancelReply() {
+            currentReplyTo = null;
+            const replyPreview = document.getElementById('reply-preview');
+            if (replyPreview) {
+                replyPreview.remove();
+            }
+        }
+        
+        // 生成引用消息的HTML
+        function generateReplyHTML(replyTo) {
+            if (!replyTo) return '';
+            
+            const displayContent = truncateText(replyTo.content, 40);
+            return `
+                <div class="reply-reference">
+                    <div class="reply-reference-line"></div>
+                    <div class="reply-reference-content">
+                        <div class="reply-reference-sender">${replyTo.senderName}</div>
+                        <div class="reply-reference-message">${displayContent}</div>
+                    </div>
+                </div>
+            `;
         }
         
         // 复制消息
@@ -11952,14 +12456,29 @@ ${character.bio}
                 }
             }
 
+            // 🔥【新增】获取挂载的聊天记忆
+            let mountedMemoryContent = '';
+            try {
+                mountedMemoryContent = await getMountedMemories(character.id, chatSettings);
+            } catch (error) {
+                console.error('获取挂载记忆失败:', error);
+            }
+
             // 核心修复：现在这个函数能理解 message 参数可能是一个包含图片和文字的数组
             let characterPrompt = buildCharacterPrompt(character, Array.isArray(message));
+            
             // 将动态记忆添加到提示词中
             if (dynamicMemoryContent) {
                 characterPrompt = characterPrompt.replace('<!-- DYNAMIC_MEMORY_PLACEHOLDER -->', dynamicMemoryContent);
             } else {
                 // 如果没有动态记忆，移除占位符
                 characterPrompt = characterPrompt.replace('<!-- DYNAMIC_MEMORY_PLACEHOLDER -->', '');
+            }
+            
+            // 🔥【新增】将挂载的聊天记忆添加到提示词中
+            if (mountedMemoryContent) {
+                characterPrompt += mountedMemoryContent;
+                console.log('🧠 已将挂载记忆添加到角色提示词中');
             }
             
             const historyCount = chatSettings.historyCount || 5;
@@ -12260,6 +12779,98 @@ ${character.bio}
         }
         
         // ================== 记忆设置相关功能 ==================
+        
+        // 获取挂载的聊天记忆
+        async function getMountedMemories(currentCharacterId, chatSettings) {
+            if (!chatSettings.memoryMountEnabled || !chatSettings.selectedMemoryChats || chatSettings.selectedMemoryChats.length === 0) {
+                return '';
+            }
+            
+            const mountCount = chatSettings.memoryMountCount || 3;
+            let mountedMemoryContent = '';
+            
+            for (const chatId of chatSettings.selectedMemoryChats) {
+                // 跳过当前聊天
+                if (chatId === currentCharacterId) continue;
+                
+                // 获取该聊天的历史记录
+                const chatHistory = chatMessages[chatId] || [];
+                if (chatHistory.length === 0) continue;
+                
+                // 获取最近的几条记录
+                const recentMessages = chatHistory.slice(-mountCount);
+                if (recentMessages.length === 0) continue;
+                
+                // 获取聊天对象的名称
+                let chatName = '未知聊天';
+                let chatType = '单聊';
+                
+                // 查找单聊角色
+                const character = characters.find(c => c.id === chatId);
+                if (character) {
+                    chatName = character.name;
+                    chatType = '单聊';
+                } else {
+                    // 查找群聊
+                    const group = groupChats.find(g => g.id === chatId);
+                    if (group) {
+                        chatName = group.name;
+                        chatType = '群聊';
+                    }
+                }
+                
+                // 构建记忆内容
+                mountedMemoryContent += `\n\n【${chatType}记忆 - ${chatName}】以下是与${chatName}的最近对话，可以作为背景参考：\n`;
+                
+                recentMessages.forEach(msg => {
+                    let sender = '';
+                    let content = msg.content || '';
+                    
+                    if (msg.sender === 'sent') {
+                        sender = '用户';
+                    } else if (msg.sender === 'received' || msg.sender === 'ai') {
+                        if (chatType === '群聊' && msg.name) {
+                            sender = msg.name; // 群聊中的发言者名称
+                        } else {
+                            sender = chatName; // 单聊中使用角色名称
+                        }
+                    } else {
+                        sender = '系统';
+                    }
+                    
+                    // 处理特殊消息类型
+                    if (msg.type === 'voice_message') {
+                        content = `[语音消息：${content}]`;
+                    } else if (msg.type === 'transfer') {
+                        content = `[转账：${msg.amount}元${msg.note ? ` - ${msg.note}` : ''}]`;
+                    } else if (msg.type === 'ai_image') {
+                        content = `[AI图片：${msg.imageDescription || '无描述'}]`;
+                    } else if (msg.isEmoji) {
+                        content = `[表情包：${msg.emojiDescription || '表情包'}]`;
+                    } else if (msg.type === 'location') {
+                        content = `[位置分享：${msg.locationName || '位置信息'}]`;
+                    } else if (Array.isArray(content)) {
+                        // 处理数组类型的内容（图片+文字）
+                        const textPart = content.find(p => p.type === 'text')?.text || '';
+                        content = textPart ? `[图片+文字：${textPart}]` : '[图片]';
+                    }
+                    
+                    // 确保content是字符串且不为空
+                    if (typeof content !== 'string' || !content.trim()) {
+                        content = '[特殊消息]';
+                    }
+                    
+                    mountedMemoryContent += `${sender}：${content}\n`;
+                });
+            }
+            
+            if (mountedMemoryContent.trim()) {
+                console.log('🧠 成功加载挂载记忆，涉及聊天数:', chatSettings.selectedMemoryChats.length);
+                return mountedMemoryContent;
+            }
+            
+            return '';
+        }
         
         // 加载群聊数据 - 使用IndexedDB（包含数据迁移）
         async function loadGroupChats() {
@@ -12614,7 +13225,9 @@ ${character.bio}
                         // 其他原有设置
                         timestampEnabled: true,
                 timestampPosition: 'center',
-                characterStatusEnabled: false 
+                characterStatusEnabled: false,
+                        // 🔥【新增】状态更新频率设置
+                        statusUpdateFrequency: 'medium' 
             };
 
             // 5. 将新创建的默认设置存入内存
@@ -12676,7 +13289,10 @@ ${character.bio}
                 scheduledMomentsEnabled: false,
                 scheduledMomentsTimes: [],
                 timestampEnabled: true,
-                timestampPosition: 'center'
+                timestampPosition: 'center',
+                aiHeartrateEnabled: false,
+                // 🔥【新增】状态更新频率设置
+                statusUpdateFrequency: 'medium'
             };
             
             // 同时触发一个异步加载，以便后续使用
@@ -13916,6 +14532,17 @@ ${character.bio}
             const characterStatusCheckbox = document.getElementById('character-status-enabled');
             if (characterStatusCheckbox) {
                 characterStatusCheckbox.checked = chatSettings.characterStatusEnabled || false;
+                // 🔥【新增】控制状态更新频率设置的显示
+                const statusFrequencySetting = document.getElementById('status-frequency-setting');
+                if (statusFrequencySetting) {
+                    statusFrequencySetting.style.display = chatSettings.characterStatusEnabled ? 'flex' : 'none';
+                }
+            }
+            
+            // 🔥【新增】更新状态更新频率设置
+            const statusUpdateFrequencySelect = document.getElementById('status-update-frequency');
+            if (statusUpdateFrequencySelect) {
+                statusUpdateFrequencySelect.value = chatSettings.statusUpdateFrequency || 'medium';
             }
             
 
@@ -14031,6 +14658,13 @@ ${character.bio}
                     const chatSettings = getCurrentChatSettings();
                     chatSettings.aiHeartrateEnabled = this.checked;
                     await saveCurrentChatSettings(chatSettings);
+                    
+                    // 立即更新心率显示状态
+                    if (currentChatCharacter) {
+                        updateAiHeartrate();
+                    }
+                    
+                    showToast(`角色心率监测已${this.checked ? '开启' : '关闭'}`, 'success');
                 };
             }
             
@@ -14158,6 +14792,12 @@ ${character.bio}
                     chatSettings.characterStatusEnabled = this.checked;
                     await saveCurrentChatSettings(chatSettings);
                     
+                    // 🔥【新增】控制状态更新频率设置的显示
+                    const statusFrequencySetting = document.getElementById('status-frequency-setting');
+                    if (statusFrequencySetting) {
+                        statusFrequencySetting.style.display = this.checked ? 'flex' : 'none';
+                    }
+                    
                     // 重新渲染聊天界面以显示/隐藏状态
                     if (currentChatCharacter) {
                         renderChatMessages(currentChatCharacter.id);
@@ -14168,10 +14808,36 @@ ${character.bio}
                         }
                     }
                     
+                    // 🔥【新增】重启状态更新定时器以应用新设置
+                    restartCharacterStatusTimer();
+                    
                     showToast(`角色状态显示已${this.checked ? '开启' : '关闭'}`, 'success');
                 };
             } else {
                 console.warn('找不到character-status-enabled元素');
+            }
+            
+            // 🔥【新增】状态更新频率设置
+            const statusUpdateFrequencySelect = document.getElementById('status-update-frequency');
+            if (statusUpdateFrequencySelect) {
+                statusUpdateFrequencySelect.onchange = async function() {
+                    const chatSettings = getCurrentChatSettings();
+                    chatSettings.statusUpdateFrequency = this.value;
+                    await saveCurrentChatSettings(chatSettings);
+                    
+                    // 重启状态更新定时器以应用新频率
+                    restartCharacterStatusTimer();
+                    
+                    const frequencyNames = {
+                        'high': '高频',
+                        'medium-high': '中高频',
+                        'medium': '中频',
+                        'medium-low': '中低频',
+                        'low': '低频'
+                    };
+                    
+                    showToast(`状态更新频率已设置为${frequencyNames[this.value]}`, 'success');
+                };
             }
         }
 
@@ -15590,10 +16256,15 @@ async function createGroupChat(personaId) {
         
         // 该函数已被删除，使用上面的异步IndexedDB版本
         
-        // 添加消息长按监听器
+        // 🔥【修复】添加消息长按监听器 - 支持手机端菜单操作
         function addMessageLongPressListener(messageContainer, messageId) {
             let pressTimer = null;
             let isLongPress = false;
+            
+            // 检测是否为移动设备
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             'ontouchstart' in window || 
+                             navigator.maxTouchPoints > 0;
             
             const startLongPress = (e) => {
                 if (isMessageSelectionMode) {
@@ -15603,7 +16274,13 @@ async function createGroupChat(personaId) {
                 isLongPress = false;
                 pressTimer = setTimeout(() => {
                     isLongPress = true;
-                    enterMessageSelectionMode(messageId);
+                    
+                    // 🔥【新增】手机端显示操作菜单，桌面端进入多选模式
+                    if (isMobile) {
+                        showMobileMessageMenu(messageId, e);
+                    } else {
+                        enterMessageSelectionMode(messageId);
+                    }
                     e.preventDefault();
                 }, 500);
             };
@@ -15645,6 +16322,72 @@ async function createGroupChat(personaId) {
             
             // 点击事件 - 使用捕获阶段确保优先处理
             messageContainer.addEventListener('click', handleClick, true);
+        }
+        
+        // 🔥【新增】显示手机端消息操作菜单
+        function showMobileMessageMenu(messageId, event) {
+            selectedMessageId = messageId;
+            
+            // 检查消息是否是用户发送的（只有用户消息可以撤回）
+            const messages = chatMessages[currentChatCharacter.id] || [];
+            const message = messages.find(msg => msg.id === messageId);
+            const isUserMessage = message && message.sender === 'sent';
+            
+            // 隐藏已存在的菜单
+            hideMobileMessageMenu();
+            
+            // 创建移动端菜单
+            const menu = document.createElement('div');
+            menu.id = 'mobile-message-menu';
+            menu.className = 'mobile-message-menu';
+            
+            const menuItems = [
+                { text: '引用', action: 'replyToMessage(selectedMessageId)', icon: '↩️' },
+                { text: '复制', action: 'copyMessage()', icon: '📋' },
+                { text: '选择', action: 'enterMessageSelectionMode(selectedMessageId)', icon: '☑️' }
+            ];
+            
+            // 如果是用户消息，添加撤回选项
+            if (isUserMessage) {
+                menuItems.splice(2, 0, { text: '撤回', action: 'deleteMessage()', icon: '↩️', danger: true });
+            }
+            
+            menu.innerHTML = `
+                <div class="mobile-menu-overlay" onclick="hideMobileMessageMenu()"></div>
+                <div class="mobile-menu-content">
+                    <div class="mobile-menu-header">消息操作</div>
+                    ${menuItems.map(item => `
+                        <div class="mobile-menu-item ${item.danger ? 'danger' : ''}" onclick="${item.action}; hideMobileMessageMenu();">
+                            <span class="menu-icon">${item.icon}</span>
+                            <span class="menu-text">${item.text}</span>
+                        </div>
+                    `).join('')}
+                    <div class="mobile-menu-item cancel" onclick="hideMobileMessageMenu()">
+                        <span class="menu-icon">❌</span>
+                        <span class="menu-text">取消</span>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(menu);
+            
+            // 添加显示动画
+            setTimeout(() => {
+                menu.classList.add('show');
+            }, 10);
+        }
+        
+        // 🔥【新增】隐藏手机端消息操作菜单
+        function hideMobileMessageMenu() {
+            const menu = document.getElementById('mobile-message-menu');
+            if (menu) {
+                menu.classList.remove('show');
+                setTimeout(() => {
+                    if (menu.parentNode) {
+                        menu.parentNode.removeChild(menu);
+                    }
+                }, 300);
+            }
         }
         
         // 进入消息选择模式
@@ -16944,7 +17687,13 @@ async function createGroupChat(personaId) {
                 id: messageId,
                 sender: 'sent',
                 content: message,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                // 如果有引用消息，添加引用信息
+                replyTo: currentReplyTo ? {
+                    id: currentReplyTo.id,
+                    content: currentReplyTo.content,
+                    senderName: currentReplyTo.senderName
+                } : null
             };
             
             if (!chatMessages[currentChatCharacter.id]) {
@@ -16956,6 +17705,12 @@ async function createGroupChat(personaId) {
             
             // 清空输入框
             input.value = '';
+            
+            // 清除引用状态
+            cancelReply();
+            
+            // 🔥【新增】调整心率（用户发消息）
+            adjustHeartrateForMessage(message, true);
             
             // 使用动画添加消息而不是重新渲染整个列表
             addMessageWithAnimation(userMessage, currentChatCharacter.id);
@@ -17158,6 +17913,9 @@ async function createGroupChat(personaId) {
             saveChatMessages();
             console.log('聊天记录已保存');
 
+            // 🔥【新增】调整心率（用户发语音消息）
+            adjustHeartrateForMessage(text, true);
+
             // 添加语音消息到界面
             addMessageWithAnimation(voiceMessage, currentChatCharacter.id);
             console.log('语音消息已添加到界面');
@@ -17258,12 +18016,13 @@ async function createGroupChat(personaId) {
                         const comments = await db.momentComments.where('momentId').equals(momentData.id).toArray();
                         comments.sort((a, b) => a.timestamp - b.timestamp); // 按时间戳排序
                         
-                            // 验证并处理头像
+                            // 🔥【修复】验证并处理头像
                             let avatarToUse = null;
                             if (momentData.avatar && isValidAvatarUrl(momentData.avatar)) {
                                 avatarToUse = momentData.avatar;
                             } else {
-                                avatarToUse = getDefaultAvatar();
+                                // 🔥【修复】使用await获取默认头像
+                                avatarToUse = await getDefaultAvatar();
                                 // 如果数据库中存储的头像无效，更新数据库记录
                                 if (momentData.avatar && !isValidAvatarUrl(momentData.avatar)) {
                                     console.log(`清理动态 ${momentData.id} 的无效头像`);
@@ -17901,7 +18660,7 @@ async function createGroupChat(personaId) {
         }
         
         // 提交简单评论
-        function submitSimpleComment(momentId) {
+        async function submitSimpleComment(momentId) {
             const input = document.getElementById(`simple-comment-${momentId}`);
             const text = input.value.trim();
             const replyTo = input.getAttribute('data-reply-to');
@@ -17911,10 +18670,13 @@ async function createGroupChat(personaId) {
                 return;
             }
             
+            // 🔥【修复】使用await获取用户头像
+            const userAvatar = await getDefaultAvatar();
+            
             const comment = {
                 id: Date.now() + Math.random(),
                 nickname: document.getElementById('moments-username')?.textContent || '我',
-                avatar: getDefaultAvatar(),
+                avatar: userAvatar,
                 text: text,
                 time: formatTime(new Date()),
                 timestamp: Date.now(),
@@ -20437,7 +21199,12 @@ async function createGroupChat(personaId) {
                         processedContent = processOfflineContent(message.content);
                     }
                     
-                    messageContent = processedContent;
+                    // 如果有引用消息，在内容前添加引用显示
+                    if (message.replyTo) {
+                        messageContent = generateReplyHTML(message.replyTo) + processedContent;
+                    } else {
+                        messageContent = processedContent;
+                    }
                 }
                 
                 let avatarHtml = '';
@@ -20602,7 +21369,14 @@ async function createGroupChat(personaId) {
                         }
                     } else {
                         // 普通文本消息或旧格式
-                        messageContentStr = message.content;
+                        let baseContent = message.content;
+                        
+                        // 如果有引用消息，在内容前添加引用显示
+                        if (message.replyTo) {
+                            messageContentStr = generateReplyHTML(message.replyTo) + baseContent;
+                        } else {
+                            messageContentStr = baseContent;
+                        }
                     }
                     
                     myBubbleHtml = `
@@ -20691,6 +21465,11 @@ async function createGroupChat(personaId) {
                         showImage(e.target.src);
                     }
                 };
+            }
+            
+            // 🔥【新增】如果是AI消息，调整心率
+            if (message.sender === 'received' && typeof message.content === 'string') {
+                adjustHeartrateForMessage(message.content, false);
             }
             
             // 滚动到底部
@@ -21097,6 +21876,10 @@ async function createGroupChat(personaId) {
                 return;
             }
             
+            // 检查角色主动拨打电话开关，用户主动拨打时不受此限制
+            const currentChatSettings = getCurrentChatSettings();
+            console.log('📞 用户主动拨打电话，开关状态:', currentChatSettings.aiCallEnabled);
+            
             currentCallCharacter = currentChatCharacter;
             
             // 设置通话界面
@@ -21438,38 +22221,42 @@ async function createGroupChat(personaId) {
                             // 移除输入指示器
                             hideCallTypingIndicator(typingIndicator);
                             
-                            // 🔥【关键修复】使用parseAiResponse解析回复，然后取第一条文本消息
+                            // 🔥【关键修复】使用parseAiResponse解析回复，显示所有文本消息
                             const parsedMessages = parseAiResponse(response);
                             console.log('🔔 通话AI回复解析结果:', parsedMessages);
                             
-                            let replyText = '';
+                            let hasValidMessage = false;
                             if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
-                                // 找到第一条纯文本消息
-                                const firstTextMessage = parsedMessages.find(msg => typeof msg === 'string');
-                                if (firstTextMessage) {
-                                    replyText = firstTextMessage;
-                                } else {
-                                    // 如果没有纯文本，尝试提取对象中的内容
-                                    const firstMessage = parsedMessages[0];
-                                    if (typeof firstMessage === 'object' && firstMessage.content) {
-                                        replyText = firstMessage.content;
-                                    } else {
-                                        replyText = getRandomCallResponse();
+                                // 遍历所有消息，显示每一条文本消息
+                                for (const msg of parsedMessages) {
+                                    let replyText = '';
+                                    if (typeof msg === 'string') {
+                                        replyText = msg.trim();
+                                    } else if (typeof msg === 'object' && msg.content) {
+                                        replyText = msg.content.trim();
+                                    }
+                                    
+                                    if (replyText) {
+                                        addCallMessage(replyText, 'received');
+                                        hasValidMessage = true;
+                                        // 添加短暂延迟，让多条消息分开显示
+                                        await new Promise(resolve => setTimeout(resolve, 300));
                                     }
                                 }
-                            } else if (typeof response === 'string') {
-                                // 备用：如果解析失败，清理原始字符串
-                                replyText = cleanCallResponse(response);
-                            } else {
-                                replyText = getRandomCallResponse();
                             }
                             
-                            console.log('🔔 最终通话回复文本:', replyText);
-                            
-                            if (replyText && replyText.trim()) {
-                                addCallMessage(replyText.trim(), 'received');
-                            } else {
-                                addCallMessage(getRandomCallResponse(), 'received');
+                            // 如果没有有效消息，使用备用回复
+                            if (!hasValidMessage) {
+                                if (typeof response === 'string') {
+                                    const cleanedText = cleanCallResponse(response);
+                                    if (cleanedText) {
+                                        addCallMessage(cleanedText, 'received');
+                                    } else {
+                                        addCallMessage(getRandomCallResponse(), 'received');
+                                    }
+                                } else {
+                                    addCallMessage(getRandomCallResponse(), 'received');
+                                }
                             }
                             
                         } catch (error) {
@@ -21617,12 +22404,21 @@ async function createGroupChat(personaId) {
             
             // 如果未启用AI主动拨打电话功能，直接返回
             if (!currentChatSettings.aiCallEnabled) {
-                console.log('🔔 AI主动拨打电话功能未开启');
+                console.log('🔔 AI主动拨打电话功能未开启，角色不会主动拨打电话');
                 return false;
             }
             
             // 如果已经在通话中，不再触发
-            if (isInCall) return false;
+            if (isInCall) {
+                console.log('🔔 当前正在通话中，不触发新的来电');
+                return false;
+            }
+            
+            // 确保有当前聊天角色
+            if (!currentChatCharacter) {
+                console.log('🔔 没有当前聊天角色，无法触发来电');
+                return false;
+            }
             
             // 通话关键词
             const callKeywords = ['通话', '电话', '视频', '语音', '打给你', '想听', '想看', '聊天', '说话', '测试', '试试', '打电话'];
@@ -21639,11 +22435,31 @@ async function createGroupChat(personaId) {
                 aiCallEnabled: currentChatSettings.aiCallEnabled
             });
             
-            // 如果用户消息包含通话关键词，有30%的概率触发AI主动拨打电话
-            // 如果AI回复也包含通话关键词，概率提升到70%
+            // 根据关键词出现情况和角色性格决定触发概率
             let triggerProbability = 0;
             if (userMessageHasCallKeyword) {
-                triggerProbability = aiResponseHasCallKeyword ? 0.7 : 0.3;
+                // 基础概率：用户提到通话关键词时20%
+                triggerProbability = 0.2;
+                
+                // 如果AI回复也包含通话关键词，大幅提升概率到60%
+                if (aiResponseHasCallKeyword) {
+                    triggerProbability = 0.6;
+                }
+                
+                // 根据角色性格调整概率（如果角色设定中包含主动、外向等特质）
+                const characterBio = currentChatCharacter.bio || '';
+                if (characterBio.includes('主动') || characterBio.includes('外向') || characterBio.includes('热情')) {
+                    triggerProbability += 0.1;
+                }
+                
+                // 限制最大概率为70%
+                triggerProbability = Math.min(triggerProbability, 0.7);
+            }
+            
+            // 增加随机因素：即使没有关键词，也有极小概率(2%)触发，模拟真实的突然来电
+            if (triggerProbability === 0 && Math.random() < 0.02) {
+                triggerProbability = 0.02;
+                console.log('🔔 随机触发AI来电（模拟突然想到要打电话）');
             }
             
             if (triggerProbability > 0 && Math.random() < triggerProbability) {
@@ -25596,9 +26412,48 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
             }
         }
 
-        // 定期更新角色状态
-        function startStatusUpdateTimer() {
-            setInterval(async () => {
+        // 🔥【修复】状态更新定时器管理
+        let characterStatusTimer = null;
+        
+        // 获取状态更新间隔时间（毫秒）
+        function getStatusUpdateInterval() {
+            // 优先使用当前聊天角色的设置，如果没有则使用默认设置
+            let frequency = 'medium'; // 默认中频
+            
+            if (currentChatCharacter) {
+                const chatSettings = getCurrentChatSettings();
+                frequency = chatSettings.statusUpdateFrequency || 'medium';
+            }
+            
+            // 将频率转换为毫秒间隔
+            const intervals = {
+                'high': 60000,      // 1分钟（目前频率）
+                'medium-high': 60000, // 1分钟
+                'medium': 180000,   // 3分钟
+                'medium-low': 300000, // 5分钟
+                'low': 600000       // 10分钟
+            };
+            
+            return intervals[frequency] || intervals['medium'];
+        }
+        
+        // 清除状态更新定时器
+        function clearCharacterStatusTimer() {
+            if (characterStatusTimer) {
+                clearInterval(characterStatusTimer);
+                characterStatusTimer = null;
+                console.log('角色状态更新定时器已清除');
+            }
+        }
+        
+        // 启动状态更新定时器
+        function startCharacterStatusTimer() {
+            clearCharacterStatusTimer(); // 先清除现有定时器
+            
+            const interval = getStatusUpdateInterval();
+            console.log('启动角色状态更新定时器，间隔:', interval / 1000, '秒');
+            
+            characterStatusTimer = setInterval(async () => {
                 // 🔥【修复】首先检查是否有任何角色启用了状态显示
                 let hasStatusEnabled = false;
                 
@@ -25633,7 +26488,18 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
                         }
                     }
                 }
-            }, 60000); // 每分钟检查一次
+            }, interval);
+        }
+        
+        // 重启状态更新定时器
+        function restartCharacterStatusTimer() {
+            console.log('重启角色状态更新定时器');
+            startCharacterStatusTimer();
+        }
+        
+        // 向后兼容的函数名
+        function startStatusUpdateTimer() {
+            startCharacterStatusTimer();
         }
         
         // 判断是否应该更新角色状态
@@ -25716,6 +26582,266 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
         });
 
         console.log('🚫 拉黑系统核心功能已加载');
+
+        // AI心率管理功能
+        let heartrateInterval = null;
+        let currentHeartrate = 72; // 基础心率
+
+        function updateAiHeartrate() {
+            const heartrateDisplay = document.getElementById('ai-heartrate-display');
+            if (!heartrateDisplay) return;
+            
+            const chatSettings = getCurrentChatSettings();
+            
+            // 检查是否启用心率监测且不是群聊
+            if (!chatSettings.aiHeartrateEnabled || (currentChatCharacter && currentChatCharacter.isGroup)) {
+                hideAiHeartrate();
+                return;
+            }
+            
+            // 显示心率
+            heartrateDisplay.style.display = 'block';
+            
+            // 计算基础心率（基于角色人设）
+            const persona = (currentChatCharacter.bio || '').toLowerCase();
+            const name = (currentChatCharacter.name || '').toLowerCase();
+            let baseHeartrate = 72;
+            
+            // 根据角色特征调整基础心率
+            if (persona.includes('紧张') || persona.includes('害羞') || persona.includes('敏感') || 
+                persona.includes('羞涩') || persona.includes('容易脸红') || persona.includes('内向')) {
+                baseHeartrate = 85; // 容易紧张的角色心率更高
+            } else if (persona.includes('冷静') || persona.includes('理性') || persona.includes('成熟') || 
+                       persona.includes('沉稳') || persona.includes('内敛') || persona.includes('严肃')) {
+                baseHeartrate = 65; // 冷静的角色心率更低
+            } else if (persona.includes('活泼') || persona.includes('兴奋') || persona.includes('热情') || 
+                       persona.includes('开朗') || persona.includes('外向') || persona.includes('爱笑')) {
+                baseHeartrate = 82; // 活泼的角色心率偏高
+            } else if (persona.includes('运动') || persona.includes('健身') || persona.includes('体育') || 
+                       persona.includes('运动员') || persona.includes('活跃')) {
+                baseHeartrate = 58; // 运动型角色心率最低
+            } else if (persona.includes('温柔') || persona.includes('甜美') || persona.includes('可爱') || 
+                       persona.includes('软萌') || persona.includes('小鸟依人') || persona.includes('乖巧')) {
+                baseHeartrate = 75; // 温柔型角色心率适中偏高
+            } else if (persona.includes('冷酷') || persona.includes('高冷') || persona.includes('傲娇') || 
+                       persona.includes('女王') || persona.includes('强势') || persona.includes('霸道')) {
+                baseHeartrate = 68; // 高冷型角色心率偏低
+            } else if (persona.includes('热血') || persona.includes('冲动') || persona.includes('急性子') || 
+                       persona.includes('火爆') || persona.includes('暴躁') || persona.includes('易怒')) {
+                baseHeartrate = 88; // 热血型角色心率很高
+            } else if (persona.includes('神秘') || persona.includes('深沉') || persona.includes('安静') || 
+                       persona.includes('文静') || persona.includes('内向')) {
+                baseHeartrate = 70; // 神秘型角色心率正常偏低
+            }
+            
+            // 根据角色名字进一步微调
+            if (name.includes('小') || name.includes('萌') || name.includes('可爱')) {
+                baseHeartrate += 3; // 可爱名字的角色心率稍高
+            } else if (name.includes('冰') || name.includes('雪') || name.includes('静') || 
+                       name.includes('冷') || name.includes('凉')) {
+                baseHeartrate -= 5; // 冷系名字的角色心率更低
+            } else if (name.includes('火') || name.includes('热') || name.includes('烈')) {
+                baseHeartrate += 5; // 火系名字的角色心率更高
+            }
+            
+            // 根据最近对话内容调整心率
+            const recentMessages = (chatMessages[currentChatCharacter.id] || []).slice(-8); // 分析最近8条消息
+            let emotionAdjustment = 0;
+            
+            recentMessages.forEach(msg => {
+                // 安全地处理消息内容
+                let content = '';
+                if (typeof msg.content === 'string') {
+                    content = msg.content.toLowerCase();
+                } else if (Array.isArray(msg.content)) {
+                    content = '';
+                } else {
+                    content = '';
+                }
+                
+                // 高度亲密词汇 - 大幅提高心率
+                if (content.includes('爱你') || content.includes('我爱你') || content.includes('love you') || 
+                    content.includes('喜欢你') || content.includes('想你') || content.includes('想抱你') ||
+                    content.includes('想吻你') || content.includes('亲亲') || content.includes('抱抱') ||
+                    content.includes('宝贝') || content.includes('darling') || content.includes('honey') ||
+                    content.includes('亲爱的') || content.includes('想要你') || content.includes('需要你') ||
+                    content.includes('离不开你') || content.includes('想和你') || content.includes('想见你')) {
+                    emotionAdjustment += 15;
+                }
+                
+                // 表白和甜蜜词汇
+                if (content.includes('表白') || content.includes('喜欢') || content.includes('心动') || 
+                    content.includes('心跳') || content.includes('脸红') || content.includes('害羞') ||
+                    content.includes('可爱') || content.includes('甜') || content.includes('温柔') ||
+                    content.includes('美丽') || content.includes('漂亮') || content.includes('迷人') ||
+                    content.includes('魅力') || content.includes('吸引') || content.includes('心仪')) {
+                    emotionAdjustment += 10;
+                }
+                
+                // 撒娇和亲昵词汇
+                if (content.includes('撒娇') || content.includes('嘤嘤') || content.includes('哼') ||
+                    content.includes('人家') || content.includes('讨厌') || content.includes('不要') ||
+                    content.includes('好不好') || content.includes('求你') || content.includes('拜托') ||
+                    content.includes('陪我') || content.includes('陪陪') || content.includes('一起')) {
+                    emotionAdjustment += 8;
+                }
+                
+                // 兴奋和开心词汇
+                if (content.includes('开心') || content.includes('高兴') || content.includes('快乐') || 
+                    content.includes('兴奋') || content.includes('激动') || content.includes('好棒') || 
+                    content.includes('厉害') || content.includes('哇') || content.includes('太好了') ||
+                    content.includes('amazing') || content.includes('wonderful') || content.includes('great')) {
+                    emotionAdjustment += 6;
+                }
+                
+                // 负面情绪词汇 - 同样会让心率加快
+                if (content.includes('难过') || content.includes('生气') || content.includes('担心') || 
+                    content.includes('害怕') || content.includes('紧张') || content.includes('焦虑') ||
+                    content.includes('不开心') || content.includes('郁闷') || content.includes('烦') ||
+                    content.includes('压力') || content.includes('累') || content.includes('疲惫')) {
+                    emotionAdjustment += 8;
+                }
+            });
+            
+            // 计算最终心率
+            currentHeartrate = Math.max(50, Math.min(140, baseHeartrate + emotionAdjustment));
+            
+            // 启动心率更新
+            if (heartrateInterval) clearInterval(heartrateInterval);
+            heartrateInterval = setInterval(() => {
+                // 添加自然的心率波动（±4 bpm）
+                const fluctuation = Math.floor(Math.random() * 9) - 4;
+                const displayHeartrate = Math.max(50, Math.min(140, currentHeartrate + fluctuation));
+                
+                // 根据心率高低添加视觉效果
+                heartrateDisplay.className = '';
+                if (displayHeartrate >= 110) {
+                    heartrateDisplay.classList.add('very-high-heartrate');
+                } else if (displayHeartrate >= 95) {
+                    heartrateDisplay.classList.add('high-heartrate');
+                }
+                
+                heartrateDisplay.innerHTML = `♥️ <span class="heartrate-number">${displayHeartrate}</span> <span class="heartrate-unit">bpm</span>`;
+            }, 1500 + Math.random() * 1000); // 1.5-2.5秒更新一次
+            
+            // 立即显示初始心率
+            heartrateDisplay.innerHTML = `♥️ <span class="heartrate-number">${currentHeartrate}</span> <span class="heartrate-unit">bpm</span>`;
+        }
+
+        function hideAiHeartrate() {
+            const heartrateDisplay = document.getElementById('ai-heartrate-display');
+            if (heartrateDisplay) {
+                heartrateDisplay.style.display = 'none';
+            }
+            
+            if (heartrateInterval) {
+                clearInterval(heartrateInterval);
+                heartrateInterval = null;
+            }
+        }
+
+        // 当发送消息时更新心率
+        function adjustHeartrateForMessage(content, isUserMessage = false) {
+            if (!heartrateInterval) return; // 心率监测未启用
+            
+            let adjustment = 0;
+            let lowerContent = '';
+            let recoveryTime = 3000; // 默认恢复时间
+            
+            // 安全地处理内容
+            if (typeof content === 'string') {
+                lowerContent = content.toLowerCase();
+            } else if (Array.isArray(content)) {
+                lowerContent = '';
+            } else {
+                lowerContent = '';
+            }
+            
+            if (isUserMessage) {
+                // 用户发送消息时，AI的心率会有相应反应
+                
+                // 高度亲密词汇 - 强烈心跳加速
+                if (lowerContent.includes('爱你') || lowerContent.includes('我爱你') || lowerContent.includes('love you') || 
+                    lowerContent.includes('喜欢你') || lowerContent.includes('想你') || lowerContent.includes('想抱你') ||
+                    lowerContent.includes('想吻你') || lowerContent.includes('亲亲') || lowerContent.includes('抱抱') ||
+                    lowerContent.includes('宝贝') || lowerContent.includes('darling') || lowerContent.includes('honey') ||
+                    lowerContent.includes('亲爱的') || lowerContent.includes('想要你') || lowerContent.includes('需要你') ||
+                    lowerContent.includes('离不开你') || lowerContent.includes('想和你') || lowerContent.includes('想见你')) {
+                    adjustment = 20; // 大幅增加
+                    recoveryTime = 8000; // 更长的恢复时间
+                }
+                // 表白和甜蜜词汇
+                else if (lowerContent.includes('表白') || lowerContent.includes('喜欢') || lowerContent.includes('心动') || 
+                    lowerContent.includes('心跳') || lowerContent.includes('脸红') || lowerContent.includes('害羞') ||
+                    lowerContent.includes('可爱') || lowerContent.includes('甜') || lowerContent.includes('温柔') ||
+                    lowerContent.includes('美丽') || lowerContent.includes('漂亮') || lowerContent.includes('迷人') ||
+                    lowerContent.includes('魅力') || lowerContent.includes('吸引') || lowerContent.includes('心仪')) {
+                    adjustment = 15;
+                    recoveryTime = 6000;
+                }
+                // 撒娇和亲昵词汇
+                else if (lowerContent.includes('撒娇') || lowerContent.includes('嘤嘤') || lowerContent.includes('哼') ||
+                    lowerContent.includes('人家') || lowerContent.includes('讨厌') || lowerContent.includes('不要') ||
+                    lowerContent.includes('好不好') || lowerContent.includes('求你') || lowerContent.includes('拜托') ||
+                    lowerContent.includes('陪我') || lowerContent.includes('陪陪') || lowerContent.includes('一起')) {
+                    adjustment = 12;
+                    recoveryTime = 5000;
+                }
+                // 兴奋和开心词汇
+                else if (lowerContent.includes('开心') || lowerContent.includes('高兴') || lowerContent.includes('快乐') || 
+                    lowerContent.includes('兴奋') || lowerContent.includes('激动') || lowerContent.includes('好棒') || 
+                    lowerContent.includes('厉害') || lowerContent.includes('哇') || lowerContent.includes('太好了')) {
+                    adjustment = 8;
+                    recoveryTime = 4000;
+                }
+                // 负面情绪词汇 - 紧张导致心率加快
+                else if (lowerContent.includes('生气') || lowerContent.includes('不开心') || lowerContent.includes('难过') ||
+                    lowerContent.includes('担心') || lowerContent.includes('害怕') || lowerContent.includes('紧张') ||
+                    lowerContent.includes('焦虑') || lowerContent.includes('郁闷') || lowerContent.includes('烦')) {
+                    adjustment = 10;
+                    recoveryTime = 6000;
+                }
+                // 普通问候
+                else if (lowerContent.includes('你好') || lowerContent.includes('hi') || lowerContent.includes('hello') ||
+                    lowerContent.includes('早上好') || lowerContent.includes('晚安')) {
+                    adjustment = 5;
+                    recoveryTime = 3000;
+                }
+                
+            } else {
+                // AI自己发送消息后的心率变化
+                if (lowerContent.includes('害羞') || lowerContent.includes('脸红') || lowerContent.includes('不好意思')) {
+                    adjustment = 10;
+                    recoveryTime = 5000;
+                } else if (lowerContent.includes('兴奋') || lowerContent.includes('开心') || lowerContent.includes('激动')) {
+                    adjustment = 8;
+                    recoveryTime = 4000;
+                } else if (lowerContent.includes('紧张') || lowerContent.includes('担心') || lowerContent.includes('焦虑')) {
+                    adjustment = 12;
+                    recoveryTime = 6000;
+                } else if (lowerContent.includes('爱') || lowerContent.includes('喜欢') || lowerContent.includes('想')) {
+                    adjustment = 15;
+                    recoveryTime = 7000;
+                }
+            }
+            
+            // 应用调整
+            currentHeartrate = Math.max(55, Math.min(130, currentHeartrate + adjustment));
+            
+            // 更自然的恢复机制
+            setTimeout(() => {
+                const recoveryRate = Math.floor(adjustment * 0.6); // 恢复60%
+                currentHeartrate = Math.max(65, currentHeartrate - recoveryRate);
+                
+                // 继续缓慢恢复
+                setTimeout(() => {
+                    const finalRecovery = Math.floor(adjustment * 0.3); // 再恢复30%
+                    currentHeartrate = Math.max(65, currentHeartrate - finalRecovery);
+                }, recoveryTime * 0.5);
+                
+            }, recoveryTime);
+        }
+
         /**
  * 🔥【新增】处理AI对好友申请的回应
  * @param {string} characterId - AI角色的ID
