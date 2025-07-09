@@ -8877,14 +8877,9 @@ textarea.call-text-input {
             height: 52px;
         }
 
-        .size-preview-rect-m {
-            width: 27px;
-            height: 58px;
-        }
-
-        .size-preview-rect-l {
-            width: 28px;
-            height: 60px;
+        .size-preview-rect-mobile {
+            width: 29px;
+            height: 62px;
         }
 
         .size-preview-rect-xl {
