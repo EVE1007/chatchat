@@ -1250,19 +1250,25 @@
             overflow: hidden; 
         }
         
-        body { 
-            height: 100%; 
-            overflow: hidden; 
-            margin: 0; 
-            padding: 8px; 
+        body {
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 8px;
             font-family: var(--theme-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
-            font-weight: normal; 
-            background: var(--body-bg, #dcdcdc); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            box-sizing: border-box; 
+            font-weight: normal;
+            background: var(--body-bg, #dcdcdc);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
             transition: all 0.3s ease;
+            /* 🔥【移动端修复】防止虚拟键盘影响布局 */
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
         
         #phone-frame { 
@@ -1276,16 +1282,19 @@
         
 
         
-        #phone-screen { 
-            width: var(--screen-width); 
-            height: var(--screen-height); 
-            background-color: var(--color-black); 
-            position: relative; 
-            overflow: hidden; 
-            display: flex; 
-            flex-direction: column; 
-            border-radius: 25px; 
-            box-shadow: var(--shadow-phone); 
+        #phone-screen {
+            width: var(--screen-width);
+            height: var(--screen-height);
+            background-color: var(--color-black);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border-radius: 25px;
+            box-shadow: var(--shadow-phone);
+            /* 🔥【移动端修复】确保虚拟手机始终居中 */
+            flex-shrink: 0;
+            transform: translateZ(0); /* 启用硬件加速 */
         }
         
         .wallpaper {
@@ -12072,6 +12081,40 @@ textarea.call-text-input {
             justify-content: center !important;
             align-items: center !important;
             z-index: 10000 !important;
+        }
+
+        /* 🔥【移动端修复】专门处理移动端虚拟键盘问题 */
+        @media screen and (max-width: 768px) {
+            body {
+                /* 使用固定定位，防止虚拟键盘影响 */
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+            }
+
+            #phone-screen {
+                /* 确保虚拟手机在移动端始终居中 */
+                position: relative !important;
+                margin: auto !important;
+                flex-shrink: 0 !important;
+                transform: translateZ(0) !important;
+            }
+        }
+
+        /* 🔥【移动端修复】处理iOS Safari的特殊情况 */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                /* iOS Safari专用修复 */
+                position: fixed !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+            }
         }
 
         #memory-share-modal.modal .modal-content {

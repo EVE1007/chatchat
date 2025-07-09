@@ -812,7 +812,7 @@
                                             <div class="setting-desc">自定义角色回复时参考的历史对话数量</div>
                                         </div>
                                         <div class="setting-right">
-                                            <span class="setting-value" id="current-history-count">5回合</span>
+                                            <span class="setting-value" id="current-history-count">5轮</span>
                                             <i class="fas fa-chevron-right"></i>
                                         </div>
                                     </div>
@@ -2499,29 +2499,29 @@
                             <div class="setting-card">
                                 <div class="setting-item">
                                     <div class="setting-left">
-                                        <div class="setting-label">附带历史消息数 (回合数)</div>
-                                        <div class="setting-desc">AI回复时参考的历史对话回合数</div>
+                                        <div class="setting-label">附带历史消息数 (轮数)</div>
+                                        <div class="setting-desc">AI回复时参考的历史对话轮数</div>
                                     </div>
                                     <div class="setting-right">
-                                        <span class="setting-value" id="history-count-display">5回合</span>
+                                        <span class="setting-value" id="history-count-display">5轮</span>
                                     </div>
                                 </div>
                                 <div class="setting-range-container">
                                     <input type="range" class="theme-range" id="history-messages-count" min="0" max="100" step="1" value="5">
                                     <div class="range-labels">
-                                        <span>0回合</span>
-                                        <span>100回合</span>
+                                        <span>0轮</span>
+                                        <span>100轮</span>
                                     </div>
                                 </div>
                                 <div class="custom-input-container">
                                     <span class="input-label">自定义数值：</span>
                                     <input type="number" class="theme-input" id="custom-history-count" min="0" max="500" value="5">
-                                    <span class="input-unit">回合 (最大500)</span>
+                                    <span class="input-unit">轮 (最大500)</span>
                                 </div>
                                 <div class="setting-explanation">
                                     <div class="explanation-text">
                                         <strong>说明：</strong><br>
-                                        • 一回合 = 你的一条消息 + AI的一条回复<br>
+                                        • 一轮 = 你的一条消息 + AI的一条回复<br>
                                         • 设置为5表示AI回复时会参考最近5轮对话<br>
                                         • 注意：数值过大可能影响API响应速度
                                     </div>
@@ -2531,25 +2531,25 @@
                             <div class="setting-card">
                                 <div class="setting-item">
                                     <div class="setting-left">
-                                        <div class="setting-label">跨窗口记忆回合数</div>
-                                        <div class="setting-desc">从其他聊天窗口读取的背景记忆回合数</div>
+                                        <div class="setting-label">跨窗口记忆轮数</div>
+                                        <div class="setting-desc">从其他聊天窗口读取的背景记忆轮数</div>
                                     </div>
                                     <div class="setting-right">
-                                        <span class="setting-value" id="cross-memory-display">3回合</span>
+                                        <span class="setting-value" id="cross-memory-display">3轮</span>
                                     </div>
                                 </div>
                                 <div class="setting-range-container">
                                     <input type="range" class="theme-range" id="cross-chat-memory" min="0" max="20" step="1" value="3">
                                     <div class="range-labels">
-                                        <span>0回合</span>
-                                        <span>20回合</span>
+                                        <span>0轮</span>
+                                        <span>20轮</span>
                                     </div>
                                 </div>
                                 <div class="setting-explanation">
                                     <div class="explanation-text">
                                         <strong>说明：</strong><br>
                                         • AI会读取其他聊天窗口中最新的几轮对话作为背景记忆<br>
-                                        • 一回合 = 用户一条消息 + AI一条回复<br>
+                                        • 一轮 = 用户一条消息 + AI一条回复<br>
                                         • 帮助AI更好地理解整体对话上下文
                                     </div>
                                 </div>
@@ -13789,14 +13789,14 @@ ${character.bio}
             const historyCount = chatSettings.historyCount;
             document.getElementById('history-messages-count').value = Math.min(historyCount, 100);
             document.getElementById('custom-history-count').value = historyCount;
-            document.getElementById('history-count-display').textContent = historyCount + '回合';
+            document.getElementById('history-count-display').textContent = historyCount + '轮';
             document.getElementById('cross-chat-memory').value = chatSettings.crossChatMemory;
             document.getElementById('cross-memory-display').textContent = chatSettings.crossChatMemory + '条';
             
             // 绑定滑块事件
             document.getElementById('history-messages-count').oninput = function() {
                 const value = parseInt(this.value);
-                document.getElementById('history-count-display').textContent = value + '回合';
+                document.getElementById('history-count-display').textContent = value + '轮';
                 document.getElementById('custom-history-count').value = value;
             };
             
@@ -13807,11 +13807,11 @@ ${character.bio}
                 if (value <= 100) {
                     document.getElementById('history-messages-count').value = value;
                 }
-                document.getElementById('history-count-display').textContent = value + '回合';
+                document.getElementById('history-count-display').textContent = value + '轮';
             };
             
             document.getElementById('cross-chat-memory').oninput = function() {
-                document.getElementById('cross-memory-display').textContent = this.value + '回合';
+                document.getElementById('cross-memory-display').textContent = this.value + '轮';
             };
             
             showModal('history-settings-modal');
@@ -13825,7 +13825,7 @@ ${character.bio}
             chatSettings.crossChatMemory = parseInt(document.getElementById('cross-chat-memory').value);
             
             // 更新设置界面显示的当前值
-            document.getElementById('current-history-count').textContent = chatSettings.historyCount + '回合';
+            document.getElementById('current-history-count').textContent = chatSettings.historyCount + '轮';
             
             saveCurrentChatSettings(chatSettings);
             hideModal('history-settings-modal');
@@ -15455,7 +15455,7 @@ ${character.bio}
             // 更新历史消息数显示
             const historyCountElement = document.getElementById('current-history-count');
             if (historyCountElement) {
-                historyCountElement.textContent = chatSettings.historyCount + '回合';
+                historyCountElement.textContent = chatSettings.historyCount + '轮';
             }
             
             // 更新记忆挂载显示
@@ -17897,9 +17897,9 @@ async function createGroupChat(personaId) {
                                 aiReplyRounds++;
                                 inAIReplyRound = true;
                             }
-                            // 继续当前回合（多条连续AI消息算一轮）
+                            // 继续当前轮（多条连续AI消息算一轮）
                         } else {
-                            // 如果有其他类型消息，结束当前回合
+                            // 如果有其他类型消息，结束当前轮
                             inAIReplyRound = false;
                         }
                     }
@@ -27141,18 +27141,36 @@ async function changeMyGroupAvatar() {
             // 输入框失焦处理
             function handleInputBlur(e) {
                 console.log('📱 输入框失去焦点，恢复缩放功能');
-                
+
                 // 恢复缩放功能
                 if (isIOS) {
                     setTimeout(() => {
                         restoreZoom();
                     }, 100);
                 }
-                
-                // 滚动回顶部
+
+                // 🔥【关键修复】强制重新计算布局，防止页面偏移
                 setTimeout(() => {
+                    // 重置滚动位置
                     window.scrollTo(0, 0);
-                }, 100);
+                    document.body.scrollTop = 0;
+                    document.documentElement.scrollTop = 0;
+
+                    // 强制重新计算虚拟手机的位置
+                    const phoneScreen = document.getElementById('phone-screen');
+                    if (phoneScreen) {
+                        // 临时改变一个样式属性来触发重新渲染
+                        phoneScreen.style.transform = 'translateZ(0)';
+                        setTimeout(() => {
+                            phoneScreen.style.transform = '';
+                        }, 10);
+                    }
+
+                    // 确保body居中对齐
+                    document.body.style.display = 'flex';
+                    document.body.style.justifyContent = 'center';
+                    document.body.style.alignItems = 'center';
+                }, 300);
             }
             
             // 绑定事件到所有输入框
@@ -27225,6 +27243,56 @@ async function changeMyGroupAvatar() {
                 }
             });
             
+            // 🔥【新增】监听viewport变化，修复虚拟键盘收起后的布局问题
+            let initialViewportHeight = window.innerHeight;
+            let isKeyboardOpen = false;
+
+            function handleViewportChange() {
+                const currentHeight = window.innerHeight;
+                const heightDiff = initialViewportHeight - currentHeight;
+
+                // 判断虚拟键盘是否打开（高度减少超过150px认为是键盘打开）
+                const keyboardWasOpen = isKeyboardOpen;
+                isKeyboardOpen = heightDiff > 150;
+
+                console.log(`📱 Viewport变化: ${currentHeight}px (初始: ${initialViewportHeight}px, 差值: ${heightDiff}px, 键盘状态: ${isKeyboardOpen})`);
+
+                // 如果键盘从打开变为关闭，强制修复布局
+                if (keyboardWasOpen && !isKeyboardOpen) {
+                    console.log('📱 检测到虚拟键盘关闭，修复布局...');
+                    setTimeout(() => {
+                        // 重置所有滚动位置
+                        window.scrollTo(0, 0);
+                        document.body.scrollTop = 0;
+                        document.documentElement.scrollTop = 0;
+
+                        // 强制重新渲染虚拟手机
+                        const phoneScreen = document.getElementById('phone-screen');
+                        if (phoneScreen) {
+                            phoneScreen.style.transform = 'translateZ(0)';
+                            requestAnimationFrame(() => {
+                                phoneScreen.style.transform = '';
+                            });
+                        }
+
+                        // 确保body布局正确
+                        document.body.style.height = '100%';
+                        document.body.style.display = 'flex';
+                        document.body.style.justifyContent = 'center';
+                        document.body.style.alignItems = 'center';
+                    }, 100);
+                }
+            }
+
+            // 监听viewport变化
+            window.addEventListener('resize', handleViewportChange, { passive: true });
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    initialViewportHeight = window.innerHeight;
+                    handleViewportChange();
+                }, 500);
+            }, { passive: true });
+
             console.log('📱 [移动端优化] 输入框viewport行为修复已启动');
         })();
     </script>
