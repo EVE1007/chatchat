@@ -3,19 +3,18 @@
             height: 100%; 
             overflow: hidden; 
         }
-        body {
-            height: 100%;
-            overflow: hidden;
-            margin: 0;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-weight: normal;
-            background-color: #dcdcdc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
+        body { 
+            height: 100%; 
+            overflow: hidden; 
+            margin: 0; 
+            padding: 8px; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-weight: normal; 
+            background-color: #dcdcdc; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            box-sizing: border-box; 
         }
         
         /* 主题系统 - 简约风格 (默认) */
@@ -1665,10 +1664,20 @@
         #memory-viewer-screen .header-actions {
             display: flex;
             align-items: center;
-            gap: 7px;
+            gap: 5px; /* 稍微减少间距以容纳3个按钮 */
             position: absolute;
-            right: 20px;
+            right: 15px; /* 稍微向左移动 */
             top: 42px; /* 稍微调低一点 */
+        }
+
+        /* 记忆查看器左侧按钮组样式 */
+        #memory-viewer-screen .header-left-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            position: absolute;
+            left: 50px; /* 在返回按钮右侧 */
+            top: 42px;
         }
 
         /* 确保按钮大小与chat app一致 */
@@ -4382,21 +4391,7 @@ textarea.call-text-input {
             }
         }
         
-        /* 触发按钮样式 */
-        .toggle-tools-btn {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        .toggle-tools-btn.active {
-            transform: rotate(45deg);
-            background-color: var(--theme-button-bg, rgba(74, 132, 193, 0.9)) !important;
-            color: white !important;
-            border-color: var(--theme-button-bg, rgba(74, 132, 193, 0.9)) !important;
-        }
-        
-        .toggle-tools-btn.active i {
-            color: white !important;
-        }
+
         
         .tool-btn-mini {
             width: 30px;
@@ -5568,6 +5563,13 @@ textarea.call-text-input {
             padding: 15px;
             max-height: 400px;
             overflow-y: auto;
+        }
+
+        /* 今日日记模态框特殊样式 - 移除外层滚动条 */
+        #today-diary-modal .modal-body {
+            padding: 15px;
+            max-height: none;
+            overflow-y: visible;
         }
         
         .modal-footer {
@@ -8330,9 +8332,7 @@ textarea.call-text-input {
             background: rgba(255, 182, 193, 0.2);
         }
         
-        body[data-theme="cute"] .toggle-tools-btn.active {
-            background-color: var(--theme-button-bg, rgba(255, 182, 193, 0.9)) !important;
-        }
+
         
         /* 响应式设计优化 */
         @media (max-width: 400px) {
@@ -8577,8 +8577,8 @@ textarea.call-text-input {
         }
 
         .radio-option:hover {
-            border-color: #007AFF;
-            background: rgba(0, 122, 255, 0.05);
+            border-color: var(--theme-button-bg, #007AFF);
+            background: rgba(var(--theme-button-bg-rgb, 0, 122, 255), 0.05);
         }
 
         .radio-option input[type="radio"] {
@@ -8598,8 +8598,8 @@ textarea.call-text-input {
         }
 
         .radio-option input[type="radio"]:checked + .radio-custom {
-            border-color: #007AFF;
-            background-color: #007AFF;
+            border-color: var(--theme-button-bg, #007AFF);
+            background-color: var(--theme-button-bg, #007AFF);
         }
 
         .radio-option input[type="radio"]:checked + .radio-custom::after {
@@ -8636,7 +8636,7 @@ textarea.call-text-input {
         }
 
         .radio-option input[type="radio"]:checked + .radio-custom + .option-content .option-label {
-            color: #007AFF;
+            color: var(--theme-button-bg, #007AFF);
         }
 
         /* 悬浮按钮样式 */
@@ -8878,9 +8878,14 @@ textarea.call-text-input {
             height: 52px;
         }
 
-        .size-preview-rect-mobile {
-            width: 30px;
-            height: 62px;
+        .size-preview-rect-m {
+            width: 27px;
+            height: 58px;
+        }
+
+        .size-preview-rect-l {
+            width: 28px;
+            height: 60px;
         }
 
         .size-preview-rect-xl {
@@ -11199,12 +11204,25 @@ textarea.call-text-input {
             color: #6c757d;
         }
 
+        /* 日记纸张容器 - 用于固定打孔效果 */
+        .diary-paper-container {
+            position: relative;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            box-shadow:
+                0 1px 3px rgba(0, 0, 0, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            background-color: #fefefe;
+            overflow: hidden; /* 确保内容不会溢出容器 */
+        }
+
         /* 日记纸张样式 */
         .diary-paper {
             min-height: 300px;
-            max-height: 500px;
+            max-height: 60vh; /* 使用视口高度，确保在手机上不会过高 */
+            height: 100%; /* 填满容器高度 */
             overflow-y: auto;
-            padding: 50px 25px 30px 25px;
+            padding: 50px 25px 30px 40px; /* 左边距40px为打孔留空间，右边距25px */
             background: linear-gradient(to bottom,
                 #fefefe 0%,
                 #fefefe 40px,
@@ -11220,10 +11238,6 @@ textarea.call-text-input {
             );
             background-color: #fefefe;
             border-radius: 8px;
-            border: 1px solid #d1d5db;
-            box-shadow:
-                0 1px 3px rgba(0, 0, 0, 0.1),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
             white-space: pre-wrap;
             font-family: 'Courier New', 'SimSun', monospace;
             font-size: 14px;
@@ -11232,43 +11246,49 @@ textarea.call-text-input {
             word-break: break-word;
             color: #2d3748;
             position: relative;
+            box-sizing: border-box; /* 确保padding计算在内 */
         }
 
         /* 红线已移除，保留注释以备后用 */
 
-        /* 日记纸张的打孔效果 */
-        .diary-paper::after {
+        /* 日记纸张容器的固定打孔效果 */
+        .diary-paper-container::after {
             content: '';
             position: absolute;
-            left: 8px;
-            top: 60px;
+            left: 8px; /* 更靠左，完全不影响正文 */
+            top: 80px; /* 从蓝线下方开始，与正文第一行对齐 */
             width: 6px;
             height: 6px;
             border-radius: 50%;
             background-color: #f3f4f6;
             border: 1px solid #d1d5db;
             box-shadow:
-                0 70px 0 #f3f4f6,
-                0 70px 0 1px #d1d5db,
-                0 140px 0 #f3f4f6,
-                0 140px 0 1px #d1d5db,
-                0 210px 0 #f3f4f6,
-                0 210px 0 1px #d1d5db;
+                0 50px 0 #f3f4f6,  /* 与行间距31px对应，约1.6行间距 */
+                0 50px 0 1px #d1d5db,
+                0 100px 0 #f3f4f6, /* 50px * 2 */
+                0 100px 0 1px #d1d5db,
+                0 150px 0 #f3f4f6, /* 50px * 3 */
+                0 150px 0 1px #d1d5db,
+                0 200px 0 #f3f4f6, /* 50px * 4 */
+                0 200px 0 1px #d1d5db;
+            z-index: 10; /* 确保打孔在内容上方 */
+            pointer-events: none; /* 不阻挡鼠标事件 */
         }
 
         /* 日记头部信息样式 */
         .diary-header {
             position: absolute;
-            top: 8px;
-            left: 25px;
-            right: 25px;
-            height: 32px;
+            top: 23px; /* 稍微离蓝色线远一点点，有自然的空隙 */
+            left: 40px; /* 与正文左边距保持一致 */
+            right: 25px; /* 与正文右边距保持一致 */
+            height: 16px; /* 稍微增加高度 */
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
+            align-items: flex-end; /* 文字底部对齐 */
+            font-size: 13px; /* 稍微放大字体，接近正文大小 */
             color: #6b7280;
             font-family: var(--theme-font-family);
+            line-height: 1;
         }
 
         .diary-date {
@@ -11343,13 +11363,20 @@ textarea.call-text-input {
             display: none;
         }
 
+        /* 过往日记的容器样式 */
+        .diary-entry .diary-paper-container {
+            margin-top: 15px;
+            min-height: 180px;
+            max-height: 300px;
+        }
+
         /* 过往日记中的日记纸张样式调整 */
         .diary-entry-full.diary-paper {
             min-height: 180px;
             max-height: 300px;
-            margin-top: 15px;
+            margin-top: 0; /* 移除margin，由容器控制 */
             border-top: none;
-            padding: 45px 20px 25px 20px;
+            padding: 45px 30px 25px 30px; /* 增加左右边距 */
             line-height: 28px;
             background: linear-gradient(to bottom,
                 #fefefe 0%,
@@ -11368,24 +11395,34 @@ textarea.call-text-input {
 
         /* 过往日记红线也已移除 */
 
-        .diary-entry-full.diary-paper::after {
-            left: 6px;
-            top: 55px;
+        /* 过往日记容器的固定打孔效果 */
+        .diary-entry .diary-paper-container::after {
+            content: '';
+            position: absolute;
+            left: 10px; /* 调整位置 */
+            top: 65px; /* 调整到合适位置 */
             width: 5px;
             height: 5px;
+            border-radius: 50%;
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
             box-shadow:
-                0 60px 0 #f3f4f6,
-                0 60px 0 1px #d1d5db,
-                0 120px 0 #f3f4f6,
-                0 120px 0 1px #d1d5db,
-                0 180px 0 #f3f4f6,
-                0 180px 0 1px #d1d5db;
+                0 56px 0 #f3f4f6,  /* 调整间距，与28px行高对应 */
+                0 56px 0 1px #d1d5db,
+                0 112px 0 #f3f4f6, /* 56px * 2 */
+                0 112px 0 1px #d1d5db,
+                0 168px 0 #f3f4f6, /* 56px * 3 */
+                0 168px 0 1px #d1d5db;
+            z-index: 10;
+            pointer-events: none;
         }
 
         .diary-entry-full.diary-paper .diary-header {
-            left: 20px;
-            right: 20px;
-            height: 28px;
+            left: 30px; /* 与正文边距保持一致 */
+            right: 30px; /* 与正文边距保持一致 */
+            top: 32px; /* 调整到正好贴着第一条线 */
+            height: 20px; /* 与主日记保持一致 */
+            font-size: 11px; /* 稍小一些 */
         }
 
         .diary-entry.expanded .diary-entry-preview {
@@ -11804,43 +11841,134 @@ textarea.call-text-input {
         }
 
         #memorySettingsModal .btn-primary {
-            background: #007AFF;
-            color: white;
+            background: var(--theme-button-bg, #007AFF);
+            color: var(--theme-button-color, white);
         }
 
         #memorySettingsModal .btn-primary:hover {
-            background: #0056CC;
+            background: var(--theme-button-bg-hover, #0056CC);
         }
 
         /* 全局记忆设置模态框样式 */
-        #global-memory-modal {
+        #global-memory-modal.modal {
             display: flex !important;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            z-index: 10000 !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+
+        #global-memory-modal.modal .modal-content {
+            background: white !important;
+            border-radius: 12px !important;
+            width: 90% !important;
+            max-width: 400px !important;
+            max-height: 80vh !important;
+            overflow-y: auto !important;
+        }
+
+
+
+
+        /* 全局记忆设置模态框的紧凑样式 */
+        #global-memory-modal .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
         }
 
-        #global-memory-modal .modal-content {
-            background: white;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
+        #global-memory-modal .modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 16px;
+        }
+
+        #global-memory-modal .modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #999;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        #global-memory-modal .modal-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        #global-memory-modal .modal-body {
+            padding: 16px 20px;
+        }
+
+        #global-memory-modal .setting-section {
+            margin-bottom: 20px;
+        }
+
+        #global-memory-modal .setting-section h4 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        #global-memory-modal .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #global-memory-modal .radio-option {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        #global-memory-modal .radio-option:hover {
+            border-color: var(--theme-button-bg, #007AFF);
+            background: rgba(var(--theme-button-bg-rgb, 0, 122, 255), 0.05);
+        }
+
+        #global-memory-modal .radio-custom {
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+        }
+
+        #global-memory-modal .radio-content {
+            flex: 1;
+        }
+
+        #global-memory-modal .radio-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        #global-memory-modal .radio-desc {
+            font-size: 12px;
+            color: #666;
         }
 
         #global-memory-modal .modal-actions {
-            padding: 15px 20px;
+            padding: 12px 20px;
             border-top: 1px solid #eee;
             display: flex;
             justify-content: space-between;
-            gap: 15px;
+            gap: 12px;
         }
 
         #global-memory-modal .modal-button {
@@ -11850,7 +11978,7 @@ textarea.call-text-input {
             font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
-            min-width: 80px;
+            min-width: 70px;
             flex: 0 0 auto;
         }
 
@@ -11864,12 +11992,12 @@ textarea.call-text-input {
         }
 
         #global-memory-modal .modal-primary {
-            background: #007AFF;
-            color: white;
+            background: var(--theme-button-bg, #007AFF);
+            color: var(--theme-button-color, white);
         }
 
         #global-memory-modal .modal-primary:hover {
-            background: #0056CC;
+            background: var(--theme-button-bg-hover, #0056CC);
         }
 
         .memory-item-date {
@@ -11928,4 +12056,161 @@ textarea.call-text-input {
         .memory-action-btn.delete:hover {
             background: #e74c3c;
             border-color: #e74c3c;
+        }
+
+        /* 记忆共享设置模态框样式 */
+        #memory-share-modal.modal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0, 0, 0, 0.5) !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 10000 !important;
+        }
+
+        #memory-share-modal.modal .modal-content {
+            background: white !important;
+            border-radius: 12px !important;
+            width: 90% !important;
+            max-width: 400px !important;
+            max-height: 80vh !important;
+            overflow-y: auto !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        #memory-share-modal .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #memory-share-modal .modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 16px;
+        }
+
+        #memory-share-modal .modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #999;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        #memory-share-modal .modal-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        #memory-share-modal .modal-body {
+            padding: 16px 20px;
+        }
+
+        #memory-share-modal .setting-section {
+            margin-bottom: 20px;
+        }
+
+        #memory-share-modal .setting-section h4 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        #memory-share-modal .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #memory-share-modal .radio-option {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        #memory-share-modal .radio-option:hover {
+            border-color: var(--theme-button-bg, #007AFF);
+            background: rgba(var(--theme-button-bg-rgb, 0, 122, 255), 0.05);
+        }
+
+        #memory-share-modal .radio-custom {
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+        }
+
+        #memory-share-modal .radio-content {
+            flex: 1;
+        }
+
+        #memory-share-modal .radio-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        #memory-share-modal .radio-desc {
+            font-size: 12px;
+            color: #666;
+        }
+
+        #memory-share-modal .info-text {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        #memory-share-modal .modal-actions {
+            padding: 12px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        #memory-share-modal .modal-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 70px;
+            flex: 0 0 auto;
+        }
+
+        #memory-share-modal .modal-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        #memory-share-modal .modal-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        #memory-share-modal .modal-primary {
+            background: var(--theme-button-bg, #007AFF);
+            color: var(--theme-button-color, white);
+        }
+
+        #memory-share-modal .modal-primary:hover {
+            background: var(--theme-button-bg-hover, #0056CC);
         }
