@@ -1814,7 +1814,18 @@
                             </div>
 
                             <div class="recovery-section">
-                                <h4>🧹 第四步：清理异常数据</h4>
+                                <h4>🔧 第四步：重建角色卡</h4>
+                                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">从聊天记录重建丢失的角色：</p>
+                                <button onclick="rebuildCharactersFromChat()" class="recovery-btn" style="background: #32D74B; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
+                                    🔧 自动重建所有角色
+                                </button>
+                                <button onclick="showManualRebuild()" class="recovery-btn" style="background: #007AFF; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 15px;">
+                                    ✏️ 手动重建角色
+                                </button>
+                            </div>
+
+                            <div class="recovery-section">
+                                <h4>🧹 第五步：清理异常数据</h4>
                                 <button onclick="cleanupBadData()" class="recovery-btn" style="background: #FF9500; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
                                     清除张三李四等异常角色
                                 </button>
@@ -32871,6 +32882,236 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
 
             } catch (error) {
                 addRecoveryLog('聊天记录分析失败: ' + error.message);
+            }
+        }
+
+        // 🔧 从聊天记录重建角色
+        async function rebuildCharactersFromChat() {
+            addRecoveryLog('开始从聊天记录重建角色...');
+
+            try {
+                const chatData = await db.chatMessages.toArray();
+                const characterInfo = new Map();
+
+                // 分析聊天记录
+                chatData.forEach(msg => {
+                    if (msg.characterId && msg.characterId !== 'user') {
+                        if (!characterInfo.has(msg.characterId)) {
+                            characterInfo.set(msg.characterId, {
+                                id: msg.characterId,
+                                messages: [],
+                                firstMessage: null,
+                                lastMessage: null
+                            });
+                        }
+
+                        const info = characterInfo.get(msg.characterId);
+                        info.messages.push(msg);
+
+                        if (!info.firstMessage || msg.timestamp < info.firstMessage.timestamp) {
+                            info.firstMessage = msg;
+                        }
+
+                        if (!info.lastMessage || msg.timestamp > info.lastMessage.timestamp) {
+                            info.lastMessage = msg;
+                        }
+                    }
+                });
+
+                addRecoveryLog(`发现 ${characterInfo.size} 个角色的聊天记录`);
+
+                // 重建角色卡
+                const rebuiltCharacters = [];
+                let rebuiltCount = 0;
+
+                for (const [characterId, info] of characterInfo) {
+                    // 跳过张三李四
+                    if (characterId === '张三' || characterId === '李四') continue;
+
+                    // 尝试从聊天内容推断角色名字
+                    let characterName = `角色_${characterId.slice(-4)}`;
+
+                    // 查找可能的角色名字（从用户消息中寻找称呼）
+                    const userMessages = info.messages.filter(msg => msg.sender === 'user');
+                    for (const msg of userMessages.slice(0, 10)) { // 检查前10条用户消息
+                        const content = msg.content || '';
+                        // 寻找常见的称呼模式
+                        const nameMatch = content.match(/(?:你好|嗨|hi|hello)[，,\s]*([^\s，,。！？]{1,8})/i);
+                        if (nameMatch && nameMatch[1] && nameMatch[1].length <= 8) {
+                            characterName = nameMatch[1];
+                            break;
+                        }
+                    }
+
+                    // 创建基础角色卡
+                    const character = {
+                        id: characterId,
+                        name: characterName,
+                        description: `从聊天记录恢复的角色，共有 ${info.messages.length} 条对话记录`,
+                        personality: '温和友善，善于交流',
+                        scenario: '日常聊天场景',
+                        firstMessage: info.firstMessage?.content || '你好！',
+                        avatar: '',
+                        createdAt: info.firstMessage?.timestamp || Date.now(),
+                        updatedAt: info.lastMessage?.timestamp || Date.now(),
+                        tags: ['恢复角色'],
+                        isPublic: false,
+                        messageCount: info.messages.length
+                    };
+
+                    rebuiltCharacters.push(character);
+                    rebuiltCount++;
+
+                    addRecoveryLog(`重建角色: ${characterName} (ID: ${characterId.slice(-6)}...)`);
+                }
+
+                if (rebuiltCharacters.length === 0) {
+                    throw new Error('没有找到可重建的角色');
+                }
+
+                // 清除现有的异常角色，添加重建的角色
+                await db.characters.clear();
+                await db.characters.bulkAdd(rebuiltCharacters);
+                characters = rebuiltCharacters;
+
+                // 更新联系人列表
+                contacts = rebuiltCharacters.map(char => char.id);
+                await saveContacts();
+
+                // 刷新界面
+                renderCharacterList();
+                renderContactList();
+
+                addRecoveryLog(`✅ 成功重建 ${rebuiltCount} 个角色！`);
+                alert(`角色重建完成！成功恢复 ${rebuiltCount} 个角色，聊天记录已保留。`);
+
+            } catch (error) {
+                addRecoveryLog('❌ 角色重建失败: ' + error.message);
+                alert('角色重建失败: ' + error.message);
+            }
+        }
+
+        // ✏️ 显示手动重建界面
+        async function showManualRebuild() {
+            try {
+                const chatData = await db.chatMessages.toArray();
+                const characterInfo = new Map();
+
+                // 分析聊天记录
+                chatData.forEach(msg => {
+                    if (msg.characterId && msg.characterId !== 'user' && msg.characterId !== '张三' && msg.characterId !== '李四') {
+                        if (!characterInfo.has(msg.characterId)) {
+                            characterInfo.set(msg.characterId, {
+                                id: msg.characterId,
+                                messageCount: 0,
+                                lastMessage: null
+                            });
+                        }
+
+                        const info = characterInfo.get(msg.characterId);
+                        info.messageCount++;
+
+                        if (!info.lastMessage || msg.timestamp > info.lastMessage.timestamp) {
+                            info.lastMessage = msg;
+                        }
+                    }
+                });
+
+                if (characterInfo.size === 0) {
+                    alert('没有发现可重建的角色');
+                    return;
+                }
+
+                // 创建手动重建界面
+                let html = '<div style="max-height: 400px; overflow-y: auto;">';
+                html += '<h4>选择要重建的角色：</h4>';
+
+                characterInfo.forEach((info, characterId) => {
+                    const shortId = characterId.slice(-6);
+                    const lastContent = info.lastMessage?.content?.substring(0, 30) || '';
+
+                    html += `
+                        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+                            <div style="font-weight: bold;">角色ID: ${shortId}...</div>
+                            <div style="font-size: 12px; color: #666;">消息数: ${info.messageCount} 条</div>
+                            <div style="font-size: 12px; color: #666;">最新消息: ${lastContent}...</div>
+                            <input type="text" id="name_${characterId}" placeholder="输入角色名字" style="width: 100%; margin: 5px 0; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                            <label><input type="checkbox" id="rebuild_${characterId}" checked> 重建此角色</label>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                html += '<button onclick="executeManualRebuild()" style="background: #32D74B; color: white; border: none; padding: 10px 20px; border-radius: 8px; width: 100%; margin-top: 10px;">确认重建选中的角色</button>';
+
+                document.getElementById('deep-search-result').style.display = 'block';
+                document.getElementById('deep-search-text').innerHTML = html;
+
+                // 存储角色信息供后续使用
+                window.manualRebuildInfo = characterInfo;
+
+            } catch (error) {
+                alert('获取角色信息失败: ' + error.message);
+            }
+        }
+
+        // 执行手动重建
+        async function executeManualRebuild() {
+            try {
+                const rebuiltCharacters = [];
+
+                for (const [characterId, info] of window.manualRebuildInfo) {
+                    const checkbox = document.getElementById(`rebuild_${characterId}`);
+                    const nameInput = document.getElementById(`name_${characterId}`);
+
+                    if (checkbox && checkbox.checked) {
+                        const characterName = nameInput.value.trim() || `角色_${characterId.slice(-4)}`;
+
+                        const character = {
+                            id: characterId,
+                            name: characterName,
+                            description: `手动重建的角色，共有 ${info.messageCount} 条对话记录`,
+                            personality: '请根据聊天记录调整性格设定',
+                            scenario: '日常聊天场景',
+                            firstMessage: info.lastMessage?.content || '你好！',
+                            avatar: '',
+                            createdAt: Date.now() - 86400000, // 1天前
+                            updatedAt: Date.now(),
+                            tags: ['手动恢复'],
+                            isPublic: false,
+                            messageCount: info.messageCount
+                        };
+
+                        rebuiltCharacters.push(character);
+                    }
+                }
+
+                if (rebuiltCharacters.length === 0) {
+                    alert('请至少选择一个角色进行重建');
+                    return;
+                }
+
+                // 清除现有角色，添加重建的角色
+                await db.characters.clear();
+                await db.characters.bulkAdd(rebuiltCharacters);
+                characters = rebuiltCharacters;
+
+                // 更新联系人列表
+                contacts = rebuiltCharacters.map(char => char.id);
+                await saveContacts();
+
+                // 刷新界面
+                renderCharacterList();
+                renderContactList();
+
+                addRecoveryLog(`✅ 手动重建完成！恢复了 ${rebuiltCharacters.length} 个角色`);
+                alert(`手动重建完成！成功恢复 ${rebuiltCharacters.length} 个角色。`);
+
+                // 隐藏重建界面
+                document.getElementById('deep-search-result').style.display = 'none';
+
+            } catch (error) {
+                alert('手动重建失败: ' + error.message);
             }
         }
 
