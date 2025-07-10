@@ -1559,6 +1559,15 @@
                             </div>
                             <i class="fas fa-chevron-right"></i>
                         </div>
+                        <div class="settings-item" onclick="showApp('emergency-recovery-screen')" style="background: rgba(255, 68, 68, 0.1); border-left: 4px solid #ff4444;">
+                            <div class="settings-item-left">
+                                <div class="settings-icon" style="background: #ff4444; color: white;">
+                                    <i class="fas fa-life-ring"></i>
+                                </div>
+                                <div style="color: #ff4444; font-weight: 600;">紧急恢复</div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color: #ff4444;"></i>
+                        </div>
                         <div class="settings-item" onclick="showApp('about-screen')">
                             <div class="settings-item-left">
                                 <div class="settings-icon about">
@@ -1744,6 +1753,65 @@
                                     </div>
                                 </div>
                                 <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🚨 紧急恢复界面 -->
+                <div class="app-screen" id="emergency-recovery-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="app-header">
+                        <button class="back-button" onclick="backToSettings('emergency-recovery-screen')">‹</button>
+                        <div class="app-title" style="color: #ff4444;">🚨 紧急恢复</div>
+                    </div>
+                    <div class="app-content">
+                        <div style="padding: 20px; color: #333;">
+                            <div style="background: rgba(255, 68, 68, 0.1); border: 1px solid #ff4444; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                                <h3 style="color: #ff4444; margin: 0 0 10px 0;">⚠️ 数据丢失检测</h3>
+                                <p style="margin: 0; font-size: 14px;">如果您的角色突然消失，请使用以下功能恢复数据。</p>
+                            </div>
+
+                            <div class="recovery-section">
+                                <h4>🔍 第一步：检查数据状态</h4>
+                                <button onclick="checkDataStatus()" class="recovery-btn" style="background: #007AFF; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 15px;">
+                                    检查当前数据状态
+                                </button>
+                                <div id="data-status-result" style="background: #f5f5f5; border-radius: 8px; padding: 10px; margin-bottom: 20px; display: none;">
+                                    <pre id="data-status-text" style="font-size: 12px; margin: 0; white-space: pre-wrap;"></pre>
+                                </div>
+                            </div>
+
+                            <div class="recovery-section">
+                                <h4>📥 第二步：从导出数据恢复</h4>
+                                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">如果您有导出的数据文件，请粘贴到下方：</p>
+                                <textarea id="recovery-data-input" placeholder="请将导出的JSON数据粘贴到这里..." style="width: 100%; height: 120px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 12px; font-family: monospace;"></textarea>
+                                <button onclick="recoverFromInput()" class="recovery-btn" style="background: #34C759; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-top: 10px;">
+                                    开始恢复数据
+                                </button>
+                            </div>
+
+                            <div class="recovery-section">
+                                <h4>🧹 第三步：清理异常数据</h4>
+                                <button onclick="cleanupBadData()" class="recovery-btn" style="background: #FF9500; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
+                                    清除张三李四等异常角色
+                                </button>
+                                <button onclick="forceReload()" class="recovery-btn" style="background: #FF3B30; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%;">
+                                    强制重新加载数据
+                                </button>
+                            </div>
+
+                            <div id="recovery-log" style="background: #f8f8f8; border-radius: 8px; padding: 10px; margin-top: 20px; max-height: 200px; overflow-y: auto; display: none;">
+                                <h5 style="margin: 0 0 10px 0; color: #333;">恢复日志：</h5>
+                                <div id="recovery-log-content" style="font-size: 12px; font-family: monospace;"></div>
                             </div>
                         </div>
                     </div>
@@ -17519,13 +17587,22 @@ async function createGroupChat(personaId) {
             }
         }
         
+        // 🔥【修复】防止重复删除操作的标志
+        let isDeletingMessages = false;
+
         // 删除选中的消息
         async function deleteSelectedMessages() {
+            // 防止重复操作
+            if (isDeletingMessages) {
+                console.log('删除操作正在进行中，请稍候...');
+                return;
+            }
             if (selectedMessages.size === 0) return;
             
             if (!currentChatCharacter) return;
             
             if (confirm(`确定要删除选中的 ${selectedMessages.size} 条消息吗？此操作不可恢复！`)) {
+                isDeletingMessages = true; // 设置删除标志
                 const characterId = currentChatCharacter.id;
 
                 if (chatMessages[characterId]) {
@@ -32494,7 +32571,296 @@ async function aiUnblockUser(characterId) {
         setTimeout(() => {
             diagnoseDatabaseIssue();
         }, 5000);
-        
+
+        // 🔥【新增】紧急数据恢复功能
+        async function emergencyDataRecovery() {
+            console.log('=== 紧急数据恢复开始 ===');
+
+            try {
+                // 1. 检查IndexedDB中的数据
+                const dbCharacters = await db.characters.toArray();
+                const dbChatMessages = await db.chatMessages.toArray();
+                const dbContacts = await db.contacts.toArray();
+
+                console.log('IndexedDB角色数据:', dbCharacters);
+                console.log('IndexedDB聊天记录:', dbChatMessages);
+                console.log('IndexedDB联系人:', dbContacts);
+
+                // 2. 检查localStorage备份
+                const localCharacters = localStorage.getItem('characters');
+                const localChatMessages = localStorage.getItem('chatMessages');
+                const localContacts = localStorage.getItem('contacts');
+
+                console.log('localStorage角色备份:', localCharacters ? JSON.parse(localCharacters) : null);
+                console.log('localStorage聊天备份:', localChatMessages ? JSON.parse(localChatMessages) : null);
+                console.log('localStorage联系人备份:', localContacts ? JSON.parse(localContacts) : null);
+
+                return {
+                    indexedDB: { characters: dbCharacters, chatMessages: dbChatMessages, contacts: dbContacts },
+                    localStorage: {
+                        characters: localCharacters ? JSON.parse(localCharacters) : null,
+                        chatMessages: localChatMessages ? JSON.parse(localChatMessages) : null,
+                        contacts: localContacts ? JSON.parse(localContacts) : null
+                    }
+                };
+
+            } catch (error) {
+                console.error('数据恢复检查失败:', error);
+                return null;
+            }
+        }
+
+        // 🔥【新增】从导出数据恢复角色
+        async function recoverFromExportData(exportData) {
+            try {
+                console.log('开始从导出数据恢复...');
+
+                if (exportData.characters && exportData.characters.length > 0) {
+                    // 过滤掉张三李四
+                    const validCharacters = exportData.characters.filter(char =>
+                        char.name !== '张三' && char.name !== '李四'
+                    );
+
+                    console.log('有效角色数据:', validCharacters);
+
+                    // 恢复角色数据
+                    await db.characters.clear();
+                    await db.characters.bulkAdd(validCharacters);
+                    characters = validCharacters;
+
+                    // 恢复联系人列表
+                    const validContactIds = validCharacters.map(char => char.id);
+                    contacts = validContactIds;
+                    await saveContacts();
+
+                    console.log('角色数据恢复完成');
+                }
+
+                if (exportData.chatMessages) {
+                    // 恢复聊天记录
+                    await db.chatMessages.clear();
+                    for (const [characterId, messages] of Object.entries(exportData.chatMessages)) {
+                        if (messages && messages.length > 0) {
+                            for (const message of messages) {
+                                await db.chatMessages.add({
+                                    characterId: characterId,
+                                    ...message
+                                });
+                            }
+                        }
+                    }
+                    chatMessages = exportData.chatMessages;
+                    console.log('聊天记录恢复完成');
+                }
+
+                // 刷新界面
+                renderCharacterList();
+                renderContactList();
+                renderMessageList();
+
+                showToast('数据恢复成功！', 'success');
+                return true;
+
+            } catch (error) {
+                console.error('数据恢复失败:', error);
+                showToast('数据恢复失败: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // 🚨【紧急恢复功能】
+        function addRecoveryLog(message) {
+            const logDiv = document.getElementById('recovery-log');
+            const logContent = document.getElementById('recovery-log-content');
+
+            if (logDiv && logContent) {
+                logDiv.style.display = 'block';
+                const timestamp = new Date().toLocaleTimeString();
+                logContent.innerHTML += `[${timestamp}] ${message}\n`;
+                logContent.scrollTop = logContent.scrollHeight;
+            }
+        }
+
+        async function checkDataStatus() {
+            addRecoveryLog('开始检查数据状态...');
+
+            try {
+                // 检查IndexedDB数据
+                const dbCharacters = await db.characters.toArray();
+                const dbChatMessages = await db.chatMessages.toArray();
+                const dbContacts = await db.contacts.toArray();
+
+                // 检查localStorage备份
+                const localCharacters = localStorage.getItem('characters');
+                const localChatMessages = localStorage.getItem('chatMessages');
+                const localContacts = localStorage.getItem('contacts');
+
+                const statusText = `
+=== 数据状态检查结果 ===
+
+📊 IndexedDB 数据：
+- 角色数量: ${dbCharacters.length}
+- 聊天记录: ${dbChatMessages.length} 条
+- 联系人: ${dbContacts.length} 个
+
+📦 localStorage 备份：
+- 角色备份: ${localCharacters ? JSON.parse(localCharacters).length : 0} 个
+- 聊天备份: ${localChatMessages ? Object.keys(JSON.parse(localChatMessages)).length : 0} 个对话
+- 联系人备份: ${localContacts ? JSON.parse(localContacts).length : 0} 个
+
+🔍 当前内存状态：
+- 角色列表: ${characters.length} 个
+- 联系人列表: ${contacts.length} 个
+- 聊天记录: ${Object.keys(chatMessages).length} 个对话
+
+⚠️ 异常角色检测：
+${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => `- ${c.name} (ID: ${c.id})`).join('\n') || '未发现异常角色'}
+                `;
+
+                document.getElementById('data-status-result').style.display = 'block';
+                document.getElementById('data-status-text').textContent = statusText;
+
+                addRecoveryLog('数据状态检查完成');
+
+            } catch (error) {
+                addRecoveryLog('数据检查失败: ' + error.message);
+            }
+        }
+
+        async function recoverFromInput() {
+            const input = document.getElementById('recovery-data-input');
+            const dataText = input.value.trim();
+
+            if (!dataText) {
+                alert('请先粘贴导出的数据');
+                return;
+            }
+
+            try {
+                addRecoveryLog('开始解析导出数据...');
+                const exportData = JSON.parse(dataText);
+
+                if (!exportData.characters || !Array.isArray(exportData.characters)) {
+                    throw new Error('数据格式不正确，缺少角色信息');
+                }
+
+                addRecoveryLog(`发现 ${exportData.characters.length} 个角色`);
+
+                // 过滤掉张三李四
+                const validCharacters = exportData.characters.filter(char =>
+                    char.name !== '张三' && char.name !== '李四'
+                );
+
+                addRecoveryLog(`过滤后有效角色: ${validCharacters.length} 个`);
+
+                if (validCharacters.length === 0) {
+                    throw new Error('没有找到有效的角色数据');
+                }
+
+                // 恢复角色数据
+                await db.characters.clear();
+                await db.characters.bulkAdd(validCharacters);
+                characters = validCharacters;
+
+                // 恢复联系人列表
+                const validContactIds = validCharacters.map(char => char.id);
+                contacts = validContactIds;
+                await saveContacts();
+
+                addRecoveryLog('角色数据恢复完成');
+
+                // 恢复聊天记录
+                if (exportData.chatMessages) {
+                    await db.chatMessages.clear();
+                    let messageCount = 0;
+
+                    for (const [characterId, messages] of Object.entries(exportData.chatMessages)) {
+                        if (messages && messages.length > 0) {
+                            for (const message of messages) {
+                                await db.chatMessages.add({
+                                    characterId: characterId,
+                                    ...message
+                                });
+                                messageCount++;
+                            }
+                        }
+                    }
+                    chatMessages = exportData.chatMessages;
+                    addRecoveryLog(`聊天记录恢复完成: ${messageCount} 条消息`);
+                }
+
+                // 刷新界面
+                renderCharacterList();
+                renderContactList();
+                renderMessageList();
+
+                addRecoveryLog('✅ 数据恢复成功！');
+                alert('数据恢复成功！您的角色和聊天记录已恢复。');
+
+            } catch (error) {
+                addRecoveryLog('❌ 恢复失败: ' + error.message);
+                alert('恢复失败: ' + error.message);
+            }
+        }
+
+        async function cleanupBadData() {
+            try {
+                addRecoveryLog('开始清理异常数据...');
+
+                // 清除张三李四
+                const deletedCount = await db.characters.where('name').anyOf(['张三', '李四']).delete();
+                addRecoveryLog(`删除了 ${deletedCount} 个异常角色`);
+
+                // 更新内存数据
+                characters = characters.filter(char => char.name !== '张三' && char.name !== '李四');
+                contacts = contacts.filter(id => {
+                    const char = characters.find(c => c.id === id);
+                    return char && char.name !== '张三' && char.name !== '李四';
+                });
+
+                await saveContacts();
+
+                // 刷新界面
+                renderCharacterList();
+                renderContactList();
+                renderMessageList();
+
+                addRecoveryLog('✅ 异常数据清理完成');
+                alert('异常数据清理完成');
+
+            } catch (error) {
+                addRecoveryLog('❌ 清理失败: ' + error.message);
+                alert('清理失败: ' + error.message);
+            }
+        }
+
+        async function forceReload() {
+            try {
+                addRecoveryLog('开始强制重新加载数据...');
+
+                // 重新加载所有数据
+                await loadCharacterGroups();
+                await loadCharacters();
+                await loadContacts();
+                await loadChatMessages();
+                await loadChatSettings();
+                await loadPersonas();
+                await loadGroupChats();
+
+                // 刷新界面
+                renderCharacterList();
+                renderContactList();
+                renderMessageList();
+
+                addRecoveryLog('✅ 数据重新加载完成');
+                alert('数据重新加载完成');
+
+            } catch (error) {
+                addRecoveryLog('❌ 重新加载失败: ' + error.message);
+                alert('重新加载失败: ' + error.message);
+            }
+        }
+
     </script>
 </body>
 </html>
