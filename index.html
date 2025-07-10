@@ -1559,14 +1559,14 @@
                             </div>
                             <i class="fas fa-chevron-right"></i>
                         </div>
-                        <div class="settings-item" onclick="showApp('emergency-recovery-screen')" style="background: rgba(255, 68, 68, 0.1); border-left: 4px solid #ff4444;">
+                        <div class="settings-item" onclick="showApp('emergency-recovery-screen')">
                             <div class="settings-item-left">
                                 <div class="settings-icon" style="background: #ff4444; color: white;">
                                     <i class="fas fa-life-ring"></i>
                                 </div>
-                                <div style="color: #ff4444; font-weight: 600;">紧急恢复</div>
+                                <div>紧急恢复</div>
                             </div>
-                            <i class="fas fa-chevron-right" style="color: #ff4444;"></i>
+                            <i class="fas fa-chevron-right"></i>
                         </div>
                         <div class="settings-item" onclick="showApp('about-screen')">
                             <div class="settings-item-left">
@@ -1775,78 +1775,110 @@
                     </div>
                     <div class="app-content">
                         <div style="padding: 20px; color: #333;">
-                            <div style="background: rgba(255, 68, 68, 0.1); border: 1px solid #ff4444; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                                <h3 style="color: #ff4444; margin: 0 0 10px 0;">⚠️ 数据丢失检测</h3>
-                                <p style="margin: 0; font-size: 14px;">如果您的角色突然消失，请使用以下功能恢复数据。</p>
+                            <!-- 警告卡片 - 毛玻璃风格 -->
+                            <div style="background: linear-gradient(135deg, rgba(255, 68, 68, 0.15) 0%, rgba(255, 68, 68, 0.08) 100%); border: 2px solid rgba(255, 68, 68, 0.3); border-radius: 16px; padding: 20px; margin-bottom: 25px; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 8px 32px rgba(255, 68, 68, 0.1);">
+                                <h3 style="color: #ff4444; margin: 0 0 12px 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    <span>⚠️</span> 数据丢失检测
+                                </h3>
+                                <p style="margin: 0; font-size: 15px; color: #666; line-height: 1.5;">如果您的角色突然消失，请使用以下功能恢复数据。</p>
                             </div>
 
-                            <div class="recovery-section">
-                                <h4>🔍 第一步：检查数据状态</h4>
-                                <button onclick="checkDataStatus()" class="recovery-btn" style="background: #007AFF; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 15px;">
+                            <!-- 第一步 -->
+                            <div class="recovery-section" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);">
+                                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    <span>🔍</span> 第一步：检查数据状态
+                                </h4>
+                                <button onclick="checkDataStatus()" style="width: 100%; padding: 14px 20px; background: var(--theme-button-bg, rgba(74, 132, 193, 0.9)); color: var(--theme-button-color, white); border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); box-shadow: var(--theme-button-shadow, 0 4px 15px rgba(74, 132, 193, 0.3)); transition: all 0.3s ease; margin-bottom: 15px;">
                                     检查当前数据状态
                                 </button>
-                                <div id="data-status-result" style="background: #f5f5f5; border-radius: 8px; padding: 10px; margin-bottom: 20px; display: none;">
-                                    <pre id="data-status-text" style="font-size: 12px; margin: 0; white-space: pre-wrap;"></pre>
+                                <div id="data-status-result" style="background: rgba(248, 249, 250, 0.9); border-radius: 12px; padding: 15px; margin-bottom: 20px; display: none; backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05);">
+                                    <pre id="data-status-text" style="font-size: 12px; margin: 0; white-space: pre-wrap; color: #333; font-family: 'SF Mono', Monaco, monospace;"></pre>
                                 </div>
                             </div>
 
-                            <div class="recovery-section">
-                                <h4>🔍 第二步：深度数据挖掘</h4>
-                                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">搜索浏览器中可能残留的角色数据：</p>
-                                <button onclick="deepDataSearch()" class="recovery-btn" style="background: #FF9500; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
-                                    🔍 深度搜索残留数据
-                                </button>
-                                <button onclick="searchChatHistory()" class="recovery-btn" style="background: #5856D6; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
-                                    💬 从聊天记录推断角色
-                                </button>
-                                <div id="deep-search-result" style="background: #f5f5f5; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: none;">
-                                    <pre id="deep-search-text" style="font-size: 12px; margin: 0; white-space: pre-wrap;"></pre>
+                            <!-- 第二步 -->
+                            <div class="recovery-section" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);">
+                                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    <span>🔍</span> 第二步：深度数据挖掘
+                                </h4>
+                                <p style="font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.5;">搜索浏览器中可能残留的角色数据：</p>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <button onclick="deepDataSearch()" style="width: 100%; padding: 14px 20px; background: var(--theme-button-bg, rgba(74, 132, 193, 0.9)); color: var(--theme-button-color, white); border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); box-shadow: var(--theme-button-shadow, 0 4px 15px rgba(74, 132, 193, 0.3)); transition: all 0.3s ease;">
+                                        🔍 深度搜索残留数据
+                                    </button>
+                                    <button onclick="searchChatHistory()" style="width: 100%; padding: 14px 20px; background: var(--theme-button-secondary-bg, rgba(255, 255, 255, 0.8)); color: var(--theme-button-secondary-color, #666); border: 2px solid var(--theme-button-secondary-border, rgba(0, 0, 0, 0.1)); border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s ease;">
+                                        💬 从聊天记录推断角色
+                                    </button>
+                                </div>
+                                <div id="deep-search-result" style="background: rgba(248, 249, 250, 0.9); border-radius: 12px; padding: 15px; margin-top: 15px; display: none; backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05);">
+                                    <pre id="deep-search-text" style="font-size: 12px; margin: 0; white-space: pre-wrap; color: #333; font-family: 'SF Mono', Monaco, monospace;"></pre>
                                 </div>
                             </div>
 
-                            <div class="recovery-section">
-                                <h4>📥 第三步：文件导入恢复</h4>
-                                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">如果您有备份文件：</p>
-                                <input type="file" id="recovery-file-input" accept=".json" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px;">
-                                <button onclick="recoverFromFile()" class="recovery-btn" style="background: #34C759; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%;">
+                            <!-- 第三步 -->
+                            <div class="recovery-section" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);">
+                                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    <span>📥</span> 第三步：文件导入恢复
+                                </h4>
+                                <p style="font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.5;">如果您有备份文件：</p>
+                                <input type="file" id="recovery-file-input" accept=".json" style="width: 100%; padding: 12px 15px; border: 2px solid rgba(0, 0, 0, 0.08); border-radius: 12px; font-size: 16px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); transition: all 0.3s ease; color: #333; box-sizing: border-box; margin-bottom: 15px;">
+                                <button onclick="recoverFromFile()" style="width: 100%; padding: 14px 20px; background: var(--theme-button-bg, rgba(74, 132, 193, 0.9)); color: var(--theme-button-color, white); border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); box-shadow: var(--theme-button-shadow, 0 4px 15px rgba(74, 132, 193, 0.3)); transition: all 0.3s ease;">
                                     从文件恢复数据
                                 </button>
                             </div>
 
-                            <div class="recovery-section">
-                                <h4>🔧 第四步：重建角色卡</h4>
-                                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">从聊天记录重建丢失的角色：</p>
-                                <button onclick="rebuildCharactersFromChat()" class="recovery-btn" style="background: #32D74B; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
-                                    🔧 自动重建所有角色
-                                </button>
-                                <button onclick="showManualRebuild()" class="recovery-btn" style="background: #007AFF; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 15px;">
-                                    ✏️ 手动重建角色
-                                </button>
+                            <!-- 第四步 -->
+                            <div class="recovery-section" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);">
+                                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    <span>🔧</span> 第四步：重建角色卡
+                                </h4>
+                                <p style="font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.5;">从聊天记录重建丢失的角色：</p>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <button onclick="rebuildCharactersFromChat()" style="width: 100%; padding: 14px 20px; background: var(--theme-button-bg, rgba(74, 132, 193, 0.9)); color: var(--theme-button-color, white); border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); box-shadow: var(--theme-button-shadow, 0 4px 15px rgba(74, 132, 193, 0.3)); transition: all 0.3s ease;">
+                                        🔧 自动重建所有角色
+                                    </button>
+                                    <button onclick="showManualRebuild()" style="width: 100%; padding: 14px 20px; background: var(--theme-button-secondary-bg, rgba(255, 255, 255, 0.8)); color: var(--theme-button-secondary-color, #666); border: 2px solid var(--theme-button-secondary-border, rgba(0, 0, 0, 0.1)); border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s ease;">
+                                        ✏️ 手动重建角色
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="recovery-section">
-                                <h4>🔍 调试：检查当前状态</h4>
-                                <button onclick="debugCurrentState()" class="recovery-btn" style="background: #5856D6; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
-                                    🔍 检查当前数据状态
-                                </button>
-                                <button onclick="forceRefreshAll()" class="recovery-btn" style="background: #34C759; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 15px;">
-                                    🔄 强制刷新所有界面
-                                </button>
+                            <!-- 调试工具 -->
+                            <div class="recovery-section" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);">
+                                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    <span>🔍</span> 调试：检查当前状态
+                                </h4>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <button onclick="debugCurrentState()" style="width: 100%; padding: 14px 20px; background: var(--theme-button-secondary-bg, rgba(255, 255, 255, 0.8)); color: var(--theme-button-secondary-color, #666); border: 2px solid var(--theme-button-secondary-border, rgba(0, 0, 0, 0.1)); border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s ease;">
+                                        🔍 检查当前数据状态
+                                    </button>
+                                    <button onclick="forceRefreshAll()" style="width: 100%; padding: 14px 20px; background: var(--theme-button-bg, rgba(74, 132, 193, 0.9)); color: var(--theme-button-color, white); border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); box-shadow: var(--theme-button-shadow, 0 4px 15px rgba(74, 132, 193, 0.3)); transition: all 0.3s ease;">
+                                        🔄 强制刷新所有界面
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="recovery-section">
-                                <h4>🧹 第五步：清理异常数据</h4>
-                                <button onclick="cleanupBadData()" class="recovery-btn" style="background: #FF9500; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
-                                    清除张三李四等异常角色
-                                </button>
-                                <button onclick="forceReload()" class="recovery-btn" style="background: #FF3B30; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%;">
-                                    强制重新加载数据
-                                </button>
+                            <!-- 第五步 -->
+                            <div class="recovery-section" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);">
+                                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    <span>🧹</span> 第五步：清理异常数据
+                                </h4>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <button onclick="cleanupBadData()" style="width: 100%; padding: 14px 20px; background: var(--theme-button-secondary-bg, rgba(255, 255, 255, 0.8)); color: var(--theme-button-secondary-color, #666); border: 2px solid var(--theme-button-secondary-border, rgba(0, 0, 0, 0.1)); border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s ease;">
+                                        清除张三李四等异常角色
+                                    </button>
+                                    <button onclick="forceReload()" style="width: 100%; padding: 14px 20px; background: #FF3B30; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3); transition: all 0.3s ease;">
+                                        强制重新加载数据
+                                    </button>
+                                </div>
                             </div>
 
-                            <div id="recovery-log" style="background: #f8f8f8; border-radius: 8px; padding: 10px; margin-top: 20px; max-height: 200px; overflow-y: auto; display: none;">
-                                <h5 style="margin: 0 0 10px 0; color: #333;">恢复日志：</h5>
-                                <div id="recovery-log-content" style="font-size: 12px; font-family: monospace;"></div>
+                            <!-- 恢复日志 -->
+                            <div id="recovery-log" style="background: rgba(248, 249, 250, 0.9); border-radius: 16px; padding: 20px; margin-top: 20px; max-height: 200px; overflow-y: auto; display: none; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);">
+                                <h5 style="margin: 0 0 15px 0; color: #333; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    <span>📋</span> 恢复日志：
+                                </h5>
+                                <div id="recovery-log-content" style="font-size: 13px; font-family: 'SF Mono', Monaco, monospace; color: #555; line-height: 1.4;"></div>
                             </div>
                         </div>
                     </div>
@@ -3295,7 +3327,7 @@
             coreMemories: '&id, characterId, fact, importance, timestamp, type, category',
             episodicMemories: '&id, characterId, fact, importance, timestamp, category',
             memorySummaries: '&id, characterId, date, summary, timestamp, context',
-            memoryEvents: '&id, characterIds, eventType, timestamp, context',
+            memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
             crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId'
         }).upgrade(tx => {
             // 数据迁移逻辑
@@ -3328,10 +3360,36 @@
             coreMemories: '&id, characterId, fact, importance, timestamp, type, category',
             episodicMemories: '&id, characterId, fact, importance, timestamp, category',
             memorySummaries: '&id, characterId, date, summary, timestamp, context',
-            memoryEvents: '&id, characterIds, eventType, timestamp, context',
+            memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
             crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId'
         }).upgrade(async tx => {
             console.log('🔧 升级到版本7：修复游戏功能回档后的数据库问题');
+        });
+
+        // 🔥【新增】版本8：修复记忆系统表结构和ID问题
+        db.version(8).stores({
+            characters: '&id, name, groupId',
+            contacts: '++id, characterId',
+            chatMessages: '&id, characterId, timestamp',
+            apiSettings: '&id',
+            customEmojis: '&id, description',
+            worldbooks: '&id, title',
+            personas: '&id, name',
+            moments: '&id, authorId, timestamp',
+            momentLikes: '[momentId+authorId], momentId, authorId',
+            momentComments: '&id, momentId, authorId, timestamp',
+            recentEmojis: '&id, lastUsed',
+            blacklist: '&id, blockerId, blockedId, timestamp, cooldownMinutes, reason',
+            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
+            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
+            // 🔥【修复】记忆系统表结构，确保包含所有必需字段
+            coreMemories: '&id, characterId, fact, importance, timestamp, type, category',
+            episodicMemories: '&id, characterId, fact, importance, timestamp, category',
+            memorySummaries: '&id, characterId, date, summary, timestamp, context',
+            memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
+            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId'
+        }).upgrade(async tx => {
+            console.log('🔧 升级到版本8：修复记忆系统表结构和ID问题');
 
             // 清理可能存在的无效游戏事件记录
             try {
@@ -4245,13 +4303,19 @@
                     }
                 }
                 
-                // 清空现有数据
-                await db.characters.clear();
-                
-                // 批量插入新数据 - 使用bulkPut而不是bulkAdd来避免键冲突
-                if (uniqueCharacters.length > 0) {
-                    await db.characters.bulkPut(uniqueCharacters);
+                // 🔥【安全修复】使用事务确保原子操作，防止数据丢失
+                if (uniqueCharacters.length === 0) {
+                    console.warn('⚠️ 拒绝保存空角色数据，可能存在数据丢失风险');
+                    return;
                 }
+
+                // 使用事务进行原子操作
+                await db.transaction('rw', db.characters, async () => {
+                    await db.characters.clear();
+                    await db.characters.bulkPut(uniqueCharacters);
+                });
+
+                console.log(`✅ 安全保存了 ${uniqueCharacters.length} 个角色到数据库`);
                 
 
             } catch (error) {
@@ -4454,13 +4518,19 @@
                     }
                 }
                 
-                // 清空现有消息
-                await db.chatMessages.clear();
-                
-                // 批量插入新消息
-                if (messageArray.length > 0) {
-                    await db.chatMessages.bulkAdd(messageArray);
+                // 🔥【安全修复】使用事务确保原子操作，防止数据丢失
+                if (messageArray.length === 0) {
+                    console.warn('⚠️ 消息数据为空，跳过保存操作');
+                    return;
                 }
+
+                // 使用事务进行原子操作
+                await db.transaction('rw', db.chatMessages, async () => {
+                    await db.chatMessages.clear();
+                    await db.chatMessages.bulkAdd(messageArray);
+                });
+
+                console.log(`✅ 安全保存了 ${messageArray.length} 条消息到数据库`);
                 
 
             } catch (error) {
@@ -4469,9 +4539,7 @@
                 // 如果批量保存失败，使用简化的重试机制
                 try {
 
-                    await db.chatMessages.clear();
-                    
-                    // 只保存最近的1000条消息，避免过大的数据集
+                    // 🔥【安全修复】使用事务进行重试保存
                     const messageArray = [];
                     let globalSequentialId = 0;
                     let totalMessages = 0;
@@ -4579,11 +4647,19 @@
                     settings: chatSettings[chatId]
                 }));
                 
-                // 清空现有数据并存储新数据
-                await db.chatSettings.clear();
-                if (chatSettingsArray.length > 0) {
-                    await db.chatSettings.bulkAdd(chatSettingsArray);
+                // 🔥【安全修复】使用事务确保原子操作，防止数据丢失
+                if (chatSettingsArray.length === 0) {
+                    console.warn('⚠️ 聊天设置数据为空，跳过保存操作');
+                    return;
                 }
+
+                // 使用事务进行原子操作
+                await db.transaction('rw', db.chatSettings, async () => {
+                    await db.chatSettings.clear();
+                    await db.chatSettings.bulkAdd(chatSettingsArray);
+                });
+
+                console.log(`✅ 安全保存了 ${chatSettingsArray.length} 个聊天设置到数据库`);
                 
                 console.log('聊天设置已保存到IndexedDB');
             } catch (error) {
@@ -6903,7 +6979,12 @@ ${chatContext}${momentsContext}
                         // 处理@内容
                         processedContent = processMentions(processedContent);
 
-                        messageContent = processedContent;
+                        // 如果有引用消息，在内容前添加引用显示
+                        if (message.replyTo) {
+                            messageContent = generateReplyHTML(message.replyTo) + processedContent;
+                        } else {
+                            messageContent = processedContent;
+                        }
                     }
                     
                     let avatarHtml = '';
@@ -7075,9 +7156,16 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                             // 新的多模态格式
                             const textPart = message.content.find(p => p.type === 'text');
                             const imagePart = message.content.find(p => p.type === 'image_url');
-                            
-                            myMessageContent = textPart?.text || '';
-                            
+
+                            let baseContent = textPart?.text || '';
+
+                            // 如果有引用消息，在内容前添加引用显示
+                            if (message.replyTo) {
+                                myMessageContent = generateReplyHTML(message.replyTo) + baseContent;
+                            } else {
+                                myMessageContent = baseContent;
+                            }
+
                             // 如果有图片，添加图片显示
                             if (imagePart?.image_url?.url) {
                                 if (myMessageContent) {
@@ -7090,7 +7178,13 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                             let baseContent = message.content;
                             // 处理@内容
                             baseContent = processMentions(baseContent);
-                            myMessageContent = baseContent;
+
+                            // 如果有引用消息，在内容前添加引用显示
+                            if (message.replyTo) {
+                                myMessageContent = generateReplyHTML(message.replyTo) + baseContent;
+                            } else {
+                                myMessageContent = baseContent;
+                            }
                         }
                     }
                     
@@ -8020,7 +8114,12 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
 async function startChat(character) {
     // [核心修复] 记录上一个聊天ID，用于清理
     const previousChatId = currentChatCharacter ? currentChatCharacter.id : null;
-    
+
+    // 🔥【新增】保存当前聊天的引用状态（如果有的话）
+    if (previousChatId && currentReplyTo) {
+        chatReplyStates[previousChatId] = { ...currentReplyTo };
+    }
+
     // 设置当前聊天角色
             currentChatCharacter = character;
             
@@ -8096,11 +8195,30 @@ async function startChat(character) {
             initScheduledMomentsSystem();
 
             renderChatMessages(character.id);
+
+            // 🔥【新增】恢复当前聊天的引用状态
+            if (chatReplyStates[character.id]) {
+                currentReplyTo = { ...chatReplyStates[character.id] };
+                showReplyPreview();
+            } else {
+                // 清除引用状态
+                currentReplyTo = null;
+                const existingPreview = document.getElementById('reply-preview');
+                if (existingPreview) {
+                    existingPreview.remove();
+                }
+            }
+
             showApp('api-chat-screen');
         }
         
         // 从聊天界面返回到聊天应用
         function backToChatApp() {
+            // 🔥【新增】保存当前聊天的引用状态
+            if (currentChatCharacter && currentReplyTo) {
+                chatReplyStates[currentChatCharacter.id] = { ...currentReplyTo };
+            }
+
             // 清除当前角色的后台定时器
             clearAllBackgroundTimers();
             // 🔥【新增】清除状态更新定时器
@@ -9331,6 +9449,14 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                             // 🔥【新增】处理撤回消息
                             console.log('解析到撤回消息指令:', item);
                             processedMessages.push(item);
+                        } else if (typeof item === 'object' && item.type === 'reply_to') {
+                            // 🔥【新增】处理AI引用回复
+                            console.log('解析到AI引用回复指令:', item);
+                            processedMessages.push({
+                                type: 'reply_to',
+                                message_id: item.message_id,
+                                content: item.content || ''
+                            });
                         } else if (typeof item === 'string') {
                             // 🚨 【新增】检查并修复合并消息问题
                             if (item.includes('\n')) {
@@ -9455,6 +9581,14 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                                 // 🔥【新增】处理撤回消息(第二处)
                                 console.log('解析到撤回消息指令(第二处):', item);
                                 processedMessages.push(item);
+                            } else if (typeof item === 'object' && item.type === 'reply_to') {
+                                // 🔥【新增】处理AI引用回复(第二处)
+                                console.log('解析到AI引用回复指令(第二处):', item);
+                                processedMessages.push({
+                                    type: 'reply_to',
+                                    message_id: item.message_id,
+                                    content: item.content || ''
+                                });
                             } else if (typeof item === 'string') {
                                 // 🚨 【新增】检查并修复合并消息问题
                                 if (item.includes('\n')) {
@@ -9567,7 +9701,13 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                 id: Date.now().toString(),
                 sender: 'sent',
                 content: messageContent, // 使用新的数组格式
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                // 如果有引用消息，添加引用信息
+                replyTo: currentReplyTo ? {
+                    id: currentReplyTo.id,
+                    content: currentReplyTo.content,
+                    senderName: currentReplyTo.senderName
+                } : null
             };
             
 
@@ -9598,6 +9738,12 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
             // 清空输入框并刷新UI
             if (chatInput) {
                 chatInput.value = '';
+            }
+
+            // 🔥【新增】清除引用状态
+            cancelReply();
+            if (currentChatCharacter) {
+                delete chatReplyStates[currentChatCharacter.id];
             }
             addMessageWithAnimation(message, currentChatCharacter.id);
             renderMessageList();
@@ -10021,7 +10167,7 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                     // 处理引用消息
                     if (message.replyTo) {
                         const quoteSender = message.replyTo.senderName || (message.replyTo.sender === 'sent' ? userName : characterName);
-                        const quoteContent = truncateText(message.replyTo.content || '[消息已删除]', 50);
+                        const quoteContent = truncateText(message.replyTo.content || '[消息已删除]', 20);
                         messageContent += `
                 <div class="quote-block">
                     <div class="quote-sender">${escapeHtml(quoteSender)}</div>
@@ -10124,6 +10270,41 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
         function truncateText(text, maxLength) {
             if (text.length <= maxLength) return text;
             return text.substring(0, maxLength) + '...';
+        }
+
+        // 🔥【新增】根据消息ID查找消息
+        function findMessageById(messageId) {
+            if (!currentChatCharacter || !chatMessages[currentChatCharacter.id]) {
+                console.log('🔍 [引用调试] findMessageById: 没有当前角色或消息记录');
+                return null;
+            }
+
+            const messages = chatMessages[currentChatCharacter.id];
+            console.log(`🔍 [引用调试] findMessageById: 查找ID=${messageId}, 总消息数=${messages.length}`);
+
+            // 🔥【调试】列出所有消息ID
+            messages.forEach((msg, index) => {
+                if (msg.id) {
+                    console.log(`🔍 [引用调试] 消息${index}: ID=${msg.id}, sender=${msg.sender}`);
+                }
+            });
+
+            const result = messages.find(msg => msg.id === messageId);
+            console.log(`🔍 [引用调试] 查找结果:`, result ? '找到' : '未找到');
+            return result;
+        }
+
+        // 🔥【新增】获取当前用户身份名称
+        function getCurrentPersonaName() {
+            const chatSettings = getCurrentChatSettings();
+            if (chatSettings.selectedIdentityId) {
+                const selectedPersona = personas.find(p => p.id === chatSettings.selectedIdentityId);
+                if (selectedPersona) {
+                    // 优先使用群聊昵称
+                    return chatSettings.myChatNickname || selectedPersona.name;
+                }
+            }
+            return '用户';
         }
         
 
@@ -10503,35 +10684,55 @@ async function applyChatBackground(backgroundUrl) {
         
         // 引用消息功能
         let currentReplyTo = null;
+
+        // 🔥【新增】每个聊天的引用状态存储
+        let chatReplyStates = {};
         
         // 🔥【修复】引用消息 - 支持传入消息ID
         function replyToMessage(messageId = null) {
             const targetMessageId = messageId || selectedMessageId;
             if (!targetMessageId) return;
-            
+
             const messages = chatMessages[currentChatCharacter.id] || [];
             const message = messages.find(msg => msg.id === targetMessageId);
-            
+
             if (message) {
                 // 设置引用信息
+                let messageContent = message.content || '[图片]';
+
+                // 🔥【修复】处理多模态消息内容
+                if (Array.isArray(message.content)) {
+                    const textPart = message.content.find(p => p.type === 'text');
+                    messageContent = textPart?.text || '[多媒体消息]';
+                } else if (typeof message.content === 'string') {
+                    messageContent = message.content;
+                } else {
+                    messageContent = '[特殊消息]';
+                }
+
                 currentReplyTo = {
                     id: message.id,
-                    content: message.content || '[图片]',
+                    content: messageContent,
                     sender: message.sender,
                     timestamp: message.timestamp,
                     senderName: getSenderDisplayName(message)
                 };
-                
+
+                // 🔥【新增】保存当前聊天的引用状态
+                if (currentChatCharacter) {
+                    chatReplyStates[currentChatCharacter.id] = { ...currentReplyTo };
+                }
+
                 // 显示引用预览
                 showReplyPreview();
-                
+
                 // 聚焦到输入框
                 const inputBox = document.getElementById('api-chat-input');
                 if (inputBox) {
                     inputBox.focus();
                 }
             }
-            
+
             hideMessageMenu();
         }
         
@@ -10568,21 +10769,21 @@ async function applyChatBackground(backgroundUrl) {
         // 显示引用预览
         function showReplyPreview() {
             if (!currentReplyTo) return;
-            
+
             // 移除已存在的引用预览
             const existingPreview = document.getElementById('reply-preview');
             if (existingPreview) {
                 existingPreview.remove();
             }
-            
+
             // 创建引用预览元素
             const replyPreview = document.createElement('div');
             replyPreview.id = 'reply-preview';
             replyPreview.className = 'reply-preview';
-            
-            // 截断显示内容
-            const displayContent = truncateText(currentReplyTo.content, 50);
-            
+
+            // 截断显示内容 - 缩短到25字符
+            const displayContent = truncateText(currentReplyTo.content, 25);
+
             replyPreview.innerHTML = `
                 <div class="reply-preview-content">
                     <div class="reply-preview-line"></div>
@@ -10595,17 +10796,33 @@ async function applyChatBackground(backgroundUrl) {
                     </button>
                 </div>
             `;
-            
-            // 插入到输入区域上方
+
+            // 🔥【修复】确保引用预览可见
+            replyPreview.style.display = 'block';
+            replyPreview.style.visibility = 'visible';
+
+            // 插入到输入区域内部的顶部
             const inputArea = document.querySelector('.chat-input-area');
             if (inputArea) {
-                inputArea.parentNode.insertBefore(replyPreview, inputArea);
+                // 将引用预览插入到输入区域的第一个子元素之前
+                const firstChild = inputArea.firstElementChild;
+                if (firstChild) {
+                    inputArea.insertBefore(replyPreview, firstChild);
+                } else {
+                    inputArea.appendChild(replyPreview);
+                }
             }
         }
         
         // 取消引用
         function cancelReply() {
             currentReplyTo = null;
+
+            // 🔥【新增】清除当前聊天的引用状态
+            if (currentChatCharacter) {
+                delete chatReplyStates[currentChatCharacter.id];
+            }
+
             const replyPreview = document.getElementById('reply-preview');
             if (replyPreview) {
                 replyPreview.remove();
@@ -10616,7 +10833,7 @@ async function applyChatBackground(backgroundUrl) {
         function generateReplyHTML(replyTo) {
             if (!replyTo) return '';
 
-            let displayContent = truncateText(replyTo.content, 40);
+            let displayContent = truncateText(replyTo.content, 20);
             // 处理引用消息中的@内容
             displayContent = processMentions(displayContent);
 
@@ -11890,13 +12107,19 @@ async function applyChatBackground(backgroundUrl) {
             try {
                 console.log('保存世界书数据到IndexedDB:', worldbooks);
                 
-                // 清空现有数据
-                await db.worldbooks.clear();
-                
-                // 批量插入新数据
-                if (worldbooks.length > 0) {
-                    await db.worldbooks.bulkAdd(worldbooks);
+                // 🔥【安全修复】使用事务确保原子操作，防止数据丢失
+                if (worldbooks.length === 0) {
+                    console.warn('⚠️ 世界书数据为空，跳过保存操作');
+                    return;
                 }
+
+                // 使用事务进行原子操作
+                await db.transaction('rw', db.worldbooks, async () => {
+                    await db.worldbooks.clear();
+                    await db.worldbooks.bulkAdd(worldbooks);
+                });
+
+                console.log(`✅ 安全保存了 ${worldbooks.length} 个世界书到数据库`);
                 
                 console.log('世界书数据保存成功');
             } catch (error) {
@@ -12689,13 +12912,19 @@ function onWorldbookAddClick() {
             try {
                 console.log('保存面具数据到IndexedDB:', personas);
                 
-                // 清空现有数据
-                await db.personas.clear();
-                
-                // 批量插入新数据
-                if (personas.length > 0) {
-                    await db.personas.bulkAdd(personas);
+                // 🔥【安全修复】使用事务确保原子操作，防止数据丢失
+                if (personas.length === 0) {
+                    console.warn('⚠️ 面具数据为空，跳过保存操作');
+                    return;
                 }
+
+                // 使用事务进行原子操作
+                await db.transaction('rw', db.personas, async () => {
+                    await db.personas.clear();
+                    await db.personas.bulkAdd(personas);
+                });
+
+                console.log(`✅ 安全保存了 ${personas.length} 个面具到数据库`);
                 
                 console.log('面具数据保存成功');
             } catch (error) {
@@ -13072,7 +13301,7 @@ ${character.bio}
                 modeInstructions = `\n# 聊天模式：线上模式\n- 你必须按照手机聊天或面对面对话的格式进行输出\n- **严格禁止**任何动作描写、神态描写、心理描写\n- 只能进行纯语言交流，不能描述任何身体动作、表情、环境等\n- 每条消息都应该是可以通过文字直接表达的内容`;
                 if (isGroupChat) {
             const membersList = character.members.map(member => `**${member.name}**: ${member.bio}`).join('\n');
-                    taskInstructions = `\n# 你的任务：\n你需要扮演以下群成员角色，在群聊中进行自然对话：\n${membersList}\n\n1. 你可以扮演任何一个群成员角色进行回复，但不能扮演用户。\n2. 你的回复必须是一个JSON数组格式的字符串，每个元素是一个对象：{"name": "角色名", "message": "消息内容"}。\n3. 你可以生成1~8条消息，模拟群聊中多个角色的互动。\n4. 每条消息不能超过25字，要简短有力。\n5. 禁止进行任何有关线下面对面互动的神态描写、动作描写。\n6. 自然地演绎各个角色，让他们有不同的说话风格。\n7. 绝对不能使用用户的名字发言。\n8. **重要**：如果用户的消息中包含@某个角色或数字暗号，请结合该角色的私聊记忆来理解含义并做出合适的回应。\n\n# JSON输出格式示例:\n[{"name": "小明", "message": "大家好呀！"}, {"name": "小红", "message": "今天天气真好"}, {"name": "小明", "message": "想出去走走吗？"}]`;
+                    taskInstructions = `\n# 你的任务：\n你需要扮演以下群成员角色，在群聊中进行自然对话：\n${membersList}\n\n1. 你可以扮演任何一个群成员角色进行回复，但不能扮演用户。\n2. 你的回复必须是一个JSON数组格式的字符串，每个元素是一个对象：{"name": "角色名", "message": "消息内容"}。\n3. 你可以生成1~8条消息，模拟群聊中多个角色的互动。\n4. 每条消息不能超过25字，要简短有力。\n5. 禁止进行任何有关线下面对面互动的神态描写、动作描写。\n6. 自然地演绎各个角色，让他们有不同的说话风格，并且能够遵循各自的人设说话、互动。\n7. 绝对不能使用用户的名字发言。\n8. **重要**：如果用户的消息中包含@某个角色或数字暗号，请结合该角色的私聊记忆来理解含义并做出合适的回应。\n\n# JSON输出格式示例:\n[{"name": "小明", "message": "大家好呀！"}, {"name": "小红", "message": "今天天气真好"}, {"name": "小明", "message": "想出去走走吗？"}]`;
                 } else {
                     taskInstructions = `\n1. 请你以你的角色的身份，严格按照角色设定进行回复和行动，不要跳出角色。自然地推进剧情。\n2. 你可以一次性生成多条消息，模拟真人在聊天中连续发送多条信息的情景。\n3. 你的回复必须是一个JSON数组格式的字符串，每个元素是一条消息。\n\n# JSON输出格式示例:\n["很高兴认识你呀，在干嘛呢？", "今天天气真好", "想出去走走吗？"]`;
                 }
@@ -13096,7 +13325,7 @@ ${character.bio}
                     characterPrompt += `${index + 1}. ${emoji.description || '表情包'}\n`;
                 });
                 
-                characterPrompt += `\n## 使用规则：\n- 只能使用上述列表中的表情包，禁止虚构\n- 发送格式：{"type": "emoji", "description": "具体的表情包描述"}\n- 合适的时候使用即可，以普通对话为主\n- 必须使用表情包列表中完全一致的描述文字\n\n示例：["你好！", "今天心情真好~", {"type": "emoji", "description": "笑哭的表情"}]`;
+                characterPrompt += `\n## 使用规则：\n- 只能使用上述列表中的表情包，禁止虚构\n- 发送格式：{"type": "emoji", "description": "具体的表情包描述"}\n- 合适的时候使用即可，以普通对话为主\n- 必须使用表情包列表中完全一致的描述文字\n- **重要：当用户发送表情包时，只在第一次看到时评价，后续不要重复评价同一个表情包**\n\n示例：["你好！", "今天心情真好~", {"type": "emoji", "description": "笑哭的表情"}]`;
             }
             
             const aiImageInstructions = `\n# 发送图片的能力\n- 你无法发送真实的图片文件。但当用户要求你发送照片，或者你想通过图片来表达时，你可以发送一张"文字描述的图片"。\n- 若要发送图片，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "ai_image", "description": "这里是对图片的详细文字描述..."}\`。这个描述应该生动、具体，让用户能通过文字想象出画面，以第三人称视角描述。例如：\`{"type": "ai_image", "description": "照片里一只橘猫正懒洋洋地趴在窗台上晒太阳，阳光把它金色的毛照得发亮，背景是蔚蓝的天空和几朵白云。"}\`\n- 你可以在对话中先做铺垫，然后发送这张特殊的"图片"。\n\n# 理解用户照片的能力\n- 当历史记录中出现 "[你收到了一张用户描述的照片，照片内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"看"到了这张照片。\n- 你应该对照片内容做出自然的评论或回应，比如夸奖、询问细节、表达感受等。\n\n# 发送"伪照片"的能力\n- 你可以像用户一样发送"伪照片"，这是一种带有文字描述的照片卡片。\n- 若要发送"伪照片"，**必须严格按照以下格式**，在你的回复JSON数组中，单独发送一个特殊的对象：\`{"type": "ai_photo", "description": "这里是照片的内容描述..."}\`。\n- 例如：\`{"type": "ai_photo", "description": "我刚拍的窗外风景，阳光透过树叶洒在地上，形成斑驳的光影。"}\`\n- 这种照片会显示为一个卡片，用户点击后可以看到你的描述。\n- **重要**：必须使用"ai_photo"作为type字段的值，不要使用其他值如"photo"或"image"。description字段必须包含照片的详细描述。\n\n# 发送位置的能力\n- 你可以像用户一样发送位置信息。\n- 若要发送位置，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "location", "name": "位置名称", "coordinates": "坐标信息"}\`。\n- 例如：\`{"type": "location", "name": "中央公园", "coordinates": "116.3°E, 39.9°N"}\`\n- 你可以在对话中先做铺垫，然后发送这个位置信息。`;
@@ -13110,15 +13339,47 @@ ${character.bio}
 - **被拉黑后的行为**: 如果你被用户拉黑，你将无法主动发送消息。当用户尝试与你对话时，你应该表现出困惑或者询问是否已经将你从黑名单移除。
 - **好友申请**: 当用户从黑名单中将你移除后，他们可能会重新发送好友申请。届时你会收到类似 "[系统消息：用户向你发送了好友申请，理由：xxx]" 的提示，你需要根据你的人设和心情决定是否同意。
 `;
-    characterPrompt += aiImageInstructions + aiVoiceInstructions + transferInstructions + avatarChangeInstructions + blacklistInstructions;
+
+    const replyInstructions = `
+# **消息引用功能**
+## **理解引用消息**
+- 当历史记录中出现 "[回复 某人: "消息内容"] 实际回复内容" 格式时，这表示某人在回复特定的消息
+- 你需要理解这种引用关系，知道回复者是在针对哪条具体消息进行回应
+- 引用功能是专门用来回复某一条特定消息的，而不是泛泛的对话
+
+## **主动使用引用功能**
+- **何时使用引用**: 当你想要针对用户之前说过的某条具体消息进行回应时，特别是：
+  - 回答用户之前提出的问题
+  - 对用户之前的某个观点进行评论
+  - 澄清或补充之前讨论过的话题
+  - 当对话中有多个话题时，明确你在回应哪个话题
+
+- **如何使用引用**: 在你的回复JSON数组中，发送特殊对象：\`{"type": "reply_to", "message_id": "消息ID", "content": "你的回复内容"}\`
+- **重要**: message_id必须是历史对话中真实存在的消息ID，格式为纯数字字符串（如"1704067200000"），不能虚构
+- **ID格式说明**: 历史记录中每条消息都有[ID:xxxxx]标记，使用xxxxx部分作为message_id
+
+## **引用使用示例**
+- 普通回复：["好的，我明白了"]
+- 引用回复：[{"type": "reply_to", "message_id": "1704067200000", "content": "关于你刚才说的那个问题，我觉得..."}]
+- 混合使用：["嗯嗯", {"type": "reply_to", "message_id": "1704067201000", "content": "对了，关于你之前问的事情..."}]
+- **注意**: 必须使用历史记录中显示的真实ID，如[ID:1704067200000]中的1704067200000
+
+## **注意事项**
+- 只在确实需要明确回应特定消息时使用引用功能
+- 不要过度使用，普通对话仍然以常规回复为主
+- 引用时要确保message_id是真实存在的
+- 在群聊中，引用功能特别有用，可以避免混淆
+`;
+    characterPrompt += aiImageInstructions + aiVoiceInstructions + transferInstructions + avatarChangeInstructions + blacklistInstructions + replyInstructions;
 
                 // 🔥【优化】智能回应图片/表情包的指令
             characterPrompt += `\n\n# **关于图片和表情包的回应原则**
-- **首次看到用户的图片或表情包时，可以自然地做出评论和反应**
-- **如果历史对话中你已经对某个图片或表情包有过具体评价，后续回复中不要再刻意重复相同的评价**
-- **可以简单提及，但要转向新的话题或角度，保持对话的推进感**
-- **重点关注当前对话的新内容和发展，而不是一直停留在之前的图片或表情包上**
-- **例如：第一次看到可爱的兔子表情包可以说"好可爱的兔子"，但下一回合回复就不要再专门评论这个兔子了**
+- **【重要】对于用户发送的表情包，只在第一次看到时进行评价，后续对话中严禁重复评价同一个表情包**
+- **如果历史对话中你已经对某个表情包有过评价，绝对不要再次评论该表情包的内容、外观或含义**
+- **当用户再次发送相同表情包时，将其视为普通的情感表达，直接回应对话内容，不要评价表情包本身**
+- **重点关注对话的实质内容和发展，表情包只是情感表达工具，不是讨论重点**
+- **例如：第一次看到兔子表情包可以说"好可爱的兔子"，但之后用户再发这个表情包时，只需回应对话内容，不要再提兔子**
+- **【严格禁止】连续多轮对话中反复提及同一个表情包的描述、外观或特征**
 
 # **最后重申**
 请再次确认，你的最终输出**【必须】**是一个严格的JSON数组，其中每个元素代表一条独立的消息。`;
@@ -13500,18 +13761,43 @@ ${character.bio}
             
             // 🔥【优化】分析历史中的图片/表情包内容，帮助AI避免重复
             const recentImageEmojis = [];
-            recentHistory.forEach(msg => {
+            const emojiEvaluationHistory = new Map(); // 记录每个表情包的评价历史
+
+            recentHistory.forEach((msg, index) => {
                 if (msg.isEmoji && msg.emojiDescription) {
                     recentImageEmojis.push(msg.emojiDescription);
+
+                    // 记录AI对表情包的评价历史
+                    if (msg.sender === 'received' && index > 0) {
+                        const prevMsg = recentHistory[index - 1];
+                        if (prevMsg && prevMsg.isEmoji && prevMsg.emojiDescription && prevMsg.sender === 'sent') {
+                            // AI回复了用户的表情包，记录这个评价
+                            emojiEvaluationHistory.set(prevMsg.emojiDescription, msg.content);
+                        }
+                    }
                 } else if (msg.image || Array.isArray(msg.content)) {
                     recentImageEmojis.push('图片');
                 }
             });
-            
+
+            // 🔥【调试】记录历史消息详情，帮助诊断引用问题
+            console.log('🔍 [引用调试] 构建历史记录，消息数量:', recentHistory.length);
+            recentHistory.forEach((msg, index) => {
+                if (msg.id) {
+                    console.log(`🔍 [引用调试] 消息${index}: ID=${msg.id}, sender=${msg.sender}, content="${msg.content?.substring(0, 30)}..."`);
+                }
+            });
+
             // 处理历史消息
             recentHistory.forEach(msg => {
                 let role = msg.sender === 'sent' ? 'user' : 'assistant';
                         let content = msg.content;
+
+                        // 🔥【新增】处理引用信息
+                        if (msg.replyTo) {
+                            const replyPrefix = `[回复 ${msg.replyTo.senderName}: "${msg.replyTo.content}"] `;
+                            content = replyPrefix + content;
+                        }
                         
                 // 🔥【关键修复】将历史消息中的特殊格式转换为AI能理解的文本
                         if (msg.type === 'user_photo') {
@@ -13537,9 +13823,17 @@ ${character.bio}
                             // 🔥【修复】处理AI发送的图片
                             content = `[AI发送了一张图片，描述：${msg.imageDescription || '无描述'}]`;
                         } else if (msg.isEmoji && msg.image) {
-                            // 🔥【优化】处理表情包消息 - 保留描述但标记为历史
+                            // 🔥【优化】处理表情包消息 - 简化历史记录，避免重复评价
                             if (msg.sender === 'sent') {
-                                content = `[用户发送了表情包：${msg.emojiDescription || '表情包'}]`;
+                                // 检查是否是重复的表情包
+                                const isDuplicate = recentHistory.slice(0, recentHistory.indexOf(msg))
+                                    .some(prevMsg => prevMsg.isEmoji && prevMsg.emojiDescription === msg.emojiDescription);
+
+                                if (isDuplicate) {
+                                    content = `[用户发送了表情包]`; // 不包含具体描述，避免重复
+                                } else {
+                                    content = `[用户发送了表情包：${msg.emojiDescription || '表情包'}]`;
+                                }
                             } else {
                                 content = `[AI回复了表情包：${msg.emojiDescription || '表情包'}]`;
                             }
@@ -13567,7 +13861,12 @@ ${character.bio}
                     console.warn('发现非字符串content，强制转换:', content);
                     content = String(content);
                 }
-                
+
+                // 🔥【新增】为AI提供消息ID信息，方便引用
+                if (msg.id) {
+                    content = `[ID:${msg.id}] ${content}`;
+                }
+
                 messages.push({ role, content });
             });
 
@@ -13649,16 +13948,40 @@ ${character.bio}
                 }
             }
 
-            // 🔥【优化】如果最近讨论过图片或表情包，给AI一个提示
+            // 🔥【优化】如果最近讨论过图片或表情包，给AI一个强制性提示
             if (recentImageEmojis.length > 0) {
-                const contextHint = `\n\n[对话上下文提示：最近的对话中包含了${recentImageEmojis.slice(-3).join('、')}等内容，请在回复时保持对话的自然流畅，避免过度重复之前已评论过的内容]`;
+                const uniqueEmojis = [...new Set(recentImageEmojis)];
+                let contextHint = `\n\n[重要提示：最近对话中包含了${uniqueEmojis.slice(-3).join('、')}等内容。`;
+
+                // 如果有表情包评价历史，添加强制性指令
+                if (emojiEvaluationHistory.size > 0) {
+                    const evaluatedEmojis = Array.from(emojiEvaluationHistory.keys());
+                    contextHint += `你已经评价过以下表情包：${evaluatedEmojis.join('、')}。严禁再次评价这些表情包的外观、内容或特征。`;
+                }
+
+                contextHint += `请专注于对话内容本身，不要重复评价已经评论过的表情包]`;
                 characterPrompt += contextHint;
                 messages[0].content = characterPrompt; // 更新系统提示
             }
             
             // 处理当前要发送的消息 (最关键的改动)
             // 如果 message 是数组，直接使用；如果是字符串，包装成数组
-            const currentUserContent = Array.isArray(message) ? message : [{ type: 'text', text: message }];
+            let currentUserContent = Array.isArray(message) ? message : [{ type: 'text', text: message }];
+
+            // 🔥【新增】检查当前消息是否是重复的表情包
+            if (pendingUserMessage && pendingUserMessage.isEmoji && pendingUserMessage.emojiDescription) {
+                const currentEmojiDesc = pendingUserMessage.emojiDescription;
+                const hasEvaluatedBefore = emojiEvaluationHistory.has(currentEmojiDesc);
+
+                if (hasEvaluatedBefore) {
+                    // 如果之前评价过这个表情包，修改当前消息内容
+                    currentUserContent = [{ type: 'text', text: `[用户发送了表情包，请直接回应对话内容，不要评价表情包本身]` }];
+                } else {
+                    // 第一次看到这个表情包，正常处理
+                    currentUserContent = [{ type: 'text', text: `[用户发送了表情包：${currentEmojiDesc}]` }];
+                }
+            }
+
             messages.push({ role: 'user', content: currentUserContent });
 
             const isGemini = apiSettings.base.includes('generativelanguage.googleapis.com');
@@ -15101,10 +15424,13 @@ ${character.bio}
         // 保存自定义表情包 - 使用IndexedDB
         async function saveCustomEmojis() {
             try {
-                await db.customEmojis.clear();
-                if (customEmojis.length > 0) {
-                    await db.customEmojis.bulkAdd(customEmojis);
-                }
+                // 🔥【安全修复】使用事务确保原子操作
+                await db.transaction('rw', db.customEmojis, async () => {
+                    await db.customEmojis.clear();
+                    if (customEmojis.length > 0) {
+                        await db.customEmojis.bulkAdd(customEmojis);
+                    }
+                });
                 
                 // 🔧【修复】将recentEmojis也迁移到IndexedDB，彻底解决localStorage问题
                 try {
@@ -15114,17 +15440,19 @@ ${character.bio}
                         recentEmojis = recentEmojis.slice(0, maxRecentEmojis);
                     }
                     
-                    // 将recentEmojis也保存到IndexedDB
-                    await db.recentEmojis.clear();
-                    if (recentEmojis.length > 0) {
-                        const recentEmojisWithId = recentEmojis.map((emoji, index) => ({
-                            id: index + 1,
-                            url: emoji.url,
-                            description: emoji.description || '表情包',
-                            lastUsed: Date.now() - index * 1000 // 确保顺序
-                        }));
-                        await db.recentEmojis.bulkAdd(recentEmojisWithId);
-                    }
+                    // 🔥【安全修复】将recentEmojis也保存到IndexedDB，使用事务
+                    await db.transaction('rw', db.recentEmojis, async () => {
+                        await db.recentEmojis.clear();
+                        if (recentEmojis.length > 0) {
+                            const recentEmojisWithId = recentEmojis.map((emoji, index) => ({
+                                id: index + 1,
+                                url: emoji.url,
+                                description: emoji.description || '表情包',
+                                lastUsed: Date.now() - index * 1000 // 确保顺序
+                            }));
+                            await db.recentEmojis.bulkAdd(recentEmojisWithId);
+                        }
+                    });
                     
                     // 清理localStorage中的旧数据（一次性迁移）
                     if (localStorage.getItem('recentEmojis')) {
@@ -17845,13 +18173,38 @@ async function createGroupChat(personaId) {
                             const isValidAvatar = await validateAvatarSource(msgData.avatar_url);
                             if (isValidAvatar) {
                                 const success = await changeCharacterAvatarByAI(msgData.avatar_url, msgData.reason || '心情变化');
-                            if (success) continue; 
+                            if (success) continue;
                             else aiMessage = { id: (Date.now() + i).toString(), sender: 'received', content: '[头像更换失败]', timestamp: Date.now() + i * 100 };
                                 } else {
                             aiMessage = { id: (Date.now() + i).toString(), sender: 'received', content: '[无效的头像来源，头像更换失败]', timestamp: Date.now() + i * 100 };
                                 }
                             } else {
                         continue;
+                    }
+                } else if (msgData.type === 'reply_to') {
+                    // 🔥【新增】处理AI引用回复
+                    console.log('🔍 [引用调试] AI尝试引用消息:', msgData);
+
+                    // 查找被引用的消息
+                    const referencedMessage = findMessageById(msgData.message_id);
+                    console.log('🔍 [引用调试] 查找结果:', referencedMessage ? `找到消息: ${referencedMessage.content?.substring(0, 30)}...` : '未找到消息');
+
+                    if (referencedMessage) {
+                        aiMessage = {
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            content: msgData.content,
+                            replyTo: {
+                                id: referencedMessage.id,
+                                content: referencedMessage.content,
+                                senderName: referencedMessage.sender === 'sent' ? (getCurrentPersonaName() || '用户') : (currentChatCharacter.name || 'AI')
+                            },
+                            timestamp: Date.now() + i * 100
+                        };
+                    } else {
+                        // 如果找不到被引用的消息，发送普通消息
+                        console.warn('找不到被引用的消息ID:', msgData.message_id);
+                        aiMessage = { id: (Date.now() + i).toString(), sender: 'received', content: msgData.content, timestamp: Date.now() + i * 100 };
                     }
                 } else if (msgData.name && msgData.message) {
                     // 这是群聊的特殊格式
@@ -17873,6 +18226,34 @@ async function createGroupChat(personaId) {
                             content: msgData.message.content, // 提取真正的语音文字内容
                             timestamp: Date.now() + i * 100
                         };
+                    } else if (typeof msgData.message === 'object' && msgData.message.type === 'reply_to') {
+                        // 🔥【新增】群聊中的引用回复
+                        const referencedMessage = findMessageById(msgData.message.message_id);
+                        if (referencedMessage) {
+                            aiMessage = {
+                                id: (Date.now() + i).toString(),
+                                sender: 'received',
+                                name: msgData.name,
+                                senderId: senderId,
+                                content: msgData.message.content,
+                                replyTo: {
+                                    id: referencedMessage.id,
+                                    content: referencedMessage.content,
+                                    senderName: referencedMessage.sender === 'sent' ? (getCurrentPersonaName() || '用户') : (referencedMessage.name || referencedMessage.senderName || 'AI')
+                                },
+                                timestamp: Date.now() + i * 100
+                            };
+                        } else {
+                            // 如果找不到被引用的消息，发送普通群聊消息
+                            aiMessage = {
+                                id: (Date.now() + i).toString(),
+                                sender: 'received',
+                                name: msgData.name,
+                                senderId: senderId,
+                                content: msgData.message.content,
+                                timestamp: Date.now() + i * 100
+                            };
+                        }
                     } else if (typeof msgData.message === 'object' && msgData.message.type === 'transfer') {
                         // 🔥【修复】如果消息内容是一个转账对象
                         aiMessage = {
@@ -18038,6 +18419,20 @@ async function createGroupChat(personaId) {
             // 🔥【新增】记录AI回复到全局记忆事件
             const character = characters.find(c => c.id === characterId);
             if (character) {
+                // 🔥【修复】构建安全的事件数据，避免循环引用
+                const eventData = {
+                    sender: characterId,
+                    content: aiMessage.content || '[特殊消息]',
+                    messageType: aiMessage.type || 'text'
+                };
+
+                // 🔥【修复】如果是引用消息，添加引用信息但避免对象嵌套
+                if (aiMessage.replyTo) {
+                    eventData.replyToId = aiMessage.replyTo.id;
+                    eventData.replyToSender = aiMessage.replyTo.senderName;
+                    eventData.replyToContent = aiMessage.replyTo.content;
+                }
+
                 await recordMemoryEvent(
                     [characterId, 'user'],
                     {
@@ -18045,11 +18440,7 @@ async function createGroupChat(personaId) {
                         id: characterId
                     },
                     'message',
-                    {
-                        sender: characterId,
-                        content: aiMessage.content || '[特殊消息]',
-                        messageType: aiMessage.type || 'text'
-                    },
+                    eventData,
                     0.7 // AI消息重要性
                 );
             }
@@ -18768,6 +19159,40 @@ async function createGroupChat(personaId) {
                             } else {
                 continue;
             }
+        } else if (msgData.type === 'reply_to') {
+            // 🔥【新增】处理AI引用回复消息
+            console.log('🔥 处理AI引用回复消息:', msgData);
+
+            // 查找被引用的消息
+            const allMessages = chatMessages[replyingCharacterId] || [];
+            const referencedMessage = allMessages.find(msg => msg.id === msgData.message_id);
+
+            if (referencedMessage) {
+                // 构建引用信息
+                const replyToInfo = {
+                    id: referencedMessage.id,
+                    content: referencedMessage.content || '',
+                    senderName: referencedMessage.sender === 'sent' ? '你' : (referencedMessage.name || currentChatCharacter?.name || '对方')
+                };
+
+                aiMessage = {
+                    id: (Date.now() + i).toString(),
+                    sender: 'received',
+                    content: msgData.content || '',
+                    replyTo: replyToInfo,
+                    timestamp: Date.now() + i * 100
+                };
+                console.log('🔥 创建引用消息对象:', aiMessage);
+            } else {
+                console.warn('🔥 找不到被引用的消息ID:', msgData.message_id);
+                // 如果找不到被引用的消息，就当作普通消息处理
+                aiMessage = {
+                    id: (Date.now() + i).toString(),
+                    sender: 'received',
+                    content: msgData.content || '',
+                    timestamp: Date.now() + i * 100
+                };
+            }
         } else if (msgData.type === 'voice_call') {
             // 🔥【新增】处理AI主动发起语音通话
             console.log('🔔 AI请求发起语音通话:', msgData);
@@ -19280,13 +19705,19 @@ async function createGroupChat(personaId) {
             }
             
             chatMessages[currentChatCharacter.id].push(userMessage);
-            saveChatMessages();
+            // 🔥【修复】立即保存消息，确保AI能看到最新的消息ID
+            await saveChatMessagesImmediate();
             
             // 清空输入框
             input.value = '';
             
             // 清除引用状态
             cancelReply();
+
+            // 🔥【新增】清除当前聊天的引用状态存储
+            if (currentChatCharacter) {
+                delete chatReplyStates[currentChatCharacter.id];
+            }
             
             // 🔥【新增】调整心率（用户发消息）
             adjustHeartrateForMessage(message, true);
@@ -22970,6 +23401,75 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             }
         }
         
+        // 🔥【新增】数据完整性检查函数
+        function validateDataIntegrity(data, dataType) {
+            if (!data) return false;
+
+            switch (dataType) {
+                case 'characters':
+                    return Array.isArray(data) && data.every(char =>
+                        char && char.id && char.name &&
+                        char.name !== '张三' && char.name !== '李四'
+                    );
+                case 'chatMessages':
+                    return Array.isArray(data) && data.every(msg =>
+                        msg && msg.id && msg.characterId
+                    );
+                case 'chatSettings':
+                    return Array.isArray(data) && data.every(setting =>
+                        setting && setting.id && setting.chatId
+                    );
+                default:
+                    return Array.isArray(data) ? data.length > 0 : !!data;
+            }
+        }
+
+        // 🔥【新增】安全的数据保存函数，防止数据丢失
+        async function safeDataSave(tableName, data, operation = 'replace') {
+            if (!data || (Array.isArray(data) && data.length === 0)) {
+                console.warn(`⚠️ ${tableName} 数据为空，拒绝保存以防止数据丢失`);
+                return false;
+            }
+
+            // 数据完整性检查
+            if (!validateDataIntegrity(data, tableName)) {
+                console.error(`❌ ${tableName} 数据完整性检查失败，拒绝保存`);
+                throw new Error(`${tableName} 数据不完整或包含异常数据`);
+            }
+
+            try {
+                const table = db[tableName];
+                if (!table) {
+                    throw new Error(`表 ${tableName} 不存在`);
+                }
+
+                // 使用事务进行原子操作
+                await db.transaction('rw', table, async () => {
+                    if (operation === 'replace') {
+                        await table.clear();
+                        if (Array.isArray(data)) {
+                            await table.bulkPut(data);
+                        } else {
+                            await table.put(data);
+                        }
+                    } else if (operation === 'add') {
+                        if (Array.isArray(data)) {
+                            await table.bulkAdd(data);
+                        } else {
+                            await table.add(data);
+                        }
+                    }
+                });
+
+                const count = Array.isArray(data) ? data.length : 1;
+                console.log(`✅ 安全保存了 ${count} 条 ${tableName} 数据`);
+                return true;
+            } catch (error) {
+                console.error(`❌ 保存 ${tableName} 数据失败:`, error);
+                throw error;
+            }
+        }
+
         // 重置数据库（如果出现schema错误）
         async function resetDatabase() {
             try {
@@ -23618,9 +24118,16 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         // 新的多模态格式
                         const textPart = message.content.find(p => p.type === 'text');
                         const imagePart = message.content.find(p => p.type === 'image_url');
-                        
-                        messageContentStr = textPart?.text || '';
-                        
+
+                        let baseContent = textPart?.text || '';
+
+                        // 如果有引用消息，在内容前添加引用显示
+                        if (message.replyTo) {
+                            messageContentStr = generateReplyHTML(message.replyTo) + baseContent;
+                        } else {
+                            messageContentStr = baseContent;
+                        }
+
                         // 如果有图片，添加图片显示
                         if (imagePart?.image_url?.url) {
                             if (messageContentStr) {
@@ -23631,7 +24138,7 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                     } else {
                         // 普通文本消息或旧格式
                         let baseContent = message.content;
-                        
+
                         // 如果有引用消息，在内容前添加引用显示
                         if (message.replyTo) {
                             messageContentStr = generateReplyHTML(message.replyTo) + baseContent;
@@ -25221,13 +25728,14 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                     // 导入角色数据
                     if (data.characters?.length) {
                         try {
-                        await db.characters.clear();
-                            // 确保每个角色都有有效ID
+                            // 🔥【安全修复】确保每个角色都有有效ID
                             const validCharacters = data.characters.map(char => ({
                                 ...char,
                                 id: char.id || `char_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
                             }));
-                            await db.characters.bulkPut(validCharacters);
+
+                            // 使用安全保存函数
+                            await safeDataSave('characters', validCharacters);
                             importedTables++;
                             console.log(`导入了 ${validCharacters.length} 个角色`);
                         } catch (error) {
@@ -29280,19 +29788,37 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
         // 记录统一事件
         async function recordMemoryEvent(characterIds, context, eventType, eventData, importance = 0.5) {
             try {
+                // 🔥【修复】确保所有参数都是有效的
+                if (!characterIds || !eventType || !eventData) {
+                    console.warn('❌ recordMemoryEvent: 缺少必需参数', { characterIds, eventType, eventData });
+                    return;
+                }
+
                 const event = {
+                    id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // 🔥【修复】提供唯一ID
                     timestamp: Date.now(),
                     characterIds: Array.isArray(characterIds) ? characterIds : [characterIds],
-                    context: context, // { type: 'private_chat', id: 'chat_id' }
+                    context: context || { type: 'unknown', id: 'unknown' }, // 🔥【修复】提供默认context
                     eventType: eventType, // 'message', 'activity_start', 'group_create' 等
                     eventData: eventData,
-                    importance: importance
+                    importance: importance || 0.5
                 };
+
+                // 🔥【修复】确保eventData是可序列化的对象
+                if (typeof event.eventData === 'object' && event.eventData !== null) {
+                    try {
+                        JSON.stringify(event.eventData);
+                    } catch (e) {
+                        console.warn('❌ eventData不可序列化，转换为字符串:', event.eventData);
+                        event.eventData = String(event.eventData);
+                    }
+                }
 
                 await db.memoryEvents.add(event);
                 console.log('📝 记录事件:', eventType, characterIds);
             } catch (error) {
                 console.error('❌ 记录事件失败:', error);
+                console.error('❌ 事件数据:', { characterIds, context, eventType, eventData, importance });
             }
         }
 
@@ -30101,12 +30627,12 @@ ${eventsText}
 - 用你的口吻和性格来写
 - 记录你今天的想法、感受和经历
 - 可以提及对用户的真实感情
-- 基于最近的聊天记录和动态内容
+- 基于最近的聊天记录，可适当考虑工作记忆和同分组好友的动态内容、角色自己和用户的动态内容
 - 保持角色的一致性和真实性
 - 内容要自然、真实，像真正的私人日记
 - 字数在50-500字之间，根据你的性格和当天的心情自由发挥${chatContext}${momentsContext}
 
-特殊样式说明（可选使用，每种样式在同一篇日记中最多使用2次）：
+特殊样式说明（可选使用，每种样式在同一篇日记中最多使用2次，该特殊样式并不是一定要使用，可以不用）：
 - 如果写到不该说的话或后悔写下的内容，可以用 <strike>内容</strike> 标记划掉
 - 如果表达重点或语气激动的内容，可以用 <mark>内容</mark> 标记高亮
 
@@ -32581,7 +33107,7 @@ async function aiUnblockUser(characterId) {
                     }
                 }
                 
-                const display = truncateText(safe.content, 40);
+                const display = truncateText(safe.content, 20);
                 return `
                     <div class="reply-reference" data-reply-id="${safe.id}">
                         <div class="reply-reference-line"></div>
@@ -32715,9 +33241,8 @@ async function aiUnblockUser(characterId) {
 
                     console.log('有效角色数据:', validCharacters);
 
-                    // 恢复角色数据
-                    await db.characters.clear();
-                    await db.characters.bulkAdd(validCharacters);
+                    // 🔥【安全修复】恢复角色数据
+                    await safeDataSave('characters', validCharacters);
                     characters = validCharacters;
 
                     // 恢复联系人列表
@@ -33072,9 +33597,8 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                     throw new Error('没有找到可重建的角色');
                 }
 
-                // 清除现有的异常角色，添加重建的角色
-                await db.characters.clear();
-                await db.characters.bulkAdd(rebuiltCharacters);
+                // 🔥【安全修复】清除现有的异常角色，添加重建的角色
+                await safeDataSave('characters', rebuiltCharacters);
                 characters = rebuiltCharacters;
 
                 // 更新联系人列表
@@ -33311,9 +33835,8 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                     return;
                 }
 
-                // 清除现有角色，添加重建的角色
-                await db.characters.clear();
-                await db.characters.bulkAdd(rebuiltCharacters);
+                // 🔥【安全修复】清除现有角色，添加重建的角色
+                await safeDataSave('characters', rebuiltCharacters);
                 characters = rebuiltCharacters;
 
                 // 更新联系人列表
@@ -33368,9 +33891,8 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                     throw new Error('文件中没有找到有效的角色数据');
                 }
 
-                // 恢复角色数据
-                await db.characters.clear();
-                await db.characters.bulkAdd(validCharacters);
+                // 🔥【安全修复】恢复角色数据
+                await safeDataSave('characters', validCharacters);
                 characters = validCharacters;
 
                 // 恢复联系人列表
