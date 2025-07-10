@@ -1825,6 +1825,16 @@
                             </div>
 
                             <div class="recovery-section">
+                                <h4>🔍 调试：检查当前状态</h4>
+                                <button onclick="debugCurrentState()" class="recovery-btn" style="background: #5856D6; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
+                                    🔍 检查当前数据状态
+                                </button>
+                                <button onclick="forceRefreshAll()" class="recovery-btn" style="background: #34C759; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 15px;">
+                                    🔄 强制刷新所有界面
+                                </button>
+                            </div>
+
+                            <div class="recovery-section">
                                 <h4>🧹 第五步：清理异常数据</h4>
                                 <button onclick="cleanupBadData()" class="recovery-btn" style="background: #FF9500; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
                                     清除张三李四等异常角色
@@ -32931,15 +32941,51 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                     // 尝试从聊天内容推断角色名字
                     let characterName = `角色_${characterId.slice(-4)}`;
 
-                    // 查找可能的角色名字（从用户消息中寻找称呼）
-                    const userMessages = info.messages.filter(msg => msg.sender === 'user');
-                    for (const msg of userMessages.slice(0, 10)) { // 检查前10条用户消息
+                    // 查找可能的角色名字（从用户消息和角色消息中寻找）
+                    const allMessages = info.messages.slice(0, 20); // 检查前20条消息
+
+                    // 方法1: 从用户消息中寻找称呼
+                    const userMessages = allMessages.filter(msg => msg.sender === 'user');
+                    for (const msg of userMessages) {
                         const content = msg.content || '';
                         // 寻找常见的称呼模式
-                        const nameMatch = content.match(/(?:你好|嗨|hi|hello)[，,\s]*([^\s，,。！？]{1,8})/i);
-                        if (nameMatch && nameMatch[1] && nameMatch[1].length <= 8) {
-                            characterName = nameMatch[1];
-                            break;
+                        const patterns = [
+                            /(?:你好|嗨|hi|hello)[，,\s]*([^\s，,。！？]{1,8})/i,
+                            /([^\s，,。！？]{1,8})[，,\s]*(?:你好|在吗|在不在)/i,
+                            /^([^\s，,。！？]{1,8})[，,\s]/,
+                            /叫你([^\s，,。！？]{1,8})/i
+                        ];
+
+                        for (const pattern of patterns) {
+                            const nameMatch = content.match(pattern);
+                            if (nameMatch && nameMatch[1] && nameMatch[1].length <= 8 && nameMatch[1].length >= 2) {
+                                characterName = nameMatch[1];
+                                break;
+                            }
+                        }
+                        if (characterName !== `角色_${characterId.slice(-4)}`) break;
+                    }
+
+                    // 方法2: 从角色的自我介绍中寻找
+                    if (characterName === `角色_${characterId.slice(-4)}`) {
+                        const characterMessages = allMessages.filter(msg => msg.sender === 'character');
+                        for (const msg of characterMessages.slice(0, 5)) {
+                            const content = msg.content || '';
+                            const patterns = [
+                                /我是([^\s，,。！？]{1,8})/i,
+                                /我叫([^\s，,。！？]{1,8})/i,
+                                /叫我([^\s，,。！？]{1,8})/i,
+                                /^([^\s，,。！？]{1,8})(?:在这里|来了|回来了)/i
+                            ];
+
+                            for (const pattern of patterns) {
+                                const nameMatch = content.match(pattern);
+                                if (nameMatch && nameMatch[1] && nameMatch[1].length <= 8 && nameMatch[1].length >= 2) {
+                                    characterName = nameMatch[1];
+                                    break;
+                                }
+                            }
+                            if (characterName !== `角色_${characterId.slice(-4)}`) break;
                         }
                     }
 
@@ -32978,12 +33024,27 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                 contacts = rebuiltCharacters.map(char => char.id);
                 await saveContacts();
 
+                // 强制刷新所有相关数据
+                await loadCharacters();
+                await loadContacts();
+                await loadChatMessages();
+
                 // 刷新界面
                 renderCharacterList();
                 renderContactList();
+                renderMessageList();
+
+                // 如果当前在聊天界面，刷新聊天界面
+                if (currentCharacterId) {
+                    const character = characters.find(c => c.id === currentCharacterId);
+                    if (character) {
+                        renderChatHeader();
+                    }
+                }
 
                 addRecoveryLog(`✅ 成功重建 ${rebuiltCount} 个角色！`);
-                alert(`角色重建完成！成功恢复 ${rebuiltCount} 个角色，聊天记录已保留。`);
+                addRecoveryLog(`角色列表: ${rebuiltCharacters.map(c => c.name).join(', ')}`);
+                alert(`角色重建完成！成功恢复 ${rebuiltCount} 个角色，聊天记录已保留。\n\n恢复的角色: ${rebuiltCharacters.map(c => c.name).join(', ')}`);
 
             } catch (error) {
                 addRecoveryLog('❌ 角色重建失败: ' + error.message);
@@ -33052,6 +33113,108 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
 
             } catch (error) {
                 alert('获取角色信息失败: ' + error.message);
+            }
+        }
+
+        // 🔍 调试当前状态
+        async function debugCurrentState() {
+            addRecoveryLog('开始检查当前数据状态...');
+
+            try {
+                // 检查内存中的数据
+                addRecoveryLog(`内存中角色数量: ${characters.length}`);
+                addRecoveryLog(`内存中联系人数量: ${contacts.length}`);
+
+                if (characters.length > 0) {
+                    addRecoveryLog('内存中的角色:');
+                    characters.forEach(char => {
+                        addRecoveryLog(`  - ${char.name} (ID: ${char.id.slice(-6)}...)`);
+                    });
+                }
+
+                // 检查数据库中的数据
+                const dbCharacters = await db.characters.toArray();
+                const dbContacts = await db.contacts.toArray();
+                const dbMessages = await db.chatMessages.toArray();
+
+                addRecoveryLog(`数据库中角色数量: ${dbCharacters.length}`);
+                addRecoveryLog(`数据库中联系人数量: ${dbContacts.length}`);
+                addRecoveryLog(`数据库中消息数量: ${dbMessages.length}`);
+
+                if (dbCharacters.length > 0) {
+                    addRecoveryLog('数据库中的角色:');
+                    dbCharacters.forEach(char => {
+                        addRecoveryLog(`  - ${char.name} (ID: ${char.id.slice(-6)}...)`);
+                    });
+                }
+
+                // 检查界面元素
+                const characterListElement = document.getElementById('character-list');
+                const contactListElement = document.getElementById('contact-list');
+
+                addRecoveryLog(`角色列表元素存在: ${!!characterListElement}`);
+                addRecoveryLog(`联系人列表元素存在: ${!!contactListElement}`);
+
+                if (characterListElement) {
+                    addRecoveryLog(`角色列表子元素数量: ${characterListElement.children.length}`);
+                }
+
+                if (contactListElement) {
+                    addRecoveryLog(`联系人列表子元素数量: ${contactListElement.children.length}`);
+                }
+
+                // 检查当前页面状态
+                addRecoveryLog(`当前页面: ${currentPage}`);
+                addRecoveryLog(`当前角色ID: ${currentCharacterId || '无'}`);
+
+                addRecoveryLog('状态检查完成');
+
+            } catch (error) {
+                addRecoveryLog('状态检查失败: ' + error.message);
+            }
+        }
+
+        // 🔄 强制刷新所有界面
+        async function forceRefreshAll() {
+            addRecoveryLog('开始强制刷新所有界面...');
+
+            try {
+                // 重新加载所有数据
+                await loadCharacters();
+                await loadContacts();
+                await loadChatMessages();
+
+                addRecoveryLog(`重新加载后角色数量: ${characters.length}`);
+                addRecoveryLog(`重新加载后联系人数量: ${contacts.length}`);
+
+                // 强制刷新所有界面
+                renderCharacterList();
+                renderContactList();
+                renderMessageList();
+
+                // 如果在聊天页面，刷新聊天界面
+                if (currentPage === 'chat' && currentCharacterId) {
+                    const character = characters.find(c => c.id === currentCharacterId);
+                    if (character) {
+                        renderChatHeader();
+                        renderChatMessages();
+                    } else {
+                        // 如果当前角色不存在，返回主页
+                        showPage('home');
+                    }
+                }
+
+                // 如果在角色管理页面，刷新角色管理界面
+                if (currentPage === 'characters') {
+                    renderCharacterList();
+                }
+
+                addRecoveryLog('✅ 界面刷新完成');
+                alert('界面刷新完成！请检查角色列表是否正常显示。');
+
+            } catch (error) {
+                addRecoveryLog('界面刷新失败: ' + error.message);
+                alert('界面刷新失败: ' + error.message);
             }
         }
 
