@@ -1791,16 +1791,30 @@
                             </div>
 
                             <div class="recovery-section">
-                                <h4>📥 第二步：从导出数据恢复</h4>
-                                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">如果您有导出的数据文件，请粘贴到下方：</p>
-                                <textarea id="recovery-data-input" placeholder="请将导出的JSON数据粘贴到这里..." style="width: 100%; height: 120px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 12px; font-family: monospace;"></textarea>
-                                <button onclick="recoverFromInput()" class="recovery-btn" style="background: #34C759; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-top: 10px;">
-                                    开始恢复数据
+                                <h4>🔍 第二步：深度数据挖掘</h4>
+                                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">搜索浏览器中可能残留的角色数据：</p>
+                                <button onclick="deepDataSearch()" class="recovery-btn" style="background: #FF9500; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
+                                    🔍 深度搜索残留数据
+                                </button>
+                                <button onclick="searchChatHistory()" class="recovery-btn" style="background: #5856D6; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
+                                    💬 从聊天记录推断角色
+                                </button>
+                                <div id="deep-search-result" style="background: #f5f5f5; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: none;">
+                                    <pre id="deep-search-text" style="font-size: 12px; margin: 0; white-space: pre-wrap;"></pre>
+                                </div>
+                            </div>
+
+                            <div class="recovery-section">
+                                <h4>📥 第三步：文件导入恢复</h4>
+                                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">如果您有备份文件：</p>
+                                <input type="file" id="recovery-file-input" accept=".json" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px;">
+                                <button onclick="recoverFromFile()" class="recovery-btn" style="background: #34C759; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%;">
+                                    从文件恢复数据
                                 </button>
                             </div>
 
                             <div class="recovery-section">
-                                <h4>🧹 第三步：清理异常数据</h4>
+                                <h4>🧹 第四步：清理异常数据</h4>
                                 <button onclick="cleanupBadData()" class="recovery-btn" style="background: #FF9500; color: white; border: none; padding: 12px 20px; border-radius: 8px; width: 100%; margin-bottom: 10px;">
                                     清除张三李四等异常角色
                                 </button>
@@ -32727,24 +32741,160 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
             }
         }
 
-        async function recoverFromInput() {
-            const input = document.getElementById('recovery-data-input');
-            const dataText = input.value.trim();
+        // 🔍 深度数据搜索
+        async function deepDataSearch() {
+            addRecoveryLog('开始深度搜索残留数据...');
 
-            if (!dataText) {
-                alert('请先粘贴导出的数据');
+            try {
+                const foundData = [];
+
+                // 1. 搜索所有localStorage键
+                addRecoveryLog('搜索localStorage...');
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('character') || key.includes('chat'))) {
+                        const value = localStorage.getItem(key);
+                        if (value && value.length > 100) { // 只关注较大的数据
+                            foundData.push(`localStorage[${key}]: ${value.length} 字符`);
+                        }
+                    }
+                }
+
+                // 2. 搜索IndexedDB中的所有表
+                addRecoveryLog('搜索IndexedDB所有表...');
+                const allTables = ['characters', 'chatMessages', 'contacts', 'chatSettings', 'customEmojis', 'worldbooks', 'moments', 'personas', 'groupChats'];
+
+                for (const tableName of allTables) {
+                    try {
+                        const data = await db[tableName].toArray();
+                        if (data.length > 0) {
+                            foundData.push(`IndexedDB[${tableName}]: ${data.length} 条记录`);
+
+                            // 特别检查角色相关数据
+                            if (tableName === 'characters') {
+                                data.forEach(char => {
+                                    if (char.name !== '张三' && char.name !== '李四') {
+                                        foundData.push(`  发现角色: ${char.name} (ID: ${char.id})`);
+                                    }
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        // 表不存在或无法访问
+                    }
+                }
+
+                // 3. 检查聊天记录中的角色信息
+                addRecoveryLog('分析聊天记录...');
+                const chatData = await db.chatMessages.toArray();
+                const characterIds = new Set();
+                chatData.forEach(msg => {
+                    if (msg.characterId && msg.characterId !== 'user') {
+                        characterIds.add(msg.characterId);
+                    }
+                });
+
+                if (characterIds.size > 0) {
+                    foundData.push(`聊天记录中发现 ${characterIds.size} 个角色ID:`);
+                    characterIds.forEach(id => {
+                        foundData.push(`  角色ID: ${id}`);
+                    });
+                }
+
+                const resultText = foundData.length > 0 ? foundData.join('\n') : '未发现额外的角色数据';
+
+                document.getElementById('deep-search-result').style.display = 'block';
+                document.getElementById('deep-search-text').textContent = resultText;
+
+                addRecoveryLog(`深度搜索完成，发现 ${foundData.length} 条线索`);
+
+            } catch (error) {
+                addRecoveryLog('深度搜索失败: ' + error.message);
+            }
+        }
+
+        // 💬 从聊天记录推断角色
+        async function searchChatHistory() {
+            addRecoveryLog('开始分析聊天记录...');
+
+            try {
+                const chatData = await db.chatMessages.toArray();
+                const characterInfo = new Map();
+
+                // 分析聊天记录，尝试重建角色信息
+                chatData.forEach(msg => {
+                    if (msg.characterId && msg.characterId !== 'user') {
+                        if (!characterInfo.has(msg.characterId)) {
+                            characterInfo.set(msg.characterId, {
+                                id: msg.characterId,
+                                messageCount: 0,
+                                lastMessage: null,
+                                firstMessage: null
+                            });
+                        }
+
+                        const info = characterInfo.get(msg.characterId);
+                        info.messageCount++;
+
+                        if (!info.firstMessage || msg.timestamp < info.firstMessage.timestamp) {
+                            info.firstMessage = msg;
+                        }
+
+                        if (!info.lastMessage || msg.timestamp > info.lastMessage.timestamp) {
+                            info.lastMessage = msg;
+                        }
+                    }
+                });
+
+                let resultText = '=== 聊天记录分析结果 ===\n\n';
+
+                if (characterInfo.size === 0) {
+                    resultText += '未发现任何角色的聊天记录';
+                } else {
+                    resultText += `发现 ${characterInfo.size} 个角色的聊天记录:\n\n`;
+
+                    characterInfo.forEach((info, characterId) => {
+                        resultText += `角色ID: ${characterId}\n`;
+                        resultText += `消息数量: ${info.messageCount} 条\n`;
+                        resultText += `最早消息: ${new Date(info.firstMessage.timestamp).toLocaleString()}\n`;
+                        resultText += `最新消息: ${new Date(info.lastMessage.timestamp).toLocaleString()}\n`;
+                        resultText += `最新内容: ${info.lastMessage.content?.substring(0, 50)}...\n\n`;
+                    });
+
+                    resultText += '\n💡 建议: 如果这些ID对应您丢失的角色，可以尝试手动重建角色卡';
+                }
+
+                document.getElementById('deep-search-result').style.display = 'block';
+                document.getElementById('deep-search-text').textContent = resultText;
+
+                addRecoveryLog('聊天记录分析完成');
+
+            } catch (error) {
+                addRecoveryLog('聊天记录分析失败: ' + error.message);
+            }
+        }
+
+        // 📁 从文件恢复
+        async function recoverFromFile() {
+            const fileInput = document.getElementById('recovery-file-input');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('请先选择一个备份文件');
                 return;
             }
 
             try {
-                addRecoveryLog('开始解析导出数据...');
-                const exportData = JSON.parse(dataText);
+                addRecoveryLog(`开始读取文件: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+                const text = await file.text();
+                const exportData = JSON.parse(text);
 
                 if (!exportData.characters || !Array.isArray(exportData.characters)) {
-                    throw new Error('数据格式不正确，缺少角色信息');
+                    throw new Error('文件格式不正确，缺少角色信息');
                 }
 
-                addRecoveryLog(`发现 ${exportData.characters.length} 个角色`);
+                addRecoveryLog(`文件中发现 ${exportData.characters.length} 个角色`);
 
                 // 过滤掉张三李四
                 const validCharacters = exportData.characters.filter(char =>
@@ -32754,7 +32904,7 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                 addRecoveryLog(`过滤后有效角色: ${validCharacters.length} 个`);
 
                 if (validCharacters.length === 0) {
-                    throw new Error('没有找到有效的角色数据');
+                    throw new Error('文件中没有找到有效的角色数据');
                 }
 
                 // 恢复角色数据
@@ -32794,12 +32944,12 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                 renderContactList();
                 renderMessageList();
 
-                addRecoveryLog('✅ 数据恢复成功！');
+                addRecoveryLog('✅ 文件恢复成功！');
                 alert('数据恢复成功！您的角色和聊天记录已恢复。');
 
             } catch (error) {
-                addRecoveryLog('❌ 恢复失败: ' + error.message);
-                alert('恢复失败: ' + error.message);
+                addRecoveryLog('❌ 文件恢复失败: ' + error.message);
+                alert('文件恢复失败: ' + error.message);
             }
         }
 
