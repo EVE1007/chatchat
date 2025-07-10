@@ -3698,14 +3698,50 @@
             
             } catch (error) {
                 console.error('应用初始化失败:', error);
+                console.error('错误详情:', error.stack);
+
+                // 显示详细错误信息
+                const errorMsg = `应用初始化失败: ${error.message}\n\n可能的解决方案：\n1. 刷新页面重试\n2. 清除浏览器缓存\n3. 进入设置→紧急恢复\n\n错误类型: ${error.name}`;
+
                 // 如果是数据库错误，尝试重置
                 if (error.name === 'DataError' || error.name === 'InvalidStateError' || error.name === 'DexieError') {
                     console.log('检测到数据库错误，尝试重置数据库...');
-                    if (confirm('应用初始化失败，是否重置数据库？\n注意：这将清除所有本地数据。')) {
-                        await resetDatabase();
+                    if (confirm('检测到数据库错误，是否重置数据库？\n注意：这将清除所有本地数据。')) {
+                        try {
+                            await resetDatabase();
+                            location.reload(); // 重置后刷新页面
+                        } catch (resetError) {
+                            console.error('重置数据库失败:', resetError);
+                            alert('重置数据库失败，请手动清除浏览器数据后重试。');
+                        }
                     }
                 } else {
-                    alert('应用初始化失败，请刷新页面重试。');
+                    alert(errorMsg);
+
+                    // 尝试显示紧急恢复界面
+                    try {
+                        // 确保基本的DOM结构存在
+                        if (!characters) characters = [];
+                        if (!contacts) contacts = [];
+                        if (!chatMessages) chatMessages = {};
+
+                        // 尝试显示设置页面
+                        showPage('settings');
+
+                        // 延迟显示恢复模态框
+                        setTimeout(() => {
+                            try {
+                                const recoveryBtn = document.querySelector('[onclick="showRecoveryModal()"]');
+                                if (recoveryBtn) {
+                                    recoveryBtn.click();
+                                }
+                            } catch (e) {
+                                console.error('无法自动打开恢复界面:', e);
+                            }
+                        }, 1000);
+                    } catch (e) {
+                        console.error('无法显示紧急恢复界面:', e);
+                    }
                 }
             }
         });
@@ -9780,8 +9816,16 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
             const totalMessages = messages.length;
             
             // 获取时间范围
-            const firstMessageTime = new Date(messages[0].timestamp);
-            const lastMessageTime = new Date(messages[messages.length - 1].timestamp);
+            const firstMessageTime = new Date(messages[0].timestamp || Date.now());
+            const lastMessageTime = new Date(messages[messages.length - 1].timestamp || Date.now());
+
+            // 确保日期有效
+            if (isNaN(firstMessageTime.getTime())) {
+                firstMessageTime = new Date();
+            }
+            if (isNaN(lastMessageTime.getTime())) {
+                lastMessageTime = new Date();
+            }
             
             // 构建HTML内容
             let htmlContent = `<!DOCTYPE html>
@@ -12074,7 +12118,8 @@ async function toggleGlobalWorldbook(bookId, isEnabled) {
     localHtml += `<div class="worldbook-section">`;
     if (localBooks.length > 0) {
         localBooks.forEach(book => {
-            const date = new Date(book.updatedAt || book.createdAt || Date.now()).toLocaleDateString();
+            const dateObj = new Date(book.updatedAt || book.createdAt || Date.now());
+            const date = isNaN(dateObj.getTime()) ? '未知日期' : dateObj.toLocaleDateString();
             const preview = truncateText(book.content, 60);
             localHtml += `
                 <div class="worldbook-item" onclick="editWorldbook('${book.id}')">
@@ -12100,7 +12145,8 @@ async function toggleGlobalWorldbook(bookId, isEnabled) {
     characterHtml += `<div class="worldbook-section">`;
     if (characterBooks.length > 0) {
         characterBooks.forEach(book => {
-            const date = new Date(book.updatedAt || book.createdAt || Date.now()).toLocaleDateString();
+            const dateObj = new Date(book.updatedAt || book.createdAt || Date.now());
+            const date = isNaN(dateObj.getTime()) ? '未知日期' : dateObj.toLocaleDateString();
             const preview = truncateText(book.content, 60);
             characterHtml += `
                 <div class="worldbook-item" onclick="editWorldbook('${book.id}')">
@@ -19853,9 +19899,16 @@ async function createGroupChat(personaId) {
         
         // 格式化时间
         function formatTime(date) {
+            // 确保date是Date对象
+            if (!date) return '未知时间';
+            if (!(date instanceof Date)) {
+                date = new Date(date);
+            }
+            if (isNaN(date.getTime())) return '无效时间';
+
             const now = new Date();
             const diff = now - date;
-            
+
             if (diff < 60000) { // 小于1分钟
                 return '刚刚';
             } else if (diff < 3600000) { // 小于1小时
@@ -29402,7 +29455,8 @@ ${eventsText}
                 if (limitedEpisodicMemories.length > 0) {
                     memoryContext += '\n# 情景记忆\n';
                     limitedEpisodicMemories.forEach(memory => {
-                        const date = new Date(memory.timestamp).toLocaleDateString();
+                        const dateObj = new Date(memory.timestamp || Date.now());
+                        const date = isNaN(dateObj.getTime()) ? '未知日期' : dateObj.toLocaleDateString();
                         memoryContext += `[${date}] ${memory.fact}\n`;
                     });
                 }
@@ -29478,7 +29532,8 @@ ${eventsText}
                 if (limitedMemorySummaries.length > 0) {
                     memoryContext += '\n# 对话摘要\n';
                     limitedMemorySummaries.forEach(summary => {
-                        const date = new Date(summary.timestamp).toLocaleDateString();
+                        const dateObj = new Date(summary.timestamp || Date.now());
+                        const date = isNaN(dateObj.getTime()) ? '未知日期' : dateObj.toLocaleDateString();
                         memoryContext += `[${date}] ${summary.summary}\n`;
                     });
                 }
@@ -29654,7 +29709,8 @@ ${eventsText}
                     content = '暂无核心记忆';
                 } else {
                     content = coreMemories.map((memory, index) => {
-                        const date = new Date(memory.timestamp).toLocaleDateString();
+                        const dateObj = new Date(memory.timestamp || Date.now());
+                        const date = isNaN(dateObj.getTime()) ? '未知日期' : dateObj.toLocaleDateString();
                         return `${index + 1}. ${memory.fact} (${date})`;
                     }).join('\n');
                 }
@@ -31507,7 +31563,8 @@ ${messages.map(msg => {
 
         // 渲染单个记忆项
         function renderMemoryItem(memory) {
-            const date = new Date(memory.timestamp).toLocaleDateString('zh-CN');
+            const dateObj = new Date(memory.timestamp || Date.now());
+            const date = isNaN(dateObj.getTime()) ? '未知日期' : dateObj.toLocaleDateString('zh-CN');
             const content = memory.fact || memory.summary || '';
             const importance = memory.importance || 0;
             const stars = '★'.repeat(Math.round(importance * 5));
