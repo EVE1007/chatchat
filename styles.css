@@ -11510,6 +11510,11 @@ textarea.call-text-input {
             opacity: 0.5;
         }
 
+        /* 🔥【新增】群聊中隐藏日记工具 */
+        .group-chat .tool-item.diary-tool {
+            display: none !important;
+        }
+
         /* 聊天标题区域的状态显示样式 */
         .app-header .character-status {
             margin-top: 2px;

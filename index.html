@@ -1344,7 +1344,7 @@
                                             </div>
                                             <span class="tool-label">位置</span>
                                         </div>
-                                        <div class="tool-item" onclick="showDiaryMenu(); hideToolsPanel();">
+                                        <div class="tool-item diary-tool" onclick="showDiaryMenu(); hideToolsPanel();">
                                             <div class="tool-icon">
                                         <i class="fas fa-book"></i>
                                             </div>
@@ -8482,7 +8482,14 @@ async function startChat(character) {
         // 先重置所有背景样式
         chatScreen.style.backgroundImage = 'none';
         chatScreen.style.backgroundColor = 'white';
-        
+
+        // 🔥【新增】根据聊天类型添加或移除group-chat类
+        if (character.isGroup) {
+            chatScreen.classList.add('group-chat');
+        } else {
+            chatScreen.classList.remove('group-chat');
+        }
+
         const messagesContainer = document.getElementById('api-chat-messages');
         if (messagesContainer) messagesContainer.style.background = '';
     }
@@ -8526,6 +8533,12 @@ async function startChat(character) {
             // 🔥【新增】保存当前聊天的引用状态
             if (currentChatCharacter && currentReplyTo) {
                 chatReplyStates[currentChatCharacter.id] = { ...currentReplyTo };
+            }
+
+            // 🔥【新增】清除群聊CSS类
+            const chatScreen = document.getElementById('api-chat-screen');
+            if (chatScreen) {
+                chatScreen.classList.remove('group-chat');
             }
 
             // 清除当前角色的后台定时器
@@ -13611,7 +13624,7 @@ ${character.bio}
                     }
 
                     // 🔥【关键修复】完全复制zhangyu.html的群聊提示词结构
-                    taskInstructions = `\n你是一个群聊的组织者和AI驱动器。你的任务是扮演以下所有角色，在群聊中进行互动。\n\n# 群聊规则\n1.  **角色扮演**: 你必须同时扮演以下所有角色，并严格遵守他们的人设。每个角色的发言都必须符合其身份和性格。\n2.  **当前时间**: ${new Date().toLocaleString()}。\n3.  **用户角色**: 用户的名字是"我"，他/她的人设是："${userPersona}"。你在群聊中对用户的称呼是"${myNickname}"，在需要时请使用"@${myNickname}"来提及用户。\n4.  **输出格式**: 你的回复**必须**是一个JSON数组。**绝对不要**在JSON前后添加任何额外字符。每个元素可以是：\n    - 普通消息: \`{"name": "角色名", "message": "文本内容"}\`\n    - 图片消息: \`{"name": "角色名", "type": "ai_image", "description": "图片描述"}\`\n    - 语音消息: \`{"name": "角色名", "type": "voice_message", "content": "语音文字"}\`\n5.  **对话节奏**: 模拟真实群聊，让成员之间互相交谈，或者一起回应用户的发言。对话应该流畅、自然、连贯。\n6.  **数量限制**: 每次生成的总消息数**不得超过30条**。\n7.  **禁止出戏**: 绝不能透露你是AI，或提及任何关于"扮演"、"模型"、"生成"等词语。\n\n# 群成员列表及人设\n${membersList}\n\n现在，请根据以上规则和下面的对话历史，继续这场群聊。`;
+                    taskInstructions = `\n你是一个群聊的组织者和AI驱动器。你的任务是扮演以下所有角色，在群聊中进行互动。\n\n# 群聊规则\n1.  **角色扮演**: 你必须同时扮演以下所有角色，并严格遵守他们的人设。每个角色的发言都必须符合其身份和性格。\n2.  **当前时间**: ${new Date().toLocaleString()}。\n3.  **用户角色**: 用户的名字是"我"，他/她的人设是："${userPersona}"。你在群聊中对用户的称呼是"${myNickname}"，在需要时请使用"@${myNickname}"来提及用户。\n4.  **输出格式**: 你的回复**必须**是一个JSON数组。**绝对不要**在JSON前后添加任何额外字符。每个元素可以是：\n    - 普通消息: \`{"name": "角色名", "message": "文本内容"}\`\n    - 图片消息: \`{"name": "角色名", "type": "ai_image", "description": "图片描述"}\`\n    - 语音消息: \`{"name": "角色名", "type": "voice_message", "content": "语音文字"}\`\n5.  **群聊对话节奏**: 模拟真实的群聊，让成员之间可以互相交谈对其他成员做出回应，或者一起回应用户的发言。对话应该流畅、自然、连贯。一轮对话里成员可以交错发言让对话更自然真实。\n6.  **数量限制**: 每次生成的总消息数**不得超过30条**。\n7.  **禁止出戏**: 绝不能透露你是AI，或提及任何关于"扮演"、"模型"、"生成"等词语。\n\n# 群成员列表及人设\n${membersList}\n\n现在，请根据以上规则和下面的对话历史，继续这场群聊。`;
                 } else {
                     taskInstructions = `\n1. 请你以你的角色的身份，严格按照角色设定进行回复和行动，不要跳出角色。自然地推进剧情。\n2. 你可以一次性生成多条消息，模拟真人在聊天中连续发送多条信息的情景。\n3. 你的回复必须是一个JSON数组格式的字符串，每个元素是一条消息。\n\n# JSON输出格式示例:\n["很高兴认识你呀，在干嘛呢？", "今天天气真好", "想出去走走吗？"]`;
                 }
@@ -31262,6 +31275,13 @@ ${eventsText}
                 showToast('请先选择一个角色', 'error');
                 return;
             }
+
+            // 🔥【修改】群聊中不支持日记功能
+            if (currentChatCharacter.isGroup) {
+                showToast('群聊中不支持日记功能，请在单聊中使用', 'error');
+                return;
+            }
+
             showModal('diary-menu-modal');
         }
 
@@ -31274,6 +31294,12 @@ ${eventsText}
         async function showTodayDiary() {
             if (!currentChatCharacter) {
                 showToast('请先选择一个角色', 'error');
+                return;
+            }
+
+            // 🔥【修改】群聊中不支持日记功能
+            if (currentChatCharacter.isGroup) {
+                showToast('群聊中不支持日记功能，请在单聊中使用', 'error');
                 return;
             }
 
@@ -31353,6 +31379,12 @@ ${eventsText}
         async function generateTodayDiary() {
             if (!currentChatCharacter) {
                 showToast('请先选择一个角色', 'error');
+                return;
+            }
+
+            // 🔥【修改】群聊中不支持日记功能
+            if (currentChatCharacter.isGroup) {
+                showToast('群聊中不支持日记功能，请在单聊中使用', 'error');
                 return;
             }
 
@@ -31519,6 +31551,12 @@ ${eventsText}
         async function showPastDiaries() {
             if (!currentChatCharacter) {
                 showToast('请先选择一个角色', 'error');
+                return;
+            }
+
+            // 🔥【修改】群聊中不支持日记功能
+            if (currentChatCharacter.isGroup) {
+                showToast('群聊中不支持日记功能，请在单聊中使用', 'error');
                 return;
             }
 
@@ -31729,6 +31767,13 @@ ${eventsText}
                 showToast('请先选择角色', 'error');
                 return;
             }
+
+            // 🔥【修改】群聊中不支持日记功能
+            if (currentChatCharacter.isGroup) {
+                showToast('群聊中不支持日记功能，请在单聊中使用', 'error');
+                return;
+            }
+
             const characterId = currentChatCharacter.id;
 
             const today = new Date().toISOString().split('T')[0];
@@ -31799,6 +31844,13 @@ ${eventsText}
                 showToast('请先选择角色', 'error');
                 return;
             }
+
+            // 🔥【修改】群聊中不支持日记功能
+            if (currentChatCharacter.isGroup) {
+                showToast('群聊中不支持日记功能，请在单聊中使用', 'error');
+                return;
+            }
+
             const characterId = currentChatCharacter.id;
             const today = new Date().toISOString().split('T')[0];
             const diaryId = `${characterId}_${today}`;
