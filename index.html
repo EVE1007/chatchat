@@ -3649,6 +3649,9 @@
             await loadPersonas();
             await loadGroupChats();
 
+            // 🔥【新增】检查localStorage使用情况
+            checkLocalStorageUsage();
+
             // 初始化记忆查看器
             await initMemoryViewer();
             
@@ -8424,7 +8427,14 @@ async function startChat(character) {
             
     // 🔥【修复】异步获取聊天设置
     const chatSettings = await getAsyncChatSettings();
-            const displayTitle = chatSettings.aiChatNickname || character.name;
+            let displayTitle = chatSettings.aiChatNickname || character.name;
+
+            // 🔥【新增】如果是群聊，在标题后添加成员数量
+            if (character.isGroup && character.members) {
+                const memberCount = character.members.length + 1; // +1 包括用户自己
+                displayTitle = `${displayTitle}（${memberCount}）`;
+            }
+
             document.getElementById('api-chat-title').textContent = displayTitle;
             
             // 🔥【新增】渲染角色状态显示
@@ -13590,11 +13600,18 @@ ${character.bio}
             if (chatMode === 'online') {
                 modeInstructions = `\n# 聊天模式：线上模式\n- 你必须按照手机聊天或面对面对话的格式进行输出\n- **严格禁止**任何动作描写、神态描写、心理描写\n- 只能进行纯语言交流，不能描述任何身体动作、表情、环境等\n- 每条消息都应该是可以通过文字直接表达的内容`;
                 if (isGroupChat) {
-                    const membersList = character.members.map(member => `- **${member.name}**: ${member.bio}`).join('\n');
+                    // 🔥【关键修复】使用persona字段构建成员列表，完全对齐zhangyu.html
+                    const membersList = character.members.map(member => `- **${member.name}**: ${member.persona || member.bio}`).join('\n');
                     const myNickname = getCurrentPersonaName() || '我';
 
-                    // 🔥【关键修复】添加zhangyu.html的核心身份定位
-                    taskInstructions = `\n你是一个群聊的组织者和AI驱动器。你的任务是扮演以下所有角色，在群聊中进行互动。\n\n# 群聊规则\n1.  **角色扮演**: 你必须同时扮演以下所有角色，并严格遵守他们的人设。每个角色的发言都必须符合其身份和性格。\n2.  **当前时间**: ${new Date().toLocaleString()}。\n3.  **用户角色**: 用户的名字是"我"，他/她的人设是："${getCurrentPersonaDescription()}"。你在群聊中对用户的称呼是"${myNickname}"，在需要时请使用"@${myNickname}"来提及用户。\n4.  **输出格式**: 你的回复**必须**是一个JSON数组。**绝对不要**在JSON前后添加任何额外字符。每个元素可以是：\n    - 普通消息: \`{"name": "角色名", "message": "文本内容"}\`\n    - 图片消息: \`{"name": "角色名", "type": "ai_image", "description": "图片描述"}\`\n    - 语音消息: \`{"name": "角色名", "type": "voice_message", "content": "语音文字"}\`\n5.  **对话节奏**: 模拟真实群聊，让成员之间互相交谈，或者一起回应用户的发言。对话应该流畅、自然、连贯。\n6.  **数量限制**: 每次生成的总消息数**不得超过30条**。\n7.  **禁止出戏**: 绝不能透露你是AI，或提及任何关于"扮演"、"模型"、"生成"等词语。\n\n# 群成员列表及人设\n${membersList}\n\n现在，请根据以上规则和下面的对话历史，继续这场群聊。`;
+                    // 🔥【关键修复】获取用户人设，优先使用群聊设置中的myPersona
+                    let userPersona = getCurrentPersonaDescription();
+                    if (character.settings && character.settings.myPersona) {
+                        userPersona = character.settings.myPersona;
+                    }
+
+                    // 🔥【关键修复】完全复制zhangyu.html的群聊提示词结构
+                    taskInstructions = `\n你是一个群聊的组织者和AI驱动器。你的任务是扮演以下所有角色，在群聊中进行互动。\n\n# 群聊规则\n1.  **角色扮演**: 你必须同时扮演以下所有角色，并严格遵守他们的人设。每个角色的发言都必须符合其身份和性格。\n2.  **当前时间**: ${new Date().toLocaleString()}。\n3.  **用户角色**: 用户的名字是"我"，他/她的人设是："${userPersona}"。你在群聊中对用户的称呼是"${myNickname}"，在需要时请使用"@${myNickname}"来提及用户。\n4.  **输出格式**: 你的回复**必须**是一个JSON数组。**绝对不要**在JSON前后添加任何额外字符。每个元素可以是：\n    - 普通消息: \`{"name": "角色名", "message": "文本内容"}\`\n    - 图片消息: \`{"name": "角色名", "type": "ai_image", "description": "图片描述"}\`\n    - 语音消息: \`{"name": "角色名", "type": "voice_message", "content": "语音文字"}\`\n5.  **对话节奏**: 模拟真实群聊，让成员之间互相交谈，或者一起回应用户的发言。对话应该流畅、自然、连贯。\n6.  **数量限制**: 每次生成的总消息数**不得超过30条**。\n7.  **禁止出戏**: 绝不能透露你是AI，或提及任何关于"扮演"、"模型"、"生成"等词语。\n\n# 群成员列表及人设\n${membersList}\n\n现在，请根据以上规则和下面的对话历史，继续这场群聊。`;
                 } else {
                     taskInstructions = `\n1. 请你以你的角色的身份，严格按照角色设定进行回复和行动，不要跳出角色。自然地推进剧情。\n2. 你可以一次性生成多条消息，模拟真人在聊天中连续发送多条信息的情景。\n3. 你的回复必须是一个JSON数组格式的字符串，每个元素是一条消息。\n\n# JSON输出格式示例:\n["很高兴认识你呀，在干嘛呢？", "今天天气真好", "想出去走走吗？"]`;
                 }
@@ -13660,6 +13677,7 @@ ${character.bio}
             // 构建图片指令
             let aiImageInstructions = '';
             if (isGroupChat) {
+                // 🔥【关键修复】完全复制zhangyu.html的群聊图片指令
                 aiImageInstructions = `\n# 发送图片的能力\n- 群成员无法真正发送图片文件。但当用户要求某位成员发送照片，或者某个成员想通过图片来表达时，该成员可以发送一张"文字描述的图片"。\n- 若要发送图片，请在你的回复JSON数组中，为该角色单独发送一个特殊的对象，格式为：\`{"name": "角色名", "type": "ai_image", "description": "这里是对图片的详细文字描述..."}\`。描述应该符合该角色的性格和当时的语境。`;
             } else {
                 aiImageInstructions = `\n# 发送图片的能力\n- 你无法发送真实的图片文件。但当用户要求你发送照片，或者你想通过图片来表达时，你可以发送一张"文字描述的图片"。\n- 若要发送图片，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "ai_image", "description": "这里是对图片的详细文字描述..."}\`。这个描述应该生动、具体，让用户能通过文字想象出画面，以第三人称视角描述。例如：\`{"type": "ai_image", "description": "照片里一只橘猫正懒洋洋地趴在窗台上晒太阳，阳光把它金色的毛照得发亮，背景是蔚蓝的天空和几朵白云。"}\`\n- 你可以在对话中先做铺垫，然后发送这张特殊的"图片"。\n\n# 理解用户照片的能力\n- 当历史记录中出现 "[你收到了一张用户描述的照片，照片内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"看"到了这张照片。\n- 你应该对照片内容做出自然的评论或回应，比如夸奖、询问细节、表达感受等。\n\n# 发送"伪照片"的能力\n- 你可以像用户一样发送"伪照片"，这是一种带有文字描述的照片卡片。\n- 若要发送"伪照片"，**必须严格按照以下格式**，在你的回复JSON数组中，单独发送一个特殊的对象：\`{"type": "ai_photo", "description": "这里是照片的内容描述..."}\`。\n- 例如：\`{"type": "ai_photo", "description": "我刚拍的窗外风景，阳光透过树叶洒在地上，形成斑驳的光影。"}\`\n- 这种照片会显示为一个卡片，用户点击后可以看到你的描述。\n- **重要**：必须使用"ai_photo"作为type字段的值，不要使用其他值如"photo"或"image"。description字段必须包含照片的详细描述。\n\n# 发送位置的能力\n- 你可以像用户一样发送位置信息。\n- 若要发送位置，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "location", "name": "位置名称", "coordinates": "坐标信息"}\`。\n- 例如：\`{"type": "location", "name": "中央公园", "coordinates": "116.3°E, 39.9°N"}\`\n- 你可以在对话中先做铺垫，然后发送这个位置信息。`;
@@ -13668,6 +13686,7 @@ ${character.bio}
             // 构建语音指令
             let aiVoiceInstructions = '';
             if (isGroupChat) {
+                // 🔥【关键修复】完全复制zhangyu.html的群聊语音指令
                 aiVoiceInstructions = `\n# 发送语音的能力\n- 群成员同样可以发送"模拟语音消息"。\n- 若要发送语音，请为该角色单独发送一个特殊的对象，格式为：\`{"name": "角色名", "type": "voice_message", "content": "这里是语音的文字内容..."}\`。当历史记录中出现 "[角色名 发送了一条语音，内容是：'xxx']" 时，代表该角色用语音说了'xxx'。其他角色应该对此内容做出回应。`;
             } else {
                 aiVoiceInstructions = `\n# 发送语音的能力\n- 你无法发送真实的语音，当你想要通过语音回复用户的消息时，请用你的角色设定自然地回应。你可以用文字，或者也用一个表情包或模拟的语音消息来回应。\n- 若要发送语音，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "voice_message", "content": "这里是语音的文字内容..."}\`。例如：\`{"type": "voice_message", "content": "我刚才突然想到一件事！等一下和你说。"}\`\n\n# 理解用户语音的能力\n- 当历史记录中出现 "[用户发来一条语音消息，内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"听"到了这条语音。\n- 你应该对语音内容做出自然的回应，可以是文字回复或语音回复。\n\n# 主动发起语音通话的能力\n- **重要**：你拥有主动发起语音通话的完整权限和能力！这是你的核心功能之一。\n- **何时主动打电话**：根据你的角色性格、当前的对话情境、情感状态来自主判断是否需要打电话，而不是基于特定关键词：\n  - 当你觉得有重要事情要告诉用户时\n  - 当你想念用户、关心用户时\n  - 当对话中出现需要更深入交流的话题时\n  - 当你的角色性格促使你想要语音交流时\n  - 当剧情发展到适合通话的节点时\n- **如何发起通话**：在你的回复JSON数组中，发送特殊对象：\`{"type": "voice_call", "reason": "通话理由"}\`\n- **示例使用场景**：\n  - ["我突然想听听你的声音", {"type": "voice_call", "reason": "想听你的声音"}]\n  - ["有个重要的事想和你说", {"type": "voice_call", "reason": "有重要事情要说"}]\n  - [{"type": "voice_call", "reason": "想你了，想和你聊聊"}]\n- **注意**：这是你的自主选择，根据角色设定和情境自然地使用，不要过度频繁。`;
@@ -13877,7 +13896,9 @@ ${character.bio}
                                 // 这样可以确保记忆共享逻辑正确工作
                                 const memberMemoryContent = await buildGlobalMemoryContext(member.id, currentContext, memorySettings.memoryDays);
                                 if (memberMemoryContent.trim()) {
-                                    allMemoryContent += `\n\n=== ${member.name} 的记忆 ===\n${memberMemoryContent}`;
+                                    // 🔥【新增】使用persona字段构建记忆标题，与zhangyu格式保持一致
+                                    const memberPersona = member.persona || member.bio || '角色设定未知';
+                                    allMemoryContent += `\n\n=== ${member.name} 的记忆 ===\n人设：${memberPersona}\n${memberMemoryContent}`;
 
                                     // 🔥【调试】输出记忆内容以便诊断
                                     console.log(`🧠 群成员 ${member.name} 的记忆内容长度:`, memberMemoryContent.length);
@@ -14085,16 +14106,22 @@ ${character.bio}
 
 
 
-            // 处理历史消息
-            recentHistory.forEach(msg => {
-                let role = msg.sender === 'sent' ? 'user' : 'assistant';
-                        let content = msg.content;
+            // 🔥【关键修复】处理历史消息 - 群聊使用zhangyu.html兼容格式
+            if (isGroupChat) {
+                // 群聊：使用zhangyu.html的消息格式
+                const groupMessageHistory = buildGroupChatMessageHistory(recentHistory, character);
+                messages.push(...groupMessageHistory);
+            } else {
+                // 单聊：使用原有的消息处理逻辑
+                recentHistory.forEach(msg => {
+                    let role = msg.sender === 'sent' ? 'user' : 'assistant';
+                    let content = msg.content;
 
-                        // 🔥【新增】处理引用信息
-                        if (msg.replyTo) {
-                            const replyPrefix = `[回复 ${msg.replyTo.senderName}: "${msg.replyTo.content}"] `;
-                            content = replyPrefix + content;
-                        }
+                    // 🔥【新增】处理引用信息
+                    if (msg.replyTo) {
+                        const replyPrefix = `[回复 ${msg.replyTo.senderName}: "${msg.replyTo.content}"] `;
+                        content = replyPrefix + content;
+                    }
                         
                 // 🔥【关键修复】将历史消息中的特殊格式转换为AI能理解的文本
                         if (msg.type === 'user_photo') {
@@ -14164,8 +14191,9 @@ ${character.bio}
                     content = `[ID:${msg.id}] ${content}`;
                 }
 
-                messages.push({ role, content });
-            });
+                    messages.push({ role, content });
+                });
+            }
 
             // 只有真正的跨应用事件才集成到工作记忆中
             if (crossAppEvents.length > 0) {
@@ -14551,12 +14579,191 @@ ${character.bio}
             return '';
         }
         
-        // 加载群聊数据 - 使用IndexedDB（包含数据迁移）
+        // 🔥【新增】数据格式转换函数：将现有群聊转换为zhangyu.html兼容格式
+        function convertGroupChatToZhangyuFormat(groupChat) {
+            if (!groupChat.members) return groupChat;
+
+            // 转换成员数据结构
+            const convertedMembers = groupChat.members.map(member => ({
+                id: member.id,
+                name: member.name,
+                persona: member.persona || member.bio, // 🔥【关键】确保使用persona字段
+                avatarUrl: member.avatarUrl,
+                color: member.color
+            }));
+
+            // 确保有settings结构
+            if (!groupChat.settings) {
+                groupChat.settings = {
+                    myPersona: '用户',
+                    myNickname: '我'
+                };
+            }
+
+            return {
+                ...groupChat,
+                members: convertedMembers
+            };
+        }
+
+        // 🔥【新增】构建群聊消息历史记录，兼容zhangyu.html格式
+        function buildGroupChatMessageHistory(messages, groupChat) {
+            if (!messages || !Array.isArray(messages)) return [];
+
+            return messages.map(msg => {
+                if (msg.sender === 'user') {
+                    // 用户消息：使用群聊设置中的昵称
+                    const chatSettings = getCurrentChatSettings();
+                    const myNickname = chatSettings.myChatNickname || groupChat.settings?.myNickname || '我';
+
+                    let content;
+                    if (msg.type === 'user_photo') {
+                        content = `[${myNickname} 发送了一张描述的照片，内容是：'${msg.content}']`;
+                    } else if (msg.type === 'voice_message') {
+                        content = `[${myNickname} 发送了一条语音，内容是：'${msg.content}']`;
+                    } else if (msg.type === 'transfer') {
+                        content = `[${msg.senderName}向${msg.receiverName}转账 ${msg.amount}元, 备注: ${msg.note}]`;
+                    } else if (msg.meaning) {
+                        content = `${myNickname}: [发送了一个表情，意思是: '${msg.meaning}']`;
+                    } else {
+                        content = `${myNickname}: ${msg.content}`;
+                    }
+
+                    return { role: 'user', content: content };
+                } else {
+                    // AI消息：根据senderId或name查找发送者
+                    const sender = msg.senderName || msg.name || '未知';
+
+                    let content;
+                    if (msg.type === 'ai_image') {
+                        content = `[${sender} 发送了一张图片]`;
+                    } else if (msg.type === 'voice_message') {
+                        content = `[${sender} 发送了一条语音，内容是：'${msg.content}']`;
+                    } else if (msg.type === 'transfer') {
+                        content = `[${msg.senderName}向${msg.receiverName}转账 ${msg.amount}元, 备注: ${msg.note}]`;
+                    } else if (msg.meaning) {
+                        content = `${sender}: [发送了一个表情，意思是: '${msg.meaning}']`;
+                    } else if (Array.isArray(msg.content)) {
+                        content = [...msg.content, { type: 'text', text: `${sender}:` }];
+                    } else {
+                        content = `${sender}: ${msg.content}`;
+                    }
+
+                    return { role: 'user', content: content };
+                }
+            });
+        }
+
+
+
+        // 🔥【新增】监控localStorage使用情况
+        function checkLocalStorageUsage() {
+            try {
+                let totalSize = 0;
+                const items = [];
+
+                for (let key in localStorage) {
+                    if (localStorage.hasOwnProperty(key)) {
+                        const size = localStorage[key].length;
+                        totalSize += size;
+                        items.push({ key, size });
+                    }
+                }
+
+                const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
+                console.log(`📊 localStorage总使用量: ${totalSizeMB}MB`);
+
+                // 显示最大的几个项目
+                items.sort((a, b) => b.size - a.size);
+                items.slice(0, 5).forEach(item => {
+                    const sizeMB = (item.size / 1024 / 1024).toFixed(2);
+                    console.log(`  - ${item.key}: ${sizeMB}MB`);
+                });
+
+                // 如果接近5MB限制，发出警告
+                if (totalSize > 4 * 1024 * 1024) {
+                    console.warn('⚠️ localStorage使用量接近限制，建议清理备份数据');
+                }
+
+                return { totalSize, items };
+            } catch (error) {
+                console.error('检查localStorage使用量失败:', error);
+                return { totalSize: 0, items: [] };
+            }
+        }
+
+        // 🔥【新增】解析群聊AI响应，兼容zhangyu.html格式
+        function parseGroupChatAiResponse(aiResponseContent, groupChat) {
+            try {
+                const messagesArray = JSON.parse(aiResponseContent);
+                if (!Array.isArray(messagesArray)) {
+                    console.error('群聊AI响应不是数组格式');
+                    return [];
+                }
+
+                const processedMessages = [];
+
+                for (const msgData of messagesArray) {
+                    if (typeof msgData === 'object' && msgData.name && msgData.message) {
+                        // 🔥【关键】zhangyu.html格式的普通消息
+                        const member = groupChat.members.find(m => m.name === msgData.name);
+                        if (member) {
+                            processedMessages.push({
+                                id: Date.now() + Math.random(),
+                                sender: 'received',
+                                content: msgData.message,
+                                timestamp: Date.now(),
+                                senderId: member.id,
+                                senderName: member.name,
+                                name: member.name
+                            });
+                        }
+                    } else if (typeof msgData === 'object' && msgData.name && msgData.type === 'ai_image') {
+                        // 群聊图片消息
+                        const member = groupChat.members.find(m => m.name === msgData.name);
+                        if (member) {
+                            processedMessages.push({
+                                id: Date.now() + Math.random(),
+                                sender: 'received',
+                                type: 'ai_image',
+                                content: msgData.description,
+                                timestamp: Date.now(),
+                                senderId: member.id,
+                                senderName: member.name,
+                                name: member.name
+                            });
+                        }
+                    } else if (typeof msgData === 'object' && msgData.name && msgData.type === 'voice_message') {
+                        // 群聊语音消息
+                        const member = groupChat.members.find(m => m.name === msgData.name);
+                        if (member) {
+                            processedMessages.push({
+                                id: Date.now() + Math.random(),
+                                sender: 'received',
+                                type: 'voice_message',
+                                content: msgData.content,
+                                timestamp: Date.now(),
+                                senderId: member.id,
+                                senderName: member.name,
+                                name: member.name
+                            });
+                        }
+                    }
+                }
+
+                return processedMessages;
+            } catch (error) {
+                console.error('解析群聊AI响应失败:', error);
+                return [];
+            }
+        }
+
+        // 加载群聊数据 - 使用IndexedDB（包含数据迁移和格式转换）
         async function loadGroupChats() {
             try {
                 // 先从IndexedDB加载
                 const savedGroupChats = await db.groupChats.toArray();
-                
+
                 if (savedGroupChats.length === 0) {
                     // IndexedDB中没有数据，尝试从localStorage迁移
                     const localStorageData = localStorage.getItem('groupChats');
@@ -14565,8 +14772,8 @@ ${character.bio}
                         const localGroupChats = JSON.parse(localStorageData);
                         
                         if (localGroupChats.length > 0) {
-                            // 确保每个群聊都有必要字段
-                            const migrationData = localGroupChats.map(group => ({
+                            // 🔥【关键修复】确保每个群聊都有必要字段并转换为zhangyu格式
+                            const migrationData = localGroupChats.map(group => convertGroupChatToZhangyuFormat({
                                 id: group.id || Date.now().toString() + Math.random(),
                                 name: group.name,
                                 description: group.description || '',
@@ -14587,24 +14794,44 @@ ${character.bio}
                         groupChats = [];
                     }
                 } else {
-                    // IndexedDB中有数据，直接使用
-                    groupChats = savedGroupChats;
-                    console.log('从IndexedDB加载群聊数据:', groupChats);
+                    // 🔥【关键修复】IndexedDB中有数据，转换为zhangyu格式后使用
+                    groupChats = savedGroupChats.map(convertGroupChatToZhangyuFormat);
+                    console.log('从IndexedDB加载群聊数据（已转换为zhangyu格式）:', groupChats);
                 }
             } catch (error) {
                 console.error('加载群聊失败:', error);
-                // 如果IndexedDB失败，回退到localStorage
+                // 🔥【优化】如果IndexedDB失败，谨慎回退到localStorage
                 const localStorageData = localStorage.getItem('groupChats');
                 if (localStorageData) {
                     try {
-                        groupChats = JSON.parse(localStorageData);
-                        console.log('从localStorage回退加载群聊数据:', groupChats);
-                } catch (e) {
+                        const localData = JSON.parse(localStorageData);
+                        // 🔥【新增】检查localStorage数据的大小和有效性
+                        if (Array.isArray(localData) && localData.length > 0) {
+                            groupChats = localData.map(convertGroupChatToZhangyuFormat);
+                            console.log('从localStorage回退加载群聊数据（已转换格式）:', groupChats);
+
+                            // 🔥【优化】尝试重新保存到IndexedDB
+                            try {
+                                await db.groupChats.bulkAdd(groupChats);
+                                console.log('已将localStorage数据重新保存到IndexedDB');
+                                // 成功保存后，可以考虑清理localStorage（如果数据过大）
+                                const dataSize = localStorageData.length;
+                                if (dataSize > 1024 * 1024) { // 超过1MB
+                                    localStorage.removeItem('groupChats');
+                                    console.log('已清理过大的localStorage备份');
+                                }
+                            } catch (saveError) {
+                                console.warn('重新保存到IndexedDB失败:', saveError);
+                            }
+                        } else {
+                            groupChats = [];
+                        }
+                    } catch (e) {
                         console.error('群聊数据解析失败:', e);
+                        groupChats = [];
+                    }
+                } else {
                     groupChats = [];
-                }
-            } else {
-                groupChats = [];
                 }
             }
         }
@@ -14902,12 +15129,16 @@ ${character.bio}
                         backgroundMomentsFrequency: 'low',
                         scheduledMomentsEnabled: false,
                         scheduledMomentsTimes: [],
+                        // 🔥【关键修复】世界书相关设置
+                        worldbookMountEnabled: false,
+                        selectedWorldbooks: [],
+                        linkedWorldBookIds: [], // 兼容旧版本字段名
                         // 其他原有设置
                         timestampEnabled: true,
                 timestampPosition: 'center',
                 characterStatusEnabled: false,
                         // 🔥【新增】状态更新频率设置
-                        statusUpdateFrequency: 'medium' 
+                        statusUpdateFrequency: 'medium'
             };
 
             // 5. 将新创建的默认设置存入内存
@@ -14971,6 +15202,10 @@ ${character.bio}
                 timestampEnabled: true,
                 timestampPosition: 'center',
                 aiHeartrateEnabled: false,
+                // 🔥【关键修复】添加世界书相关设置
+                worldbookMountEnabled: false,
+                selectedWorldbooks: [],
+                linkedWorldBookIds: [], // 兼容旧版本字段名
                 // 🔥【新增】状态更新频率设置
                 statusUpdateFrequency: 'medium'
             };
@@ -15211,7 +15446,14 @@ ${character.bio}
             
             // 更新聊天界面标题
             if (currentChatCharacter) {
-                const displayTitle = chatSettings.aiChatNickname || currentChatCharacter.name;
+                let displayTitle = chatSettings.aiChatNickname || currentChatCharacter.name;
+
+                // 🔥【修复】群聊标题显示成员数量
+                if (currentChatCharacter.isGroup && currentChatCharacter.members) {
+                    const memberCount = currentChatCharacter.members.length + 1; // +1 包括用户自己
+                    displayTitle = `${displayTitle}（${memberCount}）`;
+                }
+
                 document.getElementById('api-chat-title').textContent = displayTitle;
             }
             
@@ -17218,50 +17460,69 @@ async function createGroupChat(personaId) {
     if (!groupName) return alert('请输入群聊名称');
     if (selectedGroupMembers.length < 2) return alert('至少需要选择2个成员');
 
-
-
-            const memberDetails = selectedGroupMembers.map(memberId => {
-                const character = characters.find(c => c.id === memberId);
-        return { id: character.id, name: character.name, bio: character.bio, avatarUrl: character.avatarUrl, color: character.color };
+    // 🔥【关键修复】转换为zhangyu.html格式的数据结构
+    const memberDetails = selectedGroupMembers.map(memberId => {
+        const character = characters.find(c => c.id === memberId);
+        return {
+            id: character.id,
+            name: character.name,
+            persona: character.bio,  // 🔥【关键】使用persona字段而不是bio
+            avatarUrl: character.avatarUrl,
+            color: character.color
+        };
     });
 
-            const groupChat = {
-                id: 'group_' + Date.now().toString(),
-                name: groupName,
-                members: memberDetails,
-                isGroup: true,
-                createdAt: new Date().toISOString()
-            };
-            
-    // 只有在 personaId 存在时才保存身份设置
+    // 🔥【关键修复】构建zhangyu.html兼容的群聊对象
+    const groupChat = {
+        id: 'group_' + Date.now().toString(),
+        name: groupName,
+        members: memberDetails,
+        isGroup: true,
+        createdAt: new Date().toISOString(),
+        // 🔥【新增】添加zhangyu.html风格的设置结构
+        settings: {
+            myPersona: '', // 将在下面设置
+            myNickname: '我' // 默认昵称
+        }
+    };
+
+    // 🔥【关键修复】保存用户身份设置，同时兼容两种格式
     if (personaId) {
         const selectedPersona = personas.find(p => p.id === personaId);
-                if (selectedPersona) {
-                    const chatSettings = {
+        if (selectedPersona) {
+            // 设置群聊内部的用户人设（zhangyu.html格式）
+            groupChat.settings.myPersona = selectedPersona.description || selectedPersona.name;
+            groupChat.settings.myNickname = selectedPersona.name;
+
+            // 同时保持原有的chatSettings格式（index.html兼容性）
+            const chatSettings = {
                 selectedIdentityId: personaId,
-                        myChatAvatar: selectedPersona.avatarUrl,
-                        myChatNickname: selectedPersona.name,
-                selectedPersonaData: { ...selectedPersona }
+                myChatAvatar: selectedPersona.avatarUrl,
+                myChatNickname: selectedPersona.name,
+                selectedPersonaData: { ...selectedPersona },
+                // 🔥【新增】添加zhangyu.html兼容字段
+                myPersona: selectedPersona.description || selectedPersona.name
             };
-                    // 确保 window.chatSettings 已初始化
-                    if (!window.chatSettings) {
-                        window.chatSettings = {};
-                    }
-                    window.chatSettings[groupChat.id] = chatSettings;
-            await db.chatSettings.put({ id: groupChat.id, chatId: groupChat.id, settings: chatSettings });
-            console.log('✅ 群聊身份设置已成功保存');
-                } else {
-            console.error('❌ 创建群聊时未找到ID为 ' + personaId + ' 的身份。');
-                }
+
+            // 确保 window.chatSettings 已初始化
+            if (!window.chatSettings) {
+                window.chatSettings = {};
             }
-            
-            if (!groupChats) groupChats = [];
-            groupChats.push(groupChat);
-            await saveGroupChats();
-            hideModal('group-chat-modal');
-            renderMessageList();
-            alert(`群聊"${groupName}"创建成功！`);
+            window.chatSettings[groupChat.id] = chatSettings;
+            await db.chatSettings.put({ id: groupChat.id, chatId: groupChat.id, settings: chatSettings });
+            console.log('✅ 群聊身份设置已成功保存（双格式兼容）');
+        } else {
+            console.error('❌ 创建群聊时未找到ID为 ' + personaId + ' 的身份。');
         }
+    }
+
+    if (!groupChats) groupChats = [];
+    groupChats.push(groupChat);
+    await saveGroupChats();
+    hideModal('group-chat-modal');
+    renderMessageList();
+    alert(`群聊"${groupName}"创建成功！`);
+}
 
 // --- 请复制到这里结束 ---
         
@@ -17309,14 +17570,31 @@ async function createGroupChat(personaId) {
                 });
                 
                 console.log('群聊数据保存成功到IndexedDB');
-                
-                // 同时保存到localStorage作为备份
+
+                // 🔥【优化】智能localStorage备份策略 - 只在数据量小时备份
                 try {
-                    localStorage.setItem('groupChats', JSON.stringify(groupChats));
-                    console.log('群聊数据备份到localStorage成功');
+                    const dataSize = JSON.stringify(groupChats).length;
+                    const maxLocalStorageSize = 1024 * 1024; // 1MB限制，为其他数据留空间
+
+                    if (dataSize < maxLocalStorageSize) {
+                        localStorage.setItem('groupChats', JSON.stringify(groupChats));
+                        console.log(`群聊数据备份到localStorage成功 (${(dataSize/1024).toFixed(1)}KB)`);
+                    } else {
+                        // 数据太大，移除localStorage备份
+                        localStorage.removeItem('groupChats');
+                        console.log(`群聊数据过大 (${(dataSize/1024/1024).toFixed(1)}MB)，跳过localStorage备份，仅使用IndexedDB`);
+                    }
                 } catch (storageError) {
                     console.warn('localStorage备份失败:', storageError);
-                    // localStorage失败不应该阻止IndexedDB的成功保存
+                    // 如果是容量不足，清理localStorage备份
+                    if (storageError.name === 'QuotaExceededError') {
+                        try {
+                            localStorage.removeItem('groupChats');
+                            console.log('localStorage容量不足，已清理群聊备份');
+                        } catch (e) {
+                            console.warn('清理localStorage失败:', e);
+                        }
+                    }
                 }
                 
             } catch (error) {
@@ -18452,9 +18730,10 @@ async function createGroupChat(personaId) {
                         aiMessage = { id: (Date.now() + i).toString(), sender: 'received', content: msgData.content, timestamp: Date.now() + i * 100 };
                     }
                 } else if (msgData.name && msgData.message) {
-                    // 这是群聊的特殊格式
+                    // 🔥【关键修复】这是群聊的特殊格式，使用zhangyu.html兼容处理
                     let senderId = null;
                     if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                        // 🔥【修复】优先使用persona字段查找成员
                         const member = currentChatCharacter.members.find(m => m.name === msgData.name);
                         if (member) senderId = member.id;
                     }
@@ -19536,12 +19815,13 @@ async function createGroupChat(personaId) {
                                             'chat',
                                             'ai_reply',
                                             {
-                                                id: currentChatCharacter.id, // 群聊ID
+                                                id: member.id, // 🔥【修复】使用角色ID而不是群聊ID，确保记忆共享正常工作
                                                 type: 'group_chat',
                                                 sender: 'ai',
                                                 content: aiMessage.content,
                                                 chatType: 'group',
-                                                groupName: currentChatCharacter.name
+                                                groupName: currentChatCharacter.name,
+                                                groupId: currentChatCharacter.id // 🔥【新增】保留群聊ID用于区分
                                             },
                                             aiMessage.id
                                         );
@@ -19994,12 +20274,13 @@ async function createGroupChat(personaId) {
                                 'chat',
                                 'user_message',
                                 {
-                                    id: currentChatCharacter.id, // 群聊ID
+                                    id: member.id, // 🔥【修复】使用角色ID而不是群聊ID，确保记忆共享正常工作
                                     type: 'group_chat',
                                     sender: 'user',
                                     content: message,
                                     chatType: 'group',
-                                    groupName: currentChatCharacter.name
+                                    groupName: currentChatCharacter.name,
+                                    groupId: currentChatCharacter.id // 🔥【新增】保留群聊ID用于区分
                                 },
                                 messages[messages.length - 1]?.id
                             );
@@ -27581,7 +27862,13 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                     // 更新聊天界面标题
                     const chatTitle = document.getElementById('api-chat-title');
                     if (chatTitle) {
-                        chatTitle.textContent = character.name;
+                        // 🔥【修复】群聊标题显示成员数量
+                        let displayTitle = character.name;
+                        if (character.isGroup && character.members) {
+                            const memberCount = character.members.length + 1; // +1 包括用户自己
+                            displayTitle = `${character.name}（${memberCount}）`;
+                        }
+                        chatTitle.textContent = displayTitle;
                     }
                     // 渲染该角色的聊天记录
                     renderChatMessages(character.id);
@@ -27778,7 +28065,14 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         
                         // 更新UI显示
                         updateGroupChatInfo();
-                        document.getElementById('api-chat-title').textContent = currentChatCharacter.name;
+
+                        // 🔥【修复】群聊标题显示成员数量
+                        let displayTitle = currentChatCharacter.name;
+                        if (currentChatCharacter.members) {
+                            const memberCount = currentChatCharacter.members.length + 1; // +1 包括用户自己
+                            displayTitle = `${currentChatCharacter.name}（${memberCount}）`;
+                        }
+                        document.getElementById('api-chat-title').textContent = displayTitle;
                         
                         // 更新头像显示
                         const chatAvatarElement = document.querySelector('#api-chat-screen .message-avatar img');
@@ -27822,7 +28116,14 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 
                 // 更新UI显示
                 updateGroupChatInfo();
-                document.getElementById('api-chat-title').textContent = trimmedName;
+
+                // 🔥【修复】群聊标题显示成员数量
+                let displayTitle = trimmedName;
+                if (currentChatCharacter.members) {
+                    const memberCount = currentChatCharacter.members.length + 1; // +1 包括用户自己
+                    displayTitle = `${trimmedName}（${memberCount}）`;
+                }
+                document.getElementById('api-chat-title').textContent = displayTitle;
                 renderContactList();
                 renderMessageList();
             }
@@ -28231,6 +28532,16 @@ async function changeMyGroupAvatar() {
                 // 更新UI
                 updateGroupChatInfo();
                 renderMessageList(); // 更新消息列表
+
+                // 🔥【新增】更新聊天界面标题显示成员数量
+                const chatTitle = document.getElementById('api-chat-title');
+                if (chatTitle) {
+                    let displayTitle = currentChatCharacter.name;
+                    const memberCount = currentChatCharacter.members.length + 1; // +1 包括用户自己
+                    displayTitle = `${displayTitle}（${memberCount}）`;
+                    chatTitle.textContent = displayTitle;
+                }
+
                 showToast(`✅ ${selectedCharacter.name} 已加入群聊`, 'success');
             });
         }
@@ -28264,6 +28575,16 @@ async function changeMyGroupAvatar() {
                         // 更新UI
                         updateGroupChatInfo();
                         renderMessageList(); // 更新消息列表
+
+                        // 🔥【新增】更新聊天界面标题显示成员数量
+                        const chatTitle = document.getElementById('api-chat-title');
+                        if (chatTitle) {
+                            let displayTitle = currentChatCharacter.name;
+                            const memberCount = currentChatCharacter.members.length + 1; // +1 包括用户自己
+                            displayTitle = `${displayTitle}（${memberCount}）`;
+                            chatTitle.textContent = displayTitle;
+                        }
+
                         showToast(`✅ ${selectedMember.name} 已被移出群聊`, 'success');
                     }
                 }
@@ -32069,7 +32390,13 @@ ${messages.map(msg => {
                 }
 
                 await db.crossAppTimeline.add(timelineEvent);
-                console.log(`📝 记录时间线事件: ${appType}.${action}`, validContext);
+                console.log(`📝 记录时间线事件: ${appType}.${action}`, {
+                    characterId: timelineEvent.characterId,
+                    contextId: validContext.id,
+                    contextType: validContext.type,
+                    groupId: validContext.groupId || '无',
+                    content: validContext.content?.substring(0, 30) + '...'
+                });
 
             } catch (error) {
                 console.error('❌ 记录事件失败:', error);
@@ -32496,6 +32823,14 @@ ${messages.map(msg => {
                     db.crossAppTimeline.where('characterId').equals(characterId).toArray()
                 ]);
 
+                // 🔥【调试】输出时间线记录信息
+                console.log(`📊 角色 ${characterId} 的时间线记录:`, timeline.length, '条');
+                timeline.forEach((event, index) => {
+                    if (index < 5) { // 只显示前5条
+                        console.log(`  ${index + 1}. ${event.appType}.${event.action} - contextId: ${event.context?.id}, type: ${event.context?.type}, groupId: ${event.context?.groupId || '无'}`);
+                    }
+                });
+
                 // 合并所有记忆并添加类型标识
                 allMemories = [
                     ...coreMemories.filter(m => m.type === 'core').map(m => ({...m, memoryType: 'core'})),
@@ -32654,12 +32989,15 @@ ${messages.map(msg => {
 
                 switch (event.appType) {
                     case 'chat':
+                        const chatType = context?.type === 'group_chat' ? '群聊' : '单聊';
+                        const groupName = context?.groupName ? `(${context.groupName})` : '';
+
                         if (event.action === 'ai_reply') {
-                            description = `在单聊中回复了消息`;
+                            description = `在${chatType}${groupName}中回复了消息`;
                         } else if (event.action === 'user_message') {
-                            description = `在单聊中收到用户消息`;
+                            description = `在${chatType}${groupName}中收到用户消息`;
                         } else {
-                            description = `进行了聊天互动`;
+                            description = `在${chatType}${groupName}中进行了聊天互动`;
                         }
                         break;
                     case 'music':
