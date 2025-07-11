@@ -3684,7 +3684,7 @@
             }
             
             // 初始化时设置正确的按钮显示状态 - 延迟执行确保DOM加载完成
-            setTimeout(() => {
+            setTimeout(async () => {
                 switchChatTab('message-list');
                 // 确保app标题有chat-mode类和正确内容
                 const appTitle = document.querySelector('#chat-screen .app-title');
@@ -3706,6 +3706,9 @@
                 } else {
                     // 应用初始化完成，等待选择聊天角色
                 }
+
+                // 🔥【修复】在应用初始化时启动全局后台互动系统
+                await initGlobalBackgroundInteractionSystem();
             }, 100);
             
             // 温度滑块显示
@@ -4994,35 +4997,106 @@
         // === 后台互动系统 ===
         let backgroundTimers = {};
 
-        // 初始化后台互动系统
+        // 🔥【新增】全局后台互动系统初始化 - 为所有角色设置定时器
+        async function initGlobalBackgroundInteractionSystem() {
+            console.log('🚀 启动全局后台互动系统...');
+
+            // 🔥【修复】不要清除现有定时器，避免与全局动态发布系统冲突
+            // clearAllBackgroundTimers();
+
+            // 为每个角色设置后台互动定时器
+            for (const character of characters) {
+                try {
+                    const chatSettings = await getChatSettings(character.id);
+
+                    // 🔥【修复】使用默认值，确保后台互动能够正常启动
+                    const backgroundInteractionEnabled = chatSettings.backgroundInteractionEnabled !== false; // 默认启用
+                    const backgroundChatEnabled = chatSettings.backgroundChatEnabled !== false; // 默认启用
+                    const backgroundMomentsEnabled = chatSettings.backgroundMomentsEnabled !== false; // 默认启用
+
+                    if (!backgroundInteractionEnabled) {
+                        console.log(`角色 ${character.name} 的后台互动已禁用，跳过`);
+                        continue;
+                    }
+
+                    console.log(`为角色 ${character.name} 设置后台互动定时器`);
+
+                    // 设置主动聊天定时器
+                    if (backgroundChatEnabled) {
+                        // 🔥【修复】检查是否有聊天记录，如果没有则不设置定时器
+                        const messages = chatMessages[character.id] || [];
+                        const hasUserMessages = messages.some(msg => msg.sender === 'sent');
+
+                        if (hasUserMessages) {
+                            scheduleProactiveChatForCharacter(character.id);
+                            console.log(`${character.name} 动态主动聊天定时器已设置`);
+                        } else {
+                            console.log(`${character.name} 没有用户消息记录，暂不设置主动聊天定时器`);
+                        }
+                    }
+
+                    // 设置主动发动态定时器
+                    if (backgroundMomentsEnabled) {
+                        const momentsInterval = getBackgroundMomentsInterval(chatSettings.backgroundMomentsFrequency || 'low');
+                        backgroundTimers[character.id + '_moments'] = setInterval(() => {
+                            triggerBackgroundMoments(character.id);
+                        }, momentsInterval);
+                        console.log(`${character.name} 主动发动态定时器已设置，间隔: ${momentsInterval}ms`);
+                    }
+                } catch (error) {
+                    console.error(`为角色 ${character.name} 设置后台互动定时器失败:`, error);
+                }
+            }
+        }
+
+        // 初始化后台互动系统（单个角色）
         function initBackgroundInteractionSystem() {
             if (!currentChatCharacter) return;
-            
-            clearAllBackgroundTimers();
-            
-            const chatSettings = getCurrentChatSettings();
-            if (!chatSettings.backgroundInteractionEnabled) return;
-            
-            const characterId = currentChatCharacter.id;
-            
-            // 设置主动聊天定时器
-            if (chatSettings.backgroundChatEnabled) {
-                const chatInterval = getBackgroundInterval(chatSettings.backgroundChatFrequency || 'low');
-                backgroundTimers[characterId + '_chat'] = setInterval(() => {
-                    triggerBackgroundChat(characterId);
-                }, chatInterval);
-                
 
+            // 🔥【修复】只清除当前角色的定时器，不影响其他角色
+            const characterId = currentChatCharacter.id;
+            if (backgroundTimers[characterId + '_chat']) {
+                clearInterval(backgroundTimers[characterId + '_chat']);
+                delete backgroundTimers[characterId + '_chat'];
             }
-            
+            if (backgroundTimers[characterId + '_moments']) {
+                clearInterval(backgroundTimers[characterId + '_moments']);
+                delete backgroundTimers[characterId + '_moments'];
+            }
+
+            const chatSettings = getCurrentChatSettings();
+
+            // 🔥【修复】使用默认值，确保后台互动能够正常启动
+            const backgroundInteractionEnabled = chatSettings.backgroundInteractionEnabled !== false; // 默认启用
+            const backgroundChatEnabled = chatSettings.backgroundChatEnabled !== false; // 默认启用
+            const backgroundMomentsEnabled = chatSettings.backgroundMomentsEnabled !== false; // 默认启用
+
+            if (!backgroundInteractionEnabled) {
+                console.log(`角色 ${currentChatCharacter.name} 的后台互动已禁用`);
+                return;
+            }
+
+            // 设置主动聊天定时器
+            if (backgroundChatEnabled) {
+                // 🔥【修复】检查是否有聊天记录，如果没有则不设置定时器
+                const messages = chatMessages[characterId] || [];
+                const hasUserMessages = messages.some(msg => msg.sender === 'sent');
+
+                if (hasUserMessages) {
+                    scheduleProactiveChatForCharacter(characterId);
+                    console.log(`${currentChatCharacter.name} 动态主动聊天定时器已设置`);
+                } else {
+                    console.log(`${currentChatCharacter.name} 没有用户消息记录，暂不设置主动聊天定时器`);
+                }
+            }
+
             // 设置主动发动态定时器
-            if (chatSettings.backgroundMomentsEnabled) {
+            if (backgroundMomentsEnabled) {
                 const momentsInterval = getBackgroundMomentsInterval(chatSettings.backgroundMomentsFrequency || 'low');
                 backgroundTimers[characterId + '_moments'] = setInterval(() => {
                     triggerBackgroundMoments(characterId);
                 }, momentsInterval);
-                
-                // 移除了主动发动态日志
+                console.log(`${currentChatCharacter.name} 主动发动态定时器已设置，间隔: ${momentsInterval}ms`);
             }
         }
 
@@ -5051,8 +5125,8 @@
                 for (const character of characters) {
                     const chatSettings = await getChatSettings(character.id);
                     
-                    // 检查是否启用了后台发动态
-                    if (chatSettings.backgroundMomentsEnabled) {
+                    // 🔥【修复】检查是否启用了后台发动态，使用默认值
+                    if (chatSettings.backgroundMomentsEnabled !== false) {
                         const frequency = chatSettings.backgroundMomentsFrequency || 'low';
                         const interval = getBackgroundMomentsInterval(frequency);
                         
@@ -5117,18 +5191,108 @@
             }
         }
 
-        // 🔥【修复】获取后台聊天间隔时间 - 使用固定间隔而不是随机间隔
+        // 🔥【修复】获取后台聊天间隔时间 - 改为随机间隔，符合用户需求
         function getBackgroundInterval(frequency) {
             switch (frequency) {
                 case 'low':
-                    return 2 * 60 * 60 * 1000; // 2小时
+                    // 1-2小时随机间隔
+                    return Math.random() * 60 * 60 * 1000 + 60 * 60 * 1000;
                 case 'medium':
-                    return 60 * 60 * 1000; // 1小时
+                    // 30-60分钟随机间隔
+                    return Math.random() * 30 * 60 * 1000 + 30 * 60 * 1000;
                 case 'high':
-                    return 30 * 60 * 1000; // 30分钟
+                    // 10-30分钟随机间隔
+                    return Math.random() * 20 * 60 * 1000 + 10 * 60 * 1000;
                 default:
-                    return 2 * 60 * 60 * 1000; // 默认2小时
+                    // 默认1-2小时
+                    return Math.random() * 60 * 60 * 1000 + 60 * 60 * 1000;
             }
+        }
+
+        // 🔥【新增】为角色设置动态主动聊天定时器
+        function scheduleProactiveChatForCharacter(characterId) {
+            // 清除现有定时器
+            if (backgroundTimers[characterId + '_chat']) {
+                clearTimeout(backgroundTimers[characterId + '_chat']);
+                delete backgroundTimers[characterId + '_chat'];
+            }
+
+            // 检查用户最后回复时间
+            const messages = chatMessages[characterId] || [];
+            const lastUserMessage = messages.slice().reverse().find(msg => msg.sender === 'sent');
+
+            if (!lastUserMessage) return; // 没有用户消息，不设置定时器
+
+            const timeSinceLastUserMessage = Date.now() - lastUserMessage.timestamp;
+            const tenMinutes = 10 * 60 * 1000; // 10分钟
+
+            let delay;
+            if (timeSinceLastUserMessage < tenMinutes) {
+                // 用户最近有回复，等待10分钟后再开始计时
+                delay = tenMinutes - timeSinceLastUserMessage;
+                console.log(`${characters.find(c => c.id === characterId)?.name} 将在${Math.round(delay / 60000)}分钟后开始主动聊天计时`);
+            } else {
+                // 用户已经超过10分钟没回复，立即开始随机计时
+                delay = 0;
+                console.log(`${characters.find(c => c.id === characterId)?.name} 立即开始主动聊天计时`);
+            }
+
+            // 设置定时器
+            backgroundTimers[characterId + '_chat'] = setTimeout(async () => {
+                // 10分钟等待期结束，现在开始随机间隔计时
+                const character = characters.find(c => c.id === characterId);
+                if (!character) return;
+
+                const chatSettings = await getAsyncChatSettings(characterId);
+                const randomInterval = getBackgroundInterval(chatSettings.backgroundChatFrequency || 'low');
+
+                console.log(`${character.name} 将在${Math.round(randomInterval / 60000)}分钟后发送主动消息`);
+
+                // 设置实际的主动聊天定时器
+                backgroundTimers[characterId + '_chat'] = setTimeout(() => {
+                    triggerBackgroundChat(characterId);
+                    // 发送完消息后，重新安排下次的主动聊天
+                    scheduleProactiveChatForCharacter(characterId);
+                }, randomInterval);
+            }, delay);
+        }
+
+        // 🔥【新增】当用户发送消息时，重新安排主动聊天定时器
+        function onUserMessageSent(characterId) {
+            const character = characters.find(c => c.id === characterId);
+            console.log(`用户向 ${character?.name} 发送了消息，重新安排主动聊天定时器`);
+            // 重新安排该角色的主动聊天定时器
+            scheduleProactiveChatForCharacter(characterId);
+        }
+
+        // 🔥【新增】手动重新初始化所有角色的主动聊天定时器
+        async function reinitializeProactiveChatTimers() {
+            console.log('🔄 重新初始化所有角色的主动聊天定时器...');
+
+            for (const character of characters) {
+                try {
+                    const chatSettings = await getChatSettings(character.id);
+                    const backgroundChatEnabled = chatSettings.backgroundChatEnabled !== false;
+
+                    if (backgroundChatEnabled) {
+                        const messages = chatMessages[character.id] || [];
+                        const hasUserMessages = messages.some(msg => msg.sender === 'sent');
+
+                        if (hasUserMessages) {
+                            scheduleProactiveChatForCharacter(character.id);
+                            console.log(`✅ ${character.name} 主动聊天定时器已重新设置`);
+                        } else {
+                            console.log(`⏸️ ${character.name} 没有用户消息记录，跳过定时器设置`);
+                        }
+                    } else {
+                        console.log(`🚫 ${character.name} 主动聊天功能已禁用`);
+                    }
+                } catch (error) {
+                    console.error(`❌ 为 ${character.name} 设置主动聊天定时器失败:`, error);
+                }
+            }
+
+            console.log('🎉 主动聊天定时器重新初始化完成');
         }
 
         // 获取后台动态间隔时间
@@ -5146,22 +5310,40 @@
         }
 
         // 触发后台聊天
-        async function triggerBackgroundChat(characterId) {
+        async function triggerBackgroundChat(characterId, skipTimeCheck = false) {
             try {
                 const character = characters.find(c => c.id === characterId);
                 if (!character) return;
-                
-                // 检查用户是否至少10分钟没有回复
-                const messages = chatMessages[characterId] || [];
-                const lastUserMessage = messages.slice().reverse().find(msg => msg.sender === 'user');
-                
-                if (lastUserMessage) {
-                    const timeSinceLastUserMessage = Date.now() - lastUserMessage.timestamp;
-                    const tenMinutes = 10 * 60 * 1000; // 10分钟
-                    if (timeSinceLastUserMessage < tenMinutes) {
-                        console.log(`${character.name} 跳过主动聊天：用户最近${Math.round(timeSinceLastUserMessage / 60000)}分钟前有回复`);
-                        return; // 用户最近有活动，不发送自动消息
+
+                // 检查用户是否至少10分钟没有回复（测试时可跳过）
+                if (!skipTimeCheck) {
+                    const messages = chatMessages[characterId] || [];
+                    const lastUserMessage = messages.slice().reverse().find(msg => msg.sender === 'sent');
+
+                    if (lastUserMessage) {
+                        const timeSinceLastUserMessage = Date.now() - lastUserMessage.timestamp;
+                        const tenMinutes = 10 * 60 * 1000; // 10分钟
+                        if (timeSinceLastUserMessage < tenMinutes) {
+                            console.log(`${character.name} 跳过主动聊天：用户最近${Math.round(timeSinceLastUserMessage / 60000)}分钟前有回复`);
+                            return; // 用户最近有活动，不发送自动消息
+                        }
+
+                        // 🔥【新增】检查是否已经在等待期内发送过主动消息
+                        const lastAIMessage = messages.slice().reverse().find(msg => msg.sender === 'received');
+                        if (lastAIMessage && lastAIMessage.isProactive) {
+                            // 如果最后一条AI消息是主动消息，检查是否在合理的时间间隔内
+                            const timeSinceLastProactive = Date.now() - lastAIMessage.timestamp;
+                            const chatSettings = await getAsyncChatSettings(characterId);
+                            const minInterval = getBackgroundInterval(chatSettings.backgroundChatFrequency || 'low');
+
+                            if (timeSinceLastProactive < minInterval) {
+                                console.log(`${character.name} 跳过主动聊天：距离上次主动消息仅${Math.round(timeSinceLastProactive / 60000)}分钟`);
+                                return;
+                            }
+                        }
                     }
+                } else {
+                    console.log(`${character.name} 测试模式：跳过10分钟时间检查`);
                 }
                 
                 // 🔥【修复】获取该角色的聊天设置，而不是当前聊天设置
@@ -5170,6 +5352,9 @@
                 // 🔥【修复】使用用户设置的历史消息回合数和跨窗口记忆数
                 const historyCount = chatSettings.historyCount || 5;
                 const crossWindowMemory = chatSettings.crossWindowMemory || 3;
+
+                // 🔥【修复】获取聊天消息（我之前不小心删除了这行）
+                const messages = chatMessages[characterId] || [];
 
                 // 获取最近的聊天历史（使用历史消息回合数设置）
                 const recentMessages = messages.slice(-historyCount);
@@ -5185,10 +5370,10 @@
                 // 构建聊天历史上下文
                 let chatContext = '';
                 if (recentMessages.length > 0) {
-                    chatContext = '\n\n最近的聊天记录：\n' + 
+                    chatContext = '\n\n最近的聊天记录：\n' +
                         recentMessages.map(msg => {
-                            if (msg.sender === 'user') return `用户：${msg.content}`;
-                            if (msg.sender === 'ai') return `${character.name}：${msg.content}`;
+                            if (msg.sender === 'sent') return `用户：${msg.content}`;
+                            if (msg.sender === 'received') return `${character.name}：${msg.content}`;
                             return '';
                         }).filter(Boolean).join('\n');
                 }
@@ -5213,30 +5398,158 @@
 7. 考虑当前时间和情境，让消息更贴合实际
 8. 保持角色的一致性和连贯性${chatContext}${momentsContext}
 
-请生成一条主动聊天的消息：`;
+请生成主动聊天的消息（可以是1-12条），以JSON数组格式返回：`;
 
-                const content = await generateAIResponse(prompt, character);
-                if (content && content.trim()) {
-                    // 添加到聊天记录
-                    const message = {
-                        id: Date.now().toString(),
-                        sender: 'ai',
-                        content: content.trim(),
-                        timestamp: Date.now()
-                    };
-                    
+                const response = await generateAIResponse(prompt, character);
+                if (response && response.trim()) {
+                    // 🔥【修复】使用与正常AI回复相同的处理逻辑
+                    const aiMessages = parseAiResponse(response);
+
                     if (!chatMessages[characterId]) {
                         chatMessages[characterId] = [];
                     }
-                    
-                    chatMessages[characterId].push(message);
+
+                    // 🔥【修复】使用与processAIReply相同的消息处理逻辑
+                    for (let i = 0; i < aiMessages.length; i++) {
+                        const msgData = aiMessages[i];
+                        let aiMessage;
+
+                        // 🔥【修复】跳过拉黑指令对象
+                        if (typeof msgData === 'object' && msgData !== null && msgData.type === 'block_user') {
+                            console.log('🚫 跳过拉黑指令对象，不显示为消息:', msgData);
+                            continue;
+                        }
+
+                        if (typeof msgData === 'object' && msgData !== null) {
+                            if (msgData.type === 'voice_message') {
+                                aiMessage = {
+                                    id: (Date.now() + i).toString(),
+                                    sender: 'received',
+                                    type: 'voice_message',
+                                    content: msgData.content,
+                                    timestamp: Date.now() + i * 100
+                                };
+                            } else if (msgData.type === 'ai_image') {
+                                aiMessage = {
+                                    id: (Date.now() + i).toString(),
+                                    sender: 'received',
+                                    type: 'ai_image',
+                                    content: '',
+                                    image: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#f0f0f0"/><text x="100" y="75" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">[AI描述的图片]</text></svg>')}`,
+                                    imageDescription: msgData.description,
+                                    timestamp: Date.now() + i * 100
+                                };
+                            } else if (msgData.type === 'transfer') {
+                                aiMessage = {
+                                    id: (Date.now() + i).toString(),
+                                    sender: 'received',
+                                    type: 'transfer',
+                                    amount: msgData.amount,
+                                    note: msgData.note,
+                                    timestamp: Date.now() + i * 100
+                                };
+                            } else if (msgData.type === 'emoji') {
+                                const matchingEmoji = customEmojis.find(emoji => emoji.description === msgData.description);
+                                if (matchingEmoji) {
+                                    aiMessage = {
+                                        id: (Date.now() + i).toString(),
+                                        sender: 'received',
+                                        content: '',
+                                        image: matchingEmoji.url,
+                                        isEmoji: true,
+                                        emojiDescription: matchingEmoji.description,
+                                        timestamp: Date.now() + i * 100
+                                    };
+                                    addToRecentEmojis({ id: matchingEmoji.id, url: matchingEmoji.url, description: matchingEmoji.description });
+                                } else {
+                                    aiMessage = {
+                                        id: (Date.now() + i).toString(),
+                                        sender: 'received',
+                                        content: `[表情包"${msgData.description}"不存在]`,
+                                        timestamp: Date.now() + i * 100
+                                    };
+                                }
+                            } else if (msgData.content) {
+                                // 普通对象消息
+                                aiMessage = {
+                                    id: (Date.now() + i).toString(),
+                                    sender: 'received',
+                                    content: msgData.content,
+                                    timestamp: Date.now() + i * 100
+                                };
+                            } else {
+                                console.log('🔥 [主动聊天] 不支持的消息格式:', msgData);
+                                continue;
+                            }
+                        } else if (typeof msgData === 'string') {
+                            // 普通文本消息
+                            aiMessage = {
+                                id: (Date.now() + i).toString(),
+                                sender: 'received',
+                                content: msgData,
+                                timestamp: Date.now() + i * 100
+                            };
+                        } else {
+                            console.log('🔥 [主动聊天] 无效的消息数据:', msgData);
+                            continue;
+                        }
+
+                        if (aiMessage) {
+                            // 🔥【新增】标记为主动消息
+                            aiMessage.isProactive = true;
+                            chatMessages[characterId].push(aiMessage);
+                        }
+                    }
+
                     saveChatMessages();
-                    
+                    console.log(`🔥 [主动聊天] ${character.name} 发送了 ${aiMessages.length} 条消息`);
+
+                    // 🔥【新增】记录主动聊天消息到时间线记忆
+                    setTimeout(async () => {
+                        try {
+                            for (let i = 0; i < aiMessages.length; i++) {
+                                const msgData = aiMessages[i];
+                                let eventContent = '';
+
+                                if (typeof msgData === 'string') {
+                                    eventContent = msgData;
+                                } else if (typeof msgData === 'object' && msgData.content) {
+                                    eventContent = msgData.content;
+                                } else if (typeof msgData === 'object' && msgData.type === 'voice_message') {
+                                    eventContent = msgData.content;
+                                } else if (typeof msgData === 'object' && msgData.type === 'transfer') {
+                                    eventContent = `转账 ¥${msgData.amount}${msgData.note ? ` - ${msgData.note}` : ''}`;
+                                } else if (typeof msgData === 'object' && msgData.type === 'emoji') {
+                                    eventContent = `发送表情包：${msgData.description}`;
+                                }
+
+                                if (eventContent) {
+                                    await recordCrossAppEvent(
+                                        characterId,
+                                        'chat',
+                                        'ai_message',
+                                        {
+                                            id: characterId,
+                                            type: 'private_chat',
+                                            sender: 'ai',
+                                            content: eventContent,
+                                            chatType: 'single',
+                                            isProactive: true // 标记为主动消息
+                                        }
+                                    );
+                                    console.log(`🔥 [主动聊天] 已记录时间线事件 - 角色: ${character.name}, 内容: ${eventContent.substring(0, 50)}...`);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('🔥 [主动聊天] 记录时间线事件失败:', error);
+                        }
+                    }, 1000); // 延迟1秒执行
+
                     // 如果当前正在和这个角色聊天，立即显示消息
                     if (currentChatCharacter && currentChatCharacter.id === characterId) {
                         renderChatMessages(characterId);
                     }
-                    
+
                     // 更新消息列表
                     renderMessageList();
                     
@@ -5246,6 +5559,109 @@
                 console.error('后台聊天失败:', error);
             }
         }
+
+        // 🔥【新增】测试主动聊天功能
+        async function testActiveChat() {
+            if (!currentChatCharacter) {
+                showToast('请先选择一个聊天角色', 'error');
+                return;
+            }
+
+            console.log(`🧪 测试主动聊天功能 - 角色: ${currentChatCharacter.name}`);
+            showToast(`正在测试 ${currentChatCharacter.name} 的主动聊天功能...`, 'info');
+
+            try {
+                // 🔥【新增】显示测试前的消息数量
+                const beforeCount = (chatMessages[currentChatCharacter.id] || []).length;
+                console.log(`测试前消息数量: ${beforeCount}`);
+
+                await triggerBackgroundChat(currentChatCharacter.id, true); // 跳过时间检查
+
+                // 🔥【新增】显示测试后的消息数量
+                const afterCount = (chatMessages[currentChatCharacter.id] || []).length;
+                console.log(`测试后消息数量: ${afterCount}`);
+
+                if (afterCount > beforeCount) {
+                    showToast('主动聊天测试成功！已生成新消息', 'success');
+                } else {
+                    showToast('主动聊天测试完成，但未生成新消息（可能被条件限制）', 'warning');
+                }
+            } catch (error) {
+                console.error('主动聊天测试失败:', error);
+                showToast(`主动聊天测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 🔥【新增】测试主动发动态功能
+        async function testActiveMoments() {
+            if (!currentChatCharacter) {
+                showToast('请先选择一个聊天角色', 'error');
+                return;
+            }
+
+            console.log(`🧪 测试主动发动态功能 - 角色: ${currentChatCharacter.name}`);
+            showToast(`正在测试 ${currentChatCharacter.name} 的主动发动态功能...`, 'info');
+
+            try {
+                // 🔥【新增】获取测试前的动态数量
+                const beforeMoments = await getRecentMoments(50);
+                const beforeCount = beforeMoments.length;
+                console.log(`测试前动态数量: ${beforeCount}`);
+
+                await triggerBackgroundMoments(currentChatCharacter.id, true); // 跳过冷却时间
+
+                // 🔥【新增】获取测试后的动态数量
+                const afterMoments = await getRecentMoments(50);
+                const afterCount = afterMoments.length;
+                console.log(`测试后动态数量: ${afterCount}`);
+
+                if (afterCount > beforeCount) {
+                    showToast('主动发动态测试成功！已发布新动态', 'success');
+                } else {
+                    showToast('主动发动态测试完成，但未发布新动态', 'warning');
+                }
+            } catch (error) {
+                console.error('主动发动态测试失败:', error);
+                showToast(`主动发动态测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 🔥【新增】查看当前后台定时器状态
+        function checkBackgroundTimers() {
+            console.log('🔍 当前后台定时器状态:');
+            console.log('backgroundTimers:', backgroundTimers);
+
+            const activeTimers = Object.keys(backgroundTimers).length;
+            console.log(`活跃定时器数量: ${activeTimers}`);
+
+            if (activeTimers === 0) {
+                console.log('⚠️ 没有活跃的后台定时器');
+                console.log('💡 可以运行 reinitializeProactiveChatTimers() 来重新初始化定时器');
+            } else {
+                for (const [key, timer] of Object.entries(backgroundTimers)) {
+                    console.log(`- ${key}: ${timer ? '运行中' : '已停止'}`);
+                }
+            }
+
+            showToast(`当前有 ${activeTimers} 个活跃的后台定时器`, 'info');
+        }
+
+        // 🔥【新增】重新启动后台系统（用于测试）
+        async function restartBackgroundSystem() {
+            console.log('🔄 重新启动后台互动系统...');
+            await initGlobalBackgroundInteractionSystem();
+            checkBackgroundTimers();
+        }
+
+        // 🔧【调试】将重新初始化函数暴露到全局作用域，方便控制台调用
+        window.reinitializeProactiveChatTimers = reinitializeProactiveChatTimers;
+
+        // 🔥【暴露测试函数到全局作用域】
+        window.testActiveChat = testActiveChat;
+        window.testActiveMoments = testActiveMoments;
+        window.checkBackgroundTimers = checkBackgroundTimers;
+        window.initGlobalBackgroundInteractionSystem = initGlobalBackgroundInteractionSystem;
+        window.restartBackgroundSystem = restartBackgroundSystem;
 
         // 触发后台发动态（测试版本，跳过冷却时间）
         async function triggerBackgroundMomentsTest(characterId) {
@@ -5285,10 +5701,10 @@
                 // 构建上下文
                 let chatContext = '';
                 if (recentMessages.length > 0) {
-                    chatContext = '\n\n最近的聊天记录：\n' + 
+                    chatContext = '\n\n最近的聊天记录：\n' +
                         recentMessages.map(msg => {
-                            if (msg.sender === 'user') return `用户：${msg.content}`;
-                            if (msg.sender === 'ai') return `${character.name}：${msg.content}`;
+                            if (msg.sender === 'sent') return `用户：${msg.content}`;
+                            if (msg.sender === 'received') return `${character.name}：${msg.content}`;
                             return '';
                         }).filter(Boolean).join('\n');
                 }
@@ -5320,28 +5736,57 @@
 
 ${chatContext}${momentsContext}
 
+## 重要格式要求：
+- 直接返回动态文本内容，不要使用JSON格式
+- 不要添加任何代码块标记
+- 不要添加"动态内容："等前缀
+- 直接以动态正文开始
+
 请生成一条符合你人设的动态内容：`;
 
                 const response = await generateAIResponse(prompt, character);
                 if (response && response.trim()) {
-                    // 🔥【修复】使用parseAiResponse解析AI回复的JSON格式
-                    const parsedMessages = parseAiResponse(response);
-                    let content = '';
-                    
-                    if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
-                        // 如果有多条消息，合并为一条动态
-                        content = parsedMessages.map(msg => {
-                            if (typeof msg === 'string') {
-                                return msg.trim();
-                            } else if (typeof msg === 'object' && msg.content) {
-                                return msg.content.trim();
+                    // 🔥【修复】动态内容应该是纯文本，强化格式处理
+                    let content = response.trim();
+
+                    // 🔥【增强】更强的JSON格式检测和处理
+                    if (content.startsWith('[') || content.startsWith('{')) {
+                        try {
+                            const parsed = JSON.parse(content);
+                            console.log(character.name + ' 发动态时AI返回了JSON格式，正在提取文本:', parsed);
+
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                // 如果是数组，合并所有文本内容
+                                content = parsed.map(item => {
+                                    if (typeof item === 'string') {
+                                        return item.trim();
+                                    } else if (typeof item === 'object' && item.content) {
+                                        return item.content.trim();
+                                    } else if (typeof item === 'object' && item.text) {
+                                        return item.text.trim();
+                                    }
+                                    return '';
+                                }).filter(text => text).join('\n');
+                            } else if (typeof parsed === 'object') {
+                                // 如果是对象，尝试提取文本字段
+                                content = parsed.content || parsed.text || parsed.message || JSON.stringify(parsed);
                             }
-                            return '';
-                        }).filter(text => text).join('\n\n');
-                    } else if (typeof response === 'string') {
-                        // 备用：如果解析失败，使用原始文本
-                        content = response.trim();
+
+                            console.log(character.name + ' 提取后的动态内容:', content);
+                        } catch (parseError) {
+                            // 如果不是有效JSON，直接使用原始文本
+                            console.log(character.name + ' 动态内容不是有效JSON，使用原始文本');
+                            content = response.trim();
+                        }
                     }
+
+                    // 🔥【新增】清理可能的格式标记
+                    content = content
+                        .replace(/^```[\s\S]*?\n/, '') // 移除开头的代码块标记
+                        .replace(/\n```$/, '') // 移除结尾的代码块标记
+                        .replace(/^\*\*动态内容\*\*:?\s*/i, '') // 移除可能的标题
+                        .replace(/^动态内容:?\s*/i, '') // 移除可能的标题
+                        .trim();
                     
                     if (content) {
                         // 获取头像，确保安全
@@ -10095,28 +10540,46 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
         
         // 显示图片
         function showImage(imageUrl) {
-            // 首先检查是否是相册中的照片
-            const photo = photos.find(p => p.image === imageUrl);
-            if (photo) {
-                document.getElementById('photo-image').style.backgroundImage = `url(${imageUrl})`;
-                document.getElementById('photo-description-text').textContent = photo.description;
-                document.getElementById('photo-time').textContent = `拍摄于: ${formatFullDate(new Date(photo.timestamp))}`;
-                document.getElementById('photo-location').textContent = `地点: ${photo.location}`;
-                showApp('photo-detail-screen');
-            } else {
-                // 如果不是相册照片，显示通用的图片预览模态框
-                let modal = document.getElementById('image-preview-modal');
-                if (!modal) {
-                    modal = document.createElement('div');
-                    modal.id = 'image-preview-modal';
-                    modal.className = 'image-preview-modal';
-                    modal.onclick = () => modal.style.display = 'none';
-                    modal.innerHTML = `<img src="" alt="预览图片">`;
-                    document.body.appendChild(modal);
-                }
-                modal.querySelector('img').src = imageUrl;
-                modal.style.display = 'flex';
+            // 🔥【修复】移除对未定义的photos变量的引用，直接显示图片预览模态框
+            let modal = document.getElementById('image-preview-modal');
+            if (!modal) {
+                // 创建图片预览模态框
+                modal = document.createElement('div');
+                modal.id = 'image-preview-modal';
+                modal.className = 'image-preview-modal';
+
+                // 点击模态框背景关闭
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                };
+
+                // 创建图片元素
+                const img = document.createElement('img');
+                img.alt = '预览图片';
+                img.style.cursor = 'zoom-out';
+
+                // 点击图片也可以关闭
+                img.onclick = () => modal.style.display = 'none';
+
+                modal.appendChild(img);
+                document.body.appendChild(modal);
             }
+
+            // 设置图片源并显示模态框
+            const img = modal.querySelector('img');
+            img.src = imageUrl;
+            modal.style.display = 'flex';
+
+            // 🔥【新增】添加键盘ESC键关闭功能
+            const handleKeyPress = (e) => {
+                if (e.key === 'Escape') {
+                    modal.style.display = 'none';
+                    document.removeEventListener('keydown', handleKeyPress);
+                }
+            };
+            document.addEventListener('keydown', handleKeyPress);
         }
         
         // 显示聊天设置
@@ -13569,15 +14032,58 @@ function onWorldbookAddClick() {
         
         function buildCharacterPrompt(character, hasImage = false) {
             const chatSettings = getCurrentChatSettings();
-            const currentTime = new Date().toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                weekday: 'long'
-            });
-            
+
+            // 🔥【修复】检查时间感知设置，只有开启时才获取和使用时间信息
+            let timeInfo = '';
+            if (chatSettings.timeAwarenessEnabled !== false) { // 默认为true
+                const now = new Date();
+                const currentTime = now.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    weekday: 'long'
+                });
+
+                // 🔥【新增】获取季节信息
+                const month = now.getMonth() + 1; // 0-11 转为 1-12
+                let season = '';
+                if (month >= 3 && month <= 5) {
+                    season = '春季';
+                } else if (month >= 6 && month <= 8) {
+                    season = '夏季';
+                } else if (month >= 9 && month <= 11) {
+                    season = '秋季';
+                } else {
+                    season = '冬季';
+                }
+
+                // 🔥【新增】获取时间段信息
+                const hour = now.getHours();
+                let timeOfDay = '';
+                if (hour >= 5 && hour < 8) {
+                    timeOfDay = '清晨';
+                } else if (hour >= 8 && hour < 11) {
+                    timeOfDay = '上午';
+                } else if (hour >= 11 && hour < 14) {
+                    timeOfDay = '中午';
+                } else if (hour >= 14 && hour < 17) {
+                    timeOfDay = '下午';
+                } else if (hour >= 17 && hour < 19) {
+                    timeOfDay = '傍晚';
+                } else if (hour >= 19 && hour < 22) {
+                    timeOfDay = '晚上';
+                } else if (hour >= 22 || hour < 2) {
+                    timeOfDay = '深夜';
+                } else {
+                    timeOfDay = '凌晨';
+                }
+
+                timeInfo = `- **当前时间:** ${currentTime}
+- **季节:** ${season}，${timeOfDay}时分`;
+            }
+
     // --- 核心指令区 ---
     let characterPrompt = `
 # **首要规则：输出格式**
@@ -13606,7 +14112,7 @@ function onWorldbookAddClick() {
 ${character.bio}
 
 ## **当前情景:**
-- **当前时间:** ${currentTime}
+${timeInfo}
 `;
     // --- 核心指令区结束 ---
 
@@ -13924,7 +14430,28 @@ ${character.bio}
                         dynamicMemoryContent = '\n\n【最新动态记忆】以下是最近的动态内容，你可以在对话中自然地提及：\n';
                         recentMoments.forEach((moment, index) => {
                             const authorName = moment.authorId === 'user' ? '用户' : moment.nickname;
-                            dynamicMemoryContent += `${index + 1}. ${authorName}: ${moment.text}\n`;
+
+                            // 🔥【修复】添加动态发布时间信息，让角色感知时间流逝
+                            let timeInfo = '';
+                            if (chatSettings.timeAwarenessEnabled !== false && moment.timestamp) {
+                                const now = Date.now();
+                                const timeDiff = now - moment.timestamp;
+                                const minutes = Math.floor(timeDiff / (1000 * 60));
+                                const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                                const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+                                if (days > 0) {
+                                    timeInfo = `（${days}天前发布）`;
+                                } else if (hours > 0) {
+                                    timeInfo = `（${hours}小时前发布）`;
+                                } else if (minutes > 0) {
+                                    timeInfo = `（${minutes}分钟前发布）`;
+                                } else {
+                                    timeInfo = '（刚刚发布）';
+                                }
+                            }
+
+                            dynamicMemoryContent += `${index + 1}. ${authorName}: ${moment.text}${timeInfo}\n`;
                         });
                     }
                 } catch (error) {
@@ -14064,9 +14591,43 @@ ${character.bio}
                 console.error('获取挂载记忆失败:', error);
             }
 
+            // 🔥【新增】计算时间流逝感知
+            let timeElapsedInfo = '';
+            if (chatSettings.timeAwarenessEnabled !== false) {
+                const characterMessages = chatMessages[character.id] || [];
+                if (characterMessages.length > 0) {
+                    // 找到用户最后一次发送消息的时间
+                    const lastUserMessage = characterMessages.slice().reverse().find(msg => msg.sender === 'sent');
+                    if (lastUserMessage) {
+                        const now = Date.now();
+                        const timeDiff = now - lastUserMessage.timestamp;
+
+                        // 计算时间间隔
+                        const minutes = Math.floor(timeDiff / (1000 * 60));
+                        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+                        if (days > 0) {
+                            timeElapsedInfo = `\n- **时间流逝:** 用户上次回复是${days}天前，你们已经有${days}天没有聊天了`;
+                        } else if (hours > 0) {
+                            timeElapsedInfo = `\n- **时间流逝:** 用户上次回复是${hours}小时前`;
+                        } else if (minutes > 5) {
+                            timeElapsedInfo = `\n- **时间流逝:** 用户上次回复是${minutes}分钟前`;
+                        }
+                        // 如果少于5分钟，不显示时间流逝信息
+                    }
+                }
+            }
+
             // 核心修复：现在这个函数能理解 message 参数可能是一个包含图片和文字的数组
             let characterPrompt = buildCharacterPrompt(character, Array.isArray(message));
-            
+
+            // 🔥【新增】将时间流逝信息添加到prompt中
+            if (timeElapsedInfo) {
+                // 在"当前情景"部分添加时间流逝信息
+                characterPrompt = characterPrompt.replace('## **当前情景:**', `## **当前情景:**${timeElapsedInfo}`);
+            }
+
             // 将所有记忆内容添加到提示词中（按重要性排序）
             let memoryReplacement = '';
             if (coreMemoryContent) {
@@ -14669,7 +15230,7 @@ ${character.bio}
             if (!messages || !Array.isArray(messages)) return [];
 
             return messages.map(msg => {
-                if (msg.sender === 'user') {
+                if (msg.sender === 'sent') {
                     // 用户消息：使用群聊设置中的昵称
                     const chatSettings = getCurrentChatSettings();
                     const myNickname = chatSettings.myChatNickname || groupChat.settings?.myNickname || '我';
@@ -15180,7 +15741,7 @@ ${character.bio}
                         socialEnabled: false,
                         socialFrequency: 'medium',
                         // 后台互动设置
-                        backgroundInteractionEnabled: false,
+                        backgroundInteractionEnabled: true,
                         backgroundChatEnabled: true,
                         backgroundMomentsEnabled: true,
                         backgroundChatFrequency: 'low',
@@ -15250,7 +15811,7 @@ ${character.bio}
                 characterStatusEnabled: false,
                 socialEnabled: false,
                 socialFrequency: 'medium',
-                backgroundInteractionEnabled: false,
+                backgroundInteractionEnabled: true,
                 backgroundChatEnabled: true,
                 backgroundMomentsEnabled: true,
                 backgroundChatFrequency: 'low',
@@ -20319,10 +20880,13 @@ async function createGroupChat(personaId) {
             
             // 🔥【新增】调整心率（用户发消息）
             adjustHeartrateForMessage(message, true);
-            
+
+            // 🔥【新增】重新安排主动聊天定时器
+            onUserMessageSent(currentChatCharacter.id);
+
             // 使用动画添加消息而不是重新渲染整个列表
             addMessageWithAnimation(userMessage, currentChatCharacter.id);
-            
+
             // 设置待回复消息
             pendingUserMessage = userMessage;
             
@@ -20583,6 +21147,9 @@ async function createGroupChat(personaId) {
 
             // 🔥【新增】调整心率（用户发语音消息）
             adjustHeartrateForMessage(text, true);
+
+            // 🔥【新增】重新安排主动聊天定时器
+            onUserMessageSent(currentChatCharacter.id);
 
             // 添加语音消息到界面
             addMessageWithAnimation(voiceMessage, currentChatCharacter.id);
@@ -21163,12 +21730,26 @@ async function createGroupChat(personaId) {
         
         function updateMomentTimes() {
             try {
+                // 更新动态本身的时间
                 const momentItems = document.querySelectorAll('.moment-item[data-timestamp]');
-                
+
                 momentItems.forEach(item => {
                     const timestamp = parseInt(item.getAttribute('data-timestamp'));
                     if (timestamp) {
                         const timeElement = item.querySelector('.moment-time');
+                        if (timeElement) {
+                            const newTime = formatTime(new Date(timestamp));
+                            timeElement.textContent = newTime;
+                        }
+                    }
+                });
+
+                // 🔥【新增】更新评论区的时间显示
+                const commentElements = document.querySelectorAll('.moment-comment[data-timestamp]');
+                commentElements.forEach(commentElement => {
+                    const timestamp = parseInt(commentElement.getAttribute('data-timestamp'));
+                    if (timestamp) {
+                        const timeElement = commentElement.querySelector('.comment-time');
                         if (timeElement) {
                             const newTime = formatTime(new Date(timestamp));
                             timeElement.textContent = newTime;
@@ -21234,12 +21815,13 @@ async function createGroupChat(personaId) {
         // 显示动态评论
         function showMomentComments(momentId) {
             if (isSelectionMode) return; // 选择模式下不响应评论
-            
+
             // 显示简单评论输入框
             showSimpleCommentInput(momentId);
-            
-            // 触发AI角色自动评论
-            triggerAIInteractions(momentId, 'comment');
+
+            // 🔥【修复】移除用户点击评论时自动触发AI评论的逻辑
+            // 用户点击评论按钮只是想评论，不应该触发其他AI角色也来评论
+            // AI角色的自动评论应该只在动态发布时触发，而不是在用户评论时触发
         }
         
         // 显示简单评论输入框
@@ -21485,7 +22067,8 @@ async function createGroupChat(personaId) {
             
             // 创建评论元素
             const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment-item';
+            commentDiv.className = 'comment-item moment-comment';
+            commentDiv.setAttribute('data-timestamp', comment.timestamp || Date.now());
             commentDiv.style.cssText = `
                 display: flex;
                 gap: 8px;
@@ -21493,17 +22076,21 @@ async function createGroupChat(personaId) {
                 align-items: flex-start;
             `;
             
-            // 处理回复格式
+            // 🔥【修复】处理回复格式，确保角色回复用户时格式正常
             let commentText = comment.text;
+            let nameFormat = comment.nickname + '：'; // 默认格式
+
             if (comment.replyTo) {
+                // 有回复时，角色名后不加冒号，回复内容包含完整格式
+                nameFormat = comment.nickname;
                 commentText = `回复<span style="margin: 0 2px; color: #576b95; font-weight: 600;">${comment.replyTo}</span>: ${comment.text}`;
             }
-            
+
             commentDiv.innerHTML = `
                 <img src="${comment.avatar}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
                 <div style="flex: 1; line-height: 1.4; cursor: pointer;" onclick="replyToMomentComment('${momentId}', '${comment.nickname}')">
-                    <span style="color: #576b95; font-weight: 600;">${comment.nickname}${comment.replyTo ? '' : '：'}</span><span style="margin-left: 2px; color: #333;">${commentText}</span>
-                    <div style="color: #999; font-size: 11px; margin-top: 2px;">${comment.time}</div>
+                    <span style="color: #576b95; font-weight: 600;">${nameFormat}</span><span style="margin-left: 2px; color: #333;">${commentText}</span>
+                    <div class="comment-time" style="color: #999; font-size: 11px; margin-top: 2px;">${comment.time}</div>
                 </div>
             `;
             
@@ -21608,11 +22195,19 @@ async function createGroupChat(personaId) {
                             }
                         }
                     } else if (type === 'comment') {
+                        console.log('开始处理角色评论，同分组角色数量:', sameGroupCharacters.length);
                         for (const character of sameGroupCharacters) {
-                            if (Math.random() < 0.6) { // 修复：60%概率互动
+                            const randomValue = Math.random();
+                            const willComment = randomValue < 0.6;
+                            console.log(`${character.name} 评论概率检查: ${randomValue.toFixed(3)} < 0.6 = ${willComment}`);
+
+                            if (willComment) {
                                 setTimeout(async () => {
+                                    console.log(`${character.name} 开始生成评论...`);
                                     await addAICommentWithPersonality(momentId, character, moment);
                                 }, Math.random() * 5000 + 2000);
+                            } else {
+                                console.log(`${character.name} 因为概率未通过，不会评论`);
                             }
                         }
 
@@ -21692,11 +22287,11 @@ async function createGroupChat(personaId) {
             // 更新界面显示
             updateMomentLikeDisplay(momentId);
 
-            // 显示点赞提示
-            showToast(`${character.name} 赞了你的动态`);
-
-            // 🔥【新增】如果是点赞用户的动态，创建推送通知
+            // 🔥【修复】只有用户的动态被点赞时才显示toast和推送通知
             if (moment.authorId === 'user') {
+                // 显示点赞提示
+                showToast(`${character.name} 赞了你的动态`);
+                // 创建推送通知
                 createPushNotification(character, `赞了你的动态`, 100);
             }
 
@@ -21918,11 +22513,9 @@ async function createGroupChat(personaId) {
                 // 在动态下方显示新评论
                 displayCommentUnderMoment(momentId, comment);
 
-                // 显示评论提示
-                showToast(`${character.name} 评论了你的动态`);
-
-                // 🔥【新增】如果是评论用户的动态，创建推送通知
+                // 🔥【修复】只有当用户发布的动态被角色评论时，才显示评论提示和发送通知
                 if (moment.authorId === 'user') {
+                    showToast(`${character.name} 评论了你的动态`);
                     createPushNotification(character, `评论了你的动态：${randomComment.length > 15 ? randomComment.substring(0, 15) + '...' : randomComment}`, 200);
                 }
 
@@ -22533,7 +23126,7 @@ async function createGroupChat(personaId) {
                     return;
                 }
 
-                // 🔥【修复】使用新的记忆系统
+                // 🔥【修复】使用新的记忆系统，明确要求纯文本输出
                 const promptText = `在一个动态下，用户刚刚回复了你的评论："${userCommentText}"。
 
 原动态内容：${moment.text}
@@ -22545,6 +23138,11 @@ async function createGroupChat(personaId) {
 4. 体现出你和用户之间的友好互动
 5. 根据你的人设选择合适的语气和用词
 6. 不要使用与角色性格不符的表情符号
+
+🚨 **重要格式要求**：
+- 直接输出你的回复文本，不要使用JSON格式
+- 不要包含任何特殊标记或格式符号
+- 只输出你想说的话，10-30字左右
 
 请回复用户的评论：`;
 
@@ -22564,7 +23162,23 @@ async function createGroupChat(personaId) {
 
                 // 使用新的记忆系统
                 const response = await callChatAPI(promptText, character);
-                const replyText = Array.isArray(response) ? response[0] : response;
+
+                // 🔥【修复】正确处理AI回复格式，避免显示JSON
+                let replyText;
+                if (Array.isArray(response)) {
+                    const firstItem = response[0];
+                    if (typeof firstItem === 'string') {
+                        replyText = firstItem;
+                    } else if (typeof firstItem === 'object' && firstItem.content) {
+                        replyText = firstItem.content;
+                    } else if (typeof firstItem === 'object' && firstItem.message) {
+                        replyText = firstItem.message;
+                    } else {
+                        replyText = String(firstItem);
+                    }
+                } else {
+                    replyText = response;
+                }
 
                 console.log(`找到角色 ${character.name}，准备生成回复`);
 
@@ -22610,6 +23224,7 @@ async function createGroupChat(personaId) {
         // 生成符合角色人设和记忆系统的评论
         async function generateCharacterCommentWithMemory(character, moment) {
             try {
+                console.log(`${character.name} 开始生成评论，动态发布者: ${moment.nickname || moment.authorId}`);
                 // 获取角色对应的聊天设置
                 let chatSettings = null;
                 try {
@@ -22693,13 +23308,114 @@ async function createGroupChat(personaId) {
                 
                 // 分析动态内容，提取关键信息
                 const momentText = moment.text || '';
-                const momentAuthor = moment.nickname || '用户';
-                const isUserMoment = !moment.characterId || moment.characterId === 'user';
+
+                // 🔥【修复】正确获取动态发布者信息
+                let momentAuthor = '用户';
+                const isUserMoment = !moment.characterId || moment.characterId === 'user' || moment.authorId === 'user';
+
+                if (!isUserMoment) {
+                    // 如果是角色发布的动态，查找角色信息
+                    const publisherCharacter = characters.find(c => c.id === moment.characterId || c.id === moment.authorId);
+                    if (publisherCharacter) {
+                        momentAuthor = publisherCharacter.name;
+                    } else {
+                        momentAuthor = moment.nickname || '某位朋友';
+                    }
+                }
                 
+                // 🔥【增强】分析角色与动态发布者的关系
+                let relationshipContext = '';
+                let shouldComment = true; // 默认应该评论
+
+                // 🔥【关键修复】将关系变量定义移到外层作用域，确保在后续代码中可以访问
+                let hasNegativeRelation = false;
+                let hasPositiveRelation = false;
+                let hasNeutralRelation = false;
+
+                if (!isUserMoment) {
+                    // 如果是其他角色发布的动态，分析关系
+                    const publisherCharacter = characters.find(c => c.id === moment.characterId || c.id === moment.authorId);
+                    console.log(`${character.name} 正在分析与动态发布者的关系，发布者:`, publisherCharacter?.name || '未找到');
+                    if (publisherCharacter) {
+                        // 🔥【重点修复】更精确的人设关系分析
+                        const currentPersona = (persona || '').toLowerCase();
+                        const publisherName = publisherCharacter.name.toLowerCase();
+
+                        console.log(`🔍 分析 ${character.name} 对 ${publisherCharacter.name} 的关系:`);
+                        console.log(`人设内容: ${currentPersona}`);
+
+                        // 更精确的关系检测 - 使用更严格的匹配逻辑
+                        const negativeKeywords = ['情敌', '敌人', '讨厌', '不喜欢', '竞争', '对手', '吵架', '争执', '矛盾', '仇人', '冷战', '不和', '看不惯', '警惕', '提防', '防备'];
+                        const positiveKeywords = ['朋友', '好友', '闺蜜', '兄弟', '姐妹', '恋人', '喜欢', '爱', '亲密', '信任', '依赖', '关心', '在乎'];
+                        const neutralKeywords = ['同学', '同事', '室友', '邻居', '认识', '同班'];
+
+                        // 检查人设中是否在发布者名字附近出现关系词
+                        const publisherIndex = currentPersona.indexOf(publisherName);
+                        if (publisherIndex !== -1) {
+                            // 获取发布者名字前后30个字符的上下文
+                            const contextStart = Math.max(0, publisherIndex - 30);
+                            const contextEnd = Math.min(currentPersona.length, publisherIndex + publisherName.length + 30);
+                            const relationContext = currentPersona.substring(contextStart, contextEnd);
+
+                            console.log(`关系上下文: ${relationContext}`);
+
+                            hasNegativeRelation = negativeKeywords.some(keyword => relationContext.includes(keyword));
+                            hasPositiveRelation = positiveKeywords.some(keyword => relationContext.includes(keyword));
+                            hasNeutralRelation = neutralKeywords.some(keyword => relationContext.includes(keyword));
+
+                            console.log(`关系分析结果: 负面=${hasNegativeRelation}, 正面=${hasPositiveRelation}, 中性=${hasNeutralRelation}`);
+                        } else {
+                            // 如果在人设中找不到发布者名字，则检查整个人设内容
+                            console.log(`在人设中未找到发布者名字，检查整个人设内容`);
+                            hasNegativeRelation = negativeKeywords.some(keyword => currentPersona.includes(keyword));
+                            hasPositiveRelation = positiveKeywords.some(keyword => currentPersona.includes(keyword));
+                            hasNeutralRelation = neutralKeywords.some(keyword => currentPersona.includes(keyword));
+
+                            console.log(`全文关系分析结果: 负面=${hasNegativeRelation}, 正面=${hasPositiveRelation}, 中性=${hasNeutralRelation}`);
+                        }
+
+                        // 🔥【增强】根据不同关系类型设置不同的互动策略
+                        if (hasNegativeRelation) {
+                            relationshipContext = `\n\n⚠️ 重要关系提醒：根据你的人设，你与${publisherCharacter.name}存在负面关系。请根据你的性格特点决定：
+1. 是否要评论（可能选择忽略或冷淡回应）
+2. 如果评论，语气应该保持距离感或略带敌意
+3. 不要表现得过于友好热情
+4. 可以选择性地挑刺、反驳或表达不同观点`;
+
+                            // 🔥【修复】移除重复的概率判断，因为在triggerAIInteractions中已经做过60%概率筛选
+                            // shouldComment = Math.random() < 0.6; // 删除重复概率判断
+                        } else if (hasPositiveRelation) {
+                            relationshipContext = `\n\n💝 关系提醒：根据你的人设，你与${publisherCharacter.name}关系很好。请表现出：
+1. 更加亲密和随意的语气
+2. 可以开善意的玩笑或调侃
+3. 表达关心和支持
+4. 使用你们之间的昵称或特殊称呼`;
+                            // shouldComment = Math.random() < 0.6; // 删除重复概率判断
+                        } else if (hasNeutralRelation) {
+                            relationshipContext = `\n\n📝 关系提醒：你与${publisherCharacter.name}是${neutralKeywords.find(k => currentPersona.includes(k))}关系。请保持：
+1. 适度的礼貌和距离感
+2. 不过分亲密也不冷淡
+3. 符合这种关系的正常互动`;
+                            // shouldComment = Math.random() < 0.6; // 删除重复概率判断
+                        } else {
+                            // 没有明确关系设定，保持默认行为
+                            // shouldComment = Math.random() < 0.6; // 删除重复概率判断
+                        }
+                    }
+                }
+
+                // 如果决定不评论，直接返回空数组
+                if (!shouldComment) {
+                    console.log(`${character.name} 因为与${momentAuthor}的关系选择不评论这条动态`);
+                    return [];
+                }
+
+                console.log(`${character.name} 决定评论这条动态，开始生成评论内容...`);
+
                 // 判断评论的类型和风格
                 let commentStyle = '';
                 const bio = (character.bio || '').toLowerCase();
-                
+
                 if (bio.includes('活泼') || bio.includes('开朗') || bio.includes('外向')) {
                     commentStyle = '热情活泼，用词轻松有趣';
                 } else if (bio.includes('冷静') || bio.includes('理性') || bio.includes('严谨')) {
@@ -22714,16 +23430,26 @@ async function createGroupChat(personaId) {
                     commentStyle = '自然真实，符合性格';
                 }
 
-                let systemPrompt = `你是${character.name}，你的人设如下：${persona}。${worldBookContent}${memoryContent}${chatContext}
+                let systemPrompt = `你是${character.name}，你的人设如下：${persona}。${worldBookContent}${memoryContent}${chatContext}${relationshipContext}
 
-你在朋友圈看到了${momentAuthor}发布的动态："${momentText}"
+🎯 **当前情况分析**：
+- 动态发布者：${momentAuthor}
+- 动态内容："${momentText}"
+- 你与${momentAuthor}的关系：${hasNegativeRelation ? '负面关系（情敌/敌对）' : hasPositiveRelation ? '正面关系（朋友/亲密）' : hasNeutralRelation ? '中性关系（同学/同事）' : '关系不明确'}
 
 请作为${character.name}，基于你的人设、记忆和与发布者的关系，对这条动态发表评论。
 
-## 重要提醒：
-- 如果你与动态发布者存在负面关系（如吵架、争执、情敌等），请根据你的性格决定是否评论，以及评论的语气
-- 如果你们关系很好，可以更加亲密和随意
-- 参考你的核心记忆和情景记忆，让评论更符合你们的关系历史
+## 🚨 关键行为准则：
+1. **人设第一**：严格按照你的人设行事，绝不违背角色设定
+2. **关系敏感**：特别注意你与${momentAuthor}的关系，这决定了你的态度和语气
+3. **内容理解**：仔细分析动态内容，如果是表白、炫耀、求助等特殊内容，要有相应的反应
+4. **情绪一致**：你的评论情绪要与你对这个人的真实感受一致
+
+## 🎭 角色表现要求：
+- 如果你们是情敌或有矛盾：表现出警惕、冷淡、甚至略带敌意的态度
+- 如果你们是好朋友：表现出关心、支持、亲密的态度
+- 如果关系一般：保持礼貌但不过分热情
+- 如果你不了解这个人：可以表现出好奇或保持距离
 
 ## 评论风格要求：
 - ${commentStyle}
@@ -30459,10 +31185,10 @@ async function changeMyGroupAvatar() {
                 // 构建上下文信息
                 let chatContext = '';
                 if (recentMessages.length > 0) {
-                    chatContext = '最近的聊天记录：\n' + 
+                    chatContext = '最近的聊天记录：\n' +
                         recentMessages.map(msg => {
-                            if (msg.sender === 'user') return `用户：${msg.content}`;
-                            if (msg.sender === 'ai') return `${character.name}：${msg.content}`;
+                            if (msg.sender === 'sent') return `用户：${msg.content}`;
+                            if (msg.sender === 'received') return `${character.name}：${msg.content}`;
                             return '';
                         }).filter(Boolean).join('\n') + '\n\n';
                 }
@@ -31535,8 +32261,8 @@ ${eventsText}
                 if (recentMessages.length > 0) {
                     chatContext = '\n\n最近的聊天记录：\n' +
                         recentMessages.map(msg => {
-                            if (msg.sender === 'user') return `用户：${msg.content}`;
-                            if (msg.sender === 'ai') return `${character.name}：${msg.content}`;
+                            if (msg.sender === 'sent') return `用户：${msg.content}`;
+                            if (msg.sender === 'received') return `${character.name}：${msg.content}`;
                             return '';
                         }).filter(Boolean).join('\n');
                 }
@@ -34694,7 +35420,7 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                     const allMessages = info.messages.slice(0, 20); // 检查前20条消息
 
                     // 方法1: 从用户消息中寻找称呼
-                    const userMessages = allMessages.filter(msg => msg.sender === 'user');
+                    const userMessages = allMessages.filter(msg => msg.sender === 'sent');
                     for (const msg of userMessages) {
                         const content = msg.content || '';
                         // 寻找常见的称呼模式
