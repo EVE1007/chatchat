@@ -12647,27 +12647,18 @@ async function applyChatBackground(backgroundUrl) {
         
         // 电池管理功能
         async function initBatteryManager() {
-            console.log('开始初始化电池管理器...');
-            
             // 首先设置默认显示为 ᰔᩚ
             const allBatteryTexts = document.querySelectorAll('.battery-text');
-            console.log('找到的电池文本元素数量:', allBatteryTexts.length);
-            
+
             allBatteryTexts.forEach((element, index) => {
-                console.log(`设置电池文本 ${index}:`, element);
                 element.textContent = 'ᰔᩚ';
             });
-            
+
             if ('getBattery' in navigator) {
                 try {
-                    console.log('浏览器支持电池API，正在获取电池信息...');
                     const battery = await navigator.getBattery();
-                    console.log('电池信息:', {
-                        level: battery.level,
-                        charging: battery.charging
-                    });
                     updateBatteryDisplay(battery);
-                    
+
                     battery.addEventListener('levelchange', () => updateBatteryDisplay(battery));
                     battery.addEventListener('chargingchange', () => updateBatteryDisplay(battery));
                 } catch (err) {
@@ -12678,7 +12669,6 @@ async function applyChatBackground(backgroundUrl) {
                     });
                 }
             } else {
-                console.log("浏览器不支持电池状态API，使用默认显示。");
                 // 保持默认显示 ᰔᩚ
                 allBatteryTexts.forEach(element => {
                     element.textContent = 'ᰔᩚ';
@@ -12690,22 +12680,16 @@ async function applyChatBackground(backgroundUrl) {
             const level = Math.floor(battery.level * 100);
             const isCharging = battery.charging;
             
-            console.log(`更新电池显示: ${level}%, 充电中: ${isCharging}`);
-            
             // 更新主状态栏电池
             const batteryContainer = document.getElementById('status-bar-battery');
-            console.log('主状态栏电池容器:', batteryContainer);
-            
+
             if (batteryContainer) {
                 const batteryLevelEl = batteryContainer.querySelector('.battery-level');
                 const batteryTextEl = batteryContainer.querySelector('.battery-text');
-                
-                console.log('电池元素:', { batteryLevelEl, batteryTextEl });
-                
+
                 if (batteryLevelEl && batteryTextEl) {
                     batteryLevelEl.style.width = `${level}%`;
                     batteryTextEl.textContent = `${level}%`;
-                    console.log(`设置主屏幕电池文本为: ${level}%`);
                     
                     if (isCharging) {
                         batteryContainer.classList.add('charging');
@@ -12741,43 +12725,27 @@ async function applyChatBackground(backgroundUrl) {
         
         // 手动测试电池显示功能 - 您可以在浏览器控制台中调用这个函数
         function testBatteryDisplay() {
-            console.log('=== 电池显示测试开始 ===');
-            
             // 检查电池文本元素
             const allBatteryTexts = document.querySelectorAll('.battery-text');
-            console.log('所有电池文本元素:', allBatteryTexts);
-            
-            allBatteryTexts.forEach((element, index) => {
-                console.log(`电池文本 ${index}:`, element, '当前内容:', element.textContent);
-            });
-            
+
             // 检查主屏幕电池容器
             const mainBattery = document.getElementById('status-bar-battery');
-            console.log('主屏幕电池容器:', mainBattery);
-            
+
             if (mainBattery) {
                 const batteryText = mainBattery.querySelector('.battery-text');
-                console.log('主屏幕电池文本元素:', batteryText);
-                console.log('主屏幕电池文本内容:', batteryText ? batteryText.textContent : 'null');
             }
-            
+
             // 测试设置为百分比
-            console.log('测试设置为77%...');
             allBatteryTexts.forEach((element, index) => {
                 element.textContent = '77%';
-                console.log(`电池文本 ${index} 设置为 77%`);
             });
-            
+
             // 3秒后恢复为爱心
             setTimeout(() => {
-                console.log('恢复为爱心符号...');
                 allBatteryTexts.forEach((element, index) => {
                     element.textContent = 'ᰔᩚ';
-                    console.log(`电池文本 ${index} 恢复为 ᰔᩚ`);
                 });
             }, 3000);
-            
-            console.log('=== 电池显示测试结束 ===');
         }
         
         // 主题切换功能
@@ -20189,58 +20157,7 @@ async function createGroupChat(personaId) {
                     }
                 }
 
-                // 🔥【修复】记录AI回复的跨应用时间线事件
-                setTimeout(async () => {
-                    try {
-                        for (let i = 0; i < aiMessages.length; i++) {
-                            const msgData = aiMessages[i];
-                            let eventContent = '';
-                            let characterId = replyingCharacterId;
-
-                            if (typeof msgData === 'string') {
-                                eventContent = msgData;
-                            } else if (typeof msgData === 'object' && msgData.name && msgData.message) {
-                                // 群聊消息格式
-                                eventContent = msgData.message;
-                                // 查找群成员ID
-                                if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
-                                    const member = currentChatCharacter.members.find(m => m.name === msgData.name);
-                                    if (member) characterId = member.id;
-                                }
-                            } else if (typeof msgData === 'object' && msgData.content) {
-                                eventContent = msgData.content;
-                            }
-
-                            if (eventContent && characterId) {
-                                // 🔥【关键修复】检查是否应该记录群聊记忆
-                                let shouldRecord = true;
-                                if (currentChatCharacter?.isGroup) {
-                                    shouldRecord = await shouldRecordGroupMemoryForCharacter(characterId, currentChatCharacter.id);
-                                }
-
-                                if (shouldRecord) {
-                                    await recordCrossAppEvent(
-                                        characterId,
-                                        'chat',
-                                        'ai_message',
-                                        {
-                                            id: currentChatCharacter.id,
-                                            type: currentChatCharacter?.isGroup ? 'group_chat' : 'private_chat',
-                                            sender: 'ai',
-                                            content: eventContent,
-                                            chatType: currentChatCharacter?.isGroup ? 'group' : 'single'
-                                        }
-                                    );
-                                    console.log(`🔥 [修复] 已记录AI回复时间线事件 - 角色: ${characterId}, 内容: ${eventContent.substring(0, 50)}...`);
-                                } else {
-                                    console.log(`⏭️ 跳过记录AI消息 - 角色 ${characterId} 未与群聊 ${currentChatCharacter.id} 共享记忆`);
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        console.error('记录AI回复时间线事件失败:', error);
-                    }
-                }, 2000); // 延迟2秒执行
+                // 🔥【移除重复记录】这里的时间线记录逻辑已移动到下面的单条消息处理中，避免重复记录
                 
 // --- 请用这段全新的代码替换 ---
                 hideTypingIndicator();
@@ -20431,10 +20348,30 @@ async function createGroupChat(personaId) {
                     // 🔥【新增】触发角色状态更新
                     triggerStatusUpdateAfterMessage(replyingCharacterId);
 
-                    // 🔥【新增】在最后一条AI回复后记录时间线
-                    if (i === aiMessages.length - 1) {
-                        setTimeout(async () => {
-                            try {
+                    // 🔥【修复】为每条AI消息记录时间线事件，避免重复记录
+                    setTimeout(async () => {
+                        try {
+                            // 获取当前消息的内容
+                            let eventContent = '';
+                            let characterId = replyingCharacterId;
+
+                            if (typeof msgData === 'string') {
+                                eventContent = msgData;
+                            } else if (typeof msgData === 'object' && msgData.name && msgData.message) {
+                                // 群聊消息格式
+                                eventContent = msgData.message;
+                                // 查找群成员ID
+                                if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                                    const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                                    if (member) characterId = member.id;
+                                }
+                            } else if (typeof msgData === 'object' && msgData.content) {
+                                eventContent = msgData.content;
+                            } else if (aiMessage && aiMessage.content) {
+                                eventContent = aiMessage.content;
+                            }
+
+                            if (eventContent && characterId) {
                                 // 🔥【修复】记录AI回复的时间线事件 - 群聊需要为每个成员记录
                                 if (currentChatCharacter?.isGroup) {
                                     // 群聊：为每个群成员记录AI回复事件
@@ -20450,13 +20387,14 @@ async function createGroupChat(personaId) {
                                                     id: member.id, // 🔥【修复】使用角色ID而不是群聊ID，确保记忆共享正常工作
                                                     type: 'group_chat',
                                                     sender: 'ai',
-                                                    content: aiMessage.content,
+                                                    content: eventContent,
                                                     chatType: 'group',
                                                     groupName: currentChatCharacter.name,
                                                     groupId: currentChatCharacter.id // 🔥【新增】保留群聊ID用于区分
                                                 },
                                                 aiMessage.id
                                             );
+                                            console.log(`🔥 [修复] 已记录AI回复时间线事件 - 角色: ${member.id}, 内容: ${eventContent.substring(0, 50)}...`);
                                         } else {
                                             console.log(`⏭️ 跳过记录 - 角色 ${member.id} 未与群聊 ${currentChatCharacter.id} 共享记忆`);
                                         }
@@ -20471,17 +20409,18 @@ async function createGroupChat(personaId) {
                                             id: currentChatCharacter.id,
                                             type: 'private_chat',
                                             sender: 'ai',
-                                            content: aiMessage.content,
+                                            content: eventContent,
                                             chatType: 'single'
                                         },
                                         aiMessage.id
                                     );
+                                    console.log(`🔥 [修复] 已记录AI回复时间线事件 - 角色: ${replyingCharacterId}, 内容: ${eventContent.substring(0, 50)}...`);
                                 }
-                            } catch (error) {
-                                console.error('AI回复后记忆处理失败:', error);
                             }
-                        }, 2000); // 延迟2秒执行，避免阻塞UI
-                    }
+                        } catch (error) {
+                            console.error('AI回复后记忆处理失败:', error);
+                        }
+                    }, 1000 + i * 200); // 延迟执行，每条消息间隔200ms，避免阻塞UI
 
                     if (i < aiMessages.length - 1) {
                         const delay = Math.random() * 1000 + 500;
@@ -31499,26 +31438,52 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
         // 生成情景记忆摘要
         async function generateMemorySummary(characterId, startTime, endTime, context) {
             try {
-                // 获取时间段内的事件
-                const events = await db.memoryEvents
-                    .where('timestamp')
-                    .between(startTime, endTime)
-                    .and(event => event.characterIds.includes(characterId))
+                // 🔥【修复】获取时间段内的跨应用时间线事件（包括聊天记录）
+                const timelineEvents = await db.crossAppTimeline
+                    .where('characterId')
+                    .equals(characterId)
+                    .and(event => event.timestamp >= startTime && event.timestamp < endTime)
                     .toArray();
 
-                if (events.length === 0) return null;
+                // 🔥【修复】同时获取聊天消息
+                const characterMessages = chatMessages[characterId] || [];
+                const todayMessages = characterMessages.filter(msg =>
+                    msg.timestamp >= startTime && msg.timestamp < endTime
+                );
 
-                // 构建AI摘要prompt
-                const eventsText = events.map(event => {
-                    const timeStr = new Date(event.timestamp).toLocaleTimeString();
-                    return `[${timeStr}] ${event.eventType}: ${JSON.stringify(event.eventData)}`;
-                }).join('\n');
+                if (timelineEvents.length === 0 && todayMessages.length === 0) {
+                    console.log('今天暂无活动记录');
+                    return null;
+                }
+
+                // 🔥【修复】构建更全面的活动记录
+                let eventsText = '';
+
+                // 添加聊天记录
+                if (todayMessages.length > 0) {
+                    eventsText += '聊天记录：\n';
+                    todayMessages.forEach(msg => {
+                        const timeStr = new Date(msg.timestamp).toLocaleTimeString();
+                        const role = msg.role === 'user' ? '用户' : '我';
+                        eventsText += `[${timeStr}] ${role}: ${msg.content}\n`;
+                    });
+                }
+
+                // 添加跨应用事件
+                if (timelineEvents.length > 0) {
+                    eventsText += '\n其他活动：\n';
+                    timelineEvents.forEach(event => {
+                        const timeStr = new Date(event.timestamp).toLocaleTimeString();
+                        const actionDesc = getActionDescription(event.action, event.context);
+                        eventsText += `[${timeStr}] ${actionDesc}\n`;
+                    });
+                }
 
                 const character = characters.find(c => c.id === characterId);
-                const summaryPrompt = `你是${character.name}，请为以下时间段的活动写一份简短的记忆摘要（50-100字）：
+                const summaryPrompt = `你是${character.name}，请为今天的活动写一份简短的记忆摘要（50-100字）：
 
 时间段：${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}
-活动记录：
+今日活动：
 ${eventsText}
 
 请用第一人称写一份简洁的记忆摘要，重点记录重要的事件和感受：`;
@@ -31532,7 +31497,7 @@ ${eventsText}
                         date: new Date(startTime).toISOString().split('T')[0],
                         summary: response.trim(),
                         context: context,
-                        importance: calculateSummaryImportance(events),
+                        importance: calculateSummaryImportance(timelineEvents.concat(todayMessages)),
                         timestamp: Date.now()
                     };
 
@@ -31546,15 +31511,48 @@ ${eventsText}
             return null;
         }
 
+        // 🔥【新增】获取动作描述的辅助函数
+        function getActionDescription(action, context) {
+            const actionMap = {
+                'user_message': '收到用户消息',
+                'ai_reply': '回复了消息',
+                'moment_publish': '发布了动态',
+                'moment_comment': '评论了动态',
+                'game_start': '开始游戏',
+                'game_end': '结束游戏'
+            };
+
+            const baseDesc = actionMap[action] || action;
+            if (context && context.content) {
+                return `${baseDesc}: ${context.content.substring(0, 30)}...`;
+            }
+            return baseDesc;
+        }
+
         // 计算摘要重要性
         function calculateSummaryImportance(events) {
             if (!events || events.length === 0) return 0.3;
 
-            const avgImportance = events.reduce((sum, event) => sum + event.importance, 0) / events.length;
+            // 🔥【修复】适配不同类型的事件数据
+            let totalImportance = 0;
+            let validEvents = 0;
+
+            events.forEach(event => {
+                if (event.importance !== undefined) {
+                    totalImportance += event.importance;
+                    validEvents++;
+                } else {
+                    // 对于聊天消息，给予基础重要性
+                    totalImportance += 0.6;
+                    validEvents++;
+                }
+            });
+
+            const avgImportance = validEvents > 0 ? totalImportance / validEvents : 0.5;
             const eventCount = events.length;
 
             // 事件数量和平均重要性的综合评分
-            return Math.min(0.9, avgImportance + (eventCount * 0.05));
+            return Math.min(0.9, avgImportance + (eventCount * 0.02));
         }
 
         // 智能记忆检索系统
@@ -31811,15 +31809,29 @@ ${eventsText}
 
                             <div class="setting-section">
                                 <h4>记忆管理</h4>
-                                <button class="modal-button modal-secondary" onclick="viewCoreMemories()">
-                                    查看核心记忆
-                                </button>
-                                <button class="modal-button modal-secondary" onclick="viewMemorySummaries()">
-                                    查看记忆摘要
-                                </button>
-                                <button class="modal-button modal-secondary" onclick="generateDailySummary()">
-                                    生成今日摘要
-                                </button>
+                                <div class="memory-management-grid">
+                                    <button class="memory-action-btn primary" onclick="viewCoreMemories()">
+                                        <div class="btn-icon">🔴</div>
+                                        <div class="btn-content">
+                                            <div class="btn-title">查看核心记忆</div>
+                                            <div class="btn-desc">永久重要信息</div>
+                                        </div>
+                                    </button>
+                                    <button class="memory-action-btn secondary" onclick="viewMemorySummaries()">
+                                        <div class="btn-icon">📖</div>
+                                        <div class="btn-content">
+                                            <div class="btn-title">查看记忆摘要</div>
+                                            <div class="btn-desc">对话总结回顾</div>
+                                        </div>
+                                    </button>
+                                    <button class="memory-action-btn accent" onclick="generateDailySummary()">
+                                        <div class="btn-icon">✨</div>
+                                        <div class="btn-content">
+                                            <div class="btn-title">生成今日摘要</div>
+                                            <div class="btn-desc">总结今天活动</div>
+                                        </div>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-actions">
@@ -31869,6 +31881,68 @@ ${eventsText}
             if (modal) modal.remove();
         }
 
+        // 🔥【新增】显示记忆模态框
+        function showMemoryModal(title, memories, type) {
+            // 移除已存在的模态框
+            const existingModal = document.getElementById('memory-view-modal');
+            if (existingModal) existingModal.remove();
+
+            let content = '';
+            if (memories.length === 0) {
+                content = `<div class="memory-empty">暂无${title}</div>`;
+            } else {
+                content = memories.map((memory, index) => {
+                    let displayContent = '';
+                    let importance = '';
+                    let date = '';
+
+                    if (type === 'core') {
+                        displayContent = memory.fact || '无内容';
+                        const stars = '★'.repeat(Math.floor((memory.importance || 0) * 5));
+                        importance = `<div class="memory-importance">${stars}</div>`;
+                        const dateObj = new Date(memory.timestamp || Date.now());
+                        date = isNaN(dateObj.getTime()) ? '未知日期' : dateObj.toLocaleDateString();
+                    } else if (type === 'summary') {
+                        displayContent = memory.summary || '无内容';
+                        date = memory.date || '未知日期';
+                    }
+
+                    return `
+                        <div class="memory-modal-item">
+                            <div class="memory-modal-header">
+                                <span class="memory-modal-index">${index + 1}</span>
+                                <span class="memory-modal-date">${date}</span>
+                            </div>
+                            <div class="memory-modal-content">${displayContent}</div>
+                            ${importance}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const modalHTML = `
+                <div id="memory-view-modal" class="modal" style="display: flex;">
+                    <div class="modal-content" style="max-width: 600px; max-height: 80vh;">
+                        <div class="modal-header">
+                            <h3>${currentChatCharacter.name} 的${title}</h3>
+                            <button class="modal-close" onclick="hideMemoryModal()">×</button>
+                        </div>
+                        <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                            ${content}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 隐藏记忆模态框
+        function hideMemoryModal() {
+            const modal = document.getElementById('memory-view-modal');
+            if (modal) modal.remove();
+        }
+
         // 查看核心记忆
         async function viewCoreMemories() {
             if (!currentChatCharacter) {
@@ -31876,27 +31950,20 @@ ${eventsText}
                 return;
             }
 
+            // 🔥【修复】自动关闭全局记忆设置模态框
+            hideGlobalMemorySettings();
+
             try {
                 const coreMemories = await db.coreMemories
                     .where('characterId')
                     .equals(currentChatCharacter.id)
                     .toArray();
 
-                // 手动排序
+                // 手动排序并限制数量
                 coreMemories.sort((a, b) => (b.importance || 0) - (a.importance || 0));
+                const limitedMemories = coreMemories.slice(0, 10);
 
-                let content = '';
-                if (coreMemories.length === 0) {
-                    content = '暂无核心记忆';
-                } else {
-                    content = coreMemories.map((memory, index) => {
-                        const dateObj = new Date(memory.timestamp || Date.now());
-                        const date = isNaN(dateObj.getTime()) ? '未知日期' : dateObj.toLocaleDateString();
-                        return `${index + 1}. ${memory.fact} (${date})`;
-                    }).join('\n');
-                }
-
-                alert(`${currentChatCharacter.name} 的核心记忆：\n\n${content}`);
+                showMemoryModal('核心记忆', limitedMemories, 'core');
             } catch (error) {
                 console.error('查看核心记忆失败:', error);
                 showToast('查看核心记忆失败', 'error');
@@ -31910,6 +31977,9 @@ ${eventsText}
                 return;
             }
 
+            // 🔥【修复】自动关闭全局记忆设置模态框
+            hideGlobalMemorySettings();
+
             try {
                 const memorySummaries = await db.memorySummaries
                     .where('characterId')
@@ -31920,16 +31990,7 @@ ${eventsText}
                 memorySummaries.sort((a, b) => b.timestamp - a.timestamp);
                 const limitedSummaries = memorySummaries.slice(0, 10);
 
-                let content = '';
-                if (limitedSummaries.length === 0) {
-                    content = '暂无记忆摘要';
-                } else {
-                    content = limitedSummaries.map((summary, index) => {
-                        return `${index + 1}. [${summary.date}] ${summary.summary}`;
-                    }).join('\n\n');
-                }
-
-                alert(`${currentChatCharacter.name} 的记忆摘要：\n\n${content}`);
+                showMemoryModal('记忆摘要', limitedSummaries, 'summary');
             } catch (error) {
                 console.error('查看记忆摘要失败:', error);
                 showToast('查看记忆摘要失败', 'error');
@@ -32852,9 +32913,11 @@ ${eventsText}
 
             // 核心记忆配置
             CORE_MEMORY_IMPORTANCE_THRESHOLD: 0.9, // 核心记忆重要性阈值90%
+            MAX_CORE_MEMORIES_PER_CHARACTER: 50, // 每个角色最多保留50条核心记忆
 
             // 情景记忆配置
             EPISODIC_MEMORY_IMPORTANCE_THRESHOLD: 0.6, // 情景记忆重要性阈值60%
+            MAX_EPISODIC_MEMORIES_PER_CHARACTER: 100, // 每个角色最多保留100条情景记忆
 
             // 跨应用记忆配置
             CROSS_APP_TIMELINE_LIMIT: 20, // 跨应用时间线在工作记忆中的最大条数
@@ -33139,41 +33202,74 @@ ${messages.map(msg => {
                     return;
                 }
 
-                // 获取现有的核心记忆，检查重复
-                const existingMemories = await db.coreMemories
-                    .where('characterId')
-                    .equals(characterId)
-                    .toArray();
+                // 获取现有的记忆，检查重复
+                const [existingCoreMemories, existingEpisodicMemories] = await Promise.all([
+                    db.coreMemories.where('characterId').equals(characterId).toArray(),
+                    db.episodicMemories.where('characterId').equals(characterId).toArray()
+                ]);
 
-                // 保存核心记忆到数据库（检查重复）
-                for (const memory of memories) {
-                    if (memory.importance >= MEMORY_CONFIG.CORE_MEMORY_IMPORTANCE_THRESHOLD) {
-                        // 检查是否已存在相似的记忆
-                        const isDuplicate = existingMemories.some(existing => {
-                            const similarity = calculateTextSimilarity(existing.fact, memory.fact);
-                            return similarity > 0.8; // 相似度超过80%认为是重复
-                        });
+                // 🔥【修复】处理核心记忆
+                if (memories.core_memories && Array.isArray(memories.core_memories)) {
+                    for (const memory of memories.core_memories) {
+                        if (memory.importance >= MEMORY_CONFIG.CORE_MEMORY_IMPORTANCE_THRESHOLD) {
+                            // 检查是否已存在相似的记忆
+                            const isDuplicate = existingCoreMemories.some(existing => {
+                                const similarity = calculateTextSimilarity(existing.fact, memory.fact);
+                                return similarity > 0.8; // 相似度超过80%认为是重复
+                            });
 
-                        if (!isDuplicate) {
-                            const coreMemory = {
-                                id: `core_${characterId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                                characterId: characterId,
-                                fact: memory.fact,
-                                importance: memory.importance,
-                                category: memory.category || 'other',
-                                timestamp: Date.now()
-                            };
+                            if (!isDuplicate) {
+                                const coreMemory = {
+                                    id: `core_${characterId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                    characterId: characterId,
+                                    fact: memory.fact,
+                                    importance: memory.importance,
+                                    category: memory.category || 'other',
+                                    timestamp: Date.now(),
+                                    type: 'core'
+                                };
 
-                            await db.coreMemories.add(coreMemory);
-                            console.log(`✅ 为角色 ${character.name} 添加核心记忆: ${memory.fact}`);
-                        } else {
-                            console.log(`⚠️ 跳过重复记忆: ${memory.fact}`);
+                                await db.coreMemories.add(coreMemory);
+                                console.log(`✅ 为角色 ${character.name} 添加核心记忆: ${memory.fact}`);
+                            } else {
+                                console.log(`⚠️ 跳过重复核心记忆: ${memory.fact}`);
+                            }
                         }
                     }
                 }
 
-                // 清理过多的核心记忆
+                // 🔥【新增】处理情景记忆
+                if (memories.episodic_memories && Array.isArray(memories.episodic_memories)) {
+                    for (const memory of memories.episodic_memories) {
+                        if (memory.importance >= MEMORY_CONFIG.EPISODIC_MEMORY_IMPORTANCE_THRESHOLD) {
+                            // 检查是否已存在相似的记忆
+                            const isDuplicate = existingEpisodicMemories.some(existing => {
+                                const similarity = calculateTextSimilarity(existing.fact, memory.fact);
+                                return similarity > 0.8; // 相似度超过80%认为是重复
+                            });
+
+                            if (!isDuplicate) {
+                                const episodicMemory = {
+                                    id: `episodic_${characterId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                    characterId: characterId,
+                                    fact: memory.fact,
+                                    importance: memory.importance,
+                                    category: memory.category || 'other',
+                                    timestamp: Date.now()
+                                };
+
+                                await db.episodicMemories.add(episodicMemory);
+                                console.log(`✅ 为角色 ${character.name} 添加情景记忆: ${memory.fact}`);
+                            } else {
+                                console.log(`⚠️ 跳过重复情景记忆: ${memory.fact}`);
+                            }
+                        }
+                    }
+                }
+
+                // 清理过多的记忆
                 await cleanupCoreMemories(characterId);
+                await cleanupEpisodicMemories(characterId);
 
             } catch (error) {
                 console.error('提取核心记忆失败:', error);
@@ -33189,9 +33285,10 @@ ${messages.map(msg => {
                     .toArray();
 
                 const memories = allMemories.sort((a, b) => b.importance - a.importance);
+                const maxCoreMemories = MEMORY_CONFIG.MAX_CORE_MEMORIES_PER_CHARACTER || 50;
 
-                if (memories.length > MEMORY_CONFIG.MAX_CORE_MEMORIES_PER_CHARACTER) {
-                    const toDelete = memories.slice(MEMORY_CONFIG.MAX_CORE_MEMORIES_PER_CHARACTER);
+                if (memories.length > maxCoreMemories) {
+                    const toDelete = memories.slice(maxCoreMemories);
                     for (const memory of toDelete) {
                         await db.coreMemories.delete(memory.id);
                     }
@@ -33201,6 +33298,99 @@ ${messages.map(msg => {
                 console.error('清理核心记忆失败:', error);
             }
         }
+
+        // 🔥【新增】清理过多的情景记忆，保留最重要和最新的
+        async function cleanupEpisodicMemories(characterId) {
+            try {
+                const allMemories = await db.episodicMemories
+                    .where('characterId')
+                    .equals(characterId)
+                    .toArray();
+
+                // 按重要性和时间排序，保留最重要和最新的记忆
+                const memories = allMemories.sort((a, b) => {
+                    // 先按重要性排序，再按时间排序
+                    if (Math.abs(a.importance - b.importance) > 0.1) {
+                        return b.importance - a.importance;
+                    }
+                    return b.timestamp - a.timestamp;
+                });
+
+                const maxEpisodicMemories = MEMORY_CONFIG.MAX_EPISODIC_MEMORIES_PER_CHARACTER || 100;
+
+                if (memories.length > maxEpisodicMemories) {
+                    const toDelete = memories.slice(maxEpisodicMemories);
+                    for (const memory of toDelete) {
+                        await db.episodicMemories.delete(memory.id);
+                    }
+                    console.log(`🧹 清理了 ${toDelete.length} 个旧的情景记忆`);
+                }
+            } catch (error) {
+                console.error('清理情景记忆失败:', error);
+            }
+        }
+
+        // 🔥【新增】自动清理过期的时间线记忆和记忆摘要
+        async function cleanupExpiredMemories() {
+            try {
+                const memorySettings = getGlobalMemorySettings();
+                const cutoffTimestamp = Date.now() - (memorySettings.memoryDays * 24 * 60 * 60 * 1000);
+                const cutoffDateStr = new Date(cutoffTimestamp).toISOString().split('T')[0];
+
+                // 清理过期的时间线记忆
+                const expiredTimelineEvents = await db.crossAppTimeline
+                    .where('timestamp')
+                    .below(cutoffTimestamp)
+                    .toArray();
+
+                if (expiredTimelineEvents.length > 0) {
+                    await db.crossAppTimeline
+                        .where('timestamp')
+                        .below(cutoffTimestamp)
+                        .delete();
+                    console.log(`🧹 清理了 ${expiredTimelineEvents.length} 条过期的时间线记忆`);
+                }
+
+                // 清理过期的记忆摘要
+                const expiredSummaries = await db.memorySummaries
+                    .where('date')
+                    .below(cutoffDateStr)
+                    .toArray();
+
+                if (expiredSummaries.length > 0) {
+                    await db.memorySummaries
+                        .where('date')
+                        .below(cutoffDateStr)
+                        .delete();
+                    console.log(`🧹 清理了 ${expiredSummaries.length} 条过期的记忆摘要`);
+                }
+
+                // 清理过期的情景记忆
+                const expiredEpisodicMemories = await db.episodicMemories
+                    .where('timestamp')
+                    .below(cutoffTimestamp)
+                    .toArray();
+
+                if (expiredEpisodicMemories.length > 0) {
+                    await db.episodicMemories
+                        .where('timestamp')
+                        .below(cutoffTimestamp)
+                        .delete();
+                    console.log(`🧹 清理了 ${expiredEpisodicMemories.length} 条过期的情景记忆`);
+                }
+
+            } catch (error) {
+                console.error('清理过期记忆失败:', error);
+            }
+        }
+
+        // 🔥【新增】定期清理过期记忆（每小时执行一次）
+        setInterval(cleanupExpiredMemories, 60 * 60 * 1000); // 1小时
+
+        // 页面加载时执行一次清理
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(cleanupExpiredMemories, 5000); // 延迟5秒执行，避免影响页面加载
+        });
 
         // 获取角色的核心记忆用于对话
         async function getCoreMemoriesForChat(characterId, limit = 10) {

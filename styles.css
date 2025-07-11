@@ -12146,6 +12146,164 @@ textarea.call-text-input {
             border-color: #e74c3c;
         }
 
+        /* 🔥【新增】记忆管理按钮网格布局 */
+        .memory-management-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .memory-management-grid .memory-action-btn:last-child {
+            grid-column: 1 / -1; /* 让最后一个按钮占满整行 */
+        }
+
+        /* 🔥【新增】美化记忆操作按钮 */
+        .memory-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            border: 1px solid var(--border-black-10);
+            border-radius: 12px;
+            background: var(--bg-white-90);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 14px;
+            color: var(--text-primary);
+            min-height: 70px;
+        }
+
+        .memory-action-btn:hover {
+            background: var(--bg-white-95);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .memory-action-btn.primary {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(231, 76, 60, 0.05));
+        }
+
+        .memory-action-btn.primary:hover {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(231, 76, 60, 0.08));
+        }
+
+        .memory-action-btn.secondary {
+            border-color: #f39c12;
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.1), rgba(243, 156, 18, 0.05));
+        }
+
+        .memory-action-btn.secondary:hover {
+            border-color: #f39c12;
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.15), rgba(243, 156, 18, 0.08));
+        }
+
+        .memory-action-btn.accent {
+            border-color: var(--theme-button-bg, #4a84c1);
+            background: linear-gradient(135deg, rgba(74, 132, 193, 0.1), rgba(74, 132, 193, 0.05));
+        }
+
+        .memory-action-btn.accent:hover {
+            border-color: var(--theme-button-bg, #4a84c1);
+            background: linear-gradient(135deg, rgba(74, 132, 193, 0.15), rgba(74, 132, 193, 0.08));
+        }
+
+        .memory-action-btn .btn-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .memory-action-btn .btn-content {
+            flex: 1;
+        }
+
+        .memory-action-btn .btn-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .memory-action-btn .btn-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        /* 🔥【新增】记忆查看模态框样式 */
+        .memory-modal-item {
+            background: var(--bg-white-90);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-black-05);
+            transition: all 0.2s ease;
+        }
+
+        .memory-modal-item:hover {
+            background: var(--bg-white-95);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .memory-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .memory-modal-index {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--theme-button-bg, #4a84c1);
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .memory-modal-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--bg-white-95);
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .memory-modal-content {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+
+        .memory-importance {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 14px;
+            color: #f39c12;
+        }
+
+        .memory-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-style: italic;
+            background: var(--bg-white-90);
+            border-radius: 12px;
+            border: 2px dashed var(--border-black-05);
+        }
+
+
+
         /* 记忆共享设置模态框样式 */
         #memory-share-modal.modal {
             position: fixed !important;
