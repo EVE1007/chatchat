@@ -12317,3 +12317,73 @@ textarea.call-text-input {
         #memory-share-modal .modal-primary:hover {
             background: var(--theme-button-bg-hover, #0056CC);
         }
+
+        /* 复选框组样式 */
+        #memory-share-modal .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #memory-share-modal .checkbox-option {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        #memory-share-modal .checkbox-option:hover {
+            border-color: var(--theme-button-bg, #007AFF);
+            background: rgba(var(--theme-button-bg-rgb, 0, 122, 255), 0.05);
+        }
+
+        #memory-share-modal .checkbox-option input[type="checkbox"] {
+            display: none;
+        }
+
+        #memory-share-modal .checkbox-custom {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ddd;
+            border-radius: 3px;
+            margin-right: 10px;
+            position: relative;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        #memory-share-modal .checkbox-option input[type="checkbox"]:checked + .checkbox-custom {
+            border-color: var(--theme-button-bg, #007AFF);
+            background-color: var(--theme-button-bg, #007AFF);
+        }
+
+        #memory-share-modal .checkbox-option input[type="checkbox"]:checked + .checkbox-custom::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        #memory-share-modal .checkbox-content {
+            flex: 1;
+        }
+
+        #memory-share-modal .checkbox-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        #memory-share-modal .checkbox-desc {
+            font-size: 12px;
+            color: #666;
+        }

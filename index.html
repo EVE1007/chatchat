@@ -19606,19 +19606,29 @@ async function createGroupChat(personaId) {
                             }
 
                             if (eventContent && characterId) {
-                                await recordCrossAppEvent(
-                                    characterId,
-                                    'chat',
-                                    'ai_message',
-                                    {
-                                        id: currentChatCharacter.id,
-                                        type: currentChatCharacter?.isGroup ? 'group_chat' : 'private_chat',
-                                        sender: 'ai',
-                                        content: eventContent,
-                                        chatType: currentChatCharacter?.isGroup ? 'group' : 'single'
-                                    }
-                                );
-                                console.log(`🔥 [修复] 已记录AI回复时间线事件 - 角色: ${characterId}, 内容: ${eventContent.substring(0, 50)}...`);
+                                // 🔥【关键修复】检查是否应该记录群聊记忆
+                                let shouldRecord = true;
+                                if (currentChatCharacter?.isGroup) {
+                                    shouldRecord = await shouldRecordGroupMemoryForCharacter(characterId, currentChatCharacter.id);
+                                }
+
+                                if (shouldRecord) {
+                                    await recordCrossAppEvent(
+                                        characterId,
+                                        'chat',
+                                        'ai_message',
+                                        {
+                                            id: currentChatCharacter.id,
+                                            type: currentChatCharacter?.isGroup ? 'group_chat' : 'private_chat',
+                                            sender: 'ai',
+                                            content: eventContent,
+                                            chatType: currentChatCharacter?.isGroup ? 'group' : 'single'
+                                        }
+                                    );
+                                    console.log(`🔥 [修复] 已记录AI回复时间线事件 - 角色: ${characterId}, 内容: ${eventContent.substring(0, 50)}...`);
+                                } else {
+                                    console.log(`⏭️ 跳过记录AI消息 - 角色 ${characterId} 未与群聊 ${currentChatCharacter.id} 共享记忆`);
+                                }
                             }
                         }
                     } catch (error) {
@@ -19823,21 +19833,27 @@ async function createGroupChat(personaId) {
                                 if (currentChatCharacter?.isGroup) {
                                     // 群聊：为每个群成员记录AI回复事件
                                     for (const member of currentChatCharacter.members || []) {
-                                        await recordCrossAppEvent(
-                                            member.id, // 记录到每个成员的时间线下
-                                            'chat',
-                                            'ai_reply',
-                                            {
-                                                id: member.id, // 🔥【修复】使用角色ID而不是群聊ID，确保记忆共享正常工作
-                                                type: 'group_chat',
-                                                sender: 'ai',
-                                                content: aiMessage.content,
-                                                chatType: 'group',
-                                                groupName: currentChatCharacter.name,
-                                                groupId: currentChatCharacter.id // 🔥【新增】保留群聊ID用于区分
-                                            },
-                                            aiMessage.id
-                                        );
+                                        // 🔥【关键修复】检查该成员是否设置了与当前群聊共享记忆
+                                        const shouldRecord = await shouldRecordGroupMemoryForCharacter(member.id, currentChatCharacter.id);
+                                        if (shouldRecord) {
+                                            await recordCrossAppEvent(
+                                                member.id, // 记录到每个成员的时间线下
+                                                'chat',
+                                                'ai_reply',
+                                                {
+                                                    id: member.id, // 🔥【修复】使用角色ID而不是群聊ID，确保记忆共享正常工作
+                                                    type: 'group_chat',
+                                                    sender: 'ai',
+                                                    content: aiMessage.content,
+                                                    chatType: 'group',
+                                                    groupName: currentChatCharacter.name,
+                                                    groupId: currentChatCharacter.id // 🔥【新增】保留群聊ID用于区分
+                                                },
+                                                aiMessage.id
+                                            );
+                                        } else {
+                                            console.log(`⏭️ 跳过记录 - 角色 ${member.id} 未与群聊 ${currentChatCharacter.id} 共享记忆`);
+                                        }
                                     }
                                 } else {
                                     // 单聊：正常记录
@@ -20282,21 +20298,27 @@ async function createGroupChat(personaId) {
                     if (currentChatCharacter?.isGroup) {
                         // 群聊：为每个群成员记录用户消息事件
                         for (const member of currentChatCharacter.members || []) {
-                            await recordCrossAppEvent(
-                                member.id, // 记录到每个成员的时间线下
-                                'chat',
-                                'user_message',
-                                {
-                                    id: member.id, // 🔥【修复】使用角色ID而不是群聊ID，确保记忆共享正常工作
-                                    type: 'group_chat',
-                                    sender: 'user',
-                                    content: message,
-                                    chatType: 'group',
-                                    groupName: currentChatCharacter.name,
-                                    groupId: currentChatCharacter.id // 🔥【新增】保留群聊ID用于区分
-                                },
-                                messages[messages.length - 1]?.id
-                            );
+                            // 🔥【关键修复】检查该成员是否设置了与当前群聊共享记忆
+                            const shouldRecord = await shouldRecordGroupMemoryForCharacter(member.id, currentChatCharacter.id);
+                            if (shouldRecord) {
+                                await recordCrossAppEvent(
+                                    member.id, // 记录到每个成员的时间线下
+                                    'chat',
+                                    'user_message',
+                                    {
+                                        id: member.id, // 🔥【修复】使用角色ID而不是群聊ID，确保记忆共享正常工作
+                                        type: 'group_chat',
+                                        sender: 'user',
+                                        content: message,
+                                        chatType: 'group',
+                                        groupName: currentChatCharacter.name,
+                                        groupId: currentChatCharacter.id // 🔥【新增】保留群聊ID用于区分
+                                    },
+                                    messages[messages.length - 1]?.id
+                                );
+                            } else {
+                                console.log(`⏭️ 跳过记录 - 角色 ${member.id} 未与群聊 ${currentChatCharacter.id} 共享记忆`);
+                            }
                         }
                     } else {
                         // 单聊：正常记录
@@ -30743,7 +30765,7 @@ ${eventsText}
                 let memoryContext = '';
 
                 // 🔥【修复】检查是否启用记忆共享 - 需要获取角色的单聊设置
-                let sharedGroupId = null;
+                let sharedGroupIds = [];
                 let contextIds = [currentContext.id]; // 当前聊天窗口
 
                 // 如果当前在群聊中，需要检查该角色在单聊中是否设置了记忆共享
@@ -30751,16 +30773,16 @@ ${eventsText}
                     try {
                         // 获取该角色的单聊设置（角色ID就是单聊ID）
                         const characterChatSettings = await getAsyncChatSettings(characterId);
-                        sharedGroupId = characterChatSettings.memorySharedGroupId;
+                        sharedGroupIds = characterChatSettings.memorySharedGroupIds || [];
 
                         // 🔥【调试】输出详细的记忆共享检查信息
                         console.log(`🔍 记忆共享检查 - 角色: ${characterId}`);
                         console.log(`🔍 当前群聊ID: ${currentContext.id}`);
-                        console.log(`🔍 角色设置的共享群聊ID: ${sharedGroupId}`);
-                        console.log(`🔍 是否匹配: ${sharedGroupId === currentContext.id}`);
+                        console.log(`🔍 角色设置的共享群聊IDs: ${sharedGroupIds}`);
+                        console.log(`🔍 是否匹配: ${sharedGroupIds.includes(currentContext.id)}`);
 
                         // 如果角色设置了与当前群聊共享记忆，则包含私聊记忆
-                        if (sharedGroupId === currentContext.id) {
+                        if (sharedGroupIds.includes(currentContext.id)) {
                             contextIds.push(characterId); // 私聊的ID就是角色ID
                             console.log('🔗 在共享群聊中，包含角色私聊记忆:', characterId);
                         } else {
@@ -30772,12 +30794,12 @@ ${eventsText}
                 } else if (currentContext.type === 'private_chat') {
                     // 如果在私聊中，使用当前聊天设置
                     const chatSettings = getCurrentChatSettings();
-                    sharedGroupId = chatSettings.memorySharedGroupId;
+                    sharedGroupIds = chatSettings.memorySharedGroupIds || [];
 
-                    // 如果启用了记忆共享，添加共享的群聊ID
-                    if (sharedGroupId) {
-                        contextIds.push(sharedGroupId);
-                        console.log('🔗 启用记忆共享，包含群聊:', sharedGroupId);
+                    // 如果启用了记忆共享，添加所有共享的群聊ID
+                    if (sharedGroupIds.length > 0) {
+                        contextIds.push(...sharedGroupIds);
+                        console.log('🔗 启用记忆共享，包含群聊:', sharedGroupIds);
                     }
                 }
 
@@ -31168,7 +31190,7 @@ ${eventsText}
             }
 
             const chatSettings = getCurrentChatSettings();
-            const currentSharedGroup = chatSettings.memorySharedGroupId || '';
+            const currentSharedGroups = chatSettings.memorySharedGroupIds || [];
 
             const modalHTML = `
                 <div id="memory-share-modal" class="modal phone-modal" style="display: block;">
@@ -31180,22 +31202,14 @@ ${eventsText}
                         <div class="modal-body">
                             <div class="setting-section">
                                 <h4>选择要共享记忆的群聊</h4>
-                                <div class="radio-group">
-                                    <label class="radio-option">
-                                        <input type="radio" name="sharedGroup" value="" ${!currentSharedGroup ? 'checked' : ''}>
-                                        <span class="radio-custom"></span>
-                                        <div class="radio-content">
-                                            <div class="radio-title">关闭共享</div>
-                                            <div class="radio-desc">单聊和群聊记忆独立</div>
-                                        </div>
-                                    </label>
+                                <div class="checkbox-group">
                                     ${characterGroups.map(group => `
-                                        <label class="radio-option">
-                                            <input type="radio" name="sharedGroup" value="${group.id}" ${currentSharedGroup === group.id ? 'checked' : ''}>
-                                            <span class="radio-custom"></span>
-                                            <div class="radio-content">
-                                                <div class="radio-title">${group.name}</div>
-                                                <div class="radio-desc">与此群聊共享记忆</div>
+                                        <label class="checkbox-option">
+                                            <input type="checkbox" name="sharedGroups" value="${group.id}" ${currentSharedGroups.includes(group.id) ? 'checked' : ''}>
+                                            <span class="checkbox-custom"></span>
+                                            <div class="checkbox-content">
+                                                <div class="checkbox-title">${group.name}</div>
+                                                <div class="checkbox-desc">与此群聊共享记忆</div>
                                             </div>
                                         </label>
                                     `).join('')}
@@ -31208,7 +31222,7 @@ ${eventsText}
                                     • 开启后，角色在单聊中能记住群聊的内容<br>
                                     • 角色在群聊中也能记住单聊的内容<br>
                                     • 实现真正的跨场景记忆连贯性<br>
-                                    • 每个角色只能选择一个群聊进行记忆共享
+                                    • 可以同时选择多个群聊进行记忆共享
                                 </div>
                             </div>
                         </div>
@@ -31225,10 +31239,14 @@ ${eventsText}
 
         // 保存记忆共享设置
         async function saveMemoryShareSettings() {
-            const selectedGroup = document.querySelector('input[name="sharedGroup"]:checked').value;
+            const selectedGroups = Array.from(document.querySelectorAll('input[name="sharedGroups"]:checked'))
+                .map(checkbox => checkbox.value);
 
             const chatSettings = getCurrentChatSettings();
-            chatSettings.memorySharedGroupId = selectedGroup;
+            chatSettings.memorySharedGroupIds = selectedGroups;
+
+            // 🔥【兼容性】保留旧的单选字段，使用第一个选中的群聊
+            chatSettings.memorySharedGroupId = selectedGroups.length > 0 ? selectedGroups[0] : '';
 
             await saveChatSettings();
 
@@ -31237,9 +31255,12 @@ ${eventsText}
 
             hideMemoryShareSettings();
 
-            if (selectedGroup) {
-                const group = groupChats.find(g => g.id === selectedGroup);
-                showToast(`已开启与"${group.name}"的记忆共享`, 'success');
+            if (selectedGroups.length > 0) {
+                const groupNames = selectedGroups.map(id => {
+                    const group = groupChats.find(g => g.id === id);
+                    return group ? group.name : '未知群聊';
+                }).join('、');
+                showToast(`已开启与"${groupNames}"的记忆共享`, 'success');
             } else {
                 showToast('已关闭记忆共享', 'success');
             }
@@ -31257,11 +31278,15 @@ ${eventsText}
             if (!statusElement) return;
 
             const chatSettings = getCurrentChatSettings();
-            const sharedGroupId = chatSettings.memorySharedGroupId;
+            const sharedGroupIds = chatSettings.memorySharedGroupIds || [];
 
-            if (sharedGroupId) {
-                const group = groupChats.find(g => g.id === sharedGroupId);
-                statusElement.textContent = group ? `与"${group.name}"共享` : '已开启';
+            if (sharedGroupIds.length > 0) {
+                if (sharedGroupIds.length === 1) {
+                    const group = groupChats.find(g => g.id === sharedGroupIds[0]);
+                    statusElement.textContent = group ? `与"${group.name}"共享` : '已开启';
+                } else {
+                    statusElement.textContent = `与${sharedGroupIds.length}个群聊共享`;
+                }
             } else {
                 statusElement.textContent = '已关闭';
             }
@@ -32395,6 +32420,27 @@ ${messages.map(msg => {
             } catch (error) {
                 console.error('获取核心记忆失败:', error);
                 return '';
+            }
+        }
+
+        // 🔥【新增】检查角色是否应该记录群聊记忆的函数
+        async function shouldRecordGroupMemoryForCharacter(characterId, groupId) {
+            try {
+                // 获取该角色的单聊设置
+                const characterChatSettings = await getAsyncChatSettings(characterId);
+                const sharedGroupIds = characterChatSettings.memorySharedGroupIds || [];
+
+                // 检查该群聊是否在角色的共享群聊列表中
+                const shouldRecord = sharedGroupIds.includes(groupId);
+
+                console.log(`🔍 记忆共享检查 - 角色: ${characterId}, 群聊: ${groupId}, 应记录: ${shouldRecord}`);
+                console.log(`🔍 角色的共享群聊列表:`, sharedGroupIds);
+
+                return shouldRecord;
+            } catch (error) {
+                console.warn('检查记忆共享设置失败:', error);
+                // 出错时默认不记录，避免意外的记忆泄露
+                return false;
             }
         }
 
