@@ -6004,10 +6004,21 @@ ${chatContext}${momentsContext}
                 headerDiv.innerHTML = `
                     <span>已选择 ${selectedConversations.length} 个对话</span>
                     <div>
-                        <button onclick="deleteSelectedConversations()" class="delete-btn-red">删除</button>
-                        <button onclick="exitMessageListMultiSelectMode()" class="cancel-btn-blue">取消</button>
+                        <button class="delete-btn-red" data-action="delete">删除</button>
+                        <button class="cancel-btn-blue" data-action="cancel">取消</button>
                     </div>
                 `;
+
+                // 🔥【修复】使用事件委托绑定点击事件，避免内联onclick问题
+                headerDiv.onclick = function(e) {
+                    const action = e.target.dataset.action;
+                    if (action === 'delete') {
+                        deleteSelectedConversations();
+                    } else if (action === 'cancel') {
+                        exitMessageListMultiSelectMode();
+                    }
+                };
+
                 messageList.appendChild(headerDiv);
             }
             
@@ -10955,31 +10966,60 @@ async function applyChatBackground(backgroundUrl) {
         // 显示消息菜单
         function showMessageMenu(messageId, event) {
             selectedMessageId = messageId;
-            
+
+            // 先隐藏现有菜单，确保清理事件监听器
+            hideMessageMenu();
+
             // 创建或获取菜单元素
             let menu = document.getElementById('message-context-menu');
             if (!menu) {
                 menu = document.createElement('div');
                 menu.id = 'message-context-menu';
                 menu.className = 'message-menu';
-                menu.innerHTML = `
-                    <div class="message-menu-item" onclick="replyToMessage()">引用</div>
-                    <div class="message-menu-item" onclick="copyMessage()">复制</div>
-                    <div class="message-menu-item danger" onclick="deleteMessage()">删除</div>
-                `;
                 document.body.appendChild(menu);
             }
-            
+
+            // 🔥【修复】每次都重新设置菜单内容，避免事件绑定问题
+            menu.innerHTML = `
+                <div class="message-menu-item" data-action="reply">引用</div>
+                <div class="message-menu-item" data-action="copy">复制</div>
+                <div class="message-menu-item danger" data-action="delete">删除</div>
+            `;
+
+            // 🔥【修复】使用事件委托绑定点击事件，避免内联onclick问题
+            menu.onclick = function(e) {
+                const action = e.target.dataset.action;
+                if (action) {
+                    e.stopPropagation();
+                    switch(action) {
+                        case 'reply':
+                            replyToMessage();
+                            break;
+                        case 'copy':
+                            copyMessage();
+                            break;
+                        case 'delete':
+                            deleteMessage();
+                            break;
+                    }
+                    hideMessageMenu();
+                }
+            };
+
             // 定位菜单
             const x = event.clientX || event.pageX;
             const y = event.clientY || event.pageY;
-            
+
             menu.style.display = 'block';
             menu.style.left = `${Math.min(x, window.innerWidth - 150)}px`;
             menu.style.top = `${Math.min(y, window.innerHeight - 100)}px`;
-            
-            // 点击其他地方关闭菜单
+
+            // 🔥【修复】延迟添加外部点击监听器，避免立即触发
             setTimeout(() => {
+                // 先移除可能存在的旧监听器
+                document.removeEventListener('click', hideMessageMenu);
+                document.removeEventListener('touchstart', hideMessageMenu);
+                // 添加新的监听器
                 document.addEventListener('click', hideMessageMenu);
                 document.addEventListener('touchstart', hideMessageMenu);
             }, 100);
@@ -10990,9 +11030,14 @@ async function applyChatBackground(backgroundUrl) {
             const menu = document.getElementById('message-context-menu');
             if (menu) {
                 menu.style.display = 'none';
+                // 🔥【修复】清理菜单的点击事件处理器
+                menu.onclick = null;
             }
+            // 🔥【修复】确保移除外部点击监听器
             document.removeEventListener('click', hideMessageMenu);
             document.removeEventListener('touchstart', hideMessageMenu);
+            // 🔥【修复】重置选中的消息ID
+            selectedMessageId = null;
         }
         
         // 引用消息功能
@@ -23466,12 +23511,22 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             selectionBar.className = 'selection-bar';
             selectionBar.innerHTML = `
                 <div class="selection-actions">
-                    <button class="cancel-btn" onclick="exitSelectionMode()">取消</button>
+                    <button class="cancel-btn" data-action="cancel">取消</button>
                     <span class="selection-count">已选择 0 条动态</span>
-                    <button class="delete-btn" onclick="deleteSelectedMoments()" disabled>删除</button>
+                    <button class="delete-btn" data-action="delete" disabled>删除</button>
                 </div>
             `;
-            
+
+            // 🔥【修复】使用事件委托绑定点击事件，避免内联onclick问题
+            selectionBar.onclick = function(e) {
+                const action = e.target.dataset.action;
+                if (action === 'cancel') {
+                    exitSelectionMode();
+                } else if (action === 'delete' && !e.target.disabled) {
+                    deleteSelectedMoments();
+                }
+            };
+
             const momentsPage = document.getElementById('moments-page');
             momentsPage.insertBefore(selectionBar, momentsPage.firstChild);
         }
@@ -25981,12 +26036,29 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 return;
             }
 
-            container.innerHTML = locationHistory.map(location => 
-                `<div class="location-history-item" data-location="${location}" onclick="setLocationAddress('${location}')">
+            container.innerHTML = locationHistory.map(location =>
+                `<div class="location-history-item" data-location="${location}">
                     <span class="location-text">${location}</span>
-                    <span class="delete-btn" onclick="event.stopPropagation(); confirmDeleteLocation('${location}')" title="删除">×</span>
+                    <span class="delete-btn" data-location="${location}" title="删除">×</span>
                 </div>`
             ).join('');
+
+            // 🔥【修复】使用事件委托绑定点击事件，避免内联onclick问题
+            container.onclick = function(e) {
+                const locationItem = e.target.closest('.location-history-item');
+                if (!locationItem) return;
+
+                const location = locationItem.dataset.location;
+
+                if (e.target.classList.contains('delete-btn')) {
+                    // 点击删除按钮
+                    e.stopPropagation();
+                    confirmDeleteLocation(location);
+                } else {
+                    // 点击位置项
+                    setLocationAddress(location);
+                }
+            };
         }
 
         // 长按删除处理
