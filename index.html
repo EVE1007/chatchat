@@ -4542,16 +4542,23 @@
                     }
                 }
                 
-                // 🔥【安全修复】使用事务确保原子操作，防止数据丢失
+                // 🔥【修复删除问题】使用事务确保原子操作，支持消息删除
                 if (messageArray.length === 0) {
-                    console.warn('⚠️ 消息数据为空，跳过保存操作');
+                    console.warn('⚠️ 消息数据为空，清空数据库');
+                    // 如果没有消息，清空数据库
+                    await db.transaction('rw', db.chatMessages, async () => {
+                        await db.chatMessages.clear();
+                    });
                     return;
                 }
 
-                // 🔥【安全修复】使用bulkPut代替clear+bulkAdd，避免数据丢失
-                await db.chatMessages.bulkPut(messageArray);
+                // 🔥【修复删除问题】使用事务的clear+bulkAdd，确保删除的消息被正确移除
+                await db.transaction('rw', db.chatMessages, async () => {
+                    await db.chatMessages.clear();
+                    await db.chatMessages.bulkAdd(messageArray);
+                });
 
-                console.log(`✅ 安全保存了 ${messageArray.length} 条消息到IndexedDB`);
+                console.log(`✅ 安全保存了 ${messageArray.length} 条消息到IndexedDB（支持删除）`);
                 
 
             } catch (error) {
@@ -4593,9 +4600,13 @@
                         }
                     }
                     
-                    if (messageArray.length > 0) {
-                        await db.chatMessages.bulkAdd(messageArray);
-                    }
+                    // 🔥【修复】重试时也使用事务确保删除正确处理
+                    await db.transaction('rw', db.chatMessages, async () => {
+                        await db.chatMessages.clear();
+                        if (messageArray.length > 0) {
+                            await db.chatMessages.bulkAdd(messageArray);
+                        }
+                    });
                     
 
                 } catch (fallbackError) {
@@ -26043,28 +26054,44 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                             showToast('聊天消息导入失败: ' + error.message, 'warning');
                         }
                     }
-                    
-                    // 🔥【修复】导入聊天设置 - 安全的导入方式
-                    if (data.chatSettings?.length) {
-                        try {
-                            // 🔥【安全修复】使用事务确保原子性
-                            await db.transaction('rw', db.chatSettings, async () => {
-                                await db.chatSettings.clear();
 
-                                // 确保每个设置都有有效ID
-                                const validSettings = data.chatSettings.map(setting => ({
-                                    ...setting,
-                                    id: setting.id || `setting_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                                }));
+                    // 🔥【重新添加】批量导入所有其他表
+                    const importTasks = [
+                        // 🔥【重点】用户身份和动态内容
+                        { name: 'personas', data: data.personas, idGen: () => `persona_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'moments', data: data.moments, idGen: () => `moment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'momentComments', data: data.momentComments, idGen: () => `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'momentLikes', data: data.momentLikes, idGen: () => `like_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
 
-                                await db.chatSettings.bulkAdd(validSettings);
-                            });
+                        // 核心数据
+                        { name: 'characters', data: data.characters, idGen: () => `char_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'chatSettings', data: data.chatSettings, idGen: () => `setting_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
 
+                        // 资源数据
+                        { name: 'customEmojis', data: data.customEmojis, idGen: () => `emoji_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'worldbooks', data: data.worldbooks, idGen: () => `wb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'wallpapers', data: data.wallpapers, idGen: () => `wp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+
+                        // 记忆系统
+                        { name: 'coreMemories', data: data.coreMemories, idGen: () => `core_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'episodicMemories', data: data.episodicMemories, idGen: () => `episodic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'memorySummaries', data: data.memorySummaries, idGen: () => `summary_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'memoryEvents', data: data.memoryEvents, idGen: () => `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'crossAppTimeline', data: data.crossAppTimeline, idGen: () => `timeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+
+                        // 系统数据
+                        { name: 'contacts', data: data.contacts, idGen: () => `contact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'blacklist', data: data.blacklist, idGen: () => `blacklist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'friendRequests', data: data.friendRequests, idGen: () => `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'characterStatus', data: data.characterStatus, idGen: () => `status_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'apiSettings', data: data.apiSettings, idGen: () => `api_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
+                        { name: 'recentEmojis', data: data.recentEmojis, idGen: () => `recent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }
+                    ];
+
+                    // 批量导入
+                    for (const task of importTasks) {
+                        if (await safeTableImport(task.name, task.data, task.idGen)) {
                             importedTables++;
-                            console.log(`导入了 ${data.chatSettings.length} 个聊天设置`);
-                        } catch (error) {
-                            console.error('导入聊天设置失败:', error);
-                            showToast('聊天设置导入失败: ' + error.message, 'warning');
                         }
                     }
                     
