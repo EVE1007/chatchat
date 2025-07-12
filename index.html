@@ -403,6 +403,72 @@
                     </div>
                 </div>
 
+                <!-- 线下预设设置模态框 -->
+                <div id="offline-preset-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>线下剧情预设</h3>
+                            <button class="modal-close" onclick="closeOfflinePresetSettings()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- 已保存的预设列表 -->
+                            <div class="form-group">
+                                <label>已保存的预设</label>
+                                <div id="saved-presets-list" class="saved-presets-list">
+                                    <!-- 预设列表将在这里动态生成 -->
+                                </div>
+                            </div>
+
+                            <!-- 新建/编辑预设表单 -->
+                            <div class="form-group">
+                                <label for="offline-preset-name">预设名称</label>
+                                <input type="text" id="offline-preset-name" placeholder="为这个预设起个名字..." maxlength="50">
+                            </div>
+                            <div class="form-group">
+                                <label for="offline-preset-content">剧情预设内容</label>
+                                <textarea id="offline-preset-content" rows="6" placeholder="请输入线下剧情模式的预设内容，这将决定AI的文风、字数、视角等...&#10;&#10;例如：&#10;- 以第三人称视角描述&#10;- 每次回复200-400字&#10;- 注重环境描写和心理活动&#10;- 营造浪漫/悬疑/冒险等氛围"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>预设说明</label>
+                                <div class="preset-help-text">
+                                    <p>• 预设内容将作为AI回复的重要指导</p>
+                                    <p>• 可以指定文风、字数、视角、氛围等</p>
+                                    <p>• 支持情景描写、动作描写、心理描写</p>
+                                    <p>• 预设权重很高，会显著影响AI的回复风格</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeOfflinePresetSettings()">取消</button>
+                            <button class="btn btn-secondary" onclick="clearPresetForm()">清空表单</button>
+                            <button class="btn btn-primary" onclick="saveOfflinePreset()">保存预设</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 线下模式聊天记录模态框 -->
+                <div id="offline-history-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>线下模式聊天记录</h3>
+                            <button class="modal-close" onclick="closeOfflineHistoryModal()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="offline-history-list" class="offline-history-list">
+                                <!-- 聊天记录列表将在这里动态生成 -->
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeOfflineHistoryModal()">关闭</button>
+                            <button class="btn btn-danger" onclick="clearAllOfflineHistory()">清空所有记录</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 记忆查看器界面 -->
                 <div id="memory-viewer-screen" class="app-screen">
                     <div class="app-status-bar">
@@ -924,36 +990,7 @@
                                 </div>
                             </div>
 
-                            <!-- 聊天模式设置 -->
-                            <div class="settings-section">
-                                <div class="section-header">
-                                    <i class="fas fa-comments section-icon"></i>
-                                    <span class="section-title">聊天模式</span>
-                                </div>
-                                <div class="setting-card">
-                                    <div class="setting-item">
-                                        <div class="setting-left">
-                                            <div class="setting-label">模式选择</div>
-                                            <div class="setting-desc">选择线上纯聊天或线下剧情模式</div>
-                                        </div>
-                                    </div>
-                                    <div class="chat-mode-switch">
-                                        <div class="chat-mode-option">
-                                            <input type="radio" id="chat-mode-online" name="chat-mode" value="online" checked>
-                                            <label for="chat-mode-online">线上模式</label>
-                                        </div>
-                                        <div class="chat-mode-option">
-                                            <input type="radio" id="chat-mode-offline" name="chat-mode" value="offline">
-                                            <label for="chat-mode-offline">线下模式</label>
-                                        </div>
-                                    </div>
-                                    <div class="offline-length-control hide" id="offline-length-control">
-                                        <span class="control-label">每条消息最长：</span>
-                                        <input type="number" id="offline-mode-max-length" min="50" max="500" value="100">
-                                        <span class="control-unit">字</span>
-                                    </div>
-                                </div>
-                            </div>
+
 
 
 
@@ -1267,6 +1304,9 @@
                             <button class="back-btn" onclick="backToChatApp()">‹</button>
                             <span class="header-title" id="api-chat-title">角色聊天</span>
                             <div class="header-actions">
+                                <span class="action-btn" onclick="toggleOfflineMode()" id="offline-mode-btn" title="切换线下剧情模式">
+                                    <i class="fas fa-door-open" id="offline-mode-icon"></i>
+                                </span>
                                 <span class="action-btn" onclick="showChatSettings()">
                                 <i class="fas fa-ellipsis-v"></i>
                                 </span>
@@ -1390,8 +1430,44 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- 线下剧情模式覆盖层 -->
+                    <div id="offline-mode-overlay" class="offline-mode-overlay" style="display: none;">
+                        <div class="offline-mode-header">
+                            <button class="back-btn" onclick="exitOfflineMode()">‹</button>
+                            <span class="header-title" id="offline-mode-title">线下剧情模式</span>
+                            <div class="header-actions">
+                                <span class="action-btn" onclick="showOfflineHistoryModal()" title="查看聊天记录">
+                                    <i class="fas fa-history"></i>
+                                </span>
+                                <span class="action-btn" onclick="showOfflinePresetSettings()" title="添加预设">
+                                    <i class="fas fa-plus"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="offline-mode-content">
+                            <div class="offline-chat-messages" id="offline-chat-messages">
+                                <!-- 线下模式的聊天消息 -->
+                            </div>
+
+                            <div class="offline-input-area">
+                                <div class="offline-input-container">
+                                    <textarea id="offline-input" placeholder="在线下剧情模式中输入..." rows="3"></textarea>
+                                    <div class="offline-button-group">
+                                        <button class="offline-regenerate-btn" onclick="regenerateLastOfflineMessage()" title="重新生成AI回复">
+                                            <i class="fas fa-redo-alt"></i>
+                                        </button>
+                                        <button class="offline-send-btn" onclick="sendOfflineMessage()">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
+
                 <!-- 浏览器界面 -->
                 <div id="browser-screen" class="app-screen">
                     <div class="app-status-bar">
@@ -3352,7 +3428,9 @@
             episodicMemories: '&id, characterId, fact, importance, timestamp, category',
             memorySummaries: '&id, characterId, date, summary, timestamp, context',
             memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId'
+            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
+            // 🔥【新增】线下模式聊天记录表
+            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages, messageCount'
         }).upgrade(tx => {
             // 数据迁移逻辑
             console.log('升级到版本6：重新设计记忆系统');
@@ -3616,6 +3694,9 @@
             updateTime();
 
             try {
+
+            // 迁移旧的线下预设数据
+            migrateOldPresets();
 
             // 并行加载所有数据
             await Promise.all([
@@ -7399,10 +7480,18 @@ ${chatContext}${momentsContext}
                 messagesContainer.appendChild(loadMoreBtn);
             }
             
+            // 🔥【修复】过滤掉线下模式的消息，不在线上聊天界面显示
+            const onlineMessages = allMessages.filter(msg => !msg.isOfflineMode);
+
+            // 重新计算偏移量，基于过滤后的消息
+            const adjustedOffset = loadMore ?
+                Math.max(0, onlineMessages.length - MESSAGE_LIMIT) :
+                Math.max(0, onlineMessages.length - MESSAGE_LIMIT);
+
             // 获取要显示的消息
-            const messagesToShow = loadMore ? 
-                allMessages.slice(Math.max(0, currentMessageOffset - MESSAGE_LIMIT), currentMessageOffset) :
-                allMessages.slice(currentMessageOffset);
+            const messagesToShow = loadMore ?
+                onlineMessages.slice(Math.max(0, adjustedOffset - MESSAGE_LIMIT), adjustedOffset) :
+                onlineMessages.slice(adjustedOffset);
             
             // 获取时间戳设置
             const timestampEnabled = chatSettings.timestampEnabled !== false; // 默认为true
@@ -14130,7 +14219,7 @@ ${timeInfo}
             let taskInstructions = '';
             
             if (chatMode === 'online') {
-                modeInstructions = `\n# 聊天模式：线上模式\n- 你必须按照手机聊天或面对面对话的格式进行输出\n- **严格禁止**任何动作描写、神态描写、心理描写\n- 只能进行纯语言交流，不能描述任何身体动作、表情、环境等\n- 每条消息都应该是可以通过文字直接表达的内容`;
+                modeInstructions = `\n# 聊天模式：线上模式\n- 你必须按照手机聊天或面对面对话的格式进行输出\n- **严格禁止**任何动作描写、神态描写、心理描写\n- 只能进行纯语言交流，不能描述任何身体动作、表情、环境等\n- 每条消息都应该是可以通过文字直接表达的内容\n- **重要**：用户消息中的括号()内容是环境描写、动作描写或心理活动，你可以观察到这些信息作为背景，但不能表现得像是"听到"了用户的内心想法。你只能对括号外的实际话语进行回应，可以通过观察用户的可见行为（如犹豫、停顿等）来推测情况，但不能直接回应用户的内心想法`;
                 if (isGroupChat) {
                     // 🔥【关键修复】使用persona字段构建成员列表，完全对齐zhangyu.html
                     const membersList = character.members.map(member => `- **${member.name}**: ${member.persona || member.bio}`).join('\n');
@@ -15856,28 +15945,7 @@ ${timeInfo}
             }
         }
         
-        // 保存聊天模式设置
-        async function saveChatModeSettings() {
-            if (!currentChatCharacter) return;
-            
-            const chatSettings = await getAsyncChatSettings();
-            
-            // 获取选中的聊天模式
-            const onlineRadio = document.getElementById('chat-mode-online');
-            const offlineRadio = document.getElementById('chat-mode-offline');
-            
-            if (onlineRadio && offlineRadio) {
-                chatSettings.chatMode = onlineRadio.checked ? 'online' : 'offline';
-            }
-            
-            // 获取线下模式字数限制
-            const maxLengthInput = document.getElementById('offline-mode-max-length');
-            if (maxLengthInput) {
-                chatSettings.offlineModeMaxLength = parseInt(maxLengthInput.value) || 100;
-            }
-            
-            await saveCurrentChatSettings(chatSettings);
-        }
+
         
         // 显示记忆挂载设置
         async function showMemoryMountSettings() {
@@ -17464,57 +17532,11 @@ ${timeInfo}
             // 加载当前聊天的设置
             if (currentChatCharacter) {
                 const chatSettings = await getAsyncChatSettings();
-                
-                // 设置聊天模式
-                const chatMode = chatSettings.chatMode || 'online';
-                const onlineRadio = document.getElementById('chat-mode-online');
-                const offlineRadio = document.getElementById('chat-mode-offline');
-                
-                if (onlineRadio && offlineRadio) {
-                    if (chatMode === 'online') {
-                        onlineRadio.checked = true;
-                    } else {
-                        offlineRadio.checked = true;
-                    }
-                    
-                    // 显示/隐藏线下模式字数控制
-                    const offlineLengthControl = document.getElementById('offline-length-control');
-                    if (offlineLengthControl) {
-                        offlineLengthControl.style.display = chatMode === 'offline' ? 'flex' : 'none';
-                    }
-                    
-                    // 设置线下模式字数限制
-                    const maxLengthInput = document.getElementById('offline-mode-max-length');
-                    if (maxLengthInput) {
-                        maxLengthInput.value = chatSettings.offlineModeMaxLength || 100;
-                    }
-                    }
-                }
             }
-            
+        }
+
         // 初始化聊天设置UI相关事件
         function initChatSettingsUIEvents() {
-            // 绑定聊天模式切换事件
-            const chatModeRadios = document.querySelectorAll('input[name="chat-mode"]');
-            chatModeRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const offlineLengthControl = document.getElementById('offline-length-control');
-                    if (offlineLengthControl) {
-                        offlineLengthControl.style.display = this.value === 'offline' ? 'flex' : 'none';
-                    }
-                    
-                    // 保存聊天模式设置
-                    if (currentChatCharacter) {
-                    saveChatModeSettings();
-                    }
-                });
-            });
-            
-            // 绑定线下模式字数限制变化事件
-            const maxLengthInput = document.getElementById('offline-mode-max-length');
-            if (maxLengthInput) {
-                maxLengthInput.addEventListener('change', saveChatModeSettings);
-            }
             
 
             
@@ -31652,6 +31674,11 @@ ${eventsText}
                             if (event.timestamp < timelineCutoff) return false;
                             if (!event.context) return false;
 
+                            // 🔥【修复】线下模式剧情总结也应该被包含
+                            if (event.appType === 'offline_mode' && event.action === 'storyline_summary') {
+                                return true; // 线下模式剧情总结对所有上下文都可见
+                            }
+
                             // 检查上下文ID匹配
                             return event.context.id === contextId ||
                                    (event.context.chatId === contextId) ||
@@ -31671,7 +31698,12 @@ ${eventsText}
                     memoryContext += '\n# 最近活动时间线\n';
                     limitedTimelineMemories.forEach(memory => {
                         const time = new Date(memory.timestamp).toLocaleString();
-                        const contextInfo = memory.context?.type === 'group_chat' ? '群聊' : '私聊';
+                        let contextInfo = '私聊';
+                        if (memory.context?.type === 'group_chat') {
+                            contextInfo = '群聊';
+                        } else if (memory.appType === 'offline_mode') {
+                            contextInfo = '线下模式';
+                        }
 
                         // 构建更有意义的事件描述
                         let eventDescription = '';
@@ -31685,6 +31717,13 @@ ${eventsText}
                             eventDescription = `AI回复: ${memory.context.content.substring(0, 50)}${memory.context.content.length > 50 ? '...' : ''}`;
                         } else if (memory.action === 'ai_reply' && memory.context?.content) {
                             eventDescription = `AI回复: ${memory.context.content.substring(0, 50)}${memory.context.content.length > 50 ? '...' : ''}`;
+                        } else if (memory.action === 'storyline_summary' && memory.appType === 'offline_mode') {
+                            // 🔥【新增】线下模式剧情总结的特殊显示
+                            if (memory.context?.content) {
+                                eventDescription = `${memory.context.content.substring(0, 100)}${memory.context.content.length > 100 ? '...' : ''}`;
+                            } else {
+                                eventDescription = '线下剧情模式总结';
+                            }
                         } else {
                             eventDescription = memory.action || memory.eventType || '未知活动';
                         }
@@ -36074,6 +36113,1657 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
             } catch (error) {
                 addRecoveryLog('❌ 重新加载失败: ' + error.message);
                 alert('重新加载失败: ' + error.message);
+            }
+        }
+
+        // 🔥【新增】线下剧情模式功能
+        let isOfflineMode = false;
+        let offlinePresets = [];
+        let currentOfflinePreset = null;
+        let offlineMessages = [];
+
+        // 迁移旧的按角色存储的预设到全局存储
+        function migrateOldPresets() {
+            const globalKey = 'globalOfflinePresets';
+            let globalPresets = JSON.parse(localStorage.getItem(globalKey) || '[]');
+
+            // 如果已经有全局预设，跳过迁移
+            if (globalPresets.length > 0) return;
+
+            // 查找所有角色的预设
+            const allPresets = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('offlinePresets_')) {
+                    const presets = JSON.parse(localStorage.getItem(key) || '[]');
+                    allPresets.push(...presets);
+                }
+            }
+
+            // 去重（基于名称和内容）
+            const uniquePresets = [];
+            allPresets.forEach(preset => {
+                const exists = uniquePresets.find(p =>
+                    p.name === preset.name && p.content === preset.content
+                );
+                if (!exists) {
+                    // 移除角色ID，因为现在是全局的
+                    const { characterId, ...cleanPreset } = preset;
+                    uniquePresets.push(cleanPreset);
+                }
+            });
+
+            // 保存到全局存储
+            if (uniquePresets.length > 0) {
+                localStorage.setItem(globalKey, JSON.stringify(uniquePresets));
+                console.log(`已迁移 ${uniquePresets.length} 个预设到全局存储`);
+            }
+        }
+
+        // 切换线下模式
+        function toggleOfflineMode() {
+            if (!currentChatCharacter) {
+                showToast('请先选择一个角色', 'warning');
+                return;
+            }
+
+            isOfflineMode = !isOfflineMode;
+            const overlay = document.getElementById('offline-mode-overlay');
+            const icon = document.getElementById('offline-mode-icon');
+            const chatScreen = document.getElementById('api-chat-screen');
+            const offlineTitle = document.getElementById('offline-mode-title');
+
+            if (isOfflineMode) {
+                // 进入线下模式
+                overlay.style.display = 'flex';
+                icon.className = 'fas fa-door-closed';
+                chatScreen.classList.add('offline-mode-active');
+
+                // 更新标题为当前角色名字
+                if (offlineTitle && currentChatCharacter) {
+                    offlineTitle.textContent = currentChatCharacter.name;
+                }
+
+                // 加载线下模式的消息
+                loadOfflineMessages();
+
+                showToast('已进入线下剧情模式', 'success');
+            } else {
+                // 退出线下模式
+                exitOfflineMode();
+            }
+        }
+
+        // 退出线下模式
+        function exitOfflineMode() {
+            // 检查是否有线下模式的聊天记录
+            if (offlineMessages.length > 0) {
+                showOfflineExitModal();
+            } else {
+                // 没有聊天记录，直接退出
+                doExitOfflineMode();
+            }
+        }
+
+        // 显示线下模式退出选项模态框
+        function showOfflineExitModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal offline-exit-modal'; // 添加特定类名
+            modal.style.display = 'flex';
+            modal.style.zIndex = '10001';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h3>退出线下模式</h3>
+                        <button class="modal-close" onclick="this.closest('.modal').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>请选择退出方式：</p>
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="exitWithSummary()">
+                                <i class="fas fa-book"></i> 结束并生成剧情总结
+                            </button>
+                            <button class="btn btn-secondary" onclick="exitTemporarily()">
+                                <i class="fas fa-pause"></i> 暂时离开
+                            </button>
+                        </div>
+                        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                            生成记忆摘要会总结这段线下剧情的内容，包括感情发展和性格特点。
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        // 🔥【修改】生成剧情总结并退出
+        async function exitWithSummary() {
+            try {
+                // 🔥【新增】显示加载状态
+                const summaryButton = document.querySelector('.modal .btn-primary');
+                const originalText = summaryButton.textContent;
+                summaryButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+                summaryButton.disabled = true;
+
+                showToast('正在生成剧情总结...', 'info');
+                await generateOfflineStorylineSummary();
+
+                // 🔥【修复】确保模态框关闭
+                const modal = document.querySelector('.offline-exit-modal');
+                if (modal) modal.remove();
+
+                doExitOfflineMode();
+                showToast('已生成剧情总结并退出线下模式', 'success');
+            } catch (error) {
+                console.error('生成剧情总结失败:', error);
+
+                // 🔥【修复】恢复按钮状态
+                const summaryButton = document.querySelector('.offline-exit-modal .btn-primary');
+                if (summaryButton) {
+                    summaryButton.innerHTML = '<i class="fas fa-book"></i> 结束并生成剧情总结';
+                    summaryButton.disabled = false;
+                }
+
+                // 🔥【修复】确保模态框关闭
+                const modal = document.querySelector('.offline-exit-modal');
+                if (modal) modal.remove();
+
+                doExitOfflineMode();
+                showToast('生成剧情总结失败，但已退出线下模式', 'warning');
+            }
+        }
+
+        // 暂时离开（不生成摘要）
+        function exitTemporarily() {
+            // 🔥【修复】使用精确的选择器找到退出模态框
+            const modal = document.querySelector('.offline-exit-modal');
+            if (modal) {
+                modal.remove();
+                console.log('✅ 暂时离开：模态框已关闭');
+            } else {
+                console.log('❌ 暂时离开：找不到模态框');
+            }
+            doExitOfflineMode();
+            showToast('已暂时离开线下模式', 'info');
+        }
+
+        // 实际执行退出线下模式
+        function doExitOfflineMode() {
+            isOfflineMode = false;
+            const overlay = document.getElementById('offline-mode-overlay');
+            const icon = document.getElementById('offline-mode-icon');
+            const chatScreen = document.getElementById('api-chat-screen');
+
+            overlay.style.display = 'none';
+            icon.className = 'fas fa-door-open';
+            chatScreen.classList.remove('offline-mode-active');
+        }
+
+        // 🔥【新增】生成线下模式剧情总结
+        async function generateOfflineStorylineSummary() {
+            if (!currentChatCharacter || offlineMessages.length === 0) {
+                return;
+            }
+
+            console.log('📖 开始生成线下模式剧情总结...');
+
+            try {
+                // 构建对话历史
+                let conversationHistory = '';
+                offlineMessages.forEach((msg, index) => {
+                    const role = msg.sender === 'user' ? '用户' : currentChatCharacter.name;
+                    conversationHistory += `${role}：${msg.content}\n`;
+                });
+
+                // 🔥【修改】构建剧情总结生成prompt，侧重剧情发展和情节描述
+                const summaryPrompt = `请为以下线下剧情模式的对话生成一个剧情总结，以第三人称视角描述发生的故事情节：
+
+角色信息：
+${currentChatCharacter.name}
+
+对话历史：
+${conversationHistory}
+
+请生成一个300-800字的剧情总结，要求：
+1. 以第三人称叙述的方式，像写小说一样描述这段剧情
+2. 重点描述故事情节的发展脉络和剧情转折
+3. 包含场景和氛围的生动描述
+4. 突出角色的行为、互动和情感变化
+5. 注重情景描写和故事的戏剧性
+6. 保持叙述的连贯性和文学性
+
+请以富有文学色彩的语言，生动地描述这段剧情故事：`;
+
+                console.log('📖 剧情总结生成prompt:', summaryPrompt);
+
+                // 调用API生成摘要
+                const summary = await callOfflineChatAPI(summaryPrompt, currentChatCharacter);
+
+                // 🔥【新增】显示完整的总结内容
+                console.log('📖 生成的完整剧情总结:', summary);
+
+                if (summary && summary.trim()) {
+                    // 🔥【修复】保存到跨应用时间线数据库，使用正确的表名和字段结构
+                    const timelineMemory = {
+                        id: `offline_summary_${currentChatCharacter.id}_${Date.now()}`, // 🔥【修复】添加必需的主键
+                        characterId: currentChatCharacter.id,
+                        appType: 'offline_mode',
+                        action: 'storyline_summary',
+                        timestamp: Date.now(),
+                        context: {
+                            type: 'offline_storyline',
+                            content: `[剧情模式] ${summary.trim()}`,
+                            date: new Date().toISOString().split('T')[0],
+                            messageCount: offlineMessages.length,
+                            importance: 0.9 // 剧情总结重要性很高
+                        },
+                        messageId: `offline_summary_${Date.now()}`
+                    };
+
+                    await db.crossAppTimeline.add(timelineMemory);
+                    console.log('📖 线下模式剧情总结已保存到跨应用时间线:', timelineMemory);
+
+                    // 🔥【新增】保存聊天记录到历史记录
+                    saveOfflineHistoryRecord(summary.trim(), offlineMessages.slice());
+
+                    // 🔥【修复】清空线下模式消息
+                    offlineMessages = [];
+                    saveOfflineMessages();
+                } else {
+                    throw new Error('生成的剧情总结为空');
+                }
+
+            } catch (error) {
+                console.error('生成线下模式剧情总结失败:', error);
+                throw error;
+            }
+        }
+
+        // 显示线下预设设置
+        function showOfflinePresetSettings() {
+            document.getElementById('offline-preset-modal').style.display = 'flex';
+
+            // 加载并显示已保存的预设
+            loadAndDisplayPresets();
+
+            // 清空表单
+            clearPresetForm();
+        }
+
+        // 关闭线下预设设置
+        function closeOfflinePresetSettings() {
+            document.getElementById('offline-preset-modal').style.display = 'none';
+            // 清理编辑状态
+            delete window.editingPresetId;
+        }
+
+        // 清空预设表单
+        function clearPresetForm() {
+            document.getElementById('offline-preset-name').value = '';
+            document.getElementById('offline-preset-content').value = '';
+        }
+
+        // 加载并显示已保存的预设
+        function loadAndDisplayPresets() {
+            // 预设是全局共享的，不按角色分别存储
+            const key = 'globalOfflinePresets';
+            const presets = JSON.parse(localStorage.getItem(key) || '[]');
+            const container = document.getElementById('saved-presets-list');
+
+            container.innerHTML = '';
+
+            if (presets.length === 0) {
+                return; // CSS会显示"暂无保存的预设"
+            }
+
+            presets.forEach(preset => {
+                const presetDiv = document.createElement('div');
+                presetDiv.className = 'preset-item';
+                if (currentOfflinePreset && currentOfflinePreset.id === preset.id) {
+                    presetDiv.classList.add('active');
+                }
+
+                const presetInfo = document.createElement('div');
+                presetInfo.className = 'preset-info';
+
+                const presetName = document.createElement('div');
+                presetName.className = 'preset-name';
+                presetName.textContent = preset.name;
+
+                const presetPreview = document.createElement('div');
+                presetPreview.className = 'preset-preview';
+                presetPreview.textContent = preset.content.substring(0, 50) + (preset.content.length > 50 ? '...' : '');
+
+                presetInfo.appendChild(presetName);
+                presetInfo.appendChild(presetPreview);
+
+                const presetActions = document.createElement('div');
+                presetActions.className = 'preset-actions';
+
+                // 使用按钮
+                const useBtn = document.createElement('button');
+                useBtn.className = 'preset-action-btn use-btn';
+                useBtn.innerHTML = '<i class="fas fa-check"></i>';
+                useBtn.title = '使用此预设';
+                useBtn.onclick = () => usePreset(preset);
+
+                // 编辑按钮
+                const editBtn = document.createElement('button');
+                editBtn.className = 'preset-action-btn edit-btn';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                editBtn.title = '编辑预设';
+                editBtn.onclick = () => editPreset(preset);
+
+                // 删除按钮
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'preset-action-btn delete-btn';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.title = '删除预设';
+                deleteBtn.onclick = () => deletePreset(preset.id);
+
+                presetActions.appendChild(useBtn);
+                presetActions.appendChild(editBtn);
+                presetActions.appendChild(deleteBtn);
+
+                presetDiv.appendChild(presetInfo);
+                presetDiv.appendChild(presetActions);
+
+                container.appendChild(presetDiv);
+            });
+        }
+
+        // 使用预设
+        function usePreset(preset) {
+            currentOfflinePreset = preset;
+            loadAndDisplayPresets(); // 刷新列表显示
+            showToast(`已启用预设"${preset.name}"`, 'success');
+        }
+
+        // 编辑预设
+        function editPreset(preset) {
+            document.getElementById('offline-preset-name').value = preset.name;
+            document.getElementById('offline-preset-content').value = preset.content;
+
+            // 临时存储正在编辑的预设ID
+            window.editingPresetId = preset.id;
+        }
+
+        // 删除预设
+        function deletePreset(presetId) {
+            if (!confirm('确定要删除这个预设吗？')) {
+                return;
+            }
+
+            if (!currentChatCharacter) return;
+
+            // 预设是全局共享的
+            const key = 'globalOfflinePresets';
+            let presets = JSON.parse(localStorage.getItem(key) || '[]');
+
+            // 找到要删除的预设
+            const presetIndex = presets.findIndex(p => p.id === presetId);
+            if (presetIndex === -1) return;
+
+            const deletedPreset = presets[presetIndex];
+            presets.splice(presetIndex, 1);
+            localStorage.setItem(key, JSON.stringify(presets));
+
+            // 如果删除的是当前使用的预设，清空当前预设
+            if (currentOfflinePreset && currentOfflinePreset.id === presetId) {
+                currentOfflinePreset = null;
+            }
+
+            loadAndDisplayPresets(); // 刷新列表
+            showToast(`预设"${deletedPreset.name}"已删除`, 'info');
+        }
+
+        // 保存线下预设
+        function saveOfflinePreset() {
+            const name = document.getElementById('offline-preset-name').value.trim();
+            const content = document.getElementById('offline-preset-content').value.trim();
+
+            if (!name) {
+                showToast('请输入预设名称', 'warning');
+                return;
+            }
+
+            if (!content) {
+                showToast('请输入预设内容', 'warning');
+                return;
+            }
+
+            // 预设是全局共享的
+            const key = 'globalOfflinePresets';
+            let presets = JSON.parse(localStorage.getItem(key) || '[]');
+
+            // 检查是否是编辑现有预设
+            if (window.editingPresetId) {
+                const presetIndex = presets.findIndex(p => p.id === window.editingPresetId);
+                if (presetIndex !== -1) {
+                    // 更新现有预设
+                    presets[presetIndex].name = name;
+                    presets[presetIndex].content = content;
+                    presets[presetIndex].updatedAt = new Date().toISOString();
+
+                    // 如果正在编辑的是当前使用的预设，更新当前预设
+                    if (currentOfflinePreset && currentOfflinePreset.id === window.editingPresetId) {
+                        currentOfflinePreset = presets[presetIndex];
+                    }
+
+                    localStorage.setItem(key, JSON.stringify(presets));
+                    delete window.editingPresetId;
+
+                    loadAndDisplayPresets(); // 刷新列表
+                    clearPresetForm();
+                    showToast(`预设"${name}"已更新`, 'success');
+                    return;
+                }
+                delete window.editingPresetId;
+            }
+
+            // 创建新预设（全局共享，不记录角色ID）
+            const preset = {
+                id: Date.now().toString(),
+                name: name,
+                content: content,
+                createdAt: new Date().toISOString()
+            };
+
+            presets.push(preset);
+            localStorage.setItem(key, JSON.stringify(presets));
+
+            // 设置为当前预设
+            currentOfflinePreset = preset;
+
+            loadAndDisplayPresets(); // 刷新列表
+            clearPresetForm();
+            showToast(`预设"${name}"已保存并启用`, 'success');
+        }
+
+        // 加载线下消息
+        function loadOfflineMessages() {
+            if (!currentChatCharacter) return;
+
+            const key = `offlineMessages_${currentChatCharacter.id}`;
+            offlineMessages = JSON.parse(localStorage.getItem(key) || '[]');
+
+            // 加载全局预设
+            const presetKey = 'globalOfflinePresets';
+            const presets = JSON.parse(localStorage.getItem(presetKey) || '[]');
+            if (presets.length > 0) {
+                currentOfflinePreset = presets[presets.length - 1]; // 使用最新的预设
+            }
+
+            renderOfflineMessages();
+        }
+
+        // 渲染线下消息
+        function renderOfflineMessages() {
+            const container = document.getElementById('offline-chat-messages');
+            container.innerHTML = '';
+
+            offlineMessages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `offline-message ${message.sender}`;
+                messageDiv.dataset.messageId = message.id;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'offline-message-content';
+                // 🔥【修改】使用新的格式化函数处理文本
+                contentDiv.innerHTML = formatOfflineText(message.content);
+
+                messageDiv.appendChild(contentDiv);
+
+                // 🔥【修复】为所有消息（用户和AI）添加长按功能
+                addOfflineMessageLongPressListener(messageDiv, message.id);
+
+                container.appendChild(messageDiv);
+            });
+
+            // 滚动到底部
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 发送线下消息
+        async function sendOfflineMessage() {
+            const input = document.getElementById('offline-input');
+            const content = input.value.trim();
+
+            if (!content) return;
+            if (!currentChatCharacter) return;
+
+            // 🔥【修复】将线下模式消息直接存储到主聊天记录中，保证时间线连贯性
+            const characterId = currentChatCharacter.id;
+
+            if (!chatMessages[characterId]) {
+                chatMessages[characterId] = [];
+            }
+
+            const userChatMessage = {
+                id: Date.now(),
+                sender: 'sent', // 使用标准的sender格式
+                content: content,
+                timestamp: Date.now(),
+                type: 'text',
+                isOfflineMode: true // 标记为线下模式消息
+            };
+
+            chatMessages[characterId].push(userChatMessage);
+
+            // 保存到主聊天记录中
+            await saveChatMessages(characterId);
+
+            // 添加用户消息到线下模式显示
+            const userMessage = {
+                id: Date.now().toString(),
+                sender: 'user',
+                content: content,
+                timestamp: new Date().toISOString()
+            };
+
+            offlineMessages.push(userMessage);
+            input.value = '';
+            renderOfflineMessages();
+
+            // 保存线下消息
+            saveOfflineMessages();
+
+            // 🔥【新增】显示AI回复加载动画
+            showOfflineLoadingMessage();
+
+            // 生成AI回复
+            try {
+                const aiResponse = await generateOfflineResponse(content);
+
+                // 🔥【修复】将AI回复添加到主聊天记录中，保证时间线连贯性
+                const aiChatMessage = {
+                    id: Date.now() + 1,
+                    sender: 'received', // 使用标准的sender格式
+                    content: aiResponse,
+                    timestamp: Date.now() + 1,
+                    type: 'text',
+                    isOfflineMode: true // 标记为线下模式消息
+                };
+
+                chatMessages[characterId].push(aiChatMessage);
+                await saveChatMessages(characterId);
+
+                const aiMessage = {
+                    id: (Date.now() + 1).toString(),
+                    sender: 'ai',
+                    content: aiResponse,
+                    timestamp: new Date().toISOString()
+                };
+
+                offlineMessages.push(aiMessage);
+
+                // 🔥【新增】移除加载动画并渲染消息
+                hideOfflineLoadingMessage();
+                renderOfflineMessages();
+                saveOfflineMessages();
+
+            } catch (error) {
+                console.error('生成线下回复失败:', error);
+                // 🔥【新增】出错时也要移除加载动画
+                hideOfflineLoadingMessage();
+                showToast('生成回复失败', 'error');
+            }
+        }
+
+        // 线下模式专用的API调用函数
+        async function callOfflineChatAPI(prompt, character) {
+            if (!apiSettings.key) {
+                throw new Error('请先设置API密钥');
+            }
+
+            // 使用与线上模式相同的API设置
+            const isGemini = apiSettings.base.includes('generativelanguage.googleapis.com');
+
+            if (isGemini) {
+                // Gemini API 格式
+                const apiUrl = `${apiSettings.base}/models/${apiSettings.model}:generateContent?key=${apiSettings.key}`;
+
+                const requestBody = {
+                    contents: [
+                        {
+                            role: "user",
+                            parts: [
+                                {
+                                    text: `你是${character.name}，${character.prompt}。现在处于线下剧情模式，请以纯文本形式回复，专注于情景描写和剧情发展。\n\n${prompt}`
+                                }
+                            ]
+                        }
+                    ],
+                    generationConfig: {
+                        temperature: apiSettings.temperature || 0.8
+                        // 移除maxOutputTokens，Gemini不支持这个参数
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('🔥 线下模式Gemini API完整响应:', JSON.stringify(data, null, 2));
+
+                // 完全按照线上模式的逻辑处理
+                const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!content) {
+                    console.log('🔥 Gemini API 响应数据:', data);
+                    console.log('🔥 candidates[0]:', data.candidates?.[0]);
+                    if (data.candidates?.[0]?.content) {
+                        console.log('🔥 content:', data.candidates[0].content);
+                    }
+                    if (data.candidates?.[0]?.content?.parts) {
+                        console.log('🔥 parts:', data.candidates[0].content.parts);
+                    }
+                    return '抱歉，我现在无法回复。'; // 不要抛出错误，直接返回默认回复
+                }
+
+                return content;
+
+            } else {
+                // OpenAI 格式
+                let baseUrl = apiSettings.base;
+                let apiUrl;
+                if (baseUrl.endsWith('/v1')) {
+                    apiUrl = `${baseUrl}/chat/completions`;
+                } else {
+                    apiUrl = `${baseUrl}/v1/chat/completions`;
+                }
+
+                const requestBody = {
+                    model: apiSettings.model,
+                    messages: [
+                        {
+                            role: "system",
+                            content: `你是${character.name}，${character.prompt}。现在处于线下剧情模式，请以纯文本形式回复，专注于情景描写和剧情发展。`
+                        },
+                        {
+                            role: "user",
+                            content: prompt
+                        }
+                    ],
+                    temperature: apiSettings.temperature || 0.8,
+                    max_tokens: 1000
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiSettings.key}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('线下模式OpenAI API响应数据:', data);
+
+                const content = data.choices?.[0]?.message?.content;
+                if (!content) {
+                    console.error('OpenAI API返回了空内容或格式异常:', data);
+                    throw new Error('OpenAI API返回了空内容');
+                }
+
+                return content;
+            }
+        }
+
+        // 生成线下模式的AI回复
+        async function generateOfflineResponse(userInput) {
+            const character = currentChatCharacter;
+
+            console.log('🎭 ===== 线下模式AI回复生成开始 =====');
+            console.log('🎭 当前角色:', character.name);
+            console.log('🎭 用户输入:', userInput);
+
+            // 🔥【新增】使用与线上模式相同的记忆系统构建prompt
+            let prompt = `你现在处于线下剧情模式，需要以纯文本形式回复，不要使用JSON格式。
+
+【重要提示】用户消息中的括号()内容是环境描写、动作描写或心理活动，你可以观察到这些信息作为背景，但不能表现得像是"听到"了用户的内心想法。你只能对括号外的实际话语进行回应，可以通过观察用户的可见行为（如犹豫、停顿等）来推测情况，但不能直接回应用户的内心想法。
+
+`;
+
+            // 🔥【新增】获取聊天设置和记忆数据
+            const chatSettings = getCurrentChatSettings();
+            console.log('⚙️ 聊天设置:', chatSettings);
+
+            // 获取动态记忆数据
+            let dynamicMemoryContent = '';
+            const enableDynamicMemory = chatSettings.enableDynamicMemory !== false; // 默认为true
+            console.log('📱 动态记忆开关:', enableDynamicMemory);
+            if (enableDynamicMemory) {
+                try {
+                    const recentMoments = await getVisibleMomentsForCharacter(character.id, 5);
+                    console.log('📱 获取到的动态数量:', recentMoments.length);
+                    if (recentMoments.length > 0) {
+                        dynamicMemoryContent = '\n\n【最新动态记忆】以下是最近的动态内容，你可以在对话中自然地提及：\n';
+                        recentMoments.forEach((moment, index) => {
+                            const authorName = moment.authorId === 'user' ? '用户' : moment.nickname;
+                            dynamicMemoryContent += `${index + 1}. ${authorName}: ${moment.text}\n`;
+                            console.log(`📱 动态 ${index + 1}: ${authorName} - ${moment.text}`);
+                        });
+                    } else {
+                        console.log('📱 没有可用的动态记忆');
+                    }
+                } catch (error) {
+                    console.error('获取动态记忆失败:', error);
+                }
+            }
+
+            // 获取全局记忆数据
+            let globalMemoryContent = '';
+            try {
+                const memorySettings = getGlobalMemorySettings();
+                console.log('🧠 记忆设置:', memorySettings);
+
+                const currentContext = {
+                    type: 'private_chat',
+                    id: character.id
+                };
+                console.log('🧠 当前上下文:', currentContext);
+
+                // 🔥【修复】线下模式强制启用全局记忆读取，但不存储
+                console.log('🧠 线下模式：强制启用全局记忆读取...');
+                globalMemoryContent = await buildGlobalMemoryContext(character.id, currentContext, memorySettings.memoryDays);
+                console.log('🧠 获取到的全局记忆内容:', globalMemoryContent);
+                if (globalMemoryContent && globalMemoryContent.trim()) {
+                    console.log('🧠 线下模式已获取全局记忆上下文，总长度:', globalMemoryContent.length);
+                    console.log('🧠 线下模式全局记忆内容预览:', globalMemoryContent.substring(0, 200) + '...');
+                } else {
+                    console.log('🧠 全局记忆内容为空');
+                }
+            } catch (error) {
+                console.error('获取全局记忆失败:', error);
+            }
+
+            // 添加角色信息
+            const characterPrompt = character.prompt || character.bio || `你是${character.name}。`;
+            console.log('👤 角色人设:', characterPrompt);
+            console.log('👤 角色完整信息:', character);
+            prompt += `角色信息：\n${characterPrompt}\n\n`;
+
+            // 🔥【新增】添加世界书信息
+            let worldbookContent = '';
+            try {
+                const localBookIds = chatSettings.selectedWorldbooks || [];
+                const globalBooks = window.activeGlobalWorldbooks || [];
+                const allBookIds = [...new Set([...globalBooks, ...localBookIds])]; // 合并并去重
+
+                console.log('📚 世界书ID列表:', allBookIds);
+                console.log('📚 全局世界书:', globalBooks);
+                console.log('📚 局部世界书:', localBookIds);
+                console.log('📚 所有世界书数据:', worldbooks);
+
+                if (allBookIds.length > 0) {
+                    worldbookContent = '\n【世界书信息】以下是相关的世界设定：\n';
+                    allBookIds.forEach((bookId, index) => {
+                        const worldbook = worldbooks.find(w => w.id === bookId);
+                        if (worldbook) {
+                            console.log(`📚 找到世界书 ${index + 1}: ${worldbook.name || worldbook.title}`);
+                            worldbookContent += `${index + 1}. ${worldbook.name || worldbook.title}: ${worldbook.content}\n`;
+                        } else {
+                            console.log(`📚 未找到世界书ID: ${bookId}`);
+                        }
+                    });
+                    prompt += worldbookContent + '\n';
+                    console.log('📚 世界书内容已添加到prompt，长度:', worldbookContent.length);
+                } else {
+                    console.log('📚 没有可用的世界书');
+                }
+            } catch (error) {
+                console.error('获取世界书失败:', error);
+            }
+
+            // 添加记忆内容
+            if (globalMemoryContent && globalMemoryContent.trim()) {
+                prompt += '\n\n【角色记忆】以下是相关的记忆内容：\n' + globalMemoryContent + '\n';
+            }
+            if (dynamicMemoryContent) {
+                prompt += dynamicMemoryContent + '\n';
+            }
+
+            // 添加用户自定义预设（高权重）
+            if (currentOfflinePreset) {
+                prompt += `【重要】用户自定义剧情预设（请严格遵循）：\n${currentOfflinePreset.content}\n\n`;
+            } else {
+                prompt += `默认剧情模式要求：\n- 以第三人称视角进行情景描写\n- 包含环境描写、动作描写、心理描写\n- 每次回复150-300字\n- 营造沉浸式的剧情体验\n- **重要**：用户消息中的括号()内容是环境描写、动作描写或心理活动，你可以观察到这些信息作为背景，但不能表现得像是"听到"了用户的内心想法。你只能对括号外的实际话语进行回应，可以通过观察用户的可见行为（如犹豫、停顿等）来推测情况，但不能直接回应用户的内心想法\n\n`;
+            }
+
+            // 🔥【修复】读取用户设置的历史消息数，直接从主聊天记录获取完整时间线
+            const historyCount = chatSettings.historyCount || 5;
+
+            // 获取主聊天记录（包含线上和线下模式的所有消息，按时间顺序）
+            const allMessages = chatMessages[character.id] || [];
+
+            // 根据用户设置的历史消息数获取最近的消息
+            const recentChatMessages = allMessages.slice(-historyCount);
+
+            // 统计消息类型
+            const onlineCount = recentChatMessages.filter(msg => !msg.isOfflineMode).length;
+            const offlineCount = recentChatMessages.filter(msg => msg.isOfflineMode).length;
+
+            console.log('💬 线下模式完整前文记忆:', recentChatMessages);
+            console.log(`📊 历史消息统计: 线上${onlineCount}条, 线下${offlineCount}条, 总计使用${recentChatMessages.length}条 (用户设置: ${historyCount}条)`);
+
+            if (recentChatMessages.length > 0) {
+                prompt += `最近的对话历史：\n`;
+                recentChatMessages.forEach(msg => {
+                    // 根据sender字段确定角色
+                    const role = (msg.sender === 'sent' || msg.sender === 'user') ? '用户' : character.name;
+                    // 标记消息来源（线上/线下）
+                    const modeTag = msg.isOfflineMode ? '[线下]' : '[线上]';
+                    prompt += `${role}${modeTag}：${msg.content}\n`;
+                });
+                prompt += `\n`;
+            }
+
+            prompt += `用户刚才说：${userInput}\n\n请直接以纯文本形式回复，不要使用JSON数组格式，注重情景描写和氛围营造。`;
+
+            console.log('📝 ===== 完整的Prompt内容 =====');
+            console.log(prompt);
+            console.log('📝 ===== Prompt结束 =====');
+
+            try {
+                // 使用专门的线下模式API调用
+                const response = await callOfflineChatAPI(prompt, character);
+
+                // 直接返回响应内容，不进行JSON解析
+                return response || '抱歉，我现在无法回复。';
+            } catch (error) {
+                console.error('线下模式API调用失败:', error);
+                throw error;
+            }
+        }
+
+        // 保存线下消息
+        function saveOfflineMessages() {
+            if (!currentChatCharacter) return;
+
+            const key = `offlineMessages_${currentChatCharacter.id}`;
+            localStorage.setItem(key, JSON.stringify(offlineMessages));
+        }
+
+        // 重新生成线下模式的最后一条AI回复
+        async function regenerateLastOfflineMessage() {
+            if (!currentChatCharacter) return;
+            if (offlineMessages.length === 0) return;
+
+            // 找到最后一条AI消息
+            let lastAiMessageIndex = -1;
+            for (let i = offlineMessages.length - 1; i >= 0; i--) {
+                if (offlineMessages[i].sender === 'ai') {
+                    lastAiMessageIndex = i;
+                    break;
+                }
+            }
+
+            if (lastAiMessageIndex === -1) {
+                showToast('没有找到可重新生成的AI消息', 'warning');
+                return;
+            }
+
+            // 找到对应的用户消息
+            let userMessageIndex = -1;
+            for (let i = lastAiMessageIndex - 1; i >= 0; i--) {
+                if (offlineMessages[i].sender === 'user') {
+                    userMessageIndex = i;
+                    break;
+                }
+            }
+
+            if (userMessageIndex === -1) {
+                showToast('没有找到对应的用户消息', 'warning');
+                return;
+            }
+
+            // 删除最后一条AI消息
+            offlineMessages.splice(lastAiMessageIndex, 1);
+            renderOfflineMessages();
+            saveOfflineMessages();
+
+            // 🔥【新增】显示加载动画
+            showOfflineLoadingMessage();
+
+            // 重新生成AI回复
+            try {
+                const userMessage = offlineMessages[userMessageIndex];
+                const aiResponse = await generateOfflineResponse(userMessage.content);
+
+                const aiMessage = {
+                    id: Date.now().toString(),
+                    sender: 'ai',
+                    content: aiResponse,
+                    timestamp: new Date().toISOString()
+                };
+
+                offlineMessages.push(aiMessage);
+
+                // 🔥【新增】移除加载动画并渲染消息
+                hideOfflineLoadingMessage();
+                renderOfflineMessages();
+                saveOfflineMessages();
+
+                showToast('AI回复已重新生成', 'success');
+
+            } catch (error) {
+                console.error('重新生成AI回复失败:', error);
+                // 🔥【新增】出错时也要移除加载动画
+                hideOfflineLoadingMessage();
+                showToast('重新生成失败', 'error');
+            }
+        }
+
+        // 线下模式消息长按监听器
+        function addOfflineMessageLongPressListener(messageContainer, messageId) {
+            let pressTimer = null;
+            let isLongPress = false;
+
+            // 🔥【优化】更准确的移动设备检测
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                             'ontouchstart' in window ||
+                             navigator.maxTouchPoints > 0 ||
+                             window.innerWidth <= 768;
+
+            const startLongPress = (e) => {
+                isLongPress = false;
+                // 🔥【优化】移动端和桌面端使用不同的延迟时间
+                const delay = isMobile ? 600 : 1000; // 移动端600ms，桌面端1000ms
+                pressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    // 🔥【优化】添加触觉反馈（如果支持）
+                    if (navigator.vibrate && isMobile) {
+                        navigator.vibrate(50);
+                    }
+                    showOfflineMessageMenu(messageId, e);
+                    e.preventDefault();
+                }, delay);
+            };
+
+            const cancelLongPress = () => {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+                setTimeout(() => {
+                    isLongPress = false;
+                }, 50);
+            };
+
+            const handleClick = (e) => {
+                if (isLongPress) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            };
+
+            // 触摸事件
+            messageContainer.addEventListener('touchstart', startLongPress, { passive: false });
+            messageContainer.addEventListener('touchend', cancelLongPress);
+            messageContainer.addEventListener('touchmove', cancelLongPress);
+
+            // 鼠标事件（用于桌面端）
+            messageContainer.addEventListener('mousedown', startLongPress);
+            messageContainer.addEventListener('mouseup', cancelLongPress);
+            messageContainer.addEventListener('mouseleave', cancelLongPress);
+
+            // 右键菜单（桌面端）
+            messageContainer.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showOfflineMessageMenu(messageId, e);
+            });
+
+            // 点击事件
+            messageContainer.addEventListener('click', handleClick, true);
+        }
+
+        // 显示线下模式消息菜单
+        function showOfflineMessageMenu(messageId, event) {
+            const message = offlineMessages.find(m => m.id === messageId);
+            if (!message) return;
+
+            // 创建菜单
+            const menu = document.createElement('div');
+            menu.className = 'offline-message-menu';
+
+            // 根据消息类型显示不同的菜单项
+            if (message.sender === 'user') {
+                menu.innerHTML = `
+                    <div class="menu-item" onclick="editOfflineMessage('${messageId}')">
+                        <i class="fas fa-edit"></i>
+                        <span>修改消息</span>
+                    </div>
+                    <div class="menu-item delete" onclick="deleteOfflineMessage('${messageId}')">
+                        <i class="fas fa-trash"></i>
+                        <span>删除消息</span>
+                    </div>
+                `;
+            } else {
+                // 🔥【修改】AI消息可以编辑、删除和重新生成
+                menu.innerHTML = `
+                    <div class="menu-item" onclick="editOfflineMessage('${messageId}')">
+                        <i class="fas fa-edit"></i>
+                        <span>修改消息</span>
+                    </div>
+                    <div class="menu-item delete" onclick="deleteOfflineMessage('${messageId}')">
+                        <i class="fas fa-trash"></i>
+                        <span>删除消息</span>
+                    </div>
+                    <div class="menu-item" onclick="regenerateOfflineMessage('${messageId}')">
+                        <i class="fas fa-redo"></i>
+                        <span>重新生成</span>
+                    </div>
+                `;
+            }
+
+            // 移除现有菜单
+            const existingMenu = document.querySelector('.offline-message-menu');
+            if (existingMenu) {
+                existingMenu.remove();
+            }
+
+            // 🔥【修复】添加到线下模式容器内，而不是document.body
+            const offlineContainer = document.getElementById('offline-mode-overlay');
+            if (offlineContainer) {
+                offlineContainer.appendChild(menu);
+            } else {
+                document.body.appendChild(menu);
+            }
+
+            // 🔥【修复】定位菜单 - 相对于线下模式容器定位
+            const rect = event.target.getBoundingClientRect();
+            const containerRect = offlineContainer ? offlineContainer.getBoundingClientRect() : { left: 0, top: 0 };
+
+            // 计算相对于容器的位置
+            const relativeLeft = rect.left - containerRect.left;
+            const relativeTop = rect.top - containerRect.top;
+
+            // 设置菜单样式
+            menu.style.position = 'absolute';
+            menu.style.zIndex = '10001';
+
+            // 先添加到DOM以获取菜单尺寸
+            setTimeout(() => {
+                const menuWidth = menu.offsetWidth || 140;
+                const menuHeight = menu.offsetHeight || 100;
+                const containerWidth = offlineContainer?.offsetWidth || 400;
+                const containerHeight = offlineContainer?.offsetHeight || 600;
+
+                // 计算最佳位置，确保菜单在容器内
+                let left = Math.min(relativeLeft, containerWidth - menuWidth - 10);
+                let top = relativeTop - menuHeight - 5;
+
+                // 如果上方空间不够，显示在下方
+                if (top < 10) {
+                    top = relativeTop + 30;
+                }
+
+                // 确保不超出容器边界
+                left = Math.max(10, left);
+                top = Math.max(10, Math.min(top, containerHeight - menuHeight - 10));
+
+                menu.style.left = left + 'px';
+                menu.style.top = top + 'px';
+            }, 0);
+
+            // 点击其他地方关闭菜单
+            const closeMenu = (e) => {
+                if (!menu.contains(e.target)) {
+                    menu.remove();
+                    document.removeEventListener('click', closeMenu);
+                }
+            };
+            setTimeout(() => {
+                document.addEventListener('click', closeMenu);
+            }, 100);
+        }
+
+        // 编辑线下模式消息
+        function editOfflineMessage(messageId) {
+            const message = offlineMessages.find(m => m.id === messageId);
+            if (!message) return;
+
+            // 创建编辑模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>${message.sender === 'user' ? '编辑用户消息' : '编辑AI回复'}</h3>
+                        <button class="modal-close" onclick="this.closest('.modal').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <textarea id="edit-message-content" placeholder="请输入消息内容..." rows="4" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; resize: vertical;">${message.content}</textarea>
+                        ${message.sender === 'ai' ? '<p style="color: #666; font-size: 12px; margin-top: 8px;">💡 提示：支持 &lt;span color="颜色"&gt;文本&lt;/span&gt; 和 *斜体* 格式</p>' : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">取消</button>
+                        <button class="btn btn-primary" onclick="saveEditedOfflineMessage('${messageId}')">保存</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // 聚焦到文本框并选中所有文本
+            const textarea = modal.querySelector('#edit-message-content');
+            textarea.focus();
+            textarea.select();
+
+            // 移除菜单
+            const menu = document.querySelector('.offline-message-menu');
+            if (menu) menu.remove();
+        }
+
+        // 保存编辑的线下消息
+        async function saveEditedOfflineMessage(messageId) {
+            const textarea = document.getElementById('edit-message-content');
+            const newContent = textarea.value.trim();
+
+            if (!newContent) {
+                showToast('消息内容不能为空', 'warning');
+                return;
+            }
+
+            const message = offlineMessages.find(m => m.id === messageId);
+            if (message) {
+                console.log('✏️ 编辑线下模式消息:', messageId, '新内容:', newContent);
+
+                // 🔥【修复】同时更新主聊天记录中对应的记忆数据
+                const characterId = currentChatCharacter.id;
+                if (chatMessages[characterId]) {
+                    const messageTimestamp = new Date(message.timestamp).getTime();
+
+                    // 🔥【修改】查找并更新对应的消息（支持用户和AI消息）
+                    chatMessages[characterId].forEach(msg => {
+                        if (msg.isOfflineMode &&
+                            ((msg.sender === 'sent' && message.sender === 'user') ||
+                             (msg.sender === 'received' && message.sender === 'ai')) &&
+                            Math.abs(msg.timestamp - messageTimestamp) < 5000) {
+                            console.log('✏️ 更新记忆数据:', msg.content, '->', newContent);
+                            msg.content = newContent;
+                        }
+                    });
+
+                    // 保存更新后的聊天记录
+                    await saveChatMessages(characterId);
+                }
+
+                // 更新线下模式显示的消息
+                message.content = newContent;
+                saveOfflineMessages();
+                renderOfflineMessages();
+                showToast('消息和记忆数据已更新', 'success');
+            }
+
+            // 关闭模态框
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
+        }
+
+        // 重新生成AI回复
+        async function regenerateOfflineMessage(messageId) {
+            const messageIndex = offlineMessages.findIndex(m => m.id === messageId);
+            if (messageIndex === -1) return;
+
+            const aiMessage = offlineMessages[messageIndex];
+            if (aiMessage.sender !== 'ai') return;
+
+            // 找到对应的用户消息
+            let userMessageIndex = messageIndex - 1;
+            while (userMessageIndex >= 0 && offlineMessages[userMessageIndex].sender !== 'user') {
+                userMessageIndex--;
+            }
+
+            if (userMessageIndex < 0) {
+                showToast('找不到对应的用户消息', 'error');
+                return;
+            }
+
+            if (confirm('确定要重新生成这条AI回复吗？')) {
+                console.log('🔄 重新生成AI回复:', messageId);
+
+                // 删除当前AI回复
+                await deleteOfflineMessage(messageId);
+
+                // 🔥【新增】显示加载动画
+                showOfflineLoadingMessage();
+
+                // 重新生成AI回复
+                try {
+                    const userMessage = offlineMessages[userMessageIndex];
+                    const aiResponse = await generateOfflineResponse(userMessage.content);
+
+                    // 🔥【修复】将AI回复添加到主聊天记录中，保证时间线连贯性
+                    const aiChatMessage = {
+                        id: Date.now() + 1,
+                        sender: 'received', // 使用标准的sender格式
+                        content: aiResponse,
+                        timestamp: Date.now() + 1,
+                        type: 'text',
+                        isOfflineMode: true // 标记为线下模式消息
+                    };
+
+                    const characterId = currentChatCharacter.id;
+                    if (!chatMessages[characterId]) {
+                        chatMessages[characterId] = [];
+                    }
+                    chatMessages[characterId].push(aiChatMessage);
+                    await saveChatMessages(characterId);
+
+                    const newAiMessage = {
+                        id: Date.now().toString(),
+                        sender: 'ai',
+                        content: aiResponse,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    offlineMessages.push(newAiMessage);
+
+                    // 🔥【新增】移除加载动画并渲染消息
+                    hideOfflineLoadingMessage();
+                    renderOfflineMessages();
+                    saveOfflineMessages();
+
+                    showToast('AI回复已重新生成', 'success');
+
+                } catch (error) {
+                    console.error('重新生成AI回复失败:', error);
+                    // 🔥【新增】出错时也要移除加载动画
+                    hideOfflineLoadingMessage();
+                    showToast('重新生成失败', 'error');
+                }
+            }
+        }
+
+        // 删除线下模式消息
+        async function deleteOfflineMessage(messageId) {
+            const messageIndex = offlineMessages.findIndex(m => m.id === messageId);
+            if (messageIndex === -1) return;
+
+            const message = offlineMessages[messageIndex];
+
+            // 确认删除
+            const confirmMessage = message.sender === 'user'
+                ? '确定要删除这条消息吗？这将同时删除存储的记忆数据。'
+                : '确定要删除这条AI回复吗？这将同时删除存储的记忆数据。';
+
+            if (confirm(confirmMessage)) {
+                console.log('🗑️ 开始删除线下模式消息:', messageId, '类型:', message.sender);
+
+                // 🔥【修复】同时删除主聊天记录中对应的记忆数据
+                const characterId = currentChatCharacter.id;
+                if (chatMessages[characterId]) {
+                    const offlineMessage = offlineMessages[messageIndex];
+                    const messageTimestamp = new Date(offlineMessage.timestamp).getTime();
+
+                    // 删除对应的记忆数据
+                    const messagesToDelete = [];
+                    chatMessages[characterId].forEach((msg, index) => {
+                        if (msg.isOfflineMode && Math.abs(msg.timestamp - messageTimestamp) < 5000) {
+                            messagesToDelete.push(index);
+                        }
+                    });
+
+                    // 从后往前删除，避免索引变化
+                    messagesToDelete.reverse().forEach(index => {
+                        console.log('🗑️ 删除记忆数据:', chatMessages[characterId][index]);
+                        chatMessages[characterId].splice(index, 1);
+                    });
+
+                    // 保存更新后的聊天记录
+                    await saveChatMessages(characterId);
+                }
+
+                // 🔥【修复】删除线下模式显示的消息
+                if (message.sender === 'user') {
+                    // 删除用户消息
+                    offlineMessages.splice(messageIndex, 1);
+
+                    // 如果下一条是AI回复，也删除
+                    if (messageIndex < offlineMessages.length &&
+                        offlineMessages[messageIndex].sender === 'ai') {
+
+                        // 同时删除AI回复的记忆数据
+                        const aiMessage = offlineMessages[messageIndex];
+                        const aiTimestamp = new Date(aiMessage.timestamp).getTime();
+                        const aiMessagesToDelete = [];
+                        chatMessages[characterId].forEach((msg, index) => {
+                            if (msg.isOfflineMode && msg.sender === 'received' &&
+                                Math.abs(msg.timestamp - aiTimestamp) < 5000) {
+                                aiMessagesToDelete.push(index);
+                            }
+                        });
+
+                        aiMessagesToDelete.reverse().forEach(index => {
+                            console.log('🗑️ 删除AI回复记忆数据:', chatMessages[characterId][index]);
+                            chatMessages[characterId].splice(index, 1);
+                        });
+
+                        offlineMessages.splice(messageIndex, 1);
+                        await saveChatMessages(characterId);
+                    }
+                } else {
+                    // 删除AI消息
+                    offlineMessages.splice(messageIndex, 1);
+                }
+
+                saveOfflineMessages();
+                renderOfflineMessages();
+                showToast('消息和记忆数据已删除', 'success');
+            }
+
+            // 移除菜单
+            const menu = document.querySelector('.offline-message-menu');
+            if (menu) menu.remove();
+        }
+
+        // 🔥【新增】显示线下模式AI回复加载动画
+        function showOfflineLoadingMessage() {
+            const container = document.getElementById('offline-chat-messages');
+
+            // 移除已存在的加载动画（防止重复）
+            const existingLoading = container.querySelector('.offline-loading-message');
+            if (existingLoading) {
+                existingLoading.remove();
+            }
+
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'offline-loading-message';
+            loadingDiv.id = 'offline-loading-indicator';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'offline-loading-content';
+
+            const dotsDiv = document.createElement('div');
+            dotsDiv.className = 'offline-loading-dots';
+
+            // 创建三个加载点
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'offline-loading-dot';
+                dotsDiv.appendChild(dot);
+            }
+
+            contentDiv.appendChild(dotsDiv);
+            loadingDiv.appendChild(contentDiv);
+            container.appendChild(loadingDiv);
+
+            // 滚动到底部
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 🔥【新增】隐藏线下模式AI回复加载动画
+        function hideOfflineLoadingMessage() {
+            const loadingIndicator = document.getElementById('offline-loading-indicator');
+            if (loadingIndicator) {
+                loadingIndicator.remove();
+            }
+        }
+
+        // 🔥【新增】线下模式文本格式化函数
+        function formatOfflineText(text) {
+            if (!text) return '';
+
+            // 转义HTML特殊字符，但保留我们要处理的格式
+            let formattedText = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+            // 处理span语法：<span color="颜色">文本</span>
+            formattedText = formattedText.replace(
+                /&lt;span\s+color=&quot;([^&quot;]+)&quot;&gt;([^&lt;]+)&lt;\/span&gt;/gi,
+                '<span style="color: $1;">$2</span>'
+            );
+
+            // 处理**号包裹的加粗：**文本**
+            formattedText = formattedText.replace(
+                /\*\*([^*]+)\*\*/g,
+                '<strong>$1</strong>'
+            );
+
+            // 处理*号包裹的斜体：*文本*
+            formattedText = formattedText.replace(
+                /\*([^*]+)\*/g,
+                '<em>$1</em>'
+            );
+
+            // 处理换行
+            formattedText = formattedText.replace(/\n/g, '<br>');
+
+            return formattedText;
+        }
+
+        // 监听输入框回车事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const offlineInput = document.getElementById('offline-input');
+            if (offlineInput) {
+                offlineInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendOfflineMessage();
+                    }
+                });
+            }
+        });
+
+        // 🔥【新增】线下模式聊天记录管理功能
+
+        // 保存聊天记录到历史记录
+        async function saveOfflineHistoryRecord(summary, messages) {
+            if (!currentChatCharacter || !messages || messages.length === 0) return;
+
+            try {
+                const historyRecord = {
+                    id: `offline_history_${currentChatCharacter.id}_${Date.now()}`,
+                    characterId: currentChatCharacter.id,
+                    timestamp: Date.now(),
+                    summary: summary,
+                    messages: messages,
+                    messageCount: messages.length
+                };
+
+                // 保存到 Dexie 数据库
+                await db.offlineHistoryRecords.add(historyRecord);
+
+                // 🔥【新增】清理超过20条的旧记录
+                const allRecords = await db.offlineHistoryRecords
+                    .where('characterId')
+                    .equals(currentChatCharacter.id)
+                    .reverse()
+                    .sortBy('timestamp');
+
+                if (allRecords.length > 20) {
+                    const recordsToDelete = allRecords.slice(20);
+                    for (const record of recordsToDelete) {
+                        await db.offlineHistoryRecords.delete(record.id);
+                    }
+                }
+
+                console.log('📚 线下模式聊天记录已保存到数据库:', historyRecord);
+            } catch (error) {
+                console.error('保存线下模式聊天记录失败:', error);
+            }
+        }
+
+        // 显示线下模式聊天记录模态框
+        function showOfflineHistoryModal() {
+            if (!currentChatCharacter) return;
+
+            document.getElementById('offline-history-modal').style.display = 'flex';
+            loadOfflineHistoryList();
+        }
+
+        // 关闭线下模式聊天记录模态框
+        function closeOfflineHistoryModal() {
+            document.getElementById('offline-history-modal').style.display = 'none';
+        }
+
+        // 加载并显示聊天记录列表
+        async function loadOfflineHistoryList() {
+            if (!currentChatCharacter) return;
+
+            try {
+                const historyRecords = await db.offlineHistoryRecords
+                    .where('characterId')
+                    .equals(currentChatCharacter.id)
+                    .reverse()
+                    .sortBy('timestamp');
+
+                const container = document.getElementById('offline-history-list');
+                container.innerHTML = '';
+
+                if (historyRecords.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-history">
+                            <i class="fas fa-history" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
+                            <p>还没有线下模式聊天记录</p>
+                            <p style="font-size: 12px; color: #999;">完成线下剧情并生成总结后，聊天记录会保存在这里</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                historyRecords.forEach((record, index) => {
+                    const recordElement = document.createElement('div');
+                    recordElement.className = 'history-record-item';
+                    const date = new Date(record.timestamp).toLocaleDateString();
+                    recordElement.innerHTML = `
+                        <div class="history-record-header">
+                            <div class="history-record-info">
+                                <div class="history-record-title">剧情记录 #${historyRecords.length - index}</div>
+                                <div class="history-record-meta">${date} • ${record.messageCount}条消息</div>
+                            </div>
+                            <div class="history-record-actions">
+                                <button class="history-action-btn" onclick="viewOfflineHistory('${record.id}')" title="查看详情">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="history-action-btn delete" onclick="deleteOfflineHistory('${record.id}')" title="删除记录">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="history-record-summary">${record.summary.substring(0, 100)}${record.summary.length > 100 ? '...' : ''}</div>
+                    `;
+                    container.appendChild(recordElement);
+                });
+            } catch (error) {
+                console.error('加载线下模式聊天记录失败:', error);
+            }
+        }
+
+        // 查看具体的聊天记录
+        async function viewOfflineHistory(recordId) {
+            if (!currentChatCharacter) return;
+
+            try {
+                const record = await db.offlineHistoryRecords.get(recordId);
+
+                if (!record) {
+                    showToast('找不到该聊天记录', 'error');
+                    return;
+                }
+
+            // 创建查看详情的模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px; max-height: 80vh;">
+                    <div class="modal-header">
+                        <h3>剧情记录详情</h3>
+                        <button class="modal-close" onclick="this.closest('.modal').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body" style="overflow-y: auto;">
+                        <div class="history-detail-info">
+                            <p><strong>日期：</strong>${record.date}</p>
+                            <p><strong>消息数：</strong>${record.messageCount}条</p>
+                            <p><strong>剧情总结：</strong></p>
+                            <div class="history-summary-text">${record.summary}</div>
+                        </div>
+                        <hr style="margin: 20px 0;">
+                        <div class="history-messages">
+                            <h4>对话记录：</h4>
+                            <div class="history-messages-container">
+                                ${record.messages.map(msg => `
+                                    <div class="history-message ${msg.sender}">
+                                        <div class="message-sender">${msg.sender === 'user' ? '用户' : currentChatCharacter.name}</div>
+                                        <div class="message-content">${msg.content}</div>
+                                        <div class="message-time">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">关闭</button>
+                    </div>
+                </div>
+            `;
+
+                document.body.appendChild(modal);
+            } catch (error) {
+                console.error('查看线下模式聊天记录失败:', error);
+                showToast('查看聊天记录失败', 'error');
+            }
+        }
+
+        // 删除单个聊天记录
+        async function deleteOfflineHistory(recordId) {
+            if (!confirm('确定要删除这条聊天记录吗？此操作不可撤销。')) return;
+            if (!currentChatCharacter) return;
+
+            try {
+                await db.offlineHistoryRecords.delete(recordId);
+                loadOfflineHistoryList(); // 重新加载列表
+                showToast('聊天记录已删除', 'success');
+            } catch (error) {
+                console.error('删除线下模式聊天记录失败:', error);
+                showToast('删除聊天记录失败', 'error');
+            }
+        }
+
+        // 清空所有聊天记录
+        async function clearAllOfflineHistory() {
+            if (!confirm('确定要清空所有线下模式聊天记录吗？此操作不可撤销。')) return;
+            if (!currentChatCharacter) return;
+
+            try {
+                await db.offlineHistoryRecords
+                    .where('characterId')
+                    .equals(currentChatCharacter.id)
+                    .delete();
+                loadOfflineHistoryList(); // 重新加载列表
+                showToast('所有聊天记录已清空', 'success');
+            } catch (error) {
+                console.error('清空线下模式聊天记录失败:', error);
+                showToast('清空聊天记录失败', 'error');
             }
         }
 
