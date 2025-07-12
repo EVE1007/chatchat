@@ -11744,11 +11744,11 @@ textarea.call-text-input {
         }
 
         .offline-message.user {
-            text-align: left;
+            text-align: right; /* 🔥【修复】用户消息气泡右对齐 */
         }
 
         .offline-message.ai {
-            text-align: left; /* 🔥【修复】AI消息也左对齐 */
+            text-align: left; /* AI消息气泡左对齐 */
         }
 
         .offline-message-content {
@@ -11765,6 +11765,7 @@ textarea.call-text-input {
             background: var(--theme-button-bg);
             color: white;
             border-bottom-right-radius: 6px;
+            text-align: left; /* 🔥【修复】气泡内文字左对齐 */
         }
 
         .offline-message.ai .offline-message-content {
@@ -11772,6 +11773,7 @@ textarea.call-text-input {
             color: var(--text-primary);
             border-bottom-left-radius: 6px;
             border: 1px solid var(--color-gray-border);
+            text-align: left; /* 🔥【确保】气泡内文字左对齐 */
         }
 
         /* 线下预设模态框样式 */
