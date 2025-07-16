@@ -3110,38 +3110,111 @@
             100% { opacity: 0; transform: translateY(10px); }
         }
         
-        /* 🔥【重新设计】手机端消息操作菜单样式 - 毛玻璃中央显示风格 */
-        .mobile-message-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 10000;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+        /* 🔥【重新设计】消息气泡下方操作按钮样式 - 参考拉黑指示器实现 */
+        .message-action-buttons {
+            position: absolute;
+            display: flex;
+            gap: 7px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .message-action-buttons.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .message-action-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 11px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+            transition: all 0.15s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0 0.1px;
         }
-        
-        .mobile-message-menu.show {
-            opacity: 1;
-            visibility: visible;
+
+        .message-action-btn:hover {
+            background: rgba(107, 114, 128, 0.1);
+            color: #4b5563;
+            transform: scale(1.05);
         }
-        
-        .mobile-menu-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: transparent;
+
+        .message-action-btn:active {
+            transform: scale(0.95);
+            background: rgba(107, 114, 128, 0.2);
+        }
+
+        .message-action-btn.reply-btn:hover::before {
+            background: #4b5563;
+        }
+
+        .message-action-btn.copy-btn:hover::before {
+            background: #4b5563;
+        }
+
+        /* 修改后的图标样式 */
+        .message-action-btn.reply-btn::before {
+            content: '"';
+            font-weight: 600;
+            font-size: 11px;
+            background: #6b7280;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .message-action-btn.copy-btn::before {
+            content: '';
+            width: 14px;
+            height: 16px;
+            background: #6b7280;
+            clip-path: polygon(0 0, 85% 0, 100% 15%, 100% 100%, 0 100%);
+            display: block;
+        }
+        .message-action-btn.edit-btn::before {
+            content: '✎';
+            font-weight: 400;
+            transform: scaleX(-1);
+            display: inline-block;
+            color: #6b7280 !important;
+        }
+        .message-action-btn.recall-btn::before {
+            content: '↩';
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        /* 🔥【新增】为显示按钮的消息容器添加下边距，让下面的消息让出空间 */
+        .message-container.has-action-buttons {
+            margin-bottom: 32px;
+        }
+
+        /* 🔥【新增】确保特殊消息类型的容器也能正确定位按钮 */
+        .transfer-card,
+        .location-card,
+        .voice-message-container,
+        .photo-card,
+        .ai-image-container,
+        .dreamy-photo-container,
+        .message-image,
+        .message-emoji {
+            position: relative;
         }
         
         .mobile-menu-content {
@@ -3294,7 +3367,17 @@
             font-weight: 500;
             line-height: 1.2;
         }
-        
+
+        /* 深色主题下的消息操作按钮 */
+        .dark-theme .message-action-btn {
+            color: #aaa;
+        }
+
+        .dark-theme .message-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
         /* 深色主题适配 */
         .dark-theme .mobile-menu-content {
             background: rgba(45, 45, 45, 0.95);
@@ -13250,65 +13333,197 @@ textarea.call-text-input {
             position: relative; /* 为状态定位提供参考 */
         }
 
-        /* 🔥【简洁】拉黑状态覆盖层样式 - 底部四分之一屏幕 */
-        .blocked-status-overlay {
+        /* 🔥【美化】拉黑状态提示样式 - 现代社交软件风格 */
+        .blocked-input-notice {
             position: absolute;
             left: 0;
             right: 0;
-            bottom: 0;
-            height: 25%; /* 占据底部四分之一屏幕 */
-            background: rgba(240, 242, 245, 0.85); /* 略灰一点的半透明背景 */
-            backdrop-filter: blur(8px); /* 毛玻璃效果 */
-            -webkit-backdrop-filter: blur(8px); /* Safari支持 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            border-top: 1px solid rgba(222, 226, 230, 0.6);
-        }
-
-        .blocked-status-content {
+            bottom: 100%; /* 位于输入框上方 */
+            background: rgba(248, 249, 250, 0.85); /* 淡淡的雾霾灰，接近白色 */
+            backdrop-filter: blur(8px); /* 减少模糊度，能看到下面的内容 */
+            -webkit-backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(200, 200, 200, 0.3);
+            border-bottom: 1px solid rgba(200, 200, 200, 0.2);
+            padding: 12px 20px;
             text-align: center;
-            padding: 20px;
+            z-index: 101;
+            font-size: 13px;
+            color: #666;
+            display: none;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .blocked-status-text {
-            font-size: 16px;
-            font-weight: normal;
-            color: #333; /* 黑色字体 */
-            margin-bottom: 15px;
-            line-height: 1.4;
+        .blocked-input-notice.show {
+            display: block;
         }
 
-        .blocked-status-button {
-            background: #007bff;
+        .blocked-input-notice .notice-text {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #6B4423;
+        }
+
+        .blocked-input-notice .notice-button {
+            background: linear-gradient(135deg, #1890ff, #40a9ff);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 6px 16px;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+            box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
         }
 
-        .blocked-status-button:hover {
-            background: #0056b3;
+        .blocked-input-notice .notice-button:hover {
+            background: linear-gradient(135deg, #096dd9, #1890ff);
             transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+            box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3);
         }
 
-        /* 解除拉黑按钮的特殊样式 */
-        .blocked-status-button.unblock-style {
-            background: #28a745;
-            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+        .blocked-input-notice .notice-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
         }
 
-        .blocked-status-button.unblock-style:hover {
-            background: #218838;
-            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        /* 🔥【新增】消息拉黑状态指示器样式 */
+        .message-blocked-indicator {
+            position: absolute;
+            bottom: 4px;
+            width: 16px;
+            height: 16px;
+            background: #dc3545;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 10;
         }
+
+        /* AI消息的拉黑指示器位置由JavaScript动态设置 */
+
+        /* 用户消息的拉黑指示器位置由JavaScript动态设置 */
+
+        /* 🔥【新增】好友添加成功系统提示样式 - 透明背景像戳一戳 */
+        .friend-added-system-message {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            padding: 6px 12px;
+            margin: 4px auto;
+            background: transparent; /* 透明背景 */
+            border-radius: 12px;
+            max-width: 280px;
+            line-height: 1.4;
+        }
+
+        /* 🔥【新增】AI主动发送的好友申请卡片样式 */
+        .friend-request-container {
+            display: flex;
+            justify-content: center;
+            margin: 8px 0;
+        }
+
+        .friend-request-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            max-width: 280px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .friend-request-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .friend-request-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .friend-request-message {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .friend-request-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .friend-request-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .friend-request-btn.accept {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .friend-request-btn.accept:hover {
+            background: #45a049;
+        }
+
+        .friend-request-btn.reject {
+            background: #f44336;
+            color: white;
+        }
+
+        .friend-request-btn.reject:hover {
+            background: #da190b;
+        }
+
+        /* 🔥【新增】联系人状态指示器样式 */
+        .contact-status-indicator {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+        }
+
+        .contact-status-indicator.muted {
+            background: #ff9800; /* 橙色表示屏蔽 */
+        }
+
+        .contact-status-indicator.blocked {
+            background: #f44336; /* 红色表示已拉黑 */
+        }
+
+        .contact-status-indicator.blocked-by {
+            background: #ff5722; /* 深橙色表示被拉黑 */
+        }
+
+        /* 确保联系人项有相对定位 */
+        .contact-item {
+            position: relative;
+        }
+
+        /* 🔥【删除】消息拉黑状态提示文字样式 - 现在使用系统消息 */
 
         /* 🔥【新增】线下模式聊天记录样式 */
         .offline-history-list {

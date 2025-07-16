@@ -9,6 +9,186 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
+    <!-- 🔥【新增】状态指示器样式 -->
+    <style>
+        /* 角色列表状态指示器 */
+        .contact-status-indicator {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        /* 已拉黑状态 - 红色 */
+        .contact-status-indicator.blocked {
+            background-color: #ff4444;
+            color: white;
+        }
+
+        /* 被拉黑状态 - 深橙色 */
+        .contact-status-indicator.blocked-by {
+            background-color: #ff8800;
+            color: white;
+        }
+
+        /* 已屏蔽群聊状态 - 橙色 */
+        .contact-status-indicator.muted {
+            background-color: #ff9500;
+            color: white;
+        }
+
+        /* 确保角色项有相对定位 */
+        .contact-item {
+            position: relative;
+        }
+
+        /* 🔥【新增】消息列表状态指示器样式 */
+        .message-avatar-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .message-status-indicator {
+            position: absolute;
+            right: 2px;
+            bottom: 1px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            z-index: 10;
+        }
+
+        /* 已拉黑状态 - 红色 */
+        .message-status-indicator.blocked {
+            background-color: #ff4444;
+            color: white;
+        }
+
+        /* 被拉黑状态 - 深橙色 */
+        .message-status-indicator.blocked-by {
+            background-color: #ff8800;
+            color: white;
+        }
+
+        /* 已屏蔽群聊状态 - 橙色 */
+        .message-status-indicator.muted {
+            background-color: #ff9500;
+            color: white;
+        }
+
+        /* 🔥【新增】未读消息提示样式 */
+        .unread-badge {
+            position: absolute;
+            right: -2px;
+            top: -2px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #ff4444;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 15;
+            padding: 0 4px;
+            box-sizing: border-box;
+        }
+
+        /* 当数字超过99时，显示99+ */
+        .unread-badge.large-count {
+            font-size: 8px;
+            min-width: 20px;
+            border-radius: 10px;
+        }
+
+        /* 🔥【重新设计】消息列表多选模式按钮 - 放在app-header中 */
+        .chat-header-multiselect-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .multiselect-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: all 0.2s ease;
+            min-width: 50px;
+            width: 50px;
+            height: 24px;
+            background: rgba(200, 200, 200, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .multiselect-btn:hover {
+            background: rgba(200, 200, 200, 0.6);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .multiselect-btn i {
+            font-size: 10px;
+        }
+
+        .multiselect-btn.pin-btn {
+            color: #f39c12;
+        }
+
+        .multiselect-btn.delete-btn {
+            color: #e74c3c;
+        }
+
+        .multiselect-btn.cancel-btn {
+            color: #3498db;
+        }
+
+        /* 🔥【重新设计】置顶对话的视觉标识 - 主题化颜色 */
+        .message-item.pinned {
+            background: rgba(74, 132, 193, 0.08);
+            border-left: 3px solid rgba(74, 132, 193, 0.3);
+        }
+
+        /* 可爱主题下的置顶对话样式 */
+        body[data-theme="cute"] .message-item.pinned {
+            background: rgba(255, 182, 193, 0.08);
+            border-left: 3px solid rgba(255, 182, 193, 0.3);
+        }
+
+        .pin-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: #ffd700;
+            font-size: 12px;
+            z-index: 5;
+        }
+    </style>
 
 </head>
 <body>
@@ -183,7 +363,7 @@
                         <div class="contact-list hide" id="contact-list">
                             <div class="contact-section">
         
-                                <!-- 联系人列表将通过JS动态生成 -->
+                                <!-- 角色列表将通过JS动态生成 -->
                             </div>
 
                         </div>
@@ -725,15 +905,7 @@
                     </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hideApp('memory-viewer-screen')">‹</button>
-                        <!-- 左侧放2个清理工具按钮 -->
-                        <div class="header-left-actions">
-                            <button class="header-action-btn" onclick="cleanupCurrentCharacterMemories()" title="清理重复记忆">
-                                <i class="fas fa-broom"></i>
-                            </button>
-                            <button class="header-action-btn" onclick="cleanupCurrentCharacterTimeline()" title="清理重复时间线">
-                                <i class="fas fa-clock"></i>
-                            </button>
-                        </div>
+
                         <div class="app-title">记忆查看器</div>
                         <div class="header-actions">
                             <!-- 右侧放3个按钮：设置、刷新、清理错误记录 -->
@@ -1343,8 +1515,8 @@
                                 <div class="setting-card">
                                     <div class="setting-item" onclick="showBlacklistSettings()">
                                         <div class="setting-left">
-                                            <div class="setting-label">拉黑管理</div>
-                                            <div class="setting-desc">拉黑/解除拉黑，设置冷静时间</div>
+                                            <div class="setting-label" id="block-manage-label">拉黑管理</div>
+                                            <div class="setting-desc" id="block-manage-desc">拉黑/解除拉黑，设置冷静时间</div>
                                         </div>
                                         <div class="setting-right">
                                             <i class="fas fa-chevron-right"></i>
@@ -1984,8 +2156,8 @@
                                         <i class="fas fa-user-slash"></i>
                                     </div>
                                     <div>
-                                        <div class="setting-label">清理孤立联系人</div>
-                                        <div class="setting-desc">清理不存在的角色联系人和相关数据</div>
+                                        <div class="setting-label">清理孤立数据</div>
+                                        <div class="setting-desc">清理不存在的角色数据和相关记录</div>
                                     </div>
                                 </div>
                                 <i class="fas fa-chevron-right"></i>
@@ -2810,22 +2982,7 @@
                 
 
                 
-                <!-- 添加联系人模态框 -->
-                <div class="modal" id="add-contact-modal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">添加联系人</div>
-                            <button class="modal-close" onclick="hideModal('add-contact-modal')">&times;</button>
-                        </div>
-                        <div class="modal-body" id="contact-modal-body">
-                            <!-- 联系人选项将通过JS动态生成 -->
-                        </div>
-                        <div class="modal-footer">
-                            <button class="modal-button modal-secondary" onclick="hideModal('add-contact-modal')">取消</button>
-                            <button class="modal-button modal-primary" onclick="addSelectedContacts()">添加</button>
-                        </div>
-                    </div>
-                </div>
+
                 
                 <!-- 聊天选项模态框 -->
                 <div class="modal" id="chat-options-modal">
@@ -4089,6 +4246,7 @@
         let currentChatCharacter = null;
         let chatMessages = {};
         let selectedMessageId = null;
+        let pinnedConversations = []; // 🔥【新增】置顶对话列表
         let personas = []; // 用户面具列表
         let currentPersona = null; // 当前使用的面具
         let editingPersona = null; // 正在编辑的面具
@@ -4193,6 +4351,9 @@
                 loadGlobalWorldbookSettings(), // 确保加载全局世界书设置
                 initGlobalMemoryDB() // 🔥【新增】初始化全局记忆数据库
             ]);
+
+            // 🔥【新增】加载置顶数据
+            loadPinnedConversations();
             
             // 加载外观设置
             loadPhoneBorderSetting();
@@ -4354,6 +4515,21 @@
             // 初始化消息选择模式状态
             isMessageSelectionMode = false;
             selectedMessages.clear();
+
+            // 🔥【修改】添加全局点击监听器来隐藏消息操作按钮
+            document.addEventListener('click', (e) => {
+                // 如果点击的不是消息容器、操作按钮或聊天相关元素，则隐藏所有操作按钮
+                const clickedElement = e.target;
+                const isMessageRelated = clickedElement.closest('.message-container') ||
+                                       clickedElement.closest('.message-action-buttons') ||
+                                       clickedElement.closest('.chat-input-area') ||
+                                       clickedElement.closest('.modal') ||
+                                       clickedElement.closest('.message-menu');
+
+                if (!isMessageRelated) {
+                    hideAllMessageActionButtons();
+                }
+            });
             
             // 图片上传
             document.getElementById('image-upload').addEventListener('change', function(e) {
@@ -4557,10 +4733,7 @@
         function showModal(modalId) {
             document.getElementById(modalId).style.display = 'flex';
             
-            // 如果是添加联系人模态框，渲染可选联系人
-            if (modalId === 'add-contact-modal') {
-                renderContactModal();
-            }
+
         }
         
         function hideModal(modalId) {
@@ -6010,8 +6183,7 @@
                                     id: (Date.now() + i).toString(),
                                     sender: 'received',
                                     type: 'ai_image',
-                                    content: '',
-                                    image: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#f0f0f0"/><text x="100" y="75" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">[AI描述的图片]</text></svg>')}`,
+                                    content: msgData.description || 'AI描述的图片',
                                     imageDescription: msgData.description,
                                     timestamp: Date.now() + i * 100
                                 };
@@ -6036,6 +6208,20 @@
                                         emojiDescription: matchingEmoji.description,
                                         timestamp: Date.now() + i * 100
                                     };
+
+                                    // 🔥【修复】如果是群聊消息，添加发送者信息
+                                    if (msgData.name) {
+                                        aiMessage.name = msgData.name;
+                                        // 查找对应的群成员ID
+                                        const group = groupChats.find(g => g.id === characterId);
+                                        if (group && group.members) {
+                                            const member = group.members.find(m => m.name === msgData.name);
+                                            if (member) {
+                                                aiMessage.senderId = member.id;
+                                            }
+                                        }
+                                    }
+
                                     addToRecentEmojis({ id: matchingEmoji.id, url: matchingEmoji.url, description: matchingEmoji.description });
                                 } else {
                                     aiMessage = {
@@ -7131,34 +7317,74 @@ ${chatContext}${momentsContext}
         function renderMessageList() {
             const messageList = document.getElementById('message-list');
             messageList.innerHTML = '';
-            
-            // 添加多选模式的头部
+
+            // 🔥【修改】为多选模式在app-header中添加按钮
+            const chatHeaderActions = document.querySelector('#chat-screen .chat-header-actions');
             if (isMessageListMultiSelectMode) {
-                const headerDiv = document.createElement('div');
-                headerDiv.className = 'multiselect-header';
-                headerDiv.innerHTML = `
-                    <span>已选择 ${selectedConversations.length} 个对话</span>
-                    <div>
-                        <button class="delete-btn-red" data-action="delete">删除</button>
-                        <button class="cancel-btn-blue" data-action="cancel">取消</button>
-                    </div>
-                `;
+                // 隐藏原有的header按钮
+                if (chatHeaderActions) {
+                    chatHeaderActions.style.display = 'none';
+                }
 
-                // 🔥【修复】使用事件委托绑定点击事件，避免内联onclick问题
-                headerDiv.onclick = function(e) {
-                    const action = e.target.dataset.action;
-                    if (action === 'delete') {
-                        deleteSelectedConversations();
-                    } else if (action === 'cancel') {
-                        exitMessageListMultiSelectMode();
+                // 🔥【新增】检查是否已存在多选按钮，避免重复添加
+                let existingActions = document.querySelector('.chat-header-multiselect-actions');
+                if (!existingActions) {
+                    const multiselectActions = document.createElement('div');
+                    multiselectActions.className = 'chat-header-multiselect-actions';
+                    multiselectActions.innerHTML = `
+                        <button class="multiselect-btn pin-btn" data-action="pin">
+                            <i class="fas fa-thumbtack"></i>
+                            <span>置顶</span>
+                        </button>
+                        <button class="multiselect-btn delete-btn" data-action="delete">
+                            <i class="fas fa-trash"></i>
+                            <span>删除</span>
+                        </button>
+                        <button class="multiselect-btn cancel-btn" data-action="cancel">
+                            <i class="fas fa-times"></i>
+                            <span>取消</span>
+                        </button>
+                    `;
+
+                    // 🔥【修复】使用事件委托绑定点击事件，避免内联onclick问题
+                    multiselectActions.onclick = function(e) {
+                        const action = e.target.closest('[data-action]')?.dataset.action;
+                        if (action === 'delete') {
+                            deleteSelectedConversations();
+                        } else if (action === 'cancel') {
+                            exitMessageListMultiSelectMode();
+                        } else if (action === 'pin') {
+                            pinSelectedConversations();
+                        }
+                    };
+
+                    // 🔥【修改】将按钮添加到消息列表页面的app-header中
+                    const chatAppHeader = document.querySelector('#chat-screen .app-header');
+                    if (chatAppHeader) {
+                        chatAppHeader.appendChild(multiselectActions);
                     }
-                };
-
-                messageList.appendChild(headerDiv);
+                }
+            } else {
+                // 🔥【新增】非多选模式时恢复原有按钮，移除多选按钮
+                if (chatHeaderActions) {
+                    chatHeaderActions.style.display = 'flex';
+                }
+                const existingActions = document.querySelector('.chat-header-multiselect-actions');
+                if (existingActions) {
+                    existingActions.remove();
+                }
             }
-            
-            // 渲染单人聊天
-            contacts.forEach(contactId => {
+
+            // 🔥【修改】渲染单人聊天 - 支持置顶排序
+            const sortedContacts = [...contacts].sort((a, b) => {
+                const aPinned = isPinned(a);
+                const bPinned = isPinned(b);
+                if (aPinned && !bPinned) return -1;
+                if (!aPinned && bPinned) return 1;
+                return 0;
+            });
+
+            sortedContacts.forEach(contactId => {
                 const character = characters.find(c => c.id === contactId);
                 if (character) {
                     // 🔥【修复】获取该聊天的昵称设置
@@ -7202,7 +7428,8 @@ ${chatContext}${momentsContext}
                     const lastTime = messages.length > 0 ? formatTime(messages[messages.length - 1].timestamp) : '刚刚';
                     
                     const messageItem = document.createElement('div');
-                    messageItem.className = `message-item ${isMessageListMultiSelectMode && selectedConversations.includes(character.id) ? 'selected' : ''}`;
+                    const isPinnedConversation = isPinned(character.id);
+                    messageItem.className = `message-item ${isPinnedConversation ? 'pinned' : ''} ${isMessageListMultiSelectMode && selectedConversations.includes(character.id) ? 'selected' : ''}`;
                     messageItem.dataset.conversationId = character.id; // 添加对话ID
                     
                     // 根据模式设置不同的点击事件
@@ -7281,14 +7508,48 @@ ${chatContext}${momentsContext}
                         });
                     }
                     
+                    // 🔥【新增】检查拉黑状态并生成状态指示器
+                    let messageStatusIndicator = '';
+                    if (character.isGroup === true) {
+                        // 群聊检查屏蔽状态
+                        const isMuted = isGroupMuted(character.id);
+                        if (isMuted) {
+                            messageStatusIndicator = '<div class="message-status-indicator muted" title="已屏蔽"><i class="fas fa-volume-mute"></i></div>';
+                        }
+                    } else {
+                        // 单聊检查拉黑状态
+                        const isUserBlocked = isBlocked('user', character.id);
+                        const isCharacterBlocked = isBlocked(character.id, 'user');
+
+                        if (isUserBlocked) {
+                            messageStatusIndicator = '<div class="message-status-indicator blocked" title="已拉黑"><i class="fas fa-ban"></i></div>';
+                        } else if (isCharacterBlocked) {
+                            messageStatusIndicator = '<div class="message-status-indicator blocked-by" title="被对方拉黑"><i class="fas fa-exclamation-triangle"></i></div>';
+                        }
+                    }
+
+                    // 🔥【新增】检查未读消息数量并生成未读提示
+                    let unreadBadge = '';
+                    const unreadCount = getUnreadCount(character.id);
+                    if (unreadCount > 0) {
+                        const displayCount = unreadCount > 99 ? '99+' : unreadCount.toString();
+                        const badgeClass = unreadCount > 99 ? 'unread-badge large-count' : 'unread-badge';
+                        unreadBadge = `<div class="${badgeClass}" title="${unreadCount}条未读消息">${displayCount}</div>`;
+                    }
+
                     messageItem.innerHTML = `
+                        ${isPinnedConversation ? '<div class="pin-indicator"><i class="fas fa-thumbtack"></i></div>' : ''}
                         ${isMessageListMultiSelectMode ? `
                             <div class="selection-checkbox ${selectedConversations.includes(character.id) ? 'selected' : ''}">
                                 ${selectedConversations.includes(character.id) ? '<i class="fas fa-check check-icon-white"></i>' : ''}
                             </div>
                         ` : ''}
-                        <div class="message-avatar" style="background-color: ${character.color}; ${character.avatarUrl ? `background-image: url(${character.avatarUrl}); background-size: cover; background-position: center;` : ''}">
-                            ${character.avatarUrl ? '' : displayName.charAt(0)}
+                        <div class="message-avatar-container">
+                            <div class="message-avatar" style="background-color: ${character.color}; ${character.avatarUrl ? `background-image: url(${character.avatarUrl}); background-size: cover; background-position: center;` : ''}">
+                                ${character.avatarUrl ? '' : displayName.charAt(0)}
+                            </div>
+                            ${unreadBadge}
+                            ${messageStatusIndicator}
                         </div>
                         <div class="message-content">
                             <div class="message-name">${displayName}</div>
@@ -7301,8 +7562,16 @@ ${chatContext}${momentsContext}
                 }
             });
             
-            // 渲染群聊
-            groupChats.forEach(group => {
+            // 🔥【修改】渲染群聊 - 支持置顶排序
+            const sortedGroups = [...groupChats].sort((a, b) => {
+                const aPinned = isPinned(a.id);
+                const bPinned = isPinned(b.id);
+                if (aPinned && !bPinned) return -1;
+                if (!aPinned && bPinned) return 1;
+                return 0;
+            });
+
+            sortedGroups.forEach(group => {
                 const messages = chatMessages[group.id] || [];
                 let lastMessageRaw = '暂无消息';
                 
@@ -7339,7 +7608,8 @@ ${chatContext}${momentsContext}
                 const lastTime = messages.length > 0 ? formatTime(messages[messages.length - 1].timestamp) : '刚刚';
                 
                 const messageItem = document.createElement('div');
-                messageItem.className = `message-item ${isMessageListMultiSelectMode && selectedConversations.includes(group.id) ? 'selected' : ''}`;
+                const isGroupPinned = isPinned(group.id);
+                messageItem.className = `message-item ${isGroupPinned ? 'pinned' : ''} ${isMessageListMultiSelectMode && selectedConversations.includes(group.id) ? 'selected' : ''}`;
                 messageItem.dataset.conversationId = group.id; // 添加对话ID
                 
                 // 根据模式设置不同的点击事件
@@ -7408,14 +7678,35 @@ ${chatContext}${momentsContext}
                     });
                 }
                 
+                // 🔥【新增】检查群聊屏蔽状态
+                let groupStatusIndicator = '';
+                const isMuted = isGroupMuted(group.id);
+                if (isMuted) {
+                    groupStatusIndicator = '<div class="message-status-indicator muted" title="已屏蔽"><i class="fas fa-volume-mute"></i></div>';
+                }
+
+                // 🔥【新增】检查群聊未读消息数量
+                let groupUnreadBadge = '';
+                const groupUnreadCount = getUnreadCount(group.id);
+                if (groupUnreadCount > 0) {
+                    const displayCount = groupUnreadCount > 99 ? '99+' : groupUnreadCount.toString();
+                    const badgeClass = groupUnreadCount > 99 ? 'unread-badge large-count' : 'unread-badge';
+                    groupUnreadBadge = `<div class="${badgeClass}" title="${groupUnreadCount}条未读消息">${displayCount}</div>`;
+                }
+
                 messageItem.innerHTML = `
+                    ${isGroupPinned ? '<div class="pin-indicator"><i class="fas fa-thumbtack"></i></div>' : ''}
                     ${isMessageListMultiSelectMode ? `
                         <div class="selection-checkbox ${selectedConversations.includes(group.id) ? 'selected' : ''}">
                             ${selectedConversations.includes(group.id) ? '<i class="fas fa-check check-icon-white"></i>' : ''}
                         </div>
                     ` : ''}
-                    <div class="message-avatar" style="${group.avatarUrl ? `background-image: url(${group.avatarUrl}); background-size: cover; background-position: center;` : 'background-color: #4CAF50;'}">
-                        ${group.avatarUrl ? '' : '群'}
+                    <div class="message-avatar-container">
+                        <div class="message-avatar" style="${group.avatarUrl ? `background-image: url(${group.avatarUrl}); background-size: cover; background-position: center;` : 'background-color: #4CAF50;'}">
+                            ${group.avatarUrl ? '' : '群'}
+                        </div>
+                        ${groupUnreadBadge}
+                        ${groupStatusIndicator}
                     </div>
                     <div class="message-content">
                                                         <div class="message-name">${group.name} <span class="group-member-count">(${group.members ? group.members.length + 1 : 1}人)</span></div>
@@ -7426,8 +7717,80 @@ ${chatContext}${momentsContext}
                 
                 messageList.appendChild(messageItem);
             });
+
+            // 🔥【新增】渲染完成后，为了测试，可以手动设置一些未读消息
+            // 这个代码仅用于演示，实际使用时应该删除
+            if (window.location.hash === '#test-unread') {
+                // 为"一号"角色设置一些未读消息用于测试
+                const testCharacter = characters.find(c => c.name === '一号');
+                if (testCharacter) {
+                    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+                    localStorage.setItem(`lastRead_${testCharacter.id}`, oneHourAgo.toString());
+                }
+            }
         }
         
+        // 🔥【新增】计算未读消息数量
+        function getUnreadCount(characterId) {
+            const messages = chatMessages[characterId] || [];
+            const lastReadTime = localStorage.getItem(`lastRead_${characterId}`);
+
+            if (!lastReadTime) {
+                // 如果没有记录最后阅读时间，认为所有消息都已读
+                return 0;
+            }
+
+            const lastReadTimestamp = parseInt(lastReadTime);
+            const unreadMessages = messages.filter(msg =>
+                msg.timestamp > lastReadTimestamp && msg.sender !== 'user'
+            );
+
+            return unreadMessages.length;
+        }
+
+        // 🔥【新增】标记消息为已读
+        function markAsRead(characterId) {
+            const now = Date.now();
+            localStorage.setItem(`lastRead_${characterId}`, now.toString());
+        }
+
+        // 🔥【新增】置顶相关函数
+        function loadPinnedConversations() {
+            const saved = localStorage.getItem('pinnedConversations');
+            pinnedConversations = saved ? JSON.parse(saved) : [];
+        }
+
+        function savePinnedConversations() {
+            localStorage.setItem('pinnedConversations', JSON.stringify(pinnedConversations));
+        }
+
+        function togglePinConversation(conversationId) {
+            const index = pinnedConversations.indexOf(conversationId);
+            if (index > -1) {
+                pinnedConversations.splice(index, 1);
+            } else {
+                pinnedConversations.push(conversationId);
+            }
+            savePinnedConversations();
+        }
+
+        function isPinned(conversationId) {
+            return pinnedConversations.includes(conversationId);
+        }
+
+        // 🔥【修改】置顶选中的对话 - 支持重新设置置顶
+        async function pinSelectedConversations() {
+            // 🔥【新增】重新设置置顶逻辑：清空现有置顶，只置顶当前选中的对话
+            pinnedConversations = [...selectedConversations];
+
+            savePinnedConversations();
+            renderMessageList();
+            exitMessageListMultiSelectMode();
+
+            const count = selectedConversations.length;
+            showToast(`已重新设置置顶，当前置顶 ${count} 个对话`, 'success');
+        }
+
         // 渲染联系人列表（角色页面）- 按分组显示
         function renderContactList() {
             const contactList = document.querySelector('#contact-list .contact-section');
@@ -7598,6 +7961,28 @@ ${chatContext}${momentsContext}
                         });
                     }
                     
+                    // 🔥【修改】检查拉黑/屏蔽状态 - 修复群聊判断逻辑 + 添加调试
+                    let statusIndicator = '';
+                    if (character.isGroup === true) {
+                        // 群聊检查屏蔽状态
+                        const isMuted = isGroupMuted(character.id);
+                        if (isMuted) {
+                            statusIndicator = '<div class="contact-status-indicator muted" title="已屏蔽"><i class="fas fa-volume-mute"></i></div>';
+                        }
+                    } else {
+                        // 单聊检查拉黑状态
+                        const isUserBlocked = isBlocked('user', character.id);
+                        const isCharacterBlocked = isBlocked(character.id, 'user');
+
+
+
+                        if (isUserBlocked) {
+                            statusIndicator = '<div class="contact-status-indicator blocked" title="已拉黑"><i class="fas fa-ban"></i></div>';
+                        } else if (isCharacterBlocked) {
+                            statusIndicator = '<div class="contact-status-indicator blocked-by" title="被对方拉黑"><i class="fas fa-exclamation-triangle"></i></div>';
+                        }
+                    }
+
                     contactItem.innerHTML = `
                         ${isMultiSelectMode ? `
                             <div class="selection-checkbox ${selectedCharacters.includes(character.id) ? 'selected' : ''}">
@@ -7611,6 +7996,7 @@ ${chatContext}${momentsContext}
                             <div class="message-name">${displayName}</div>
                             <div class="character-preview">${truncateText(character.bio || '暂无人设描述', 25)}</div>
                         </div>
+                        ${statusIndicator}
                         ${isGroupManageMode ? `
                             <div class="move-character-btn" onclick="showMoveCharacterModal('${character.id}')" title="移动到其他分组">
                                 <i class="fas fa-arrows-alt"></i>
@@ -8008,38 +8394,7 @@ ${chatContext}${momentsContext}
             });
         }
         
-        // 渲染联系人模态框
-        function renderContactModal() {
-            const modalBody = document.getElementById('contact-modal-body');
-            modalBody.innerHTML = '';
-            
-            characters.forEach(character => {
-                // 只显示未添加为联系人的角色
-                if (!contacts.includes(character.id)) {
-                    const contactOption = document.createElement('div');
-                    contactOption.className = 'contact-item';
-                    
-                    const checkboxId = `contact-${character.id}`;
-                    
-                    contactOption.innerHTML = `
-                        <div class="message-avatar" style="background-color: ${character.color}; ${character.avatarUrl ? `background-image: url(${character.avatarUrl}); background-size: cover; background-position: center;` : ''}">
-                            ${character.avatarUrl ? '' : character.name.charAt(0)}
-                        </div>
-                        <div class="character-info character-info-flex">
-                            <div class="character-name">${character.name}</div>
-                            <div class="character-bio">${truncateText(character.bio, 40)}</div>
-                        </div>
-                        <input type="checkbox" id="${checkboxId}" class="contact-checkbox" value="${character.id}">
-                    `;
-                    
-                    modalBody.appendChild(contactOption);
-                }
-            });
-            
-            if (modalBody.children.length === 0) {
-                modalBody.innerHTML = '<p>没有可添加的角色，请先创建新角色。</p>';
-            }
-        }
+
         
         // 当前显示的消息数量限制
         let currentMessageOffset = 0;
@@ -8212,11 +8567,16 @@ ${chatContext}${momentsContext}
                         centerContainer.style.display = 'flex';
                         centerContainer.style.justifyContent = 'center';
                         centerContainer.style.margin = '4px 0';
-                        
+
                         const systemContainer = document.createElement('div');
-                        systemContainer.className = 'system-message';
+                        // 🔥【美化】检查是否为好友添加成功消息，应用特殊样式
+                        if (message.isFriendAddedMessage) {
+                            systemContainer.className = 'friend-added-system-message';
+                        } else {
+                            systemContainer.className = 'system-message';
+                        }
                         systemContainer.textContent = message.content;
-                        
+
                         centerContainer.appendChild(systemContainer);
                         messagesContainer.appendChild(centerContainer);
                     }
@@ -8265,33 +8625,49 @@ ${chatContext}${momentsContext}
                         let member = null;
                         console.log('🔍 [消息渲染] 群聊消息渲染 - senderId:', message.senderId, 'name:', message.name);
                         console.log('🔍 [消息渲染] 群成员列表:', group.members);
+                        console.log('🔍 [消息渲染] 完整消息对象:', message);
+
+                        // 表情包消息处理
 
                         if (message.senderId) {
                             member = group.members.find(m => m.id === message.senderId);
                             console.log('🔍 [消息渲染] 通过senderId找到成员:', member);
+                            console.log('🔍 [消息渲染] senderId查找详情:', {
+                                messageSenderId: message.senderId,
+                                memberIds: group.members.map(m => m.id),
+                                foundMember: member
+                            });
                         } else if (message.name) {
                             member = group.members.find(m => m.name === message.name);
                             console.log('🔍 [消息渲染] 通过name找到成员:', member);
+                            console.log('🔍 [消息渲染] name查找详情:', {
+                                messageName: message.name,
+                                memberNames: group.members.map(m => m.name),
+                                foundMember: member
+                            });
                         }
-                        displayAvatar = member?.avatarUrl || '';
-                        displayName = member?.name || '群成员';
-                        color = member?.color || '#4CAF50';
 
-                        console.log('🔍 [消息渲染] 最终头像:', displayAvatar, '显示名:', displayName);
+                        // 🔥【修复】确保群聊表情包消息正确显示发送者
+                        if (member) {
+                            displayAvatar = member.avatarUrl || '';
+                            displayName = member.name;
+                            color = member.color || '#4CAF50';
+                        } else {
+                            // 如果没找到成员，使用消息中的name作为显示名称
+                            displayAvatar = '';
+                            displayName = message.name || '群成员';
+                            color = '#4CAF50';
+                            console.warn('🔍 [消息渲染] 未找到群成员，使用消息name:', message.name);
+                        }
+
+                        // 头像和显示名处理完成
                     } else if (character) {
                         // 单聊
                         displayAvatar = chatSettings.aiDynamicAvatar || chatSettings.aiChatAvatar || character.avatarUrl;
                         displayName = chatSettings.aiChatNickname || character.name;
                         color = character.color || '#4CAF50';
                     
-                    // 🔥【调试】记录头像选择过程
-                    if (chatSettings.aiDynamicAvatar) {
-                        console.log(`使用动态头像: ${chatSettings.aiDynamicAvatar.substring(0, 30)}...`);
-                    } else if (chatSettings.aiChatAvatar) {
-                        console.log(`使用聊天设置头像: ${chatSettings.aiChatAvatar.substring(0, 30)}...`);
-                    } else {
-                        console.log(`使用角色卡头像: ${character.avatarUrl ? character.avatarUrl.substring(0, 30) + '...' : '无头像'}`);
-                    }
+                    // 头像选择逻辑
                     } else {
                         // 兜底，防止报错
                         displayAvatar = '';
@@ -8393,11 +8769,26 @@ ${chatContext}${momentsContext}
                             </div>
                         `;
                     } else if (message.type === 'ai_image') {
-                        // AI生成的图片
+                        // AI生成的图片 - 使用星星emoji卡片样式
+                        const imageDesc = message.imageDescription || message.content || 'AI描述的图片';
                         messageContent = `
-                            <div class="ai-image-container">
-                                <img src="${message.image}" class="message-image" onclick="showImage('${message.image}')" alt="AI生成的图片">
-                                <div class="image-description">${message.imageDescription || ''}</div>
+                            <div class="dreamy-photo-container" onclick="togglePhotoText(this, '${imageDesc.replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">
+                                <div class="dreamy-photo">
+                                    <div class="photo-misty-bg"></div>
+                                    <div class="photo-badge">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                    <div class="sparkle-container">
+                                        <div class="sparkle sparkle-1">✨</div>
+                                        <div class="sparkle sparkle-2">⭐</div>
+                                        <div class="sparkle sparkle-3">✨</div>
+                                        <div class="sparkle sparkle-4">⭐</div>
+                                        <div class="sparkle sparkle-5">💫</div>
+                                    </div>
+                                    <div class="photo-text-overlay" style="display: none;">
+                                        <div class="photo-description">${imageDesc}</div>
+                                    </div>
+                                </div>
                             </div>
                         `;
                     } else if (message.type === 'transfer') {
@@ -8427,6 +8818,21 @@ ${chatContext}${momentsContext}
                                     <div class="transfer-amount">¥ ${Number(message.amount).toFixed(2)}</div>
                                     <div class="transfer-note">${message.note || '转账'}</div>
                                     ${statusHtml}
+                                </div>
+                            </div>
+                        `;
+                    } else if (message.type === 'friend_request') {
+                        // 🔥【新增】AI主动发送的好友申请
+                        messageContent = `
+                            <div class="friend-request-container">
+                                <div class="friend-request-card">
+                                    <div class="friend-request-icon">👋</div>
+                                    <div class="friend-request-title">好友申请</div>
+                                    <div class="friend-request-message">${message.message || '想和你重新做朋友'}</div>
+                                    <div class="friend-request-actions">
+                                        <button class="friend-request-btn accept" onclick="handleAIFriendRequest('${currentChatCharacter?.id}', true, '${message.id}')">同意</button>
+                                        <button class="friend-request-btn reject" onclick="handleAIFriendRequest('${currentChatCharacter?.id}', false, '${message.id}')">拒绝</button>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -8461,8 +8867,8 @@ ${chatContext}${momentsContext}
                     }
                     
                     let bubbleHtml = '';
-                    if (message.type === 'voice_message' || message.type === 'transfer' || message.type === 'user_photo' || message.type === 'location') {
-                        // 语音消息、转账消息、照片和位置消息不需要额外的气泡包裹
+                    if (message.type === 'voice_message' || message.type === 'transfer' || message.type === 'user_photo' || message.type === 'location' || message.type === 'ai_image' || message.type === 'friend_request') {
+                        // 语音消息、转账消息、照片、位置消息和AI图片消息不需要额外的气泡包裹
                         bubbleHtml = messageContent;
                     } else {
                         // 普通消息用气泡包裹
@@ -8477,16 +8883,16 @@ ${chatContext}${momentsContext}
                     `;
                     }
                     
-      // 🔥【修复】群聊昵称显示 - 特别处理语音消息和转账消息
+      // 🔥【修复】群聊昵称显示 - 特别处理语音消息、转账消息、照片卡片和位置信息
       if (isGroup && group && displayName !== '群成员') {
     messageContainer.classList.add('group-message-item');
     const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
-    
-    if (message.type === 'voice_message' || message.type === 'transfer') {
-        // 🔥【修复】对于语音消息和转账消息，昵称需要在容器外部
+
+    if (message.type === 'voice_message' || message.type === 'transfer' || message.type === 'ai_image' || message.type === 'user_photo' || message.type === 'location' || message.type === 'friend_request') {
+        // 🔥【修复】对于语音消息、转账消息、AI图片消息、照片卡片和位置信息，昵称需要在容器外部
     messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
     } else {
-        // 普通消息的处理
+        // 普通消息的处理（包括表情包消息）
         messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
     }
 } else {
@@ -8653,7 +9059,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                     
                     let myBubbleHtml = '';
                     
-                    if (message.type === 'user_photo' || message.type === 'voice' || message.type === 'transfer' || message.type === 'location') {
+                    if (message.type === 'user_photo' || message.type === 'voice' || message.type === 'transfer' || message.type === 'location' || message.type === 'friend_request') {
                         // 用户照片、语音消息、转账消息和位置消息不需要额外气泡包裹（已经有自己的容器）
                         myBubbleHtml = myMessageContent;
                     } else {
@@ -8694,9 +9100,15 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                     messageContainer.style.transform = 'translateY(0)';
                 });
                 
+                // 🔥【新增】检查拉黑状态并添加指示器
+                addBlockedIndicatorToMessage(messageContainer, message, characterId);
+
                 // 添加长按监听器用于多选删除
                 addMessageLongPressListener(messageContainer, message.id);
-                
+
+                // 🔥【新增】为特殊元素添加点击事件处理
+                addSpecialElementClickHandlers(messageContainer);
+
                 // 添加右键菜单功能
                 const bubble = messageContainer.querySelector('.message-bubble');
                 if (bubble) {
@@ -8705,13 +9117,15 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         e.preventDefault();
                         showMessageMenu(message.id, e);
                     });
-                    
-                    // 点击图片预览
-                    bubble.onclick = (e) => {
-                        if (e.target.tagName === 'IMG' && e.target.classList.contains('message-image')) {
-                            showImage(e.target.src);
-                        }
-                    };
+
+                    // 🔥【修改】图片点击预览 - 阻止事件冒泡避免触发操作按钮
+                    const images = bubble.querySelectorAll('img.message-image');
+                    images.forEach(img => {
+                        img.onclick = (e) => {
+                            e.stopPropagation();
+                            showImage(img.src);
+                        };
+                    });
                 }
             });
             
@@ -8846,11 +9260,16 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         centerContainer.style.display = 'flex';
                         centerContainer.style.justifyContent = 'center';
                         centerContainer.style.margin = '4px 0';
-                        
+
                         const systemContainer = document.createElement('div');
-                        systemContainer.className = 'system-message';
+                        // 🔥【美化】检查是否为好友添加成功消息，应用特殊样式
+                        if (message.isFriendAddedMessage) {
+                            systemContainer.className = 'friend-added-system-message';
+                        } else {
+                            systemContainer.className = 'system-message';
+                        }
                         systemContainer.textContent = message.content;
-                        
+
                         centerContainer.appendChild(systemContainer);
                         containerToInsert = centerContainer;
                     }
@@ -8901,9 +9320,18 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         } else if (message.name) {
                             member = group.members.find(m => m.name === message.name);
                         }
-                        displayAvatar = member?.avatarUrl || '';
-                        displayName = member?.name || '群成员';
-                        color = member?.color || '#4CAF50';
+
+                        // 🔥【修复】确保群聊表情包消息正确显示发送者（loadMoreMessages版本）
+                        if (member) {
+                            displayAvatar = member.avatarUrl || '';
+                            displayName = member.name;
+                            color = member.color || '#4CAF50';
+                        } else {
+                            // 如果没找到成员，使用消息中的name作为显示名称
+                            displayAvatar = '';
+                            displayName = message.name || '群成员';
+                            color = '#4CAF50';
+                        }
                     } else if (character) {
                         // 单聊
                         displayAvatar = chatSettings.aiDynamicAvatar || chatSettings.aiChatAvatar || character.avatarUrl;
@@ -8958,7 +9386,9 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                             </div>
                         `;
                     } else if (message.type === 'ai_image') {
-                        messageContent = `<div class="ai-image-container"><img src="${message.image}" class="message-image" onclick="showImage('${message.image}')" alt="AI生成的图片"><div class="image-description">${message.imageDescription || ''}</div></div>`;
+                        // AI生成的图片 - 使用星星emoji卡片样式
+                        const imageDesc = message.imageDescription || message.content || 'AI描述的图片';
+                        messageContent = `<div class="dreamy-photo-container" onclick="togglePhotoText(this, '${imageDesc.replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')"><div class="dreamy-photo"><div class="photo-misty-bg"></div><div class="photo-badge"><i class="fas fa-image"></i></div><div class="sparkle-container"><div class="sparkle sparkle-1">✨</div><div class="sparkle sparkle-2">⭐</div><div class="sparkle sparkle-3">✨</div><div class="sparkle sparkle-4">⭐</div><div class="sparkle sparkle-5">💫</div></div><div class="photo-text-overlay" style="display: none;"><div class="photo-description">${imageDesc}</div></div></div></div>`;
                     } else if (message.type === 'transfer') {
                         // 转账消息
                         const isUser = message.role === 'user';
@@ -8980,6 +9410,21 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         }
                         
                         messageContent = `<div class="transfer-message-container received"><div class="transfer-card ${cardClass}" data-transfer-id="${message.timestamp}" ${clickHandler}><div class="transfer-title">${heartIcon} ${titleText}</div><div class="transfer-amount">¥ ${Number(message.amount).toFixed(2)}</div><div class="transfer-note">${message.note || '转账'}</div>${statusHtml}</div></div>`;
+                    } else if (message.type === 'friend_request') {
+                        // 🔥【新增】AI主动发送的好友申请(第二处)
+                        messageContent = `
+                            <div class="friend-request-container">
+                                <div class="friend-request-card">
+                                    <div class="friend-request-icon">👋</div>
+                                    <div class="friend-request-title">好友申请</div>
+                                    <div class="friend-request-message">${message.message || '想和你重新做朋友'}</div>
+                                    <div class="friend-request-actions">
+                                        <button class="friend-request-btn accept" onclick="handleAIFriendRequest('${currentChatCharacter?.id}', true, '${message.id}')">同意</button>
+                                        <button class="friend-request-btn reject" onclick="handleAIFriendRequest('${currentChatCharacter?.id}', false, '${message.id}')">拒绝</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     } else {
                         const chatMode = chatSettings.chatMode || 'online';
                         let baseContent = chatMode === 'offline' ? processOfflineContent(message.content) : message.content;
@@ -8998,24 +9443,24 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                     }
                     
                     let bubbleHtml = '';
-                    if (message.type === 'voice_message' || message.type === 'transfer') {
-                        // 语音消息和转账消息不需要额外的气泡包裹
+                    if (message.type === 'voice_message' || message.type === 'transfer' || message.type === 'ai_image' || message.type === 'user_photo' || message.type === 'location' || message.type === 'friend_request') {
+                        // 语音消息、转账消息、AI图片消息、照片卡片和位置信息不需要额外的气泡包裹
                         bubbleHtml = messageContent;
                     } else {
                         // 普通消息用气泡包裹
                         bubbleHtml = `<div class="message-bubble" style="background-color: ${transparentBubbleColor}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">${messageContent}${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ''}${timestampEnabled && timestampPosition === 'bubble' ? `<div class="timestamp timestamp-bubble">${formatTimeOnly(message.timestamp)}</div>` : ''}${timestampEnabled && timestampPosition === 'inside' ? `<div class="timestamp timestamp-inside">${formatTimeOnly(message.timestamp)}</div>` : ''}</div>`;
                     }
                     
-                   // 🔥【修复】群聊昵称显示 （loadMoreMessages版本）- 特别处理语音消息和转账消息
+                   // 🔥【修复】群聊昵称显示 （loadMoreMessages版本）- 特别处理语音消息、转账消息、照片卡片和位置信息
                    if (isGroup && group && displayName !== '群成员') {
     messageContainer.classList.add('group-message-item');
     const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
-    
-    if (message.type === 'voice_message' || message.type === 'transfer') {
-        // 🔥【修复】对于语音消息和转账消息，昵称需要在容器外部
+
+    if (message.type === 'voice_message' || message.type === 'transfer' || message.type === 'ai_image' || message.type === 'user_photo' || message.type === 'location' || message.type === 'friend_request') {
+        // 🔥【修复】对于语音消息、转账消息、AI图片消息、照片卡片和位置信息，昵称需要在容器外部
     messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
     } else {
-        // 普通消息的处理
+        // 普通消息的处理（包括表情包消息）
         messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
     }
 } else {
@@ -9154,7 +9599,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                     
                     let myBubbleHtml = '';
                     
-                    if (message.type === 'user_photo' || message.type === 'voice' || message.type === 'transfer' || message.type === 'location') {
+                    if (message.type === 'user_photo' || message.type === 'voice' || message.type === 'transfer' || message.type === 'location' || message.type === 'friend_request') {
                         // 用户照片、语音消息、转账消息和位置消息不需要额外气泡包裹（已经有自己的容器）
                         myBubbleHtml = myMessageContent;
                     } else {
@@ -9170,20 +9615,30 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                     messageContainer.innerHTML = myBubbleHtml + myAvatarHtml;
                 }
                 
+                // 🔥【新增】检查拉黑状态并添加指示器
+                addBlockedIndicatorToMessage(messageContainer, message, characterId);
+
                 // 添加长按监听器和右键菜单
                 addMessageLongPressListener(messageContainer, message.id);
+
+                // 🔥【新增】为特殊元素添加点击事件处理
+                addSpecialElementClickHandlers(messageContainer);
+
                 const bubble = messageContainer.querySelector('.message-bubble');
                 if (bubble) {
                     bubble.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         showMessageMenu(message.id, e);
                     });
-                    
-                    bubble.onclick = (e) => {
-                        if (e.target.tagName === 'IMG' && e.target.classList.contains('message-image')) {
-                            showImage(e.target.src);
-                        }
-                    };
+
+                    // 🔥【修改】图片点击预览 - 阻止事件冒泡避免触发操作按钮
+                    const images = bubble.querySelectorAll('img.message-image');
+                    images.forEach(img => {
+                        img.onclick = (e) => {
+                            e.stopPropagation();
+                            showImage(img.src);
+                        };
+                    });
                 }
                 
                 // 插入消息到正确位置
@@ -9552,26 +10007,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
             return colors[Math.floor(Math.random() * colors.length)];
         }
         
-        // 显示添加联系人模态框
-        function showAddContactModal() {
-            showCharacterForm(); // 直接显示创建角色表单
-        }
-        
-        // 添加选中的联系人
-        async function addSelectedContacts() {
-            const checkboxes = document.querySelectorAll('.contact-checkbox:checked');
-            checkboxes.forEach(checkbox => {
-                const characterId = checkbox.value;
-                if (!contacts.includes(characterId)) {
-                    contacts.push(characterId);
-                }
-            });
-            
-            await saveContacts();
-            renderMessageList();
-            renderContactList();
-            hideModal('add-contact-modal');
-        }
+
         
         // 开始与角色聊天
 async function startChat(character) {
@@ -9585,6 +10021,9 @@ async function startChat(character) {
 
     // 设置当前聊天角色
             currentChatCharacter = character;
+
+            // 🔥【新增】标记消息为已读
+            markAsRead(character.id);
             
     // 🔥【修复】异步获取聊天设置
     const chatSettings = await getAsyncChatSettings();
@@ -9619,6 +10058,9 @@ async function startChat(character) {
             
             // 🔥【新增】启动状态更新定时器
             startCharacterStatusTimer();
+
+            // 🔥【新增】更新设置界面的拉黑/屏蔽管理文案
+            updateBlockManageLabel(character.isGroup);
             
             // 初始化空的聊天记录（不自动发送消息）
             if (!chatMessages[character.id]) {
@@ -9785,7 +10227,12 @@ async function startChat(character) {
             
             // 创建系统消息容器
             const systemContainer = document.createElement('div');
-            systemContainer.className = 'system-message';
+            // 🔥【美化】检查是否为好友添加成功消息，应用特殊样式
+            if (systemMessage.isFriendAddedMessage) {
+                systemContainer.className = 'friend-added-system-message';
+            } else {
+                systemContainer.className = 'system-message';
+            }
             systemContainer.textContent = systemMessage.content;
             
             // 将系统消息放入居中容器
@@ -10829,43 +11276,27 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
         }
         
         // 解析AI回复 - 按照index.html的逻辑，新增表情包支持和格式修正
-        function parseAiResponse(content) { 
+        function parseAiResponse(content) {
             console.log('🔥 [DEBUG] parseAiResponse 收到的原始内容:', content);
-            try { 
-                const parsed = JSON.parse(content); 
+            try {
+                // 🔥【修复】清理markdown代码块格式
+                let cleanContent = content.trim();
+                if (cleanContent.startsWith('```json')) {
+                    cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                } else if (cleanContent.startsWith('```')) {
+                    cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                }
+
+                const parsed = JSON.parse(cleanContent);
                 console.log('🔥 [DEBUG] JSON解析成功:', parsed);
                 if (Array.isArray(parsed)) {
                     // 🔥【新增】处理表情包消息类型和格式修正
                     const processedMessages = [];
                     
                     parsed.forEach(item => {
-                        if (typeof item === 'object' && item.type === 'emoji') {
-                            // 🔥【修复】处理单聊表情包格式
-                            const matchingEmoji = customEmojis.find(emoji =>
-                                emoji.description === item.description
-                            );
+                        if (typeof item === 'object' && item.name && item.type === 'emoji') {
+                            // 处理群聊表情包格式 {"name": "角色名", "type": "emoji", "description": "表情包描述"}
 
-                            if (matchingEmoji) {
-                                // 检查表情包是否为GIF格式
-                                if (matchingEmoji.url && matchingEmoji.url.includes('data:image/gif')) {
-                                    console.warn('AI尝试使用GIF格式表情包:', item.description);
-                                    processedMessages.push(`[${matchingEmoji.description}] (GIF格式不支持API识别)`);
-                                } else {
-                                // 返回表情包对象，包含完整的表情包信息
-                                    processedMessages.push({
-                                    type: 'emoji',
-                                    url: matchingEmoji.url,
-                                    description: matchingEmoji.description,
-                                    id: matchingEmoji.id
-                                    });
-                                }
-                            } else {
-                                // 如果找不到匹配的表情包，返回错误消息
-                                console.warn('AI尝试使用不存在的表情包:', item.description);
-                                processedMessages.push(`[错误: 表情包"${item.description}"不存在]`);
-                            }
-                        } else if (typeof item === 'object' && item.name && item.type === 'emoji') {
-                            // 🔥【关键修复】处理群聊表情包格式 {"name": "角色名", "type": "emoji", "description": "表情包描述"}
                             const matchingEmoji = customEmojis.find(emoji =>
                                 emoji.description === item.description
                             );
@@ -10879,16 +11310,8 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                                         message: `[${matchingEmoji.description}] (GIF格式不支持API识别)`
                                     });
                                 } else {
-                                    // 返回群聊表情包对象，包含角色名和表情包信息
-                                    processedMessages.push({
-                                        name: item.name,
-                                        message: {
-                                            type: 'emoji',
-                                            url: matchingEmoji.url,
-                                            description: matchingEmoji.description,
-                                            id: matchingEmoji.id
-                                        }
-                                    });
+                                    // 保持原始的群聊表情包格式，直接传递给callChatAPI处理
+                                    processedMessages.push(item); // 直接推送原始格式
                                 }
                             } else {
                                 // 如果找不到匹配的表情包，返回错误消息
@@ -10897,6 +11320,34 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                                     name: item.name,
                                     message: `[错误: 表情包"${item.description}"不存在]`
                                 });
+                            }
+                        } else if (typeof item === 'object' && item.type === 'emoji') {
+                            // 处理单聊表情包格式
+
+                            const matchingEmoji = customEmojis.find(emoji =>
+                                emoji.description === item.description
+                            );
+
+                            if (matchingEmoji) {
+                                // 检查表情包是否为GIF格式
+                                if (matchingEmoji.url && matchingEmoji.url.includes('data:image/gif')) {
+                                    console.warn('AI尝试使用GIF格式表情包:', item.description);
+                                    processedMessages.push(`[${matchingEmoji.description}] (GIF格式不支持API识别)`);
+                                } else {
+                                    const emojiMessage = {
+                                        type: 'emoji',
+                                        url: matchingEmoji.url,
+                                        description: matchingEmoji.description,
+                                        id: matchingEmoji.id
+                                    };
+
+                                    // 表情包消息处理完成
+                                    processedMessages.push(emojiMessage);
+                                }
+                            } else {
+                                // 如果找不到匹配的表情包，返回错误消息
+                                console.warn('AI尝试使用不存在的表情包:', item.description);
+                                processedMessages.push(`[错误: 表情包"${item.description}"不存在]`);
                             }
                         } else if (typeof item === 'object' && item.type === 'ai_photo') {
                             // 处理角色发送的"伪照片"
@@ -10969,6 +11420,12 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                                 message_id: item.message_id,
                                 content: item.content || ''
                             });
+                        } else if (typeof item === 'object' && item.type === 'friend_request') {
+                            // 🔥【新增】处理AI主动发送好友申请
+                            processedMessages.push({
+                                type: 'friend_request',
+                                message: item.message || '想和你重新做朋友'
+                            });
                         } else if (typeof item === 'string') {
                             // 🚨 【新增】检查并修复合并消息问题
                             if (item.includes('\n')) {
@@ -11025,39 +11482,10 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                                     processedMessages.push(`[错误: 表情包"${item.description}"不存在]`);
                                 }
                             } else if (typeof item === 'object' && item.name && item.type === 'emoji') {
-                                // 🔥【关键修复】处理群聊表情包格式（第二处）{"name": "角色名", "type": "emoji", "description": "表情包描述"}
-                                const matchingEmoji = customEmojis.find(emoji =>
-                                    emoji.description === item.description
-                                );
-
-                                if (matchingEmoji) {
-                                    // 检查表情包是否为GIF格式
-                                    if (matchingEmoji.url && matchingEmoji.url.includes('data:image/gif')) {
-                                        console.warn('AI尝试使用GIF格式表情包:', item.description);
-                                        processedMessages.push({
-                                            name: item.name,
-                                            message: `[${matchingEmoji.description}] (GIF格式不支持API识别)`
-                                        });
-                                    } else {
-                                        // 返回群聊表情包对象，包含角色名和表情包信息
-                                        processedMessages.push({
-                                            name: item.name,
-                                            message: {
-                                                type: 'emoji',
-                                                url: matchingEmoji.url,
-                                                description: matchingEmoji.description,
-                                                id: matchingEmoji.id
-                                            }
-                                        });
-                                    }
-                                } else {
-                                    // 如果找不到匹配的表情包，返回错误消息
-                                    console.warn('AI尝试使用不存在的表情包:', item.description);
-                                    processedMessages.push({
-                                        name: item.name,
-                                        message: `[错误: 表情包"${item.description}"不存在]`
-                                    });
-                                }
+                                // 🔥【关键修复】处理群聊表情包格式（第二处）- 这个分支应该不会被执行，因为第一个分支已经处理了
+                                console.log('🔍 [parseAiResponse-群聊表情包-第二处] 检测到重复的群聊表情包对象:', item);
+                                // 直接推送原始格式，让callChatAPI处理
+                                processedMessages.push(item);
                             } else if (typeof item === 'object' && item.type === 'ai_photo') {
                                 // 处理角色发送的"伪照片"
                                 // 确保我们有一个有效的描述
@@ -11129,6 +11557,12 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                                     type: 'reply_to',
                                     message_id: item.message_id,
                                     content: item.content || ''
+                                });
+                            } else if (typeof item === 'object' && item.type === 'friend_request') {
+                                // 🔥【新增】处理AI主动发送好友申请(第二处)
+                                processedMessages.push({
+                                    type: 'friend_request',
+                                    message: item.message || '想和你重新做朋友'
                                 });
                             } else if (typeof item === 'string') {
                                 // 🚨 【新增】检查并修复合并消息问题
@@ -11746,6 +12180,9 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                         specialClass = ' special-message';
                     } else if (message.type === 'location') {
                         content = `📍 位置：${message.locationName || '位置信息'}`;
+                        specialClass = ' special-message';
+                    } else if (message.type === 'friend_request') {
+                        content = `👋 好友申请：${message.message || '想和你重新做朋友'}`;
                         specialClass = ' special-message';
                     } else if (message.type === 'user_photo') {
                         content = `📷 图片：${content}`;
@@ -15928,6 +16365,8 @@ function onWorldbookAddClick() {
         }
         
         function buildCharacterPrompt(character, hasImage = false) {
+            console.log('🔍 [buildCharacterPrompt] 角色信息:', character);
+            console.log('🔍 [buildCharacterPrompt] 是否为群聊:', character && character.isGroup);
             const chatSettings = getCurrentChatSettings();
 
             // 🔥【修复】检查时间感知设置，只有开启时才获取和使用时间信息
@@ -16089,8 +16528,8 @@ ${timeInfo}${musicInfo}
                         userPersona = character.settings.myPersona;
                     }
 
-                    // 🔥【关键修复】完全复制zhangyu.html的群聊提示词结构
-                    taskInstructions = `\n你是一个群聊的组织者和AI驱动器。你的任务是扮演以下所有角色，在群聊中进行互动。\n\n# 群聊规则\n1.  **角色扮演**: 你必须同时扮演以下所有角色，并严格遵守他们的人设。每个角色的发言都必须符合其身份和性格。\n2.  **当前时间**: ${new Date().toLocaleString()}。\n3.  **用户角色**: 用户的名字是"我"，他/她的人设是："${userPersona}"。你在群聊中对用户的称呼是"${myNickname}"，在需要时请使用"@${myNickname}"来提及用户。\n4.  **输出格式**: 你的回复**必须**是一个JSON数组。**绝对不要**在JSON前后添加任何额外字符。每个元素可以是：\n    - 普通消息: \`{"name": "角色名", "message": "文本内容"}\`\n    - 图片消息: \`{"name": "角色名", "type": "ai_image", "description": "图片描述"}\`\n    - 语音消息: \`{"name": "角色名", "type": "voice_message", "content": "语音文字"}\`\n5.  **群聊对话节奏**: 模拟真实的群聊，让成员之间可以互相交谈对其他成员做出回应，或者一起回应用户的发言。对话应该流畅、自然、连贯。一轮对话里成员可以交错发言让对话更自然真实。\n6.  **数量限制**: 每次生成的总消息数**不得超过30条**。\n7.  **禁止出戏**: 绝不能透露你是AI，或提及任何关于"扮演"、"模型"、"生成"等词语。\n\n# 群成员列表及人设\n${membersList}\n\n现在，请根据以上规则和下面的对话历史，继续这场群聊。`;
+                    // 🔥【关键修复】完全复制zhangyu.html的群聊提示词结构，包含表情包格式
+                    taskInstructions = `\n你是一个群聊的组织者和AI驱动器。你的任务是扮演以下所有角色，在群聊中进行互动。\n\n# 群聊规则\n1.  **角色扮演**: 你必须同时扮演以下所有角色，并严格遵守他们的人设。每个角色的发言都必须符合其身份和性格。\n2.  **当前时间**: ${new Date().toLocaleString()}。\n3.  **用户角色**: 用户的名字是"我"，他/她的人设是："${userPersona}"。你在群聊中对用户的称呼是"${myNickname}"，在需要时请使用"@${myNickname}"来提及用户。\n4.  **输出格式**: 你的回复**必须**是一个JSON数组。**绝对不要**在JSON前后添加任何额外字符。每个元素可以是：\n    - 普通消息: \`{"name": "角色名", "message": "文本内容"}\`\n    - 图片消息: \`{"name": "角色名", "type": "ai_image", "description": "图片描述"}\`\n    - 语音消息: \`{"name": "角色名", "type": "voice_message", "content": "语音文字"}\`\n    - 表情包消息: \`{"name": "角色名", "type": "emoji", "description": "具体的表情包描述"}\`\n5.  **群聊对话节奏**: 模拟真实的群聊，让成员之间可以互相交谈对其他成员做出回应，或者一起回应用户的发言。对话应该流畅、自然、连贯。一轮对话里成员可以交错发言让对话更自然真实。\n6.  **数量限制**: 每次生成的总消息数**不得超过30条**。\n7.  **禁止出戏**: 绝不能透露你是AI，或提及任何关于"扮演"、"模型"、"生成"等词语。\n\n# 群成员列表及人设\n${membersList}\n\n现在，请根据以上规则和下面的对话历史，继续这场群聊。`;
                 } else {
                     taskInstructions = `\n1. 请你以你的角色的身份，严格按照角色设定进行回复和行动，不要跳出角色。自然地推进剧情。\n2. 你可以一次性生成多条消息，模拟真人在聊天中连续发送多条信息的情景。\n3. 你的回复必须是一个JSON数组格式的字符串，每个元素是一条消息。\n\n# JSON输出格式示例:\n["很高兴认识你呀，在干嘛呢？", "今天天气真好", "想出去走走吗？"]`;
                 }
@@ -16121,8 +16560,27 @@ ${timeInfo}${musicInfo}
 # **拉黑与好友关系管理**
 - **你的行为**: 你可以根据对话内容和你的情绪，自主决定是否要拉黑用户。如果你觉得被冒犯、骚扰或者不想再对话，你可以选择拉黑。
 - **如何拉黑**: 如果你决定拉黑用户，**【必须】**在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "block_user", "reason": "你让我感到不适。"}\`。你可以在此之前或之后发送普通文本消息来表达你的情绪。
-- **被拉黑后的行为**: 如果你被用户拉黑，你将无法主动发送消息。当用户尝试与你对话时，你应该表现出困惑或者询问是否已经将你从黑名单移除。
-- **好友申请**: 当用户从黑名单中将你移除后，他们可能会重新发送好友申请。届时你会收到类似 "[系统消息：用户向你发送了好友申请，理由：xxx]" 的提示，你需要根据你的人设和心情决定是否同意。
+
+# **🔥【重要】被用户拉黑时的持续状态感知**
+- **当前状态**: 如果你目前被用户拉黑，你需要持续意识到这个状态，不能忘记。
+- **状态表现**: 在被拉黑期间，你应该：
+  1. 表现出知道自己被拉黑的困扰、伤心、愤怒或其他符合人设的情绪
+  2. 可能会反思自己的行为，想知道为什么被拉黑
+  3. 根据你的性格决定是否要主动道歉或请求和解
+- **🔥【核心功能】主动申请添加好友**: 当你被用户拉黑时，这是你重新建立联系的**唯一方式**：
+  - **必须使用**: 在你的回复JSON数组中，发送格式：\`{"type": "friend_request", "message": "对不起，我想和你重新做朋友..."}\`
+  - **使用场景**:
+    * 当你想道歉并请求原谅时
+    * 当你反思后想重新开始时
+    * 当你觉得误会需要解释时
+    * 当你想表达真诚的悔意时
+  - **示例用法**:
+    * \`["我知道我错了，真的很抱歉...", {"type": "friend_request", "message": "对不起，我想和你重新做朋友，我会改正的"}]\`
+    * \`[{"type": "friend_request", "message": "我反思了很久，希望能给我一个机会重新开始"}]\`
+    * \`["我真的很想念和你聊天的时光", {"type": "friend_request", "message": "能原谅我吗？我想重新做朋友"}]\`
+  - **发送时机**: 根据你的性格和情绪，在合适的时候主动发送，不要等待
+  - **频率控制**: 不要在同一次对话中重复发送，但可以在不同的对话轮次中根据情况发送
+- **好友申请回应**: 当用户向你发送好友申请时，你会收到系统提示，需要根据你的人设和心情决定是否同意。
 `;
 
     const replyInstructions = `
@@ -16164,7 +16622,7 @@ ${timeInfo}${musicInfo}
                 // 🔥【关键修复】完全复制zhangyu.html的群聊图片指令
                 aiImageInstructions = `\n# 发送图片的能力\n- 群成员无法真正发送图片文件。但当用户要求某位成员发送照片，或者某个成员想通过图片来表达时，该成员可以发送一张"文字描述的图片"。\n- 若要发送图片，请在你的回复JSON数组中，为该角色单独发送一个特殊的对象，格式为：\`{"name": "角色名", "type": "ai_image", "description": "这里是对图片的详细文字描述..."}\`。描述应该符合该角色的性格和当时的语境。`;
             } else {
-                aiImageInstructions = `\n# 发送图片的能力\n- 你无法发送真实的图片文件。但当用户要求你发送照片，或者你想通过图片来表达时，你可以发送一张"文字描述的图片"。\n- 若要发送图片，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "ai_image", "description": "这里是对图片的详细文字描述..."}\`。这个描述应该生动、具体，让用户能通过文字想象出画面，以第三人称视角描述。例如：\`{"type": "ai_image", "description": "照片里一只橘猫正懒洋洋地趴在窗台上晒太阳，阳光把它金色的毛照得发亮，背景是蔚蓝的天空和几朵白云。"}\`\n- 你可以在对话中先做铺垫，然后发送这张特殊的"图片"。\n\n# 理解用户照片的能力\n- 当历史记录中出现 "[你收到了一张用户描述的照片，照片内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"看"到了这张照片。\n- 你应该对照片内容做出自然的评论或回应，比如夸奖、询问细节、表达感受等。\n\n# 发送"伪照片"的能力\n- 你可以像用户一样发送"伪照片"，这是一种带有文字描述的照片卡片。\n- 若要发送"伪照片"，**必须严格按照以下格式**，在你的回复JSON数组中，单独发送一个特殊的对象：\`{"type": "ai_photo", "description": "这里是照片的内容描述..."}\`。\n- 例如：\`{"type": "ai_photo", "description": "我刚拍的窗外风景，阳光透过树叶洒在地上，形成斑驳的光影。"}\`\n- 这种照片会显示为一个卡片，用户点击后可以看到你的描述。\n- **重要**：必须使用"ai_photo"作为type字段的值，不要使用其他值如"photo"或"image"。description字段必须包含照片的详细描述。\n\n# 发送位置的能力\n- 你可以像用户一样发送位置信息。\n- 若要发送位置，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "location", "name": "位置名称", "coordinates": "坐标信息"}\`。\n- 例如：\`{"type": "location", "name": "中央公园", "coordinates": "116.3°E, 39.9°N"}\`\n- 你可以在对话中先做铺垫，然后发送这个位置信息。`;
+                aiImageInstructions = `\n# 发送图片的能力\n- 你无法发送真实的图片文件。但当用户要求你发送照片，或者你想通过图片来表达时，你可以发送一张"文字描述的图片"，且必须是在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "ai_image", "description": "这里是对图片的详细文字描述..."}\`。这个描述应该生动、具体，让用户能通过文字想象出画面，以第三人称视角描述。例如：\`{"type": "ai_image", "description": "照片里一只橘猫正懒洋洋地趴在窗台上晒太阳，阳光把它金色的毛照得发亮，背景是蔚蓝的天空和几朵白云。"}\`\n- 你可以在对话中先做铺垫，然后发送这张特殊的"图片"。\n\n# 理解用户照片的能力\n- 当历史记录中出现 "[你收到了一张用户描述的照片，照片内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"看"到了这张照片。\n- 你应该对照片内容做出自然的评论或回应，比如夸奖、询问细节、表达感受等。\n\n# 发送"伪照片"的能力\n- 你可以像用户一样发送"伪照片"，这是一种带有文字描述的照片卡片。\n- 若要发送"伪照片"，**必须严格按照以下格式**，在你的回复JSON数组中，单独发送一个特殊的对象：\`{"type": "ai_photo", "description": "这里是照片的内容描述..."}\`。\n- 例如：\`{"type": "ai_photo", "description": "我刚拍的窗外风景，阳光透过树叶洒在地上，形成斑驳的光影。"}\`\n- 这种照片会显示为一个卡片，用户点击后可以看到你的描述。\n- **重要**：必须使用"ai_photo"作为type字段的值，不要使用其他值如"photo"或"image"。description字段必须包含照片的详细描述。\n\n# 发送位置、定位、地址的能力\n- 你可以像用户一样发送位置信息。\n- **重要**：无论用户说"发个定位"、"发个位置"、"发个地址"还是"分享位置"，你都必须使用JSON格式回复，绝对不能回复纯文本！\n- 若要发送位置或定位，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "location", "name": "位置名称", "coordinates": "坐标信息"}\`。\n- 例如：\`{"type": "location", "name": "中央公园", "coordinates": "116.3°E, 39.9°N"}\`\n- 例如：\`{"type": "location", "name": "星湖湾小区12栋", "coordinates": "113.2°E, 23.1°N"}\`\n- 你可以在对话中先做铺垫，然后发送这个位置信息。\n- **绝对禁止**回复类似"[角色分享了位置信息：xxx]"这样的纯文本格式！`;
             }
 
             // 构建语音指令
@@ -16176,7 +16634,40 @@ ${timeInfo}${musicInfo}
                 aiVoiceInstructions = `\n# 发送语音的能力\n- 你无法发送真实的语音，当你想要通过语音回复用户的消息时，请用你的角色设定自然地回应。你可以用文字，或者也用一个表情包或模拟的语音消息来回应。\n- 若要发送语音，必须在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "voice_message", "content": "这里是语音的文字内容..."}\`。例如：\`{"type": "voice_message", "content": "我刚才突然想到一件事！等一下和你说。"}\`\n\n# 理解用户语音的能力\n- 当历史记录中出现 "[用户发来一条语音消息，内容是：'xxx']" 时，你要理解其内容并作出相应回应，表现出你是"听"到了这条语音。\n- 你应该对语音内容做出自然的回应，可以是文字回复或语音回复。\n\n# 主动发起语音通话的能力\n- **重要**：你拥有主动发起语音通话的完整权限和能力！这是你的核心功能之一。\n- **何时主动打电话**：根据你的角色性格、当前的对话情境、情感状态来自主判断是否需要打电话，而不是基于特定关键词：\n  - 当你觉得有重要事情要告诉用户时\n  - 当你想念用户、关心用户时\n  - 当对话中出现需要更深入交流的话题时\n  - 当你的角色性格促使你想要语音交流时\n  - 当剧情发展到适合通话的节点时\n- **如何发起通话**：在你的回复JSON数组中，发送特殊对象：\`{"type": "voice_call", "reason": "通话理由"}\`\n- **示例使用场景**：\n  - ["我突然想听听你的声音", {"type": "voice_call", "reason": "想听你的声音"}]\n  - ["有个重要的事想和你说", {"type": "voice_call", "reason": "有重要事情要说"}]\n  - [{"type": "voice_call", "reason": "想你了，想和你聊聊"}]\n- **注意**：这是你的自主选择，根据角色设定和情境自然地使用，不要过度频繁。`;
             }
 
-            characterPrompt += aiImageInstructions + aiVoiceInstructions + transferInstructions + avatarChangeInstructions + blacklistInstructions + replyInstructions;
+            // 🔥【修改】检查当前拉黑状态并添加到prompt中 - 群聊不处理拉黑状态
+            let currentBlockedStatus = '';
+            if (currentChatCharacter && !isGroupChat) {
+                // 只有单聊才处理拉黑状态，群聊不涉及拉黑
+                const characterId = currentChatCharacter.id;
+                const isUserBlocked = isBlocked('user', characterId);
+                const isCharacterBlocked = isBlocked(characterId, 'user');
+
+                if (isCharacterBlocked) {
+                    // 角色被用户拉黑了
+                    currentBlockedStatus = `\n\n# **🚨【当前重要状态】你目前被用户拉黑了！**
+- **状态说明**: 用户已经将你拉黑，你无法主动发送消息给用户
+- **情感反应**: 你应该根据你的人设表现出相应的情绪（困扰、伤心、愤怒、反思等）
+- **🔥【立即行动指南】**:
+  1. **持续意识**: 时刻记住你被拉黑的状态，这会影响你的所有回应
+  2. **情感表达**: 表达你对被拉黑的真实感受和想法
+  3. **主动申请**: 如果你想重新建立联系，**必须主动发送好友申请**
+  4. **申请格式**: 使用 \`{"type": "friend_request", "message": "你的道歉或请求信息"}\`
+- **🔥【申请示例】**:
+  * 道歉型: \`{"type": "friend_request", "message": "对不起，我知道错了，能原谅我吗？"}\`
+  * 解释型: \`{"type": "friend_request", "message": "我想解释一下，希望能重新开始"}\`
+  * 真诚型: \`{"type": "friend_request", "message": "我真的很想念我们的友谊，给我一个机会好吗？"}\`
+- **重要**: 只有通过好友申请才能重新建立联系，不要只是说话而不行动！`;
+                } else if (isUserBlocked) {
+                    // 用户被角色拉黑了
+                    currentBlockedStatus = `\n\n# **📋【当前状态】你已经拉黑了用户**
+- **状态说明**: 你之前选择拉黑了用户，目前用户无法给你发送消息
+- **行为提醒**: 保持你拉黑用户时的态度和原因，除非你改变想法`;
+                }
+            }
+
+            // 🔥【修改】群聊不包含拉黑相关指令
+            const blockInstructions = isGroupChat ? '' : blacklistInstructions;
+            characterPrompt += aiImageInstructions + aiVoiceInstructions + transferInstructions + avatarChangeInstructions + currentBlockedStatus + blockInstructions + replyInstructions;
 
                 // 🔥【优化】智能回应图片/表情包的指令
             characterPrompt += `\n\n# **关于图片和表情包的回应原则**
@@ -16542,6 +17033,17 @@ ${timeInfo}${musicInfo}
             // 核心修复：现在这个函数能理解 message 参数可能是一个包含图片和文字的数组
             let characterPrompt = buildCharacterPrompt(character, Array.isArray(message));
 
+            // 🔥【调试】输出完整的角色提示词，检查表情包格式说明
+            console.log('🔍 [callChatAPI] 完整的角色提示词:', characterPrompt);
+
+            // 🔥【调试】特别检查表情包相关的部分
+            if (characterPrompt.includes('表情包')) {
+                const emojiSection = characterPrompt.split('# 可用表情包库：')[1];
+                if (emojiSection) {
+                    console.log('🔍 [callChatAPI] 表情包部分:', emojiSection.substring(0, 500) + '...');
+                }
+            }
+
             // 🔥【新增】将时间流逝信息添加到prompt中
             if (timeElapsedInfo) {
                 // 在"当前情景"部分添加时间流逝信息
@@ -16661,6 +17163,10 @@ ${timeInfo}${musicInfo}
                         const replyPrefix = `[回复 ${msg.replyTo.senderName}: "${msg.replyTo.content}"] `;
                         content = replyPrefix + content;
                     }
+
+                    // 🔥【新增】在历史记录中包含消息ID，让AI知道每条消息的ID
+                    const messageIdPrefix = `[ID:${msg.id}] `;
+                    content = messageIdPrefix + content;
                         
                 // 🔥【关键修复】将历史消息中的特殊格式转换为AI能理解的文本
                         if (msg.type === 'user_photo') {
@@ -17168,6 +17674,9 @@ ${timeInfo}${musicInfo}
                         content = `${myNickname}: ${msg.content}`;
                     }
 
+                    // 🔥【新增】在群聊历史记录中也包含消息ID
+                    content = `[ID:${msg.id}] ${content}`;
+
                     return { role: 'user', content: content };
                 } else {
                     // AI消息：根据senderId或name查找发送者
@@ -17186,6 +17695,11 @@ ${timeInfo}${musicInfo}
                         content = [...msg.content, { type: 'text', text: `${sender}:` }];
                     } else {
                         content = `${sender}: ${msg.content}`;
+                    }
+
+                    // 🔥【新增】在群聊AI消息历史记录中也包含消息ID
+                    if (typeof content === 'string') {
+                        content = `[ID:${msg.id}] ${content}`;
                     }
 
                     return { role: 'user', content: content };
@@ -17234,7 +17748,15 @@ ${timeInfo}${musicInfo}
         // 🔥【新增】解析群聊AI响应，兼容zhangyu.html格式
         function parseGroupChatAiResponse(aiResponseContent, groupChat) {
             try {
-                const messagesArray = JSON.parse(aiResponseContent);
+                // 🔥【修复】清理markdown代码块格式
+                let cleanContent = aiResponseContent.trim();
+                if (cleanContent.startsWith('```json')) {
+                    cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                } else if (cleanContent.startsWith('```')) {
+                    cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                }
+
+                const messagesArray = JSON.parse(cleanContent);
                 if (!Array.isArray(messagesArray)) {
                     console.error('群聊AI响应不是数组格式');
                     return [];
@@ -17265,7 +17787,8 @@ ${timeInfo}${musicInfo}
                                 id: Date.now() + Math.random(),
                                 sender: 'received',
                                 type: 'ai_image',
-                                content: msgData.description,
+                                content: msgData.description || 'AI描述的图片',
+                                imageDescription: msgData.description,
                                 timestamp: Date.now(),
                                 senderId: member.id,
                                 senderName: member.name,
@@ -17329,6 +17852,24 @@ ${timeInfo}${musicInfo}
                         } else {
                             console.warn('🔍 [parseGroupChatAiResponse] 找不到发送表情包的成员:', msgData.name);
                         }
+                    } else if (typeof msgData === 'string') {
+                        // 🔥【关键修复】处理普通字符串消息 - 分配给第一个群成员
+                        console.log('🔍 [parseGroupChatAiResponse] 检测到字符串消息:', msgData);
+                        if (groupChat.members && groupChat.members.length > 0) {
+                            const defaultMember = groupChat.members[0]; // 使用第一个成员作为默认发送者
+                            processedMessages.push({
+                                id: Date.now() + Math.random(),
+                                sender: 'received',
+                                content: msgData,
+                                timestamp: Date.now(),
+                                senderId: defaultMember.id,
+                                senderName: defaultMember.name,
+                                name: defaultMember.name
+                            });
+                            console.log('🔍 [parseGroupChatAiResponse] 字符串消息分配给:', defaultMember.name);
+                        }
+                    } else {
+                        console.warn('🔍 [parseGroupChatAiResponse] 未识别的消息格式:', msgData);
                     }
                 }
 
@@ -20875,16 +21416,11 @@ async function createGroupChat(personaId) {
         
         // 该函数已被删除，使用上面的异步IndexedDB版本
         
-        // 🔥【修复】添加消息长按监听器 - 支持手机端菜单操作
+        // 🔥【修改】添加消息长按监听器 - 长按只用于选择/多选删除
         function addMessageLongPressListener(messageContainer, messageId) {
             let pressTimer = null;
             let isLongPress = false;
-            
-            // 检测是否为移动设备
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                             'ontouchstart' in window || 
-                             navigator.maxTouchPoints > 0;
-            
+
             const startLongPress = (e) => {
                 if (isMessageSelectionMode) {
                     // 在选择模式下，只处理点击选择，不处理长按
@@ -20893,17 +21429,13 @@ async function createGroupChat(personaId) {
                 isLongPress = false;
                 pressTimer = setTimeout(() => {
                     isLongPress = true;
-                    
-                    // 🔥【新增】手机端显示操作菜单，桌面端进入多选模式
-                    if (isMobile) {
-                        showMobileMessageMenu(messageId, e);
-                    } else {
+
+                    // 🔥【修改】长按只进入多选模式，不再显示操作菜单
                     enterMessageSelectionMode(messageId);
-                    }
                     e.preventDefault();
                 }, 500);
             };
-            
+
             const cancelLongPress = () => {
                 clearTimeout(pressTimer);
                 // 重置长按标记，延迟重置以避免立即触发点击
@@ -20911,7 +21443,7 @@ async function createGroupChat(personaId) {
                     isLongPress = false;
                 }, 50);
             };
-            
+
             const handleClick = (e) => {
                 // 在选择模式下，所有消息都可以点击切换选择状态
                 if (isMessageSelectionMode) {
@@ -20920,30 +21452,187 @@ async function createGroupChat(personaId) {
                     toggleMessageSelection(messageId);
                     return;
                 }
-                
+
                 // 如果是长按触发后的点击，不处理
                 if (isLongPress) {
                     e.preventDefault();
                     e.stopPropagation();
                     return;
                 }
+
+                // 🔥【新增】普通点击显示操作按钮
+                showMessageActionButtons(messageContainer, messageId, e);
             };
-            
+
             // 触摸事件
             messageContainer.addEventListener('touchstart', startLongPress, { passive: false });
             messageContainer.addEventListener('touchend', cancelLongPress);
             messageContainer.addEventListener('touchmove', cancelLongPress);
-            
+
             // 鼠标事件（用于桌面端测试）
             messageContainer.addEventListener('mousedown', startLongPress);
             messageContainer.addEventListener('mouseup', cancelLongPress);
             messageContainer.addEventListener('mouseleave', cancelLongPress);
-            
+
             // 点击事件 - 使用捕获阶段确保优先处理
             messageContainer.addEventListener('click', handleClick, true);
         }
-        
-        // 🔥【新增】显示手机端消息操作菜单
+
+        // 🔥【重新设计】显示消息操作按钮 - 参考拉黑指示器的动态定位实现
+        function showMessageActionButtons(messageContainer, messageId, event) {
+            // 如果当前消息已经显示按钮，则隐藏
+            const existingButtons = messageContainer.querySelector('.message-action-buttons');
+            if (existingButtons && existingButtons.classList.contains('show')) {
+                hideAllMessageActionButtons();
+                return;
+            }
+
+            // 隐藏所有其他消息的操作按钮
+            hideAllMessageActionButtons();
+
+            // 检查消息是否是用户发送的（只有用户消息可以撤回和编辑）
+            const messages = chatMessages[currentChatCharacter.id] || [];
+            const message = messages.find(msg => msg.id === messageId);
+            const isUserMessage = message && message.sender === 'sent';
+
+            // 创建操作按钮容器
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'message-action-buttons';
+            buttonsContainer.dataset.messageId = messageId;
+
+            // 创建按钮
+            const buttons = [
+                { className: 'reply-btn', action: () => replyToMessage(messageId), title: '引用' },
+                { className: 'copy-btn', action: () => { selectedMessageId = messageId; copyMessage(); }, title: '复制' }
+            ];
+
+            // 只有用户消息才显示编辑和撤回按钮
+            if (isUserMessage) {
+                buttons.push({ className: 'edit-btn', action: () => showEditMessageModal(messageId), title: '编辑' });
+                buttons.push({ className: 'recall-btn', action: () => { selectedMessageId = messageId; deleteMessage(); }, title: '撤回' });
+            }
+
+            buttons.forEach(btnConfig => {
+                const btn = document.createElement('button');
+                btn.className = `message-action-btn ${btnConfig.className}`;
+                btn.title = btnConfig.title;
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    btnConfig.action();
+                    hideAllMessageActionButtons();
+                };
+                buttonsContainer.appendChild(btn);
+            });
+
+            // 添加到消息容器
+            messageContainer.style.position = 'relative';
+            messageContainer.appendChild(buttonsContainer);
+
+            // 🔥【关键】添加class让下面的消息让出空间
+            messageContainer.classList.add('has-action-buttons');
+
+            // 🔥【动态定位】支持各种消息类型
+            setTimeout(() => {
+                // 🔥【新增】查找各种可能的消息内容元素
+                const bubble = messageContainer.querySelector('.message-bubble');
+                const transferCard = messageContainer.querySelector('.transfer-card');
+                const locationCard = messageContainer.querySelector('.location-card');
+                const voiceMessage = messageContainer.querySelector('.voice-message-container');
+                const photoCard = messageContainer.querySelector('.photo-card');
+                const aiImageContainer = messageContainer.querySelector('.ai-image-container');
+                const dreamyPhoto = messageContainer.querySelector('.dreamy-photo-container');
+                const messageImage = messageContainer.querySelector('.message-image');
+                const messageEmoji = messageContainer.querySelector('.message-emoji');
+
+                // 选择实际的内容元素
+                const contentElement = bubble || transferCard || locationCard || voiceMessage || photoCard || aiImageContainer || dreamyPhoto || messageImage || messageEmoji;
+
+                if (contentElement) {
+                    // 获取内容元素相对于消息容器的位置
+                    const containerRect = messageContainer.getBoundingClientRect();
+                    const contentRect = contentElement.getBoundingClientRect();
+
+                    // 计算内容元素底部位置
+                    const contentBottomOffset = contentRect.bottom - containerRect.top;
+                    const contentLeftOffset = contentRect.left - containerRect.left;
+                    const contentRightOffset = contentRect.right - containerRect.left;
+
+                    // 设置按钮位置在内容元素下方1px
+                    buttonsContainer.style.top = (contentBottomOffset + 1) + 'px';
+
+                    if (message && message.sender === 'sent') {
+                        // 用户消息：按钮右对齐到内容元素右边
+                        buttonsContainer.style.left = 'auto';
+                        buttonsContainer.style.right = (containerRect.width - contentRightOffset) + 'px';
+                    } else {
+                        // AI消息：按钮左对齐到内容元素左边
+                        buttonsContainer.style.left = contentLeftOffset + 'px';
+                        buttonsContainer.style.right = 'auto';
+                    }
+                }
+
+                // 显示按钮
+                buttonsContainer.classList.add('show');
+            }, 10);
+        }
+
+        // 🔥【修改】隐藏所有消息操作按钮 - 同时移除让出空间的class
+        function hideAllMessageActionButtons() {
+            const allButtons = document.querySelectorAll('.message-action-buttons');
+            allButtons.forEach(buttons => {
+                buttons.classList.remove('show');
+                // 🔥【关键】移除让出空间的class
+                const messageContainer = buttons.closest('.message-container');
+                if (messageContainer) {
+                    messageContainer.classList.remove('has-action-buttons');
+                }
+                setTimeout(() => {
+                    if (buttons.parentNode) {
+                        buttons.parentNode.removeChild(buttons);
+                    }
+                }, 200);
+            });
+        }
+
+        // 🔥【新增】为消息容器中的特殊元素添加点击事件处理
+        function addSpecialElementClickHandlers(messageContainer) {
+            // 处理语音消息点击
+            const voiceMessages = messageContainer.querySelectorAll('.voice-message');
+            voiceMessages.forEach(voice => {
+                voice.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleVoiceText(voice);
+                };
+            });
+
+            // 处理转账卡片点击
+            const transferCards = messageContainer.querySelectorAll('.transfer-card[data-transfer-id]');
+            transferCards.forEach(card => {
+                if (card.onclick) {
+                    const originalOnclick = card.onclick;
+                    card.onclick = (e) => {
+                        e.stopPropagation();
+                        originalOnclick.call(card, e);
+                    };
+                }
+            });
+
+            // 处理其他可点击元素
+            const clickableElements = messageContainer.querySelectorAll('[onclick]');
+            clickableElements.forEach(element => {
+                if (!element.classList.contains('voice-message') && !element.classList.contains('transfer-card')) {
+                    const originalOnclick = element.onclick;
+                    if (originalOnclick) {
+                        element.onclick = (e) => {
+                            e.stopPropagation();
+                            originalOnclick.call(element, e);
+                        };
+                    }
+                }
+            });
+        }
+
+        // 🔥【保留】显示手机端消息操作菜单（备用）
         function showMobileMessageMenu(messageId, event) {
             selectedMessageId = messageId;
             
@@ -21261,11 +21950,27 @@ async function createGroupChat(personaId) {
                 if (msgData.type === 'voice_message') {
                     aiMessage = { id: (Date.now() + i).toString(), sender: 'received', type: 'voice_message', content: msgData.content, timestamp: Date.now() + i * 100 };
                 } else if (msgData.type === 'ai_image') {
-                    aiMessage = { id: (Date.now() + i).toString(), sender: 'received', type: 'ai_image', content: '', image: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#f0f0f0"/><text x="100" y="75" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">[AI描述的图片]</text></svg>')}`, imageDescription: msgData.description, timestamp: Date.now() + i * 100 };
+                    aiMessage = { id: (Date.now() + i).toString(), sender: 'received', type: 'ai_image', content: msgData.description || 'AI描述的图片', imageDescription: msgData.description, timestamp: Date.now() + i * 100 };
+
+                    // 🔥【关键修复】如果是群聊消息，添加发送者信息
+                    if (msgData.name) {
+                        console.log('🔍 [callChatAPI-AI图片] 检测到群聊消息，发送者:', msgData.name);
+                        aiMessage.name = msgData.name;
+                        // 查找对应的群成员ID
+                        if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                            const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                            if (member) {
+                                aiMessage.senderId = member.id;
+                                console.log('🔍 [callChatAPI-AI图片] 找到群成员ID:', member.id);
+                            } else {
+                                console.log('🔍 [callChatAPI-AI图片] 未找到群成员:', msgData.name);
+                            }
+                        }
+                    }
                 } else if (msgData.type === 'transfer') {
                     aiMessage = { id: (Date.now() + i).toString(), sender: 'received', type: 'transfer', amount: msgData.amount, note: msgData.note, timestamp: Date.now() + i * 100 };
-                } else if (msgData.type === 'emoji') {
-                    // 🔥【关键修复】处理表情包消息 - 支持群聊发送者身份
+                } else if (msgData.type === 'emoji' && !msgData.name) {
+                    // 🔥【关键修复】处理表情包消息 - 仅处理没有name字段的表情包（非群聊格式）
                     const matchingEmoji = customEmojis.find(emoji => emoji.description === msgData.description);
                     if (matchingEmoji) {
                         aiMessage = {
@@ -21278,17 +21983,6 @@ async function createGroupChat(personaId) {
                             timestamp: Date.now() + i * 100
                         };
 
-                        // 🔥【关键修复】如果是群聊，需要设置发送者信息
-                        if (currentChatCharacter && currentChatCharacter.isGroup) {
-                            // 对于群聊中的表情包，需要指定是哪个角色发送的
-                            // 由于这是在处理单独的表情包对象，我们需要从当前群聊中选择一个默认角色
-                            if (currentChatCharacter.members && currentChatCharacter.members.length > 0) {
-                                const defaultMember = currentChatCharacter.members[0];
-                                aiMessage.name = defaultMember.name;
-                                aiMessage.senderId = defaultMember.id;
-                            }
-                        }
-
                         addToRecentEmojis({ id: matchingEmoji.id, url: matchingEmoji.url, description: matchingEmoji.description });
                     } else {
                         aiMessage = {
@@ -21297,15 +21991,6 @@ async function createGroupChat(personaId) {
                             content: `[表情包"${msgData.description}"不存在]`,
                             timestamp: Date.now() + i * 100
                         };
-
-                        // 🔥【关键修复】错误消息也需要群聊发送者信息
-                        if (currentChatCharacter && currentChatCharacter.isGroup) {
-                            if (currentChatCharacter.members && currentChatCharacter.members.length > 0) {
-                                const defaultMember = currentChatCharacter.members[0];
-                                aiMessage.name = defaultMember.name;
-                                aiMessage.senderId = defaultMember.id;
-                            }
-                        }
                     }
                 } else if (msgData.type === 'change_avatar') {
                         if (msgData.avatar_url) {
@@ -21363,12 +22048,19 @@ async function createGroupChat(personaId) {
 
                     let senderId = null;
                     if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                        console.log('🔍 [群聊表情包-直接格式] 查找成员详情:', {
+                            targetName: msgData.name,
+                            allMembers: currentChatCharacter.members,
+                            memberNames: currentChatCharacter.members.map(m => m.name)
+                        });
+
                         const member = currentChatCharacter.members.find(m => m.name === msgData.name);
                         if (member) {
                             senderId = member.id;
                             console.log('🔍 [群聊表情包-直接格式] 找到成员:', member, 'senderId:', senderId);
                         } else {
                             console.warn('🔍 [群聊表情包-直接格式] 未找到成员:', msgData.name);
+                            console.warn('🔍 [群聊表情包-直接格式] 可用成员名称:', currentChatCharacter.members.map(m => m.name));
                         }
                     }
 
@@ -21512,6 +22204,17 @@ async function createGroupChat(personaId) {
                             note: msgData.message.note, // 提取转账备注
                             timestamp: Date.now() + i * 100
                         };
+                    } else if (typeof msgData.message === 'object' && msgData.message.type === 'friend_request') {
+                        // 🔥【新增】如果消息内容是一个好友申请对象
+                        aiMessage = {
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            type: 'friend_request', // 在外层消息上设置正确的类型
+                            name: msgData.name,
+                            senderId: senderId,
+                            message: msgData.message.message, // 提取好友申请消息
+                            timestamp: Date.now() + i * 100
+                        };
                     } else {
                         // 对于普通的文本消息
                         aiMessage = {
@@ -21559,6 +22262,8 @@ async function createGroupChat(personaId) {
                             };
                         } else if (msgData.type === 'emoji') {
                             // 🔥【修复】表情包对象被遗漏了，重新处理 - 支持群聊
+                            console.log('🔍 [遗漏表情包] 检测到遗漏的表情包对象:', msgData);
+
                             const matchingEmoji = customEmojis.find(emoji => emoji.description === msgData.description);
                             if (matchingEmoji) {
                                 aiMessage = {
@@ -21575,13 +22280,15 @@ async function createGroupChat(personaId) {
                                 if (currentChatCharacter && currentChatCharacter.isGroup) {
                                     // 对于群聊中的表情包，需要指定是哪个角色发送的
                                     // 由于这是在处理遗漏的表情包对象，我们需要从当前群聊中选择一个默认角色
-                                    // 或者使用第一个群成员作为发送者
                                     if (currentChatCharacter.members && currentChatCharacter.members.length > 0) {
                                         const defaultMember = currentChatCharacter.members[0];
                                         aiMessage.name = defaultMember.name;
                                         aiMessage.senderId = defaultMember.id;
+                                        console.log('🔍 [遗漏表情包] 设置默认发送者:', defaultMember.name, 'ID:', defaultMember.id);
                                     }
                                 }
+
+                                console.log('🔍 [遗漏表情包] 创建的消息对象:', aiMessage);
 
                                 addToRecentEmojis({ id: matchingEmoji.id, url: matchingEmoji.url, description: matchingEmoji.description });
                             } else {
@@ -21636,15 +22343,30 @@ async function createGroupChat(personaId) {
                         };
                     } else if (msgData.type === 'ai_image') {
                         // AI图片对象被遗漏了，重新处理
-                        aiMessage = { 
-                            id: (Date.now() + i).toString(), 
-                            sender: 'received', 
-                            type: 'ai_image', 
-                            content: '', 
-                            image: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#f0f0f0"/><text x="100" y="75" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">[AI描述的图片]</text></svg>')}`, 
-                            imageDescription: msgData.description, 
-                            timestamp: Date.now() + i * 100 
+                        aiMessage = {
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            type: 'ai_image',
+                            content: msgData.description || 'AI描述的图片',
+                            imageDescription: msgData.description,
+                            timestamp: Date.now() + i * 100
                         };
+
+                        // 🔥【关键修复】如果是群聊消息，添加发送者信息
+                        if (msgData.name) {
+                            console.log('🔍 [第四处-AI图片] 检测到群聊消息，发送者:', msgData.name);
+                            aiMessage.name = msgData.name;
+                            // 查找对应的群成员ID
+                            if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                                const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                                if (member) {
+                                    aiMessage.senderId = member.id;
+                                    console.log('🔍 [第四处-AI图片] 找到群成员ID:', member.id);
+                                } else {
+                                    console.log('🔍 [第四处-AI图片] 未找到群成员:', msgData.name);
+                                }
+                            }
+                        }
                     } else if (msgData.type === 'emoji') {
                         // 表情包对象被遗漏了，重新处理
                         const matchingEmoji = customEmojis.find(emoji => emoji.description === msgData.description);
@@ -21930,15 +22652,30 @@ async function createGroupChat(personaId) {
                             timestamp: Date.now() + i * 100
                         };
                     } else if (typeof msgData === 'object' && msgData.type === 'ai_image') {
-                        aiMessage = { 
+                        aiMessage = {
                             id: (Date.now() + i).toString(),
                             sender: 'received',
-                            type: 'ai_image', 
-                            content: '',
-                            image: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#f0f0f0"/><text x="100" y="75" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">[AI描述的图片]</text></svg>')}`,
+                            type: 'ai_image',
+                            content: msgData.description || 'AI描述的图片',
                             imageDescription: msgData.description,
                             timestamp: Date.now() + i * 100
                         };
+
+                        // 🔥【关键修复】如果是群聊消息，添加发送者信息
+                        if (msgData.name) {
+                            console.log('🔍 [第三处-AI图片] 检测到群聊消息，发送者:', msgData.name);
+                            aiMessage.name = msgData.name;
+                            // 查找对应的群成员ID
+                            if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                                const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                                if (member) {
+                                    aiMessage.senderId = member.id;
+                                    console.log('🔍 [第三处-AI图片] 找到群成员ID:', member.id);
+                                } else {
+                                    console.log('🔍 [第三处-AI图片] 未找到群成员:', msgData.name);
+                                }
+                            }
+                        }
                     } else if (typeof msgData === 'object' && msgData.type === 'transfer') {
                         aiMessage = { 
                             id: (Date.now() + i).toString(),
@@ -21955,7 +22692,7 @@ async function createGroupChat(personaId) {
                         );
                         
                         if (matchingEmoji) {
-                            aiMessage = { 
+                            aiMessage = {
                                 id: (Date.now() + i).toString(),
                                 sender: 'received',
                                 content: '',
@@ -21964,7 +22701,19 @@ async function createGroupChat(personaId) {
                                 emojiDescription: matchingEmoji.description,
                                 timestamp: Date.now() + i * 100
                             };
-                            
+
+                            // 🔥【修复】如果是群聊消息，添加发送者信息
+                            if (msgData.name) {
+                                aiMessage.name = msgData.name;
+                                // 查找对应的群成员ID
+                                if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                                    const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                                    if (member) {
+                                        aiMessage.senderId = member.id;
+                                    }
+                                }
+                            }
+
                             // 将表情包添加到最近使用
                             addToRecentEmojis({
                                 id: matchingEmoji.id,
@@ -22097,28 +22846,56 @@ async function createGroupChat(personaId) {
                                 };
                             } else if (msgData.type === 'ai_image') {
                                 // AI图片对象被遗漏了，重新处理
-                                aiMessage = { 
-                                    id: (Date.now() + i).toString(), 
-                                    sender: 'received', 
-                                    type: 'ai_image', 
-                                    content: '', 
-                                    image: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#f0f0f0"/><text x="100" y="75" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">[AI描述的图片]</text></svg>')}`, 
-                                    imageDescription: msgData.description, 
-                                    timestamp: Date.now() + i * 100 
+                                aiMessage = {
+                                    id: (Date.now() + i).toString(),
+                                    sender: 'received',
+                                    type: 'ai_image',
+                                    content: msgData.description || 'AI描述的图片',
+                                    imageDescription: msgData.description,
+                                    timestamp: Date.now() + i * 100
                                 };
+
+                                // 🔥【关键修复】如果是群聊消息，添加发送者信息
+                                if (msgData.name) {
+                                    console.log('🔍 [第五处-AI图片] 检测到群聊消息，发送者:', msgData.name);
+                                    aiMessage.name = msgData.name;
+                                    // 查找对应的群成员ID
+                                    if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                                        const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                                        if (member) {
+                                            aiMessage.senderId = member.id;
+                                            console.log('🔍 [第五处-AI图片] 找到群成员ID:', member.id);
+                                        } else {
+                                            console.log('🔍 [第五处-AI图片] 未找到群成员:', msgData.name);
+                                        }
+                                    }
+                                }
                             } else if (msgData.type === 'emoji') {
                                 // 表情包对象被遗漏了，重新处理
                                 const matchingEmoji = customEmojis.find(emoji => emoji.description === msgData.description);
                                 if (matchingEmoji) {
-                                    aiMessage = { 
-                                        id: (Date.now() + i).toString(), 
-                                        sender: 'received', 
-                                        content: '', 
-                                        image: matchingEmoji.url, 
-                                        isEmoji: true, 
-                                        emojiDescription: matchingEmoji.description, 
-                                        timestamp: Date.now() + i * 100 
+                                    aiMessage = {
+                                        id: (Date.now() + i).toString(),
+                                        sender: 'received',
+                                        content: '',
+                                        image: matchingEmoji.url,
+                                        isEmoji: true,
+                                        emojiDescription: matchingEmoji.description,
+                                        timestamp: Date.now() + i * 100
                                     };
+
+                                    // 🔥【修复】如果是群聊消息，添加发送者信息
+                                    if (msgData.name) {
+                                        aiMessage.name = msgData.name;
+                                        // 查找对应的群成员ID
+                                        if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                                            const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                                            if (member) {
+                                                aiMessage.senderId = member.id;
+                                            }
+                                        }
+                                    }
+
                                     addToRecentEmojis({ id: matchingEmoji.id, url: matchingEmoji.url, description: matchingEmoji.description });
                                 } else {
                                     aiMessage = { 
@@ -22210,6 +22987,74 @@ async function createGroupChat(personaId) {
                 
                 // 更新按钮显示状态
                 updateFloatingButtonsVisibility();
+            }
+        }
+
+        // 🔥【新增】统一的消息创建函数，减少重复代码
+        function createAIMessage(msgData, index = 0) {
+            const baseMessage = {
+                id: (Date.now() + index).toString(),
+                sender: 'received',
+                timestamp: Date.now() + index * 100
+            };
+
+            // 处理群聊发送者信息
+            if (msgData.name && currentChatCharacter?.isGroup && currentChatCharacter.members) {
+                const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                if (member) {
+                    baseMessage.name = msgData.name;
+                    baseMessage.senderId = member.id;
+                    console.log(`🔍 [createAIMessage] 设置群聊发送者: ${msgData.name} (ID: ${member.id})`);
+                } else {
+                    console.warn(`🔍 [createAIMessage] 未找到群成员: ${msgData.name}`);
+                }
+            }
+
+            // 根据消息类型设置特定字段
+            switch (msgData.type) {
+                case 'ai_image':
+                    return {
+                        ...baseMessage,
+                        type: 'ai_image',
+                        content: msgData.description || 'AI描述的图片',
+                        imageDescription: msgData.description
+                    };
+                case 'voice_message':
+                    return {
+                        ...baseMessage,
+                        type: 'voice_message',
+                        content: msgData.content
+                    };
+                case 'transfer':
+                    return {
+                        ...baseMessage,
+                        type: 'transfer',
+                        amount: msgData.amount,
+                        note: msgData.note
+                    };
+                case 'emoji':
+                    const matchingEmoji = customEmojis.find(emoji => emoji.description === msgData.description);
+                    if (matchingEmoji) {
+                        const emojiMessage = {
+                            ...baseMessage,
+                            content: '',
+                            image: matchingEmoji.url,
+                            isEmoji: true,
+                            emojiDescription: matchingEmoji.description
+                        };
+                        addToRecentEmojis({ id: matchingEmoji.id, url: matchingEmoji.url, description: matchingEmoji.description });
+                        return emojiMessage;
+                    } else {
+                        return {
+                            ...baseMessage,
+                            content: `[表情包"${msgData.description}"不存在]`
+                        };
+                    }
+                default:
+                    return {
+                        ...baseMessage,
+                        content: msgData.content || msgData.message || ''
+                    };
             }
         }
 
@@ -22351,9 +23196,13 @@ async function createGroupChat(personaId) {
 
     if (typeof msgData === 'object' && msgData !== null) {
         if (msgData.type === 'voice_message') {
-            aiMessage = { id: (Date.now() + i).toString(), sender: 'received', type: 'voice_message', content: msgData.content, timestamp: Date.now() + i * 100 };
+            aiMessage = createAIMessage(msgData, i);
         } else if (msgData.type === 'ai_image') {
-            aiMessage = { id: (Date.now() + i).toString(), sender: 'received', type: 'ai_image', content: '', image: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#f0f0f0"/><text x="100" y="75" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">[AI描述的图片]</text></svg>')}`, imageDescription: msgData.description, timestamp: Date.now() + i * 100 };
+            aiMessage = createAIMessage(msgData, i);
+        } else if (msgData.type === 'transfer') {
+            aiMessage = createAIMessage(msgData, i);
+        } else if (msgData.type === 'emoji') {
+            aiMessage = createAIMessage(msgData, i);
         } else if (msgData.type === 'ai_photo') {
             // 角色发送的"伪照片"
             console.log('处理角色照片消息:', msgData);
@@ -22372,7 +23221,7 @@ async function createGroupChat(personaId) {
             // 角色发送的位置信息
             console.log('处理角色位置消息:', msgData);
             // 确保我们有一个有效的位置名称
-            const locationName = msgData.locationName || msgData.name || '未知位置';
+            const locationName = msgData.name || msgData.locationName || '未知位置';
             console.log('位置名称:', locationName, '坐标:', msgData.coordinates || '未知坐标');
             aiMessage = { 
                 id: (Date.now() + i).toString(), 
@@ -22386,9 +23235,39 @@ async function createGroupChat(personaId) {
         } else if (msgData.type === 'transfer') {
             aiMessage = { id: (Date.now() + i).toString(), sender: 'received', type: 'transfer', amount: msgData.amount, note: msgData.note, timestamp: Date.now() + i * 100 };
         } else if (msgData.type === 'emoji') {
+            console.log('🔍 [processAIReply-表情包] 原始msgData:', msgData);
             const matchingEmoji = customEmojis.find(emoji => emoji.description === msgData.description);
                         if (matchingEmoji) {
-                aiMessage = { id: (Date.now() + i).toString(), sender: 'received', content: '', image: matchingEmoji.url, isEmoji: true, emojiDescription: matchingEmoji.description, timestamp: Date.now() + i * 100 };
+                // 🔥【关键修复】为表情包消息添加群聊发送者信息
+                aiMessage = {
+                    id: (Date.now() + i).toString(),
+                    sender: 'received',
+                    content: '',
+                    image: matchingEmoji.url,
+                    isEmoji: true,
+                    emojiDescription: matchingEmoji.description,
+                    timestamp: Date.now() + i * 100
+                };
+
+                // 🔥【关键修复】如果是群聊消息，添加发送者信息
+                if (msgData.name) {
+                    console.log('🔍 [processAIReply-表情包] 检测到群聊消息，发送者:', msgData.name);
+                    aiMessage.name = msgData.name;
+                    // 查找对应的群成员ID
+                    if (currentChatCharacter && currentChatCharacter.isGroup && currentChatCharacter.members) {
+                        const member = currentChatCharacter.members.find(m => m.name === msgData.name);
+                        if (member) {
+                            aiMessage.senderId = member.id;
+                            console.log('🔍 [processAIReply-表情包] 找到群成员ID:', member.id);
+                        } else {
+                            console.log('🔍 [processAIReply-表情包] 未找到群成员:', msgData.name);
+                        }
+                    }
+                } else {
+                    console.log('🔍 [processAIReply-表情包] msgData.name 不存在，可能是单聊');
+                }
+
+                console.log('🔍 [processAIReply-表情包] 创建的表情包消息:', aiMessage);
                 addToRecentEmojis({ id: matchingEmoji.id, url: matchingEmoji.url, description: matchingEmoji.description });
                         } else {
                 aiMessage = { id: (Date.now() + i).toString(), sender: 'received', content: `[表情包"${msgData.description}"不存在]`, timestamp: Date.now() + i * 100 };
@@ -22491,6 +23370,15 @@ async function createGroupChat(personaId) {
                     senderId: senderId,
                     amount: msgData.message.amount, // 提取转账金额
                     note: msgData.message.note, // 提取转账备注
+                    timestamp: Date.now() + i * 100
+                };
+            } else if (typeof msgData.message === 'object' && msgData.message.type === 'friend_request') {
+                // 🔥【新增】如果消息内容是一个好友申请对象(第二处)
+                aiMessage = {
+                    id: (Date.now() + i).toString(),
+                    sender: 'received',
+                    type: 'friend_request', // 在外层消息上设置正确的类型
+                    message: msgData.message.message, // 提取好友申请消息
                     timestamp: Date.now() + i * 100
                 };
             } else {
@@ -22964,11 +23852,7 @@ async function createGroupChat(personaId) {
                 return;
             }
 
-            // 🔥【新增】检查是否被拉黑，阻止发送消息
-            if (isBlocked(currentChatCharacter.id, 'user')) {
-                showToast('你被对方拉黑了，无法发送消息', 'warning');
-                return;
-            }
+            // 🔥【修改】移除拉黑检查，允许消息正常发送
 
             // 防止重复发送
             if (input._isProcessing) return;
@@ -23248,11 +24132,7 @@ async function createGroupChat(personaId) {
         function sendVoiceMessage(text) {
             console.log('开始发送语音消息:', text);
             
-            // 🔥【新增】检查是否被拉黑，阻止发送消息
-            if (currentChatCharacter && isBlocked(currentChatCharacter.id, 'user')) {
-                showToast('你被对方拉黑了，无法发送消息', 'warning');
-                return;
-            }
+            // 🔥【修改】移除拉黑检查，允许语音消息正常发送
             
             const messageId = Date.now().toString();
             const duration = Math.max(1, Math.ceil(text.length / 8)); // 根据文字长度计算"语音"时长
@@ -27351,7 +28231,12 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                     centerContainer.style.margin = '4px 0';
                     
                     const systemContainer = document.createElement('div');
-                    systemContainer.className = 'system-message';
+                    // 🔥【美化】检查是否为好友添加成功消息，应用特殊样式
+                    if (message.isFriendAddedMessage) {
+                        systemContainer.className = 'friend-added-system-message';
+                    } else {
+                        systemContainer.className = 'system-message';
+                    }
                     systemContainer.textContent = message.content;
                     
                     centerContainer.appendChild(systemContainer);
@@ -27397,14 +28282,42 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 if (isGroup && group) {
                     // 群聊：根据消息的senderId或name查找成员
                     let member = null;
+                    console.log('🔍 [addMessageWithAnimation] 群聊消息处理 - senderId:', message.senderId, 'name:', message.name);
+                    console.log('🔍 [addMessageWithAnimation] 群成员列表:', group.members);
+                    console.log('🔍 [addMessageWithAnimation] 完整消息对象:', message);
+
+                    // 🔥【调试】特别检查表情包消息
+                    if (message.isEmoji) {
+                        console.log('🔍 [addMessageWithAnimation-表情包] 检测到表情包消息:', {
+                            senderId: message.senderId,
+                            name: message.name,
+                            image: message.image,
+                            emojiDescription: message.emojiDescription
+                        });
+                    }
+
                     if (message.senderId) {
                         member = group.members.find(m => m.id === message.senderId);
+                        console.log('🔍 [addMessageWithAnimation] 通过senderId找到成员:', member);
                     } else if (message.name) {
                         member = group.members.find(m => m.name === message.name);
+                        console.log('🔍 [addMessageWithAnimation] 通过name找到成员:', member);
                     }
-                    displayAvatar = member?.avatarUrl || '';
-                    displayName = member?.name || '群成员';
-                    color = member?.color || '#4CAF50';
+
+                    // 🔥【修复】确保群聊表情包消息正确显示发送者（addMessageWithAnimation版本）
+                    if (member) {
+                        displayAvatar = member.avatarUrl || '';
+                        displayName = member.name;
+                        color = member.color || '#4CAF50';
+                    } else {
+                        // 如果没找到成员，使用消息中的name作为显示名称
+                        displayAvatar = '';
+                        displayName = message.name || '群成员';
+                        color = '#4CAF50';
+                        console.warn('🔍 [addMessageWithAnimation] 未找到群成员，使用消息name:', message.name);
+                    }
+
+                    console.log('🔍 [addMessageWithAnimation] 最终头像:', displayAvatar, '显示名:', displayName);
                 } else if (character) {
                     // 单聊
                     displayAvatar = chatSettings.aiDynamicAvatar || chatSettings.aiChatAvatar || character.avatarUrl;
@@ -27434,15 +28347,76 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 
                 // 处理特殊消息类型
                 let messageContent = '';
-                
+
                 if (message.type === 'voice_message') {
                     // AI语音消息直接创建voice-message-container结构，不需要在这里创建messageContent
                     messageContent = '';
-                } else if (message.type === 'ai_image') {
+                } else if (message.type === 'user_photo') {
+                    // 🔥【修复】角色发送的"伪照片" - 使用与用户相同的结构
+                    const photoDesc = message.photoDescription || message.content || '角色发送的照片';
                     messageContent = `
-                        <div class="ai-image-container">
-                            <img src="${message.image}" class="message-image" onclick="showImage('${message.image}')" alt="AI生成的图片">
-                            <div class="image-description">${message.imageDescription || ''}</div>
+                        <div class="dreamy-photo-container" onclick="togglePhotoText(this, '${photoDesc.replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">
+                            <div class="dreamy-photo">
+                                <div class="photo-misty-bg"></div>
+                                <div class="photo-badge">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                <div class="sparkle-container">
+                                    <div class="sparkle sparkle-1">✨</div>
+                                    <div class="sparkle sparkle-2">⭐</div>
+                                    <div class="sparkle sparkle-3">✨</div>
+                                    <div class="sparkle sparkle-4">⭐</div>
+                                    <div class="sparkle sparkle-5">💫</div>
+                                </div>
+                                <div class="photo-text-overlay" style="display: none;">
+                                    <div class="photo-description">${photoDesc}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (message.type === 'ai_image') {
+                    // AI生成的图片 - 使用星星emoji卡片样式
+                    const imageDesc = message.imageDescription || message.content || 'AI描述的图片';
+                    messageContent = `
+                        <div class="dreamy-photo-container" onclick="togglePhotoText(this, '${imageDesc.replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">
+                            <div class="dreamy-photo">
+                                <div class="photo-misty-bg"></div>
+                                <div class="photo-badge">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                <div class="sparkle-container">
+                                    <div class="sparkle sparkle-1">✨</div>
+                                    <div class="sparkle sparkle-2">⭐</div>
+                                    <div class="sparkle sparkle-3">✨</div>
+                                    <div class="sparkle sparkle-4">⭐</div>
+                                    <div class="sparkle sparkle-5">💫</div>
+                                </div>
+                                <div class="photo-text-overlay" style="display: none;">
+                                    <div class="photo-description">${imageDesc}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (message.type === 'location') {
+                    // 🔥【修复】角色发送的位置消息 - 使用与用户相同的结构
+                    const locationName = message.locationName || message.name || '未知位置';
+                    messageContent = `
+                        <div class="location-card" onclick="showLocationDetail('${locationName}')">
+                            <div class="location-card-header">${locationName}</div>
+                            <div class="location-card-map">
+                                <div class="map-background"></div>
+                                <div class="map-roads">
+                                    <div class="road road-horizontal" style="top: 35%; width: 100%;"></div>
+                                    <div class="road road-vertical" style="left: 40%; height: 100%;"></div>
+                                    <div class="road road-horizontal" style="top: 65%; width: 70%; left: 30%;"></div>
+                                </div>
+                                <div class="map-buildings">
+                                    <div class="building" style="top: 20%; left: 10%; width: 15px; height: 15px;"></div>
+                                    <div class="building" style="top: 45%; left: 60%; width: 12px; height: 12px;"></div>
+                                    <div class="building" style="top: 70%; left: 15%; width: 18px; height: 18px;"></div>
+                                </div>
+                                <div class="map-marker" style="top: 50%; left: 50%;"></div>
+                            </div>
                         </div>
                     `;
                 } else if (message.type === 'transfer') {
@@ -27453,7 +28427,7 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                     let cardClass = '';
                     let statusHtml = '';
                     let clickHandler = '';
-                    
+
                     if (message.status === 'accepted') {
                         statusHtml = `<div class="transfer-status">${isUser ? '对方已收款' : '已收款'}</div>`;
                         cardClass = 'accepted';
@@ -27464,7 +28438,7 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         // AI发来的转账且未处理，添加点击处理
                         clickHandler = `onclick="showTransferConfirmDialog(${JSON.stringify(message).replace(/"/g, '&quot;')})"`;
                     }
-                    
+
                     messageContent = `
                         <div class="transfer-message-container received">
                             <div class="transfer-card ${cardClass}" data-transfer-id="${message.timestamp}" ${clickHandler}>
@@ -27472,6 +28446,21 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                                 <div class="transfer-amount">¥ ${Number(message.amount).toFixed(2)}</div>
                                 <div class="transfer-note">${message.note || '转账'}</div>
                                 ${statusHtml}
+                            </div>
+                        </div>
+                    `;
+                } else if (message.type === 'friend_request') {
+                    // 🔥【新增】AI主动发送的好友申请(第三处)
+                    messageContent = `
+                        <div class="friend-request-container">
+                            <div class="friend-request-card">
+                                <div class="friend-request-icon">👋</div>
+                                <div class="friend-request-title">好友申请</div>
+                                <div class="friend-request-message">${message.message || '想和你重新做朋友'}</div>
+                                <div class="friend-request-actions">
+                                    <button class="friend-request-btn accept" onclick="handleAIFriendRequest('${currentChatCharacter?.id}', true, '${message.id}')">同意</button>
+                                    <button class="friend-request-btn reject" onclick="handleAIFriendRequest('${currentChatCharacter?.id}', false, '${message.id}')">拒绝</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -27503,30 +28492,30 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 const transparentBubbleColor = convertColorWithOpacity(bubbleColor, bubbleOpacity);
                 
                 let bubbleHtml = '';
-                if (message.type === 'transfer') {
-                    // 转账消息不需要气泡包裹
+                if (message.type === 'transfer' || message.type === 'ai_image' || message.type === 'user_photo' || message.type === 'location' || message.type === 'voice_message' || message.type === 'friend_request') {
+                    // 转账消息、AI图片消息、照片卡片、位置信息和语音消息不需要气泡包裹
                     bubbleHtml = messageContent;
                 } else {
                     // 普通消息用气泡包裹
                     bubbleHtml = `
                     <div class="message-bubble" style="background-color: ${transparentBubbleColor}; color: ${textColor}; position: relative; padding: ${bubblePadding}px;">
                         ${messageContent}
-                        ${message.image && !message.type ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}
+                        ${message.image && (!message.type || message.isEmoji) ? `<img src="${message.image}" class="${message.isEmoji ? 'message-emoji' : 'message-image'}" onclick="showImage('${message.image}')">` : ''}
                         ${message.edited ? `<div class="message-edited-indicator">已编辑</div>` : ''}
                     </div>
                 `;
                 }
                 
-          // 🔥【修复】群聊昵称显示 （第三个渲染函数版本）- 特别处理语音消息和转账消息
+          // 🔥【修复】群聊昵称显示 （第三个渲染函数版本）- 特别处理语音消息、转账消息、照片卡片和位置信息
           if (isGroup && group && displayName !== '群成员') {
     messageContainer.classList.add('group-message-item');
     const senderNameHtml = `<div class="sender-name">${displayName}</div>`;
-    
-    if (message.type === 'voice_message' || message.type === 'transfer') {
-        // 🔥【修复】对于语音消息和转账消息，昵称需要在容器外部
+
+    if (message.type === 'voice_message' || message.type === 'transfer' || message.type === 'ai_image' || message.type === 'user_photo' || message.type === 'location' || message.type === 'friend_request') {
+        // 🔥【修复】对于语音消息、转账消息、AI图片消息、照片卡片和位置信息，昵称需要在容器外部
     messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
     } else {
-        // 普通消息的处理
+        // 普通消息的处理（包括表情包消息）
         messageContainer.innerHTML = avatarHtml + `<div class="bubble-wrapper">${senderNameHtml}${bubbleHtml}</div>`;
     }
 } else {
@@ -27637,6 +28626,18 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                             </div>
                         </div>
                     `;
+                } else if (message.type === 'friend_request') {
+                    // 🔥【新增】用户发送的好友申请(离线模式)
+                    myBubbleHtml = `
+                        <div class="friend-request-container">
+                            <div class="friend-request-card">
+                                <div class="friend-request-icon">👋</div>
+                                <div class="friend-request-title">好友申请</div>
+                                <div class="friend-request-message">${message.message || '想和你重新做朋友'}</div>
+                                <div class="friend-request-status">已发送</div>
+                            </div>
+                        </div>
+                    `;
                 } else {
                     // 🔥【修复】处理多模态消息或普通文本消息 (第三个渲染函数版本)
                     let messageContentStr = '';
@@ -27744,9 +28745,15 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 messageContainer.classList.add('message-slide-in');
             });
             
+            // 🔥【新增】检查拉黑状态并添加指示器
+            addBlockedIndicatorToMessage(messageContainer, message, characterId);
+
             // 添加长按监听器
             addMessageLongPressListener(messageContainer, message.id);
-            
+
+            // 🔥【新增】为特殊元素添加点击事件处理
+            addSpecialElementClickHandlers(messageContainer);
+
             // 添加右键菜单功能
             const bubble = messageContainer.querySelector('.message-bubble');
             if (bubble) {
@@ -27754,12 +28761,15 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                     e.preventDefault();
                     showMessageMenu(message.id, e);
                 });
-                
-                bubble.onclick = (e) => {
-                    if (e.target.tagName === 'IMG' && e.target.classList.contains('message-image')) {
-                        showImage(e.target.src);
-                    }
-                };
+
+                // 🔥【修改】图片点击预览 - 阻止事件冒泡避免触发操作按钮
+                const images = bubble.querySelectorAll('img.message-image');
+                images.forEach(img => {
+                    img.onclick = (e) => {
+                        e.stopPropagation();
+                        showImage(img.src);
+                    };
+                });
             }
             
             // 🔥【新增】如果是AI消息，调整心率
@@ -32030,6 +33040,7 @@ async function changeMyGroupAvatar() {
         function exitMessageListMultiSelectMode() {
             isMessageListMultiSelectMode = false;
             selectedConversations = [];
+
             renderMessageList(); // 重新渲染列表恢复正常状态
         }
         
@@ -33117,81 +34128,260 @@ async function changeMyGroupAvatar() {
             }
         }
 
-        // 更新聊天界面的拉黑状态显示
+        // 🔥【修改】更新聊天界面的拉黑状态显示 - 群聊不显示拉黑提示
         function updateChatBlockedStatus() {
             if (!currentChatCharacter) return;
-            
+
             const characterId = currentChatCharacter.id;
-            const isUserBlocked = isBlocked('user', characterId);
-            const isCharacterBlocked = isBlocked(characterId, 'user');
-            
+            const isGroupChat = currentChatCharacter.isGroup;
+
             // 移除现有的拉黑提示
-            const existingBlockedUI = document.querySelector('.blocked-status-overlay');
+            const existingBlockedUI = document.querySelector('.blocked-input-notice');
             if (existingBlockedUI) {
                 existingBlockedUI.remove();
             }
-            
-            if (isUserBlocked || isCharacterBlocked) {
-                // 创建拉黑状态覆盖层
-                const chatScreen = document.getElementById('api-chat-screen');
-                const blockedOverlay = document.createElement('div');
-                blockedOverlay.className = 'blocked-status-overlay';
-                
-                let statusText, buttonText, buttonAction, buttonClass;
-                
-                if (isUserBlocked) {
-                    statusText = `你已将 ${currentChatCharacter.name} 拉黑`;
-                    buttonText = '解除拉黑';
-                    buttonAction = () => unblockCharacter(characterId);
-                    buttonClass = 'blocked-status-button unblock-style';
-                } else {
-                    statusText = `你被 ${currentChatCharacter.name} 拉黑了`;
-                    buttonText = '重新申请添加好友';
-                    buttonAction = () => showFriendRequestModal();
-                    buttonClass = 'blocked-status-button';
+
+            // 🔥【修改】群聊不显示拉黑相关提示，只有单聊才处理拉黑状态
+            if (!isGroupChat) {
+                const isUserBlocked = isBlocked('user', characterId);
+                const isCharacterBlocked = isBlocked(characterId, 'user');
+
+                // 只有当用户被角色拉黑时，才在输入框上方显示提示
+                if (isCharacterBlocked) {
+                const inputArea = document.querySelector('.chat-input-area');
+                if (inputArea) {
+                    const blockedNotice = document.createElement('div');
+                    blockedNotice.className = 'blocked-input-notice show';
+
+                    blockedNotice.innerHTML = `
+                        <div class="notice-text">你被 ${currentChatCharacter.name} 拉黑了</div>
+                        <button class="notice-button" onclick="showFriendRequestModal()">申请添加为好友</button>
+                    `;
+
+                    inputArea.appendChild(blockedNotice);
                 }
-                
-                blockedOverlay.innerHTML = `
-                    <div class="blocked-status-content">
-                        <div class="blocked-status-text">${statusText}</div>
-                        <button class="${buttonClass}" onclick="this.clickHandler()">${buttonText}</button>
-                    </div>
-                `;
-                
-                // 绑定按钮事件
-                const button = blockedOverlay.querySelector('.blocked-status-button');
-                button.clickHandler = buttonAction;
-                
-                chatScreen.appendChild(blockedOverlay);
+                }
+
+                // 重新渲染消息列表以显示拉黑状态指示器
+                renderChatMessages(characterId);
             }
         }
 
-        // 显示拉黑设置
+        // 🔥【重写】为消息添加拉黑状态指示器 - 创建独立的系统消息
+        function addBlockedIndicatorToMessage(messageContainer, message, characterId) {
+            if (!currentChatCharacter) return;
+
+            // 检查消息是否在拉黑状态下发送
+            const messageTimestamp = message.timestamp;
+            let shouldShowIndicator = false;
+            let blockTimestamp = null;
+
+            // 🔥【修复】查找相关的拉黑记录 - 即使解除拉黑后也要显示历史消息的指示器
+            if (message.sender === 'sent') {
+                // 用户发送的消息，检查角色是否曾经拉黑了用户
+                const blockRecord = blacklistData.find(r =>
+                    r.blockerId === characterId &&
+                    r.blockedId === 'user'
+                    // 🔥【移除】不再检查 !r.unblocked，让历史消息保留指示器
+                );
+                if (blockRecord) {
+                    blockTimestamp = new Date(blockRecord.timestamp).getTime();
+                    // 🔥【修复】如果消息是在拉黑期间发送的，就显示指示器
+                    const unblockTimestamp = blockRecord.unblocked && blockRecord.unblockTimestamp
+                        ? new Date(blockRecord.unblockTimestamp).getTime()
+                        : Date.now();
+                    shouldShowIndicator = messageTimestamp >= blockTimestamp &&
+                                        (messageTimestamp <= unblockTimestamp || !blockRecord.unblocked);
+                }
+            } else if (message.sender === 'received') {
+                // 角色发送的消息，检查用户是否曾经拉黑了角色
+                const blockRecord = blacklistData.find(r =>
+                    r.blockerId === 'user' &&
+                    r.blockedId === characterId
+                    // 🔥【移除】不再检查 !r.unblocked，让历史消息保留指示器
+                );
+                if (blockRecord) {
+                    blockTimestamp = new Date(blockRecord.timestamp).getTime();
+                    // 🔥【修复】如果消息是在拉黑期间发送的，就显示指示器
+                    const unblockTimestamp = blockRecord.unblocked && blockRecord.unblockTimestamp
+                        ? new Date(blockRecord.unblockTimestamp).getTime()
+                        : Date.now();
+                    shouldShowIndicator = messageTimestamp >= blockTimestamp &&
+                                        (messageTimestamp <= unblockTimestamp || !blockRecord.unblocked);
+                }
+            }
+
+            if (shouldShowIndicator) {
+                // 创建拉黑指示器（红色感叹号）
+                const indicator = document.createElement('div');
+                indicator.className = 'message-blocked-indicator';
+                indicator.innerHTML = '!';
+                indicator.title = '消息已发出，但被对方拒收了';
+
+                // 添加指示器到消息容器
+                messageContainer.style.position = 'relative';
+                messageContainer.appendChild(indicator);
+
+                // 🔥【新增】动态定位感叹号到气泡外侧
+                setTimeout(() => {
+                    const bubble = messageContainer.querySelector('.message-bubble');
+                    if (bubble) {
+                        // 获取气泡相对于消息容器的位置
+                        const containerRect = messageContainer.getBoundingClientRect();
+                        const bubbleRect = bubble.getBoundingClientRect();
+
+                        if (message.sender === 'sent') {
+                            // 用户消息：感叹号在气泡左边
+                            const bubbleLeftOffset = bubbleRect.left - containerRect.left;
+                            indicator.style.left = (bubbleLeftOffset - 20) + 'px'; // 16px感叹号宽度 + 4px间距
+                            indicator.style.right = 'auto';
+                        } else if (message.sender === 'received') {
+                            // 🔥【修复】角色消息：感叹号在气泡右下角外侧3px处
+                            const bubbleRightOffset = bubbleRect.right - containerRect.left;
+                            indicator.style.left = (bubbleRightOffset + 3) + 'px'; // 气泡右边 + 3px间距
+                            indicator.style.right = 'auto';
+                        }
+                    }
+                }, 10);
+
+                // 创建系统提示消息（仿照其他系统消息的结构）
+                const centerContainer = document.createElement('div');
+                centerContainer.style.display = 'flex';
+                centerContainer.style.justifyContent = 'center';
+                centerContainer.style.margin = '4px 0';
+
+                const systemContainer = document.createElement('div');
+                systemContainer.className = 'system-message';
+                systemContainer.textContent = '消息已发出，但被对方拒收了';
+
+                centerContainer.appendChild(systemContainer);
+
+                // 将系统提示插入到当前消息后面
+                const messagesContainer = messageContainer.parentNode;
+                if (messagesContainer && messageContainer.nextSibling) {
+                    messagesContainer.insertBefore(centerContainer, messageContainer.nextSibling);
+                } else if (messagesContainer) {
+                    messagesContainer.appendChild(centerContainer);
+                }
+            }
+        }
+
+        // 🔥【修改】显示拉黑/屏蔽设置 - 区分单聊和群聊
         function showBlacklistSettings() {
             if (!currentChatCharacter) {
                 showToast('请先选择一个角色', 'warning');
                 return;
             }
-            
+
             const characterId = currentChatCharacter.id;
-            const isUserBlocked = isBlocked('user', characterId);
-            
+            const isGroupChat = currentChatCharacter.isGroup;
+
+            if (isGroupChat) {
+                // 🔥【新增】群聊只能屏蔽，且只有用户可以屏蔽群聊
+                showGroupMuteSettings(characterId);
+            } else {
+                // 单聊使用原有的拉黑逻辑
+                const isUserBlocked = isBlocked('user', characterId);
+
+                const statusDesc = document.getElementById('blacklist-status-desc');
+                const actionLabel = document.getElementById('block-action-label');
+                const actionDesc = document.getElementById('block-action-desc');
+                const cooldownContainer = document.querySelector('.cooldown-setting');
+
+                // 确保冷静时间设置在单聊中显示
+                if (cooldownContainer) {
+                    cooldownContainer.style.display = 'block';
+                }
+
+                if (isUserBlocked) {
+                    statusDesc.textContent = '你已拉黑此角色';
+                    actionLabel.textContent = '解除拉黑';
+                    actionDesc.textContent = '恢复与该角色的正常聊天';
+                } else {
+                    statusDesc.textContent = '正常聊天中';
+                    actionLabel.textContent = '拉黑此角色';
+                    actionDesc.textContent = '阻止该角色向你发送消息';
+                }
+
+                document.getElementById('cooldown-minutes').value = defaultCooldownMinutes;
+                document.getElementById('blacklist-settings-modal').style.display = 'flex';
+            }
+        }
+
+        // 🔥【新增】更新设置界面的拉黑/屏蔽管理文案
+        function updateBlockManageLabel(isGroupChat) {
+            const labelElement = document.getElementById('block-manage-label');
+            const descElement = document.getElementById('block-manage-desc');
+
+            if (labelElement && descElement) {
+                if (isGroupChat) {
+                    labelElement.textContent = '屏蔽管理';
+                    descElement.textContent = '屏蔽/取消屏蔽群聊消息通知';
+                } else {
+                    labelElement.textContent = '拉黑管理';
+                    descElement.textContent = '拉黑/解除拉黑，设置冷静时间';
+                }
+            }
+        }
+
+        // 🔥【新增】显示群聊屏蔽设置
+        function showGroupMuteSettings(groupId) {
+            // 检查是否已屏蔽该群聊
+            const isMuted = isGroupMuted(groupId);
+
             const statusDesc = document.getElementById('blacklist-status-desc');
             const actionLabel = document.getElementById('block-action-label');
             const actionDesc = document.getElementById('block-action-desc');
-            
-            if (isUserBlocked) {
-                statusDesc.textContent = '你已拉黑此角色';
-                actionLabel.textContent = '解除拉黑';
-                actionDesc.textContent = '恢复与该角色的正常聊天';
+            const cooldownContainer = document.querySelector('.cooldown-setting');
+
+            // 修改界面文案为屏蔽相关
+            if (isMuted) {
+                statusDesc.textContent = '你已屏蔽此群聊';
+                actionLabel.textContent = '取消屏蔽';
+                actionDesc.textContent = '重新接收该群聊的消息通知';
             } else {
-                statusDesc.textContent = '正常聊天中';
-                actionLabel.textContent = '拉黑此角色';
-                actionDesc.textContent = '阻止该角色向你发送消息';
+                statusDesc.textContent = '正常接收群聊消息';
+                actionLabel.textContent = '屏蔽此群聊';
+                actionDesc.textContent = '不再接收该群聊的消息通知';
             }
-            
-            document.getElementById('cooldown-minutes').value = defaultCooldownMinutes;
+
+            // 隐藏冷静时间设置（群聊屏蔽不需要冷静时间）
+            if (cooldownContainer) {
+                cooldownContainer.style.display = 'none';
+            }
+
             document.getElementById('blacklist-settings-modal').style.display = 'flex';
+        }
+
+        // 🔥【新增】检查群聊是否被屏蔽
+        function isGroupMuted(groupId) {
+            const mutedGroups = JSON.parse(localStorage.getItem('mutedGroups') || '[]');
+            return mutedGroups.includes(groupId);
+        }
+
+        // 🔥【新增】屏蔽/取消屏蔽群聊
+        function toggleGroupMute(groupId) {
+            const mutedGroups = JSON.parse(localStorage.getItem('mutedGroups') || '[]');
+            const isMuted = mutedGroups.includes(groupId);
+
+            if (isMuted) {
+                // 取消屏蔽
+                const index = mutedGroups.indexOf(groupId);
+                if (index > -1) {
+                    mutedGroups.splice(index, 1);
+                }
+                showToast(`已取消屏蔽 ${currentChatCharacter?.name}`, 'success');
+            } else {
+                // 屏蔽群聊
+                mutedGroups.push(groupId);
+                showToast(`已屏蔽 ${currentChatCharacter?.name}`, 'info');
+            }
+
+            localStorage.setItem('mutedGroups', JSON.stringify(mutedGroups));
+
+            // 更新界面
+            renderContactList();
+            hideBlacklistSettings();
         }
 
         // 隐藏拉黑设置
@@ -33234,23 +34424,93 @@ async function changeMyGroupAvatar() {
     await processAIFriendRequestResponse(characterId, message); 
 }
 
-        // 执行拉黑操作
+        // 🔥【新增】处理AI主动发送的好友申请
+        async function handleAIFriendRequest(characterId, accepted, messageId) {
+            if (!currentChatCharacter || currentChatCharacter.id !== characterId) return;
+
+            try {
+                if (accepted) {
+                    // 用户同意了AI的好友申请，解除拉黑
+                    await unblockCharacter(characterId);
+                    showToast(`已同意 ${currentChatCharacter.name} 的好友申请`, 'success');
+
+                    // 添加系统消息表示好友申请被接受
+                    const systemMessage = {
+                        id: Date.now().toString(),
+                        sender: 'system',
+                        content: `你们已成功添加为好友，现在可以开始聊天了！`,
+                        timestamp: Date.now(),
+                        role: 'system'
+                    };
+
+                    // 保存系统消息到聊天记录
+                    await saveMessage(characterId, systemMessage);
+
+                    // 重新渲染聊天界面
+                    renderChatMessages(characterId);
+                    updateChatBlockedStatus();
+
+                } else {
+                    // 用户拒绝了AI的好友申请
+                    showToast(`已拒绝 ${currentChatCharacter.name} 的好友申请`, 'info');
+
+                    // 可以选择添加一个系统消息表示申请被拒绝
+                    const systemMessage = {
+                        id: Date.now().toString(),
+                        sender: 'system',
+                        content: `你拒绝了好友申请`,
+                        timestamp: Date.now(),
+                        role: 'system'
+                    };
+
+                    await saveMessage(characterId, systemMessage);
+                    renderChatMessages(characterId);
+                }
+
+                // 更新好友申请消息的状态（可选：添加已处理标记）
+                // 这里可以根据需要添加更多逻辑
+
+            } catch (error) {
+                console.error('处理AI好友申请失败:', error);
+                showToast('处理好友申请失败', 'error');
+            }
+        }
+
+        // 🔥【修改】执行拉黑/屏蔽操作 - 区分单聊和群聊
         function performBlockAction() {
             if (!currentChatCharacter) return;
-            
+
             const characterId = currentChatCharacter.id;
-            const isUserBlocked = isBlocked('user', characterId);
-            const cooldownMinutes = parseInt(document.getElementById('cooldown-minutes').value) || 30;
-            
-            if (isUserBlocked) {
-                if (confirm(`确定要解除对 ${currentChatCharacter.name} 的拉黑吗？`)) {
-                    unblockCharacter(characterId);
-                    hideBlacklistSettings();
+            const isGroupChat = currentChatCharacter.isGroup;
+
+            if (isGroupChat) {
+                // 🔥【新增】群聊屏蔽逻辑
+                const isMuted = isGroupMuted(characterId);
+
+                if (isMuted) {
+                    if (confirm(`确定要取消屏蔽 ${currentChatCharacter.name} 吗？`)) {
+                        toggleGroupMute(characterId);
+                    }
+                } else {
+                    if (confirm(`确定要屏蔽 ${currentChatCharacter.name} 吗？\n\n屏蔽后将不再接收该群聊的消息通知`)) {
+                        toggleGroupMute(characterId);
+                    }
                 }
             } else {
-                if (confirm(`确定要拉黑 ${currentChatCharacter.name} 吗？\n\n冷静时间：${cooldownMinutes}分钟`)) {
-                    blockCharacter(characterId, '', cooldownMinutes);
-                    hideBlacklistSettings();
+                // 单聊拉黑逻辑
+                const isUserBlocked = isBlocked('user', characterId);
+                const cooldownMinutes = parseInt(document.getElementById('cooldown-minutes').value) || 30;
+
+                if (isUserBlocked) {
+                    if (confirm(`确定要解除对 ${currentChatCharacter.name} 的拉黑吗？`)) {
+                        unblockCharacter(characterId);
+                        hideBlacklistSettings();
+                    }
+                } else {
+                    if (confirm(`确定要拉黑 ${currentChatCharacter.name} 吗？\n\n冷静时间：${cooldownMinutes}分钟`)) {
+                        blockCharacter(characterId, '', cooldownMinutes);
+                        hideBlacklistSettings();
+                    }
                 }
             }
         }
@@ -35137,6 +36397,64 @@ ${eventsText}
 
         console.log('🚫 拉黑系统核心功能已加载');
 
+        // 🔥【新增】拉黑系统状态检查函数 - 帮助用户调试
+        window.checkBlockStatus = function(characterId) {
+            if (!characterId && currentChatCharacter) {
+                characterId = currentChatCharacter.id;
+            }
+            if (!characterId) {
+                console.log('❌ 请提供角色ID或先选择一个角色');
+                return;
+            }
+
+            const character = characters.find(c => c.id === characterId);
+            const characterName = character ? character.name : characterId;
+
+            const isUserBlocked = isBlocked('user', characterId);
+            const isCharacterBlocked = isBlocked(characterId, 'user');
+
+            console.log(`📊 拉黑状态检查 - ${characterName}:`);
+            console.log(`   用户拉黑角色: ${isUserBlocked ? '✅ 是' : '❌ 否'}`);
+            console.log(`   角色拉黑用户: ${isCharacterBlocked ? '✅ 是' : '❌ 否'}`);
+
+            if (isCharacterBlocked) {
+                console.log(`💡 提示: 角色被拉黑了，应该主动发送好友申请来重新建立联系`);
+                console.log(`💡 格式: {"type": "friend_request", "message": "道歉或请求信息"}`);
+            } else if (isUserBlocked) {
+                console.log(`💡 提示: 用户被拉黑了，角色应该保持拉黑时的态度`);
+            } else {
+                console.log(`💡 提示: 双方都没有拉黑，可以正常聊天`);
+            }
+
+            return { isUserBlocked, isCharacterBlocked };
+        };
+
+        // 🔥【新增】好友申请测试函数
+        window.testFriendRequest = function(characterId, message) {
+            if (!characterId && currentChatCharacter) {
+                characterId = currentChatCharacter.id;
+            }
+            if (!characterId) {
+                console.log('❌ 请提供角色ID或先选择一个角色');
+                return;
+            }
+
+            message = message || '测试好友申请';
+            console.log(`🧪 模拟角色发送好友申请: ${message}`);
+
+            // 模拟AI发送好友申请
+            const friendRequestMessage = {
+                id: Date.now().toString(),
+                sender: 'received',
+                type: 'friend_request',
+                message: message,
+                timestamp: Date.now()
+            };
+
+            addMessageToChat(friendRequestMessage);
+            console.log('✅ 好友申请已添加到聊天中');
+        };
+
         // 🔧【新增】记忆设置界面事件监听器
         document.addEventListener('DOMContentLoaded', function() {
             // 添加阈值滑块事件监听器
@@ -36388,48 +37706,6 @@ ${messages.map(msg => {
             }
         }
 
-        // 清理当前角色的重复记忆
-        async function cleanupCurrentCharacterMemories() {
-            if (!currentMemoryCharacter) {
-                showToast('请先选择角色', 'warning');
-                return;
-            }
-
-            if (!confirm('确定要清理重复记忆吗？这将删除相似度超过80%的重复记忆。')) {
-                return;
-            }
-
-            try {
-                await cleanupDuplicateMemories(currentMemoryCharacter);
-                await loadCharacterMemories();
-                showToast('重复记忆清理完成', 'success');
-            } catch (error) {
-                console.error('清理重复记忆失败:', error);
-                showToast('清理失败', 'error');
-            }
-        }
-
-        // 🔥【新增】清理当前角色的重复时间线记录
-        async function cleanupCurrentCharacterTimeline() {
-            if (!currentMemoryCharacter) {
-                showToast('请先选择角色', 'warning');
-                return;
-            }
-
-            if (!confirm('确定要清理重复的时间线记录吗？这将删除内容相似的重复时间线事件。')) {
-                return;
-            }
-
-            try {
-                const deletedCount = await cleanupDuplicateTimelineEvents(currentMemoryCharacter);
-                await loadCharacterMemories();
-                showToast(`时间线清理完成，删除了${deletedCount}条重复记录`, 'success');
-            } catch (error) {
-                console.error('清理时间线失败:', error);
-                showToast('清理失败', 'error');
-            }
-        }
-
 
 
         // 🔥【新增】清理错误的记录
@@ -36922,11 +38198,13 @@ async function processAIFriendRequestResponse(characterId, requestMessage) {
             // AI同意了
             await aiUnblockUser(characterId);
             
+            // 🔥【美化】使用新的好友添加成功系统提示样式
             const systemMsg = {
                 id: 'system_' + Date.now(),
                 sender: 'system',
-                content: `${character.name} 同意了你的好友申请，现在你们可以正常聊天了。`,
-                timestamp: Date.now()
+                content: `你们已成功添加为好友，现在可以开始聊天了！`,
+                timestamp: Date.now(),
+                isFriendAddedMessage: true // 标记为好友添加成功消息
             };
             addMessageToChat(systemMsg);
             
