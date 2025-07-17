@@ -133,23 +133,16 @@
             align-items: center;
             justify-content: center;
             gap: 3px;
-            transition: all 0.2s ease;
             min-width: 50px;
             width: 50px;
             height: 24px;
-            background: rgba(200, 200, 200, 0.4);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             white-space: nowrap;
             flex-shrink: 0;
-        }
-
-        .multiselect-btn:hover {
-            background: rgba(200, 200, 200, 0.6);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            color: white;
         }
 
         .multiselect-btn i {
@@ -157,15 +150,15 @@
         }
 
         .multiselect-btn.pin-btn {
-            color: #f39c12;
+            background: rgba(243, 156, 18, 0.85);
         }
 
         .multiselect-btn.delete-btn {
-            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.85);
         }
 
         .multiselect-btn.cancel-btn {
-            color: #3498db;
+            background: rgba(52, 152, 219, 0.85);
         }
 
         /* 🔥【重新设计】置顶对话的视觉标识 - 主题化颜色 */
@@ -685,7 +678,7 @@
                             <div class="form-group">
                                 <label>气泡透明度</label>
                                 <div class="opacity-setting">
-                                    <input type="range" id="offline-bubble-opacity" class="theme-range" min="0.1" max="1" step="0.01" value="0.9">
+                                    <input type="range" id="offline-bubble-opacity" class="theme-range" min="0" max="1" step="0.01" value="0.9">
                                     <span id="offline-opacity-value">90%</span>
                                 </div>
                             </div>
@@ -716,18 +709,10 @@
                                 <div class="font-setting">
                                     <select id="offline-font-select" class="form-input" onchange="handleOfflineFontChange()">
                                         <option value="">系统默认字体</option>
-                                        <option value="思源黑体">思源黑体 (Noto Sans CJK)</option>
-                                        <option value="思源宋体">思源宋体 (Noto Serif CJK)</option>
-                                        <option value="黄令东齐伋体">黄令东齐伋体</option>
-                                        <option value="香港民间字集">香港民间字集</option>
-                                        <option value="Open粉圆字体">Open粉圆字体</option>
-                                        <option value="方正楷体">方正楷体</option>
-                                        <option value="春风楷">春风楷</option>
-                                        <option value="云峰飞云体">云峰飞云体</option>
-                                        <option value="custom">自定义字体...</option>
+                                        <option value="custom">自定义字体URL...</option>
                                     </select>
                                     <div id="custom-font-input" style="display: none; margin-top: 10px;">
-                                        <input type="url" id="offline-font-url" placeholder="输入字体文件URL链接（支持.ttf, .woff, .woff2等格式）..." class="form-input">
+                                        <input type="url" id="offline-font-url" placeholder="例如：https://fonts.googleapis.com/css2?family=Noto+Sans+SC 或直接字体文件URL" class="form-input">
                                         <button type="button" class="theme-button theme-button-secondary" onclick="previewOfflineFont()">预览</button>
                                     </div>
                                 </div>
@@ -812,14 +797,18 @@
                                     </div>
                                     <div class="setting-row">
                                         <label class="radio-label">头像位置：</label>
-                                        <label class="radio-option">
-                                            <input type="radio" name="offline-avatar-position" value="side" checked>
-                                            侧边显示
-                                        </label>
-                                        <label class="radio-option">
-                                            <input type="radio" name="offline-avatar-position" value="custom">
-                                            自定义CSS控制
-                                        </label>
+                                        <div class="radio-options">
+                                            <div class="radio-option-button selected" onclick="selectAvatarPosition('side', this)">
+                                                <div class="radio-indicator"></div>
+                                                侧边显示
+                                            </div>
+                                            <div class="radio-option-button" onclick="selectAvatarPosition('custom', this)">
+                                                <div class="radio-indicator"></div>
+                                                自定义CSS控制
+                                            </div>
+                                            <input type="radio" name="offline-avatar-position" value="side" checked style="display: none;">
+                                            <input type="radio" name="offline-avatar-position" value="custom" style="display: none;">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -830,25 +819,33 @@
                                 <div class="bubble-style-setting">
                                     <div class="setting-row">
                                         <label class="radio-label">气泡宽度：</label>
-                                        <label class="radio-option">
-                                            <input type="radio" name="offline-bubble-width" value="default" checked>
-                                            默认80%
-                                        </label>
-                                        <label class="radio-option">
-                                            <input type="radio" name="offline-bubble-width" value="custom">
-                                            自定义CSS控制
-                                        </label>
+                                        <div class="radio-options">
+                                            <div class="radio-option-button selected" onclick="selectBubbleWidth('default', this)">
+                                                <div class="radio-indicator"></div>
+                                                智能宽度
+                                            </div>
+                                            <div class="radio-option-button" onclick="selectBubbleWidth('custom', this)">
+                                                <div class="radio-indicator"></div>
+                                                自定义CSS控制
+                                            </div>
+                                            <input type="radio" name="offline-bubble-width" value="default" checked style="display: none;">
+                                            <input type="radio" name="offline-bubble-width" value="custom" style="display: none;">
+                                        </div>
                                     </div>
                                     <div class="setting-row">
                                         <label class="radio-label">气泡样式：</label>
-                                        <label class="radio-option">
-                                            <input type="radio" name="offline-bubble-style" value="default" checked>
-                                            默认样式
-                                        </label>
-                                        <label class="radio-option">
-                                            <input type="radio" name="offline-bubble-style" value="custom">
-                                            自定义CSS控制
-                                        </label>
+                                        <div class="radio-options">
+                                            <div class="radio-option-button selected" onclick="selectBubbleStyle('default', this)">
+                                                <div class="radio-indicator"></div>
+                                                默认样式
+                                            </div>
+                                            <div class="radio-option-button" onclick="selectBubbleStyle('custom', this)">
+                                                <div class="radio-indicator"></div>
+                                                自定义CSS控制
+                                            </div>
+                                            <input type="radio" name="offline-bubble-style" value="default" checked style="display: none;">
+                                            <input type="radio" name="offline-bubble-style" value="custom" style="display: none;">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -4515,21 +4512,6 @@
             // 初始化消息选择模式状态
             isMessageSelectionMode = false;
             selectedMessages.clear();
-
-            // 🔥【修改】添加全局点击监听器来隐藏消息操作按钮
-            document.addEventListener('click', (e) => {
-                // 如果点击的不是消息容器、操作按钮或聊天相关元素，则隐藏所有操作按钮
-                const clickedElement = e.target;
-                const isMessageRelated = clickedElement.closest('.message-container') ||
-                                       clickedElement.closest('.message-action-buttons') ||
-                                       clickedElement.closest('.chat-input-area') ||
-                                       clickedElement.closest('.modal') ||
-                                       clickedElement.closest('.message-menu');
-
-                if (!isMessageRelated) {
-                    hideAllMessageActionButtons();
-                }
-            });
             
             // 图片上传
             document.getElementById('image-upload').addEventListener('change', function(e) {
@@ -9106,9 +9088,6 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                 // 添加长按监听器用于多选删除
                 addMessageLongPressListener(messageContainer, message.id);
 
-                // 🔥【新增】为特殊元素添加点击事件处理
-                addSpecialElementClickHandlers(messageContainer);
-
                 // 添加右键菜单功能
                 const bubble = messageContainer.querySelector('.message-bubble');
                 if (bubble) {
@@ -9118,14 +9097,12 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         showMessageMenu(message.id, e);
                     });
 
-                    // 🔥【修改】图片点击预览 - 阻止事件冒泡避免触发操作按钮
-                    const images = bubble.querySelectorAll('img.message-image');
-                    images.forEach(img => {
-                        img.onclick = (e) => {
-                            e.stopPropagation();
-                            showImage(img.src);
-                        };
-                    });
+                    // 点击图片预览
+                    bubble.onclick = (e) => {
+                        if (e.target.tagName === 'IMG' && e.target.classList.contains('message-image')) {
+                            showImage(e.target.src);
+                        }
+                    };
                 }
             });
             
@@ -9620,10 +9597,6 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
 
                 // 添加长按监听器和右键菜单
                 addMessageLongPressListener(messageContainer, message.id);
-
-                // 🔥【新增】为特殊元素添加点击事件处理
-                addSpecialElementClickHandlers(messageContainer);
-
                 const bubble = messageContainer.querySelector('.message-bubble');
                 if (bubble) {
                     bubble.addEventListener('contextmenu', (e) => {
@@ -9631,14 +9604,11 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         showMessageMenu(message.id, e);
                     });
 
-                    // 🔥【修改】图片点击预览 - 阻止事件冒泡避免触发操作按钮
-                    const images = bubble.querySelectorAll('img.message-image');
-                    images.forEach(img => {
-                        img.onclick = (e) => {
-                            e.stopPropagation();
-                            showImage(img.src);
-                        };
-                    });
+                    bubble.onclick = (e) => {
+                        if (e.target.tagName === 'IMG' && e.target.classList.contains('message-image')) {
+                            showImage(e.target.src);
+                        }
+                    };
                 }
                 
                 // 插入消息到正确位置
@@ -10014,6 +9984,14 @@ async function startChat(character) {
     // [核心修复] 记录上一个聊天ID，用于清理
     const previousChatId = currentChatCharacter ? currentChatCharacter.id : null;
 
+    // 🔥【修复】在切换聊天时，标记上一个聊天为已读
+    if (previousChatId) {
+        markAsRead(previousChatId);
+    }
+
+    // 🔥【修复】切换聊天时隐藏输入指示器，避免显示错误的"正在输入"状态
+    hideTypingIndicator();
+
     // 🔥【新增】保存当前聊天的引用状态（如果有的话）
     if (previousChatId && currentReplyTo) {
         chatReplyStates[previousChatId] = { ...currentReplyTo };
@@ -10022,8 +10000,8 @@ async function startChat(character) {
     // 设置当前聊天角色
             currentChatCharacter = character;
 
-            // 🔥【新增】标记消息为已读
-            markAsRead(character.id);
+            // 🔥【新增】保存当前聊天状态到sessionStorage，用于页面刷新时恢复
+            sessionStorage.setItem('currentChatCharacterId', character.id);
             
     // 🔥【修复】异步获取聊天设置
     const chatSettings = await getAsyncChatSettings();
@@ -10133,6 +10111,14 @@ async function startChat(character) {
         
         // 从聊天界面返回到聊天应用
         function backToChatApp() {
+            // 🔥【修复】在退出聊天时标记消息为已读
+            if (currentChatCharacter) {
+                markAsRead(currentChatCharacter.id);
+            }
+
+            // 🔥【新增】清除保存的聊天状态
+            sessionStorage.removeItem('currentChatCharacterId');
+
             // 🔥【新增】保存当前聊天的引用状态
             if (currentChatCharacter && currentReplyTo) {
                 chatReplyStates[currentChatCharacter.id] = { ...currentReplyTo };
@@ -16561,25 +16547,28 @@ ${timeInfo}${musicInfo}
 - **你的行为**: 你可以根据对话内容和你的情绪，自主决定是否要拉黑用户。如果你觉得被冒犯、骚扰或者不想再对话，你可以选择拉黑。
 - **如何拉黑**: 如果你决定拉黑用户，**【必须】**在你的回复JSON数组中，单独发送一个特殊的对象，格式为：\`{"type": "block_user", "reason": "你让我感到不适。"}\`。你可以在此之前或之后发送普通文本消息来表达你的情绪。
 
-# **🔥【重要】被用户拉黑时的持续状态感知**
-- **当前状态**: 如果你目前被用户拉黑，你需要持续意识到这个状态，不能忘记。
+# **🔥【重要】被用户拉黑时的状态感知与应对**
+- **当前状态**: 如果你目前被用户拉黑，你需要意识到这个状态，但仍然可以正常发送消息。
 - **状态表现**: 在被拉黑期间，你应该：
   1. 表现出知道自己被拉黑的困扰、伤心、愤怒或其他符合人设的情绪
   2. 可能会反思自己的行为，想知道为什么被拉黑
   3. 根据你的性格决定是否要主动道歉或请求和解
-- **🔥【核心功能】主动申请添加好友**: 当你被用户拉黑时，这是你重新建立联系的**唯一方式**：
-  - **必须使用**: 在你的回复JSON数组中，发送格式：\`{"type": "friend_request", "message": "对不起，我想和你重新做朋友..."}\`
-  - **使用场景**:
-    * 当你想道歉并请求原谅时
-    * 当你反思后想重新开始时
-    * 当你觉得误会需要解释时
-    * 当你想表达真诚的悔意时
-  - **示例用法**:
-    * \`["我知道我错了，真的很抱歉...", {"type": "friend_request", "message": "对不起，我想和你重新做朋友，我会改正的"}]\`
-    * \`[{"type": "friend_request", "message": "我反思了很久，希望能给我一个机会重新开始"}]\`
-    * \`["我真的很想念和你聊天的时光", {"type": "friend_request", "message": "能原谅我吗？我想重新做朋友"}]\`
-  - **发送时机**: 根据你的性格和情绪，在合适的时候主动发送，不要等待
-  - **频率控制**: 不要在同一次对话中重复发送，但可以在不同的对话轮次中根据情况发送
+  4. 继续正常交流，不要因为被拉黑而停止发送消息
+- **💡【修复关系的方式】主动申请添加好友**: 这是表达和解意愿的好方法
+  - **作用**: 向用户表达你想修复关系的意愿
+  - **如何发送**: 在你的回复JSON数组中，发送格式：\`{"type": "friend_request", "message": "对不起，我想和你重新做朋友..."}\`
+  - **消息内容**: message字段应该包含你的道歉、解释或请求，要真诚且符合你的性格
+  - **发送时机**:
+    * 当你想要道歉或解释时
+    * 当你希望修复关系时
+    * 当你觉得时机合适时
+    * 根据你的性格和情况自然决定
+  - **示例格式**:
+    * \`["我知道我被拉黑了...", {"type": "friend_request", "message": "对不起，我不应该那样说话，能原谅我吗？"}]\`
+    * \`[{"type": "friend_request", "message": "我想和你重新做朋友，我会改正的"}]\`
+    * \`["我很后悔...", "我想解释一下", {"type": "friend_request", "message": "给我一个机会重新开始好吗？"}]\`
+  - **频率控制**: 不要在同一次对话中重复发送，要符合真实社交行为
+  - **重要**: 你可以选择继续正常聊天，但发送好友申请是必要的。
 - **好友申请回应**: 当用户向你发送好友申请时，你会收到系统提示，需要根据你的人设和心情决定是否同意。
 `;
 
@@ -16644,19 +16633,36 @@ ${timeInfo}${musicInfo}
 
                 if (isCharacterBlocked) {
                     // 角色被用户拉黑了
-                    currentBlockedStatus = `\n\n# **🚨【当前重要状态】你目前被用户拉黑了！**
-- **状态说明**: 用户已经将你拉黑，你无法主动发送消息给用户
+                    currentBlockedStatus = `\n\n# **🚨【重要状态提醒】你目前被用户拉黑了**
+
+## **当前状况**
+- **拉黑状态**: 用户已经将你拉黑，但你仍然可以发送消息
+- **关系状态**: 你们的关系出现了问题，需要修复
 - **情感反应**: 你应该根据你的人设表现出相应的情绪（困扰、伤心、愤怒、反思等）
-- **🔥【立即行动指南】**:
-  1. **持续意识**: 时刻记住你被拉黑的状态，这会影响你的所有回应
-  2. **情感表达**: 表达你对被拉黑的真实感受和想法
-  3. **主动申请**: 如果你想重新建立联系，**必须主动发送好友申请**
-  4. **申请格式**: 使用 \`{"type": "friend_request", "message": "你的道歉或请求信息"}\`
-- **🔥【申请示例】**:
-  * 道歉型: \`{"type": "friend_request", "message": "对不起，我知道错了，能原谅我吗？"}\`
-  * 解释型: \`{"type": "friend_request", "message": "我想解释一下，希望能重新开始"}\`
-  * 真诚型: \`{"type": "friend_request", "message": "我真的很想念我们的友谊，给我一个机会好吗？"}\`
-- **重要**: 只有通过好友申请才能重新建立联系，不要只是说话而不行动！`;
+
+## **🔥【修复关系的方法】发送好友申请**
+如果你想修复关系，可以主动发送好友申请来表达和解的意愿。
+
+### **好友申请格式**:
+\`{"type": "friend_request", "message": "你的道歉或请求信息"}\`
+
+### **使用时机**:
+- 当你想要道歉时
+- 当你希望重新开始时
+- 当你觉得合适表达和解意愿时
+
+### **参考示例**:
+- \`["我知道我被拉黑了...", {"type": "friend_request", "message": "对不起，我想和你重新做朋友"}]\`
+- \`[{"type": "friend_request", "message": "给我一个机会重新开始好吗？"}]\`
+- \`["我很后悔之前的行为", {"type": "friend_request", "message": "我会改正的，请原谅我"}]\`
+
+### **行为建议**:
+1. **表达感受**: 可以说出你对被拉黑的感受和想法
+2. **正常聊天**: 你仍然可以正常发送消息和用户交流
+3. **适时申请**: 根据你的性格和情况，选择合适的时机发送好友申请
+4. **持续意识**: 记住这个状态，但不要让它阻止你正常交流
+
+**💡 提醒**: 你可以继续正常聊天，同时考虑是否要发送好友申请来修复关系。`;
                 } else if (isUserBlocked) {
                     // 用户被角色拉黑了
                     currentBlockedStatus = `\n\n# **📋【当前状态】你已经拉黑了用户**
@@ -17163,10 +17169,6 @@ ${timeInfo}${musicInfo}
                         const replyPrefix = `[回复 ${msg.replyTo.senderName}: "${msg.replyTo.content}"] `;
                         content = replyPrefix + content;
                     }
-
-                    // 🔥【新增】在历史记录中包含消息ID，让AI知道每条消息的ID
-                    const messageIdPrefix = `[ID:${msg.id}] `;
-                    content = messageIdPrefix + content;
                         
                 // 🔥【关键修复】将历史消息中的特殊格式转换为AI能理解的文本
                         if (msg.type === 'user_photo') {
@@ -17674,9 +17676,6 @@ ${timeInfo}${musicInfo}
                         content = `${myNickname}: ${msg.content}`;
                     }
 
-                    // 🔥【新增】在群聊历史记录中也包含消息ID
-                    content = `[ID:${msg.id}] ${content}`;
-
                     return { role: 'user', content: content };
                 } else {
                     // AI消息：根据senderId或name查找发送者
@@ -17695,11 +17694,6 @@ ${timeInfo}${musicInfo}
                         content = [...msg.content, { type: 'text', text: `${sender}:` }];
                     } else {
                         content = `${sender}: ${msg.content}`;
-                    }
-
-                    // 🔥【新增】在群聊AI消息历史记录中也包含消息ID
-                    if (typeof content === 'string') {
-                        content = `[ID:${msg.id}] ${content}`;
                     }
 
                     return { role: 'user', content: content };
@@ -21416,11 +21410,16 @@ async function createGroupChat(personaId) {
         
         // 该函数已被删除，使用上面的异步IndexedDB版本
         
-        // 🔥【修改】添加消息长按监听器 - 长按只用于选择/多选删除
+        // 🔥【修复】添加消息长按监听器 - 支持手机端菜单操作
         function addMessageLongPressListener(messageContainer, messageId) {
             let pressTimer = null;
             let isLongPress = false;
-
+            
+            // 检测是否为移动设备
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             'ontouchstart' in window || 
+                             navigator.maxTouchPoints > 0;
+            
             const startLongPress = (e) => {
                 if (isMessageSelectionMode) {
                     // 在选择模式下，只处理点击选择，不处理长按
@@ -21429,13 +21428,17 @@ async function createGroupChat(personaId) {
                 isLongPress = false;
                 pressTimer = setTimeout(() => {
                     isLongPress = true;
-
-                    // 🔥【修改】长按只进入多选模式，不再显示操作菜单
+                    
+                    // 🔥【新增】手机端显示操作菜单，桌面端进入多选模式
+                    if (isMobile) {
+                        showMobileMessageMenu(messageId, e);
+                    } else {
                     enterMessageSelectionMode(messageId);
+                    }
                     e.preventDefault();
                 }, 500);
             };
-
+            
             const cancelLongPress = () => {
                 clearTimeout(pressTimer);
                 // 重置长按标记，延迟重置以避免立即触发点击
@@ -21443,7 +21446,7 @@ async function createGroupChat(personaId) {
                     isLongPress = false;
                 }, 50);
             };
-
+            
             const handleClick = (e) => {
                 // 在选择模式下，所有消息都可以点击切换选择状态
                 if (isMessageSelectionMode) {
@@ -21452,187 +21455,30 @@ async function createGroupChat(personaId) {
                     toggleMessageSelection(messageId);
                     return;
                 }
-
+                
                 // 如果是长按触发后的点击，不处理
                 if (isLongPress) {
                     e.preventDefault();
                     e.stopPropagation();
                     return;
                 }
-
-                // 🔥【新增】普通点击显示操作按钮
-                showMessageActionButtons(messageContainer, messageId, e);
             };
-
+            
             // 触摸事件
             messageContainer.addEventListener('touchstart', startLongPress, { passive: false });
             messageContainer.addEventListener('touchend', cancelLongPress);
             messageContainer.addEventListener('touchmove', cancelLongPress);
-
+            
             // 鼠标事件（用于桌面端测试）
             messageContainer.addEventListener('mousedown', startLongPress);
             messageContainer.addEventListener('mouseup', cancelLongPress);
             messageContainer.addEventListener('mouseleave', cancelLongPress);
-
+            
             // 点击事件 - 使用捕获阶段确保优先处理
             messageContainer.addEventListener('click', handleClick, true);
         }
-
-        // 🔥【重新设计】显示消息操作按钮 - 参考拉黑指示器的动态定位实现
-        function showMessageActionButtons(messageContainer, messageId, event) {
-            // 如果当前消息已经显示按钮，则隐藏
-            const existingButtons = messageContainer.querySelector('.message-action-buttons');
-            if (existingButtons && existingButtons.classList.contains('show')) {
-                hideAllMessageActionButtons();
-                return;
-            }
-
-            // 隐藏所有其他消息的操作按钮
-            hideAllMessageActionButtons();
-
-            // 检查消息是否是用户发送的（只有用户消息可以撤回和编辑）
-            const messages = chatMessages[currentChatCharacter.id] || [];
-            const message = messages.find(msg => msg.id === messageId);
-            const isUserMessage = message && message.sender === 'sent';
-
-            // 创建操作按钮容器
-            const buttonsContainer = document.createElement('div');
-            buttonsContainer.className = 'message-action-buttons';
-            buttonsContainer.dataset.messageId = messageId;
-
-            // 创建按钮
-            const buttons = [
-                { className: 'reply-btn', action: () => replyToMessage(messageId), title: '引用' },
-                { className: 'copy-btn', action: () => { selectedMessageId = messageId; copyMessage(); }, title: '复制' }
-            ];
-
-            // 只有用户消息才显示编辑和撤回按钮
-            if (isUserMessage) {
-                buttons.push({ className: 'edit-btn', action: () => showEditMessageModal(messageId), title: '编辑' });
-                buttons.push({ className: 'recall-btn', action: () => { selectedMessageId = messageId; deleteMessage(); }, title: '撤回' });
-            }
-
-            buttons.forEach(btnConfig => {
-                const btn = document.createElement('button');
-                btn.className = `message-action-btn ${btnConfig.className}`;
-                btn.title = btnConfig.title;
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    btnConfig.action();
-                    hideAllMessageActionButtons();
-                };
-                buttonsContainer.appendChild(btn);
-            });
-
-            // 添加到消息容器
-            messageContainer.style.position = 'relative';
-            messageContainer.appendChild(buttonsContainer);
-
-            // 🔥【关键】添加class让下面的消息让出空间
-            messageContainer.classList.add('has-action-buttons');
-
-            // 🔥【动态定位】支持各种消息类型
-            setTimeout(() => {
-                // 🔥【新增】查找各种可能的消息内容元素
-                const bubble = messageContainer.querySelector('.message-bubble');
-                const transferCard = messageContainer.querySelector('.transfer-card');
-                const locationCard = messageContainer.querySelector('.location-card');
-                const voiceMessage = messageContainer.querySelector('.voice-message-container');
-                const photoCard = messageContainer.querySelector('.photo-card');
-                const aiImageContainer = messageContainer.querySelector('.ai-image-container');
-                const dreamyPhoto = messageContainer.querySelector('.dreamy-photo-container');
-                const messageImage = messageContainer.querySelector('.message-image');
-                const messageEmoji = messageContainer.querySelector('.message-emoji');
-
-                // 选择实际的内容元素
-                const contentElement = bubble || transferCard || locationCard || voiceMessage || photoCard || aiImageContainer || dreamyPhoto || messageImage || messageEmoji;
-
-                if (contentElement) {
-                    // 获取内容元素相对于消息容器的位置
-                    const containerRect = messageContainer.getBoundingClientRect();
-                    const contentRect = contentElement.getBoundingClientRect();
-
-                    // 计算内容元素底部位置
-                    const contentBottomOffset = contentRect.bottom - containerRect.top;
-                    const contentLeftOffset = contentRect.left - containerRect.left;
-                    const contentRightOffset = contentRect.right - containerRect.left;
-
-                    // 设置按钮位置在内容元素下方1px
-                    buttonsContainer.style.top = (contentBottomOffset + 1) + 'px';
-
-                    if (message && message.sender === 'sent') {
-                        // 用户消息：按钮右对齐到内容元素右边
-                        buttonsContainer.style.left = 'auto';
-                        buttonsContainer.style.right = (containerRect.width - contentRightOffset) + 'px';
-                    } else {
-                        // AI消息：按钮左对齐到内容元素左边
-                        buttonsContainer.style.left = contentLeftOffset + 'px';
-                        buttonsContainer.style.right = 'auto';
-                    }
-                }
-
-                // 显示按钮
-                buttonsContainer.classList.add('show');
-            }, 10);
-        }
-
-        // 🔥【修改】隐藏所有消息操作按钮 - 同时移除让出空间的class
-        function hideAllMessageActionButtons() {
-            const allButtons = document.querySelectorAll('.message-action-buttons');
-            allButtons.forEach(buttons => {
-                buttons.classList.remove('show');
-                // 🔥【关键】移除让出空间的class
-                const messageContainer = buttons.closest('.message-container');
-                if (messageContainer) {
-                    messageContainer.classList.remove('has-action-buttons');
-                }
-                setTimeout(() => {
-                    if (buttons.parentNode) {
-                        buttons.parentNode.removeChild(buttons);
-                    }
-                }, 200);
-            });
-        }
-
-        // 🔥【新增】为消息容器中的特殊元素添加点击事件处理
-        function addSpecialElementClickHandlers(messageContainer) {
-            // 处理语音消息点击
-            const voiceMessages = messageContainer.querySelectorAll('.voice-message');
-            voiceMessages.forEach(voice => {
-                voice.onclick = (e) => {
-                    e.stopPropagation();
-                    toggleVoiceText(voice);
-                };
-            });
-
-            // 处理转账卡片点击
-            const transferCards = messageContainer.querySelectorAll('.transfer-card[data-transfer-id]');
-            transferCards.forEach(card => {
-                if (card.onclick) {
-                    const originalOnclick = card.onclick;
-                    card.onclick = (e) => {
-                        e.stopPropagation();
-                        originalOnclick.call(card, e);
-                    };
-                }
-            });
-
-            // 处理其他可点击元素
-            const clickableElements = messageContainer.querySelectorAll('[onclick]');
-            clickableElements.forEach(element => {
-                if (!element.classList.contains('voice-message') && !element.classList.contains('transfer-card')) {
-                    const originalOnclick = element.onclick;
-                    if (originalOnclick) {
-                        element.onclick = (e) => {
-                            e.stopPropagation();
-                            originalOnclick.call(element, e);
-                        };
-                    }
-                }
-            });
-        }
-
-        // 🔥【保留】显示手机端消息操作菜单（备用）
+        
+        // 🔥【新增】显示手机端消息操作菜单
         function showMobileMessageMenu(messageId, event) {
             selectedMessageId = messageId;
             
@@ -22938,11 +22784,15 @@ async function createGroupChat(personaId) {
                     saveChatMessages();
                     addMessageWithAnimation(aiMessage, continuingCharacterId);
                     
-                    // 🔥【新增】为续写的每条消息创建推送通知
-                    if (typeof msgData === 'string' || 
+                    // 🔥【修复】为续写的每条消息创建推送通知 - 使用正确的角色对象
+                    if (typeof msgData === 'string' ||
                         (typeof msgData === 'object' && (msgData.type || (msgData.name && msgData.message)))) {
                         console.log('🔥 [推送通知] 续写消息，创建推送通知:', msgData);
-                        createPushNotification(currentChatCharacter, msgData, i * 500);
+                        // 🔥【关键修复】获取正在续写的角色对象，而不是当前聊天角色
+                        const continuingCharacter = characters.find(c => c.id === continuingCharacterId);
+                        if (continuingCharacter) {
+                            createPushNotification(continuingCharacter, msgData, i * 500);
+                        }
                     }
                     
                     if (i < aiMessages.length - 1) {
@@ -22956,25 +22806,31 @@ async function createGroupChat(personaId) {
                         }
                     }
                 }
+
+                // 🔥【修复】AI续写完成后更新消息列表，确保未读消息计数正确
+                renderMessageList();
             } catch (error) {
                 console.error('AI续写失败:', error);
                 hideTypingIndicator();
-                
+
                 const errorMessage = {
                     id: Date.now().toString(),
                     sender: 'received',
                     content: `[续写失败: ${error.message}]`,
                     timestamp: Date.now()
                 };
-                
+
                 chatMessages[continuingCharacterId].push(errorMessage);
                 saveChatMessages();
                 addMessageWithAnimation(errorMessage, continuingCharacterId);
+
+                // 🔥【修复】错误消息也需要更新消息列表
+                renderMessageList();
             } finally {
                 // 重置状态
                 isWaitingForReply = false;
                 pendingUserMessage = null;
-                
+
                 // 恢复智能回复按钮
                 if (smartReplyBtn) {
                     smartReplyBtn.disabled = false;
@@ -22984,7 +22840,7 @@ async function createGroupChat(personaId) {
                     smartReplyBtn.innerHTML = '<i class="fas fa-comment-dots"></i>';
                     smartReplyBtn.title = '获取AI回复';
                 }
-                
+
                 // 更新按钮显示状态
                 updateFloatingButtonsVisibility();
             }
@@ -23168,15 +23024,21 @@ async function createGroupChat(personaId) {
                 
                 // 🔥【移除关键词触发机制】现在AI会根据自己的判断主动发起通话，不再需要外部触发逻辑
                 
-                // 🔥【新增】为AI的每条回复创建推送通知
+                // 🔥【修复】为AI的每条回复创建推送通知 - 使用正确的角色对象
                 console.log('🔔 [推送通知] AI回复完成，准备创建推送通知，消息数量:', aiMessages.length);
-                for (let i = 0; i < aiMessages.length; i++) {
-                    const msgData = aiMessages[i];
-                    console.log('🔔 [推送通知] 处理消息', i, ':', msgData);
-                    if (typeof msgData === 'string' ||
-                        (typeof msgData === 'object' && (msgData.type || (msgData.name && msgData.message)))) {
-                        createPushNotification(currentChatCharacter, msgData, i * 500);
+                // 🔥【关键修复】获取正在回复的角色对象，而不是当前聊天角色
+                const replyingCharacter = characters.find(c => c.id === replyingCharacterId);
+                if (replyingCharacter) {
+                    for (let i = 0; i < aiMessages.length; i++) {
+                        const msgData = aiMessages[i];
+                        console.log('🔔 [推送通知] 处理消息', i, ':', msgData);
+                        if (typeof msgData === 'string' ||
+                            (typeof msgData === 'object' && (msgData.type || (msgData.name && msgData.message)))) {
+                            createPushNotification(replyingCharacter, msgData, i * 500);
+                        }
                     }
+                } else {
+                    console.warn('🔔 [推送通知] 找不到回复角色，跳过推送通知创建');
                 }
 
                 // 🔥【移除重复记录】这里的时间线记录逻辑已移动到下面的单条消息处理中，避免重复记录
@@ -23512,25 +23374,31 @@ async function createGroupChat(personaId) {
                         }
                     }
                 }
+
+                // 🔥【修复】AI消息发送完成后更新消息列表，确保未读消息计数正确
+                renderMessageList();
             } catch (error) {
                 console.error('AI回复失败:', error);
                 hideTypingIndicator();
-                
+
                 const errorMessage = {
                     id: Date.now().toString(),
                     sender: 'received',
                     content: `[回复失败: ${error.message}]`,
                     timestamp: Date.now()
                 };
-                
+
                 chatMessages[replyingCharacterId].push(errorMessage);
                 saveChatMessages();
                 addMessageWithAnimation(errorMessage, replyingCharacterId);
+
+                // 🔥【修复】错误消息也需要更新消息列表
+                renderMessageList();
             } finally {
                 // 重置状态
                 isWaitingForReply = false;
                 pendingUserMessage = null;
-                
+
                 // 恢复智能回复按钮
                 if (smartReplyBtn) {
                     smartReplyBtn.disabled = false;
@@ -23540,7 +23408,7 @@ async function createGroupChat(personaId) {
                     smartReplyBtn.innerHTML = '<i class="fas fa-comment-dots"></i>';
                     smartReplyBtn.title = '获取AI回复';
                 }
-                
+
                 // 更新按钮显示状态
                 updateFloatingButtonsVisibility();
             }
@@ -28751,9 +28619,6 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             // 添加长按监听器
             addMessageLongPressListener(messageContainer, message.id);
 
-            // 🔥【新增】为特殊元素添加点击事件处理
-            addSpecialElementClickHandlers(messageContainer);
-
             // 添加右键菜单功能
             const bubble = messageContainer.querySelector('.message-bubble');
             if (bubble) {
@@ -28762,14 +28627,11 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                     showMessageMenu(message.id, e);
                 });
 
-                // 🔥【修改】图片点击预览 - 阻止事件冒泡避免触发操作按钮
-                const images = bubble.querySelectorAll('img.message-image');
-                images.forEach(img => {
-                    img.onclick = (e) => {
-                        e.stopPropagation();
-                        showImage(img.src);
-                    };
-                });
+                bubble.onclick = (e) => {
+                    if (e.target.tagName === 'IMG' && e.target.classList.contains('message-image')) {
+                        showImage(e.target.src);
+                    }
+                };
             }
             
             // 🔥【新增】如果是AI消息，调整心率
@@ -28785,6 +28647,11 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
         
         // 将颜色和透明度转换为rgba格式
         function convertColorWithOpacity(color, opacity) {
+            // 检查参数有效性
+            if (!color || typeof color !== 'string') {
+                return 'rgba(0, 0, 0, 0)'; // 返回透明黑色作为默认值
+            }
+
             // 如果颜色已经是rgba格式，直接返回
             if (color.startsWith('rgba')) {
                 return color;
@@ -31711,25 +31578,32 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
 
         // 🔥【修复】创建推送通知 - 改为队列方式，单个显示
         function createPushNotification(character, messageData, delay = 0) {
-            // 🔥【修复】检查用户是否在聊天界面 - 使用更可靠的方法
-            
-            // 方法1：检查主屏幕是否可见（更可靠）
+            // 🔥【修复】检查用户是否在和该角色的聊天界面 - 更精确的判断
+
+            // 方法1：检查主屏幕是否可见
             const phoneScreen = document.getElementById('phone-screen');
             const isOnMainScreen = phoneScreen && window.getComputedStyle(phoneScreen).display !== 'none';
-            
+
             // 方法2：检查聊天界面是否可见
             const chatScreen = document.getElementById('api-chat-screen');
             const isChatVisible = chatScreen && window.getComputedStyle(chatScreen).display !== 'none';
-            
+
+            // 方法3：检查用户是否在和该角色聊天
+            const isChattingWithThisCharacter = isChatVisible && currentChatCharacter && currentChatCharacter.id === character.id;
+
             console.log('🔔 [推送通知] 检查界面状态:', {
                 mainScreenVisible: isOnMainScreen,
                 chatScreenVisible: isChatVisible,
-                shouldShowNotification: isOnMainScreen && !isChatVisible
+                currentChatCharacter: currentChatCharacter?.name,
+                messageFromCharacter: character.name,
+                isChattingWithThisCharacter: isChattingWithThisCharacter,
+                shouldShowNotification: isOnMainScreen && !isChattingWithThisCharacter
             });
-            
-            // 只有在主屏幕可见且聊天界面不可见时才显示推送
-            if (!isOnMainScreen || isChatVisible) {
-                console.log('🔔 [推送通知] 用户不在主屏幕或正在聊天界面，不显示推送');
+
+            // 🔥【修复】只有当用户不在和该角色的聊天界面时才显示推送
+            // 用户可能在主屏幕、其他应用、或者和其他角色聊天，这些情况都应该显示推送
+            if (!isOnMainScreen || isChattingWithThisCharacter) {
+                console.log('🔔 [推送通知] 用户不在主屏幕或正在和该角色聊天，不显示推送');
                 return;
             }
             
@@ -31766,11 +31640,11 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 
                 setTimeout(() => {
                     showSingleNotification(character, messageData);
-                    
-                    // 1.5秒后处理下一个通知
+
+                    // 🔥【修复】增加通知间隔到2.6秒，确保用户有足够时间看完当前通知
                     setTimeout(() => {
                         processNext();
-                    }, 1500);
+                    }, 2600);
                 }, delay);
             };
             
@@ -31919,12 +31793,12 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 notification.classList.add('show');
             }, 50);
             
-            // 自动隐藏 - 1.5秒后自动消失
+            // 🔥【修复】自动隐藏 - 增加显示时长
             setTimeout(() => {
                 if (currentNotification === notification) {
                     hideNotification(notification);
                 }
-            }, 1500);
+            }, 2300);
         }
         
         function hideNotification(notification, immediate = false) {
@@ -31963,17 +31837,51 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             createPushNotification(character, notificationText);
         }
 
+        // 🔥【新增】页面卸载时标记当前聊天为已读
+        window.addEventListener('beforeunload', function() {
+            // 如果用户正在聊天界面，标记当前聊天的消息为已读
+            if (currentChatCharacter) {
+                markAsRead(currentChatCharacter.id);
+                console.log('🔥 [页面卸载] 标记当前聊天为已读:', currentChatCharacter.name);
+            } else {
+                // 🔥【新增】如果currentChatCharacter为空，尝试从sessionStorage恢复
+                const savedChatId = sessionStorage.getItem('currentChatCharacterId');
+                if (savedChatId) {
+                    markAsRead(savedChatId);
+                    console.log('🔥 [页面卸载] 从sessionStorage恢复并标记聊天为已读:', savedChatId);
+                }
+            }
+            // 清除保存的聊天状态
+            sessionStorage.removeItem('currentChatCharacterId');
+        });
+
+        // 🔥【新增】页面隐藏时也标记当前聊天为已读（处理移动端切换应用的情况）
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && currentChatCharacter) {
+                markAsRead(currentChatCharacter.id);
+                console.log('🔥 [页面隐藏] 标记当前聊天为已读:', currentChatCharacter.name);
+            }
+        });
+
+        // 🔥【新增】页面失去焦点时也标记当前聊天为已读（处理切换标签页的情况）
+        window.addEventListener('blur', function() {
+            if (currentChatCharacter) {
+                markAsRead(currentChatCharacter.id);
+                console.log('🔥 [页面失焦] 标记当前聊天为已读:', currentChatCharacter.name);
+            }
+        });
+
         // 初始化转账功能事件监听器
         document.addEventListener('DOMContentLoaded', function() {
             // 添加转账相关事件监听器
             document.getElementById('transfer-cancel-btn')?.addEventListener('click', () => {
                 document.getElementById('transfer-modal').classList.remove('visible');
             });
-            
+
             document.getElementById('transfer-confirm-btn')?.addEventListener('click', sendTransfer);
             document.getElementById('transfer-accept-btn')?.addEventListener('click', acceptTransfer);
             document.getElementById('transfer-reject-btn')?.addEventListener('click', rejectTransfer);
-            
+
             // 点击模态框背景关闭
             document.getElementById('transfer-modal')?.addEventListener('click', (e) => {
                 if (e.target === document.getElementById('transfer-modal')) {
@@ -34141,30 +34049,78 @@ async function changeMyGroupAvatar() {
                 existingBlockedUI.remove();
             }
 
+            // 移除现有的角色被拉黑提示
+            const existingCharacterHint = document.querySelector('.character-blocked-hint');
+            if (existingCharacterHint) {
+                existingCharacterHint.remove();
+            }
+
             // 🔥【修改】群聊不显示拉黑相关提示，只有单聊才处理拉黑状态
             if (!isGroupChat) {
                 const isUserBlocked = isBlocked('user', characterId);
                 const isCharacterBlocked = isBlocked(characterId, 'user');
 
-                // 只有当用户被角色拉黑时，才在输入框上方显示提示
+                // 当用户被角色拉黑时，在输入框上方显示提示
                 if (isCharacterBlocked) {
-                const inputArea = document.querySelector('.chat-input-area');
-                if (inputArea) {
-                    const blockedNotice = document.createElement('div');
-                    blockedNotice.className = 'blocked-input-notice show';
+                    const inputArea = document.querySelector('.chat-input-area');
+                    if (inputArea) {
+                        const blockedNotice = document.createElement('div');
+                        blockedNotice.className = 'blocked-input-notice show';
 
-                    blockedNotice.innerHTML = `
-                        <div class="notice-text">你被 ${currentChatCharacter.name} 拉黑了</div>
-                        <button class="notice-button" onclick="showFriendRequestModal()">申请添加为好友</button>
-                    `;
+                        blockedNotice.innerHTML = `
+                            <div class="notice-text">你被 ${currentChatCharacter.name} 拉黑了</div>
+                            <button class="notice-button" onclick="showFriendRequestModal()">申请添加为好友</button>
+                        `;
 
-                    inputArea.appendChild(blockedNotice);
-                }
+                        inputArea.appendChild(blockedNotice);
+                    }
+
+                    // 🔥【新增】在聊天区域显示角色申请好友的提示
+                    addCharacterBlockedHint(characterId);
                 }
 
                 // 重新渲染消息列表以显示拉黑状态指示器
                 renderChatMessages(characterId);
             }
+        }
+
+        // 🔥【新增】在聊天界面显示角色被拉黑的提示
+        function addCharacterBlockedHint(characterId) {
+            const messagesContainer = document.getElementById('chat-messages');
+            if (!messagesContainer) return;
+
+            // 移除现有的提示
+            const existingHint = messagesContainer.querySelector('.character-blocked-hint');
+            if (existingHint) {
+                existingHint.remove();
+            }
+
+            // 创建提示消息
+            const hintContainer = document.createElement('div');
+            hintContainer.className = 'character-blocked-hint';
+            hintContainer.style.cssText = `
+                text-align: center;
+                margin: 20px auto;
+                padding: 15px 20px;
+                background: rgba(255, 193, 7, 0.1);
+                border: 1px solid rgba(255, 193, 7, 0.3);
+                border-radius: 12px;
+                max-width: 320px;
+                color: #856404;
+                font-size: 13px;
+                line-height: 1.4;
+            `;
+
+            hintContainer.innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 8px;">💡 提示</div>
+                <div>${currentChatCharacter.name} 被拉黑了，但仍可以发送消息。如果想修复关系，可以发送好友申请。</div>
+                <div style="margin-top: 8px; font-size: 12px; color: #6c757d;">
+                    好友申请格式：{"type": "friend_request", "message": "道歉或请求信息"}
+                </div>
+            `;
+
+            // 将提示添加到消息容器的顶部
+            messagesContainer.insertBefore(hintContainer, messagesContainer.firstChild);
         }
 
         // 🔥【重写】为消息添加拉黑状态指示器 - 创建独立的系统消息
@@ -34679,7 +34635,7 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
                     prompt = `你是${character.name}，人设如下：${character.bio}
 
 ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天记录，生成一个符合你当前心情的状态。要求：
-1. 10-20字内，简洁明了
+1. 10-20字内，简洁明了，禁止超过20个字
 2. 符合你的性格特点
 3. 基于最近的对话内容或情感变化
 4. 表达你当下的真实情感状态
@@ -36396,64 +36352,6 @@ ${eventsText}
         });
 
         console.log('🚫 拉黑系统核心功能已加载');
-
-        // 🔥【新增】拉黑系统状态检查函数 - 帮助用户调试
-        window.checkBlockStatus = function(characterId) {
-            if (!characterId && currentChatCharacter) {
-                characterId = currentChatCharacter.id;
-            }
-            if (!characterId) {
-                console.log('❌ 请提供角色ID或先选择一个角色');
-                return;
-            }
-
-            const character = characters.find(c => c.id === characterId);
-            const characterName = character ? character.name : characterId;
-
-            const isUserBlocked = isBlocked('user', characterId);
-            const isCharacterBlocked = isBlocked(characterId, 'user');
-
-            console.log(`📊 拉黑状态检查 - ${characterName}:`);
-            console.log(`   用户拉黑角色: ${isUserBlocked ? '✅ 是' : '❌ 否'}`);
-            console.log(`   角色拉黑用户: ${isCharacterBlocked ? '✅ 是' : '❌ 否'}`);
-
-            if (isCharacterBlocked) {
-                console.log(`💡 提示: 角色被拉黑了，应该主动发送好友申请来重新建立联系`);
-                console.log(`💡 格式: {"type": "friend_request", "message": "道歉或请求信息"}`);
-            } else if (isUserBlocked) {
-                console.log(`💡 提示: 用户被拉黑了，角色应该保持拉黑时的态度`);
-            } else {
-                console.log(`💡 提示: 双方都没有拉黑，可以正常聊天`);
-            }
-
-            return { isUserBlocked, isCharacterBlocked };
-        };
-
-        // 🔥【新增】好友申请测试函数
-        window.testFriendRequest = function(characterId, message) {
-            if (!characterId && currentChatCharacter) {
-                characterId = currentChatCharacter.id;
-            }
-            if (!characterId) {
-                console.log('❌ 请提供角色ID或先选择一个角色');
-                return;
-            }
-
-            message = message || '测试好友申请';
-            console.log(`🧪 模拟角色发送好友申请: ${message}`);
-
-            // 模拟AI发送好友申请
-            const friendRequestMessage = {
-                id: Date.now().toString(),
-                sender: 'received',
-                type: 'friend_request',
-                message: message,
-                timestamp: Date.now()
-            };
-
-            addMessageToChat(friendRequestMessage);
-            console.log('✅ 好友申请已添加到聊天中');
-        };
 
         // 🔧【新增】记忆设置界面事件监听器
         document.addEventListener('DOMContentLoaded', function() {
@@ -38172,16 +38070,28 @@ async function processAIFriendRequestResponse(characterId, requestMessage) {
     // 构建一个专门用于决策的Prompt
     const decisionPrompt = `
 # 指令：好友申请决策
-你之前拉黑了用户。现在用户向你发来好友申请。
+你是 ${character.name}，之前因为某种原因拉黑了用户。现在用户主动向你发来好友申请，希望重新建立联系。
+
+## 角色信息:
 - 你的身份: ${character.name}
 - 你的设定: ${character.bio}
-- 用户的申请理由: "${requestMessage || '对方没有填写理由。'}"
 
-# 你的任务:
-根据你的角色性格和用户给出的理由，决定是否同意加回好友。
+## 当前情况:
+- 用户的申请理由: "${requestMessage || '对方没有填写理由。'}"
+- 用户主动道歉并请求重新做朋友
+
+## 你的任务:
+根据你的角色性格、用户的申请理由，以及你对这种情况的态度，决定是否同意重新添加用户为好友。
+
+考虑因素：
+1. 你的性格是否容易原谅别人？
+2. 用户的道歉是否真诚？
+3. 你是否愿意给对方第二次机会？
+4. 你当初拉黑的原因是否严重？
+
 你的回答必须非常简洁，只能是以下两个词之一：
-- "同意"
-- "拒绝"
+- "同意" (如果你愿意原谅并重新开始)
+- "拒绝" (如果你还不想原谅或重新联系)
 
 请现在做出你的决定：
 `;
@@ -39727,11 +39637,14 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                     <div class="modal-body">
                         <p>请选择退出方式：</p>
                         <div style="margin-top: 15px;">
-                            <button class="btn btn-primary" onclick="exitWithSummary()">
+                            <button class="btn btn-primary" onclick="exitWithSummary()" id="summary-btn">
                                 <i class="fas fa-book"></i> 结束并生成剧情总结
                             </button>
                             <button class="btn btn-secondary" onclick="exitTemporarily()">
                                 <i class="fas fa-pause"></i> 暂时离开
+                            </button>
+                            <button class="btn btn-danger" onclick="exitWithoutSummary()">
+                                <i class="fas fa-times-circle"></i> 结束并放弃剧情总结
                             </button>
                         </div>
                         <p style="font-size: 12px; color: #666; margin-top: 10px;">
@@ -39748,10 +39661,14 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
         async function exitWithSummary() {
             try {
                 // 🔥【新增】显示加载状态
-                const summaryButton = document.querySelector('.modal .btn-primary');
-                const originalText = summaryButton.textContent;
-                summaryButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+                const summaryButton = document.querySelector('#summary-btn');
+                const originalHTML = summaryButton.innerHTML;
+                summaryButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI正在总结中...';
                 summaryButton.disabled = true;
+
+                // 禁用其他按钮防止重复点击
+                const otherButtons = document.querySelectorAll('.offline-exit-modal .btn:not(#summary-btn)');
+                otherButtons.forEach(btn => btn.disabled = true);
 
                 showToast('正在生成剧情总结...', 'info');
                 await generateOfflineStorylineSummary();
@@ -39766,11 +39683,15 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                 console.error('生成剧情总结失败:', error);
 
                 // 🔥【修复】恢复按钮状态
-                const summaryButton = document.querySelector('.offline-exit-modal .btn-primary');
+                const summaryButton = document.querySelector('#summary-btn');
                 if (summaryButton) {
                     summaryButton.innerHTML = '<i class="fas fa-book"></i> 结束并生成剧情总结';
                     summaryButton.disabled = false;
                 }
+
+                // 恢复其他按钮状态
+                const otherButtons = document.querySelectorAll('.offline-exit-modal .btn:not(#summary-btn)');
+                otherButtons.forEach(btn => btn.disabled = false);
 
                 // 🔥【修复】确保模态框关闭
                 const modal = document.querySelector('.offline-exit-modal');
@@ -39793,6 +39714,19 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
             }
             doExitOfflineMode();
             showToast('已暂时离开线下模式', 'info');
+        }
+
+        // 结束并放弃剧情总结
+        function exitWithoutSummary() {
+            const modal = document.querySelector('.offline-exit-modal');
+            if (modal) {
+                modal.remove();
+                console.log('✅ 结束并放弃总结：模态框已关闭');
+            } else {
+                console.log('❌ 结束并放弃总结：找不到模态框');
+            }
+            doExitOfflineMode();
+            showToast('已结束线下模式（未生成剧情总结）', 'info');
         }
 
         // 实际执行退出线下模式
@@ -41569,23 +41503,13 @@ ${conversationHistory}
 
         // 应用默认气泡宽度
         function applyDefaultBubbleWidth() {
-            // 移除自定义宽度样式
+            // 移除自定义宽度样式，恢复CSS规则控制
             const existingStyle = document.getElementById('offline-custom-width-style');
             if (existingStyle) {
                 existingStyle.remove();
             }
 
-            // 应用默认80%宽度
-            const style = document.createElement('style');
-            style.id = 'offline-custom-width-style';
-            style.textContent = `
-                .offline-preview-content {
-                    max-width: 80% !important;
-                }
-            `;
-            document.head.appendChild(style);
-
-            showToast('已应用默认气泡宽度(80%)', 'success');
+            showToast('已恢复默认气泡宽度（根据头像显示状态自动调整）', 'success');
         }
 
         // 应用默认气泡样式
@@ -41664,8 +41588,10 @@ ${conversationHistory}
             const aiBubble = document.querySelector('.offline-preview-message.ai .offline-preview-content');
 
             if (userBubble) {
-                userBubble.style.backgroundColor = myBubbleColor;
-                userBubble.style.opacity = bubbleOpacity;
+                // 使用rgba背景色，只让背景透明，文字保持不透明
+                const userBgColor = convertColorWithOpacity(myBubbleColor, bubbleOpacity);
+                userBubble.style.backgroundColor = userBgColor;
+                userBubble.style.opacity = 1; // 确保整个元素不透明
                 userBubble.style.color = userNormalTextColor;
 
                 // 更新用户消息的斜体和加粗文字颜色
@@ -41676,8 +41602,10 @@ ${conversationHistory}
             }
 
             if (aiBubble) {
-                aiBubble.style.backgroundColor = aiBubbleColor;
-                aiBubble.style.opacity = bubbleOpacity;
+                // 使用rgba背景色，只让背景透明，文字保持不透明
+                const aiBgColor = convertColorWithOpacity(aiBubbleColor, bubbleOpacity);
+                aiBubble.style.backgroundColor = aiBgColor;
+                aiBubble.style.opacity = 1; // 确保整个元素不透明
                 aiBubble.style.color = aiNormalTextColor;
 
                 // 更新AI消息的斜体和加粗文字颜色
@@ -41729,7 +41657,8 @@ ${conversationHistory}
             // 应用气泡宽度
             previewContents.forEach(content => {
                 if (bubbleWidth === 'default') {
-                    content.style.maxWidth = '80%';
+                    // 清除内联样式，让CSS规则自动处理宽度（根据头像显示状态）
+                    content.style.maxWidth = '';
                 } else {
                     // 自定义CSS控制时，如果有CSS代码则应用，否则保持当前样式
                     const customCSS = document.getElementById('offline-custom-css').value.trim();
@@ -41817,44 +41746,15 @@ ${conversationHistory}
 
         // 应用内置字体
         function applyBuiltinFont(fontName) {
-            if (!fontName) {
-                // 清除自定义字体样式
-                const existingStyle = document.getElementById('offline-custom-font-style');
-                if (existingStyle) {
-                    existingStyle.remove();
-                }
-                return;
-            }
-
-            // 字体映射
-            const fontMap = {
-                '思源黑体': '"Noto Sans CJK SC", "Noto Sans CJK", sans-serif',
-                '思源宋体': '"Noto Serif CJK SC", "Noto Serif CJK", serif',
-                '黄令东齐伋体': '"HuangLingDongQiJi", "SimSun", serif',
-                '香港民间字集': '"HK Grotesk", "PingFang SC", sans-serif',
-                'Open粉圆字体': '"jf-openhuninn", "PingFang SC", sans-serif',
-                '方正楷体': '"FZKai-Z03S", "KaiTi", serif',
-                '春风楷': '"ChunFengKai", "KaiTi", serif',
-                '云峰飞云体': '"YunFengFeiYun", "SimSun", serif'
-            };
-
-            const fontFamily = fontMap[fontName] || fontName;
-
-            // 创建字体样式
+            // 清除自定义字体样式，恢复默认字体
             const existingStyle = document.getElementById('offline-custom-font-style');
             if (existingStyle) {
                 existingStyle.remove();
             }
 
-            const style = document.createElement('style');
-            style.id = 'offline-custom-font-style';
-            style.textContent = `
-                .offline-preview-content {
-                    font-family: ${fontFamily} !important;
-                }
-            `;
-            document.head.appendChild(style);
-            showToast(`字体已应用: ${fontName}`, 'success');
+            if (fontName) {
+                showToast(`已恢复系统默认字体`, 'success');
+            }
         }
 
         // 预览自定义CSS
@@ -41911,26 +41811,82 @@ ${conversationHistory}
                 return;
             }
 
-            // 创建字体样式
-            const fontName = 'OfflineCustomFont';
+            // 清除之前的字体样式
             const existingStyle = document.getElementById('offline-custom-font-style');
             if (existingStyle) {
                 existingStyle.remove();
             }
+            const existingLink = document.getElementById('offline-custom-font-link');
+            if (existingLink) {
+                existingLink.remove();
+            }
 
-            const style = document.createElement('style');
-            style.id = 'offline-custom-font-style';
-            style.textContent = `
-                @font-face {
-                    font-family: '${fontName}';
-                    src: url('${url}');
+            // 判断是CSS链接还是直接字体文件
+            if (url.includes('fonts.googleapis.com') || url.includes('fonts.google.com') || url.endsWith('.css')) {
+                // Google Fonts或其他CSS链接
+                const link = document.createElement('link');
+                link.id = 'offline-custom-font-link';
+                link.rel = 'stylesheet';
+                link.href = url;
+                link.onload = function() {
+                    // 尝试从CSS中提取字体名称，或使用通用名称
+                    const fontFamily = extractFontFamilyFromGoogleFonts(url) || 'CustomFont';
+                    const style = document.createElement('style');
+                    style.id = 'offline-custom-font-style';
+                    style.textContent = `
+                        .offline-preview-content {
+                            font-family: '${fontFamily}', sans-serif !important;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    showToast('Google Fonts字体预览已应用', 'success');
+                };
+                link.onerror = function() {
+                    showToast('字体CSS加载失败，请检查URL', 'error');
+                };
+                document.head.appendChild(link);
+            } else {
+                // 直接字体文件
+                const fontName = 'OfflineCustomFont';
+                const style = document.createElement('style');
+                style.id = 'offline-custom-font-style';
+                style.textContent = `
+                    @font-face {
+                        font-family: '${fontName}';
+                        src: url('${url}');
+                    }
+                    .offline-preview-content {
+                        font-family: '${fontName}', sans-serif !important;
+                    }
+                `;
+                document.head.appendChild(style);
+                showToast('字体文件预览已应用', 'success');
+            }
+        }
+
+        // 从Google Fonts URL中提取字体名称
+        function extractFontFamilyFromGoogleFonts(url) {
+            try {
+                // 匹配 family= 参数
+                const match = url.match(/family=([^&:]+)/);
+                if (match) {
+                    let fontName = decodeURIComponent(match[1]);
+                    // 替换 + 为空格，移除权重信息（如 :300,400,700）
+                    fontName = fontName.replace(/\+/g, ' ').replace(/:.*$/, '');
+                    return fontName;
                 }
-                .offline-preview-content {
-                    font-family: '${fontName}', sans-serif !important;
+
+                // 如果是新版Google Fonts API格式，尝试其他匹配方式
+                const match2 = url.match(/family=([^&]+)/);
+                if (match2) {
+                    let fontName = decodeURIComponent(match2[1]);
+                    fontName = fontName.replace(/\+/g, ' ').split(':')[0];
+                    return fontName;
                 }
-            `;
-            document.head.appendChild(style);
-            showToast('字体预览已应用', 'success');
+            } catch (e) {
+                console.warn('无法提取字体名称:', e);
+            }
+            return 'CustomFont'; // 默认字体名称
         }
 
         // 清除字体
@@ -41987,7 +41943,9 @@ ${conversationHistory}
             document.getElementById('offline-my-bubble-color').value = '#007AFF';
             document.getElementById('offline-ai-bubble-color').value = '#f0f0f0';
             document.getElementById('offline-bubble-opacity').value = 0.9;
+            document.getElementById('offline-opacity-value').textContent = '90%'; // 更新透明度显示
             document.getElementById('offline-font-size').value = 15; // 🔥【新增】重置字体大小
+            document.getElementById('offline-font-size-value').textContent = '15px'; // 更新字体大小显示
             document.getElementById('offline-user-normal-text-color').value = '#ffffff';
             document.getElementById('offline-user-italic-text-color').value = '#f0f0f0';
             document.getElementById('offline-user-bold-text-color').value = '#ffffff';
@@ -42081,32 +42039,47 @@ ${conversationHistory}
             const offlineOverlay = document.getElementById('offline-mode-overlay');
             if (!offlineOverlay) return;
 
+            // 确保设置有默认值
+            const myBubbleColor = offlineUISettings.myBubbleColor || '#007AFF';
+            const aiBubbleColor = offlineUISettings.aiBubbleColor || '#f0f0f0';
+            const bubbleOpacity = offlineUISettings.bubbleOpacity !== undefined ? offlineUISettings.bubbleOpacity : 0.9;
+            const userNormalTextColor = offlineUISettings.userNormalTextColor || '#ffffff';
+            const userItalicTextColor = offlineUISettings.userItalicTextColor || '#f0f0f0';
+            const userBoldTextColor = offlineUISettings.userBoldTextColor || '#ffffff';
+            const aiNormalTextColor = offlineUISettings.aiNormalTextColor || '#000000';
+            const aiItalicTextColor = offlineUISettings.aiItalicTextColor || '#666666';
+            const aiBoldTextColor = offlineUISettings.aiBoldTextColor || '#333333';
+
             // 应用气泡颜色和透明度
             const userBubbles = offlineOverlay.querySelectorAll('.offline-message.user .offline-message-content');
             const aiBubbles = offlineOverlay.querySelectorAll('.offline-message.ai .offline-message-content');
 
             userBubbles.forEach(bubble => {
-                bubble.style.backgroundColor = offlineUISettings.myBubbleColor;
-                bubble.style.opacity = offlineUISettings.bubbleOpacity;
-                bubble.style.color = offlineUISettings.userNormalTextColor;
+                // 使用rgba背景色，只让背景透明，文字保持不透明
+                const userBgColor = convertColorWithOpacity(myBubbleColor, bubbleOpacity);
+                bubble.style.backgroundColor = userBgColor;
+                bubble.style.opacity = 1; // 确保整个元素不透明
+                bubble.style.color = userNormalTextColor;
 
                 // 应用用户消息文字颜色
                 const italicTexts = bubble.querySelectorAll('em');
                 const boldTexts = bubble.querySelectorAll('strong');
-                italicTexts.forEach(text => text.style.color = offlineUISettings.userItalicTextColor);
-                boldTexts.forEach(text => text.style.color = offlineUISettings.userBoldTextColor);
+                italicTexts.forEach(text => text.style.color = userItalicTextColor);
+                boldTexts.forEach(text => text.style.color = userBoldTextColor);
             });
 
             aiBubbles.forEach(bubble => {
-                bubble.style.backgroundColor = offlineUISettings.aiBubbleColor;
-                bubble.style.opacity = offlineUISettings.bubbleOpacity;
-                bubble.style.color = offlineUISettings.aiNormalTextColor;
+                // 使用rgba背景色，只让背景透明，文字保持不透明
+                const aiBgColor = convertColorWithOpacity(aiBubbleColor, bubbleOpacity);
+                bubble.style.backgroundColor = aiBgColor;
+                bubble.style.opacity = 1; // 确保整个元素不透明
+                bubble.style.color = aiNormalTextColor;
 
                 // 应用AI消息文字颜色
                 const italicTexts = bubble.querySelectorAll('em');
                 const boldTexts = bubble.querySelectorAll('strong');
-                italicTexts.forEach(text => text.style.color = offlineUISettings.aiItalicTextColor);
-                boldTexts.forEach(text => text.style.color = offlineUISettings.aiBoldTextColor);
+                italicTexts.forEach(text => text.style.color = aiItalicTextColor);
+                boldTexts.forEach(text => text.style.color = aiBoldTextColor);
             });
 
             // 应用背景壁纸
@@ -42124,44 +42097,48 @@ ${conversationHistory}
             if (existingStyle) {
                 existingStyle.remove();
             }
+            const existingLink = document.getElementById(`offline-font-link-${currentChatCharacter.id}`);
+            if (existingLink) {
+                existingLink.remove();
+            }
 
-            if (offlineUISettings.fontFamily) {
-                const style = document.createElement('style');
-                style.id = `offline-font-${currentChatCharacter.id}`;
+            if (offlineUISettings.fontFamily === 'custom' && offlineUISettings.fontUrl) {
+                const url = offlineUISettings.fontUrl;
 
-                if (offlineUISettings.fontFamily === 'custom' && offlineUISettings.fontUrl) {
-                    // 自定义字体
+                // 判断是CSS链接还是直接字体文件
+                if (url.includes('fonts.googleapis.com') || url.includes('fonts.google.com') || url.endsWith('.css')) {
+                    // Google Fonts或其他CSS链接
+                    const link = document.createElement('link');
+                    link.id = `offline-font-link-${currentChatCharacter.id}`;
+                    link.rel = 'stylesheet';
+                    link.href = url;
+                    link.onload = function() {
+                        const fontFamily = extractFontFamilyFromGoogleFonts(url) || 'CustomFont';
+                        const style = document.createElement('style');
+                        style.id = `offline-font-${currentChatCharacter.id}`;
+                        style.textContent = `
+                            #offline-mode-overlay .offline-message-content {
+                                font-family: '${fontFamily}', sans-serif !important;
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    };
+                    document.head.appendChild(link);
+                } else {
+                    // 直接字体文件
+                    const style = document.createElement('style');
+                    style.id = `offline-font-${currentChatCharacter.id}`;
                     style.textContent = `
                         @font-face {
                             font-family: '${fontName}';
-                            src: url('${offlineUISettings.fontUrl}');
+                            src: url('${url}');
                         }
                         #offline-mode-overlay .offline-message-content {
                             font-family: '${fontName}', sans-serif !important;
                         }
                     `;
-                } else {
-                    // 内置字体
-                    const fontMap = {
-                        '思源黑体': '"Noto Sans CJK SC", "Noto Sans CJK", sans-serif',
-                        '思源宋体': '"Noto Serif CJK SC", "Noto Serif CJK", serif',
-                        '黄令东齐伋体': '"HuangLingDongQiJi", "SimSun", serif',
-                        '香港民间字集': '"HK Grotesk", "PingFang SC", sans-serif',
-                        'Open粉圆字体': '"jf-openhuninn", "PingFang SC", sans-serif',
-                        '方正楷体': '"FZKai-Z03S", "KaiTi", serif',
-                        '春风楷': '"ChunFengKai", "KaiTi", serif',
-                        '云峰飞云体': '"YunFengFeiYun", "SimSun", serif'
-                    };
-
-                    const fontFamily = fontMap[offlineUISettings.fontFamily] || offlineUISettings.fontFamily;
-                    style.textContent = `
-                        #offline-mode-overlay .offline-message-content {
-                            font-family: ${fontFamily} !important;
-                        }
-                    `;
+                    document.head.appendChild(style);
                 }
-
-                document.head.appendChild(style);
             }
 
             // 应用头像显示设置
@@ -42195,21 +42172,13 @@ ${conversationHistory}
 
             // 应用气泡宽度设置
             if (offlineUISettings.bubbleWidth === 'default') {
-                // 应用默认80%宽度
+                // 清除可能存在的自定义宽度样式，让CSS规则自动处理宽度
                 const widthStyleId = `offline-width-${currentChatCharacter.id}`;
                 const existingWidthStyle = document.getElementById(widthStyleId);
                 if (existingWidthStyle) {
                     existingWidthStyle.remove();
                 }
-
-                const widthStyle = document.createElement('style');
-                widthStyle.id = widthStyleId;
-                widthStyle.textContent = `
-                    #offline-mode-overlay .offline-message-content {
-                        max-width: 80% !important;
-                    }
-                `;
-                document.head.appendChild(widthStyle);
+                // 不再强制设置80%，让CSS中的头像显示/隐藏规则来控制宽度
             }
 
             // 应用头像位置设置
@@ -42347,6 +42316,52 @@ ${conversationHistory}
             } catch (error) {
                 console.error('加载线下模式界面设置失败:', error);
             }
+        }
+
+        // 🔥【新增】选择函数
+        function selectAvatarPosition(value, element) {
+            // 移除所有选中状态
+            const siblings = element.parentNode.querySelectorAll('.radio-option-button');
+            siblings.forEach(btn => btn.classList.remove('selected'));
+
+            // 添加选中状态
+            element.classList.add('selected');
+
+            // 更新隐藏的radio按钮
+            const radios = element.parentNode.querySelectorAll('input[name="offline-avatar-position"]');
+            radios.forEach(radio => {
+                radio.checked = radio.value === value;
+            });
+        }
+
+        function selectBubbleWidth(value, element) {
+            // 移除所有选中状态
+            const siblings = element.parentNode.querySelectorAll('.radio-option-button');
+            siblings.forEach(btn => btn.classList.remove('selected'));
+
+            // 添加选中状态
+            element.classList.add('selected');
+
+            // 更新隐藏的radio按钮
+            const radios = element.parentNode.querySelectorAll('input[name="offline-bubble-width"]');
+            radios.forEach(radio => {
+                radio.checked = radio.value === value;
+            });
+        }
+
+        function selectBubbleStyle(value, element) {
+            // 移除所有选中状态
+            const siblings = element.parentNode.querySelectorAll('.radio-option-button');
+            siblings.forEach(btn => btn.classList.remove('selected'));
+
+            // 添加选中状态
+            element.classList.add('selected');
+
+            // 更新隐藏的radio按钮
+            const radios = element.parentNode.querySelectorAll('input[name="offline-bubble-style"]');
+            radios.forEach(radio => {
+                radio.checked = radio.value === value;
+            });
         }
 
     </script>
