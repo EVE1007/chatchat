@@ -3110,200 +3110,86 @@
             100% { opacity: 0; transform: translateY(10px); }
         }
         
-        /* 🔥【重新设计】手机端消息操作菜单样式 - 毛玻璃中央显示风格 */
-        .mobile-message-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 10000;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+        /* 🔥【重新设计】消息上方按钮条样式 */
+        .message-action-bar {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(60, 60, 60, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 22px;
+            padding: 8px 16px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
+            gap: 20px;
+            z-index: 1000;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
-        }
-        
-        .mobile-message-menu.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .mobile-menu-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: transparent;
-        }
-        
-        .mobile-menu-content {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 15px 20px;
-            max-width: 320px;
-            width: 90%;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        
-        .mobile-message-menu.show .mobile-menu-content {
-            transform: scale(1);
-        }
-        
-        .mobile-menu-header {
-            text-align: center;
-            font-size: 15px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 15px;
-            opacity: 0.8;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
         }
 
-        /* 🔥【新增】一排纯文字按钮容器 */
-        .mobile-menu-buttons {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
+        .message-action-bar.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-5px);
         }
-        
-        .mobile-menu-item {
-            flex: 1;
-            text-align: center;
-            padding: 12px 8px;
-            cursor: pointer;
+
+        .message-action-btn {
+            color: white;
             font-size: 14px;
             font-weight: 500;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 12px;
             transition: all 0.2s ease;
             background: transparent;
             border: none;
-            color: #333;
-            border-radius: 8px;
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            min-width: 40px;
+            text-align: center;
         }
-        
-        .mobile-menu-item:hover {
-            background: rgba(240, 240, 240, 0.5);
+
+        .message-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
             transform: scale(1.05);
         }
 
-        .mobile-menu-item:active {
-            background: rgba(220, 220, 220, 0.7);
+        .message-action-btn:active {
             transform: scale(0.95);
         }
         
-        /* 🔥【修改】纯文字按钮样式 - 移除特殊颜色，统一使用默认颜色 */
-        .mobile-menu-item.reply-btn,
-        .mobile-menu-item.copy-btn,
-        .mobile-menu-item.edit-btn,
-        .mobile-menu-item.recall-btn {
-            color: #333;
+        /* 🔥【新增】消息容器相对定位，用于放置按钮条 */
+        .message-container {
+            position: relative;
         }
 
-        .mobile-menu-item.reply-btn:hover,
-        .mobile-menu-item.copy-btn:hover,
-        .mobile-menu-item.edit-btn:hover,
-        .mobile-menu-item.recall-btn:hover {
-            background: rgba(240, 240, 240, 0.5);
-        }
-        
-        /* 🔥【修改】删除和选择按钮样式 - 统一纯文字风格 */
-        .mobile-menu-item.delete-btn,
-        .mobile-menu-item.select-btn {
-            color: #333;
-            background: transparent;
+        /* 🔥【新增】深色主题按钮条样式 */
+        .dark-theme .message-action-bar {
+            background: rgba(40, 40, 40, 0.95);
         }
 
-        .mobile-menu-item.delete-btn:hover,
-        .mobile-menu-item.select-btn:hover {
-            background: rgba(240, 240, 240, 0.5);
-            transform: scale(1.05);
-        }
-        
-        /* 🔥【修改】取消按钮样式 - 统一纯文字风格 */
-        .mobile-menu-item.cancel-btn {
-            color: #333;
-            margin-top: 8px;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-            background: transparent;
-            width: 100%;
-            flex: none;
-        }
-
-        .mobile-menu-item.cancel-btn:hover {
-            background: rgba(240, 240, 240, 0.5);
-            transform: scale(1.02);
-        }
-
-        /* 🔥【修改】可爱风主题 - 纯文字风格 */
-        .cute-theme .mobile-menu-content {
-            background: rgba(255, 240, 245, 0.95);
-            border: 1px solid rgba(255, 182, 193, 0.3);
-        }
-
-        .cute-theme .mobile-menu-item {
-            color: #333;
-        }
-
-        .cute-theme .mobile-menu-item:hover {
-            background: rgba(255, 182, 193, 0.2);
-        }
-        
-        /* 🔥【删除】移除图标和文字样式，改为纯文字按钮 */
-        
-        /* 🔥【修改】深色主题适配 - 纯文字风格 */
-        .dark-theme .mobile-menu-content {
-            background: rgba(45, 45, 45, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .dark-theme .mobile-menu-header {
+        .dark-theme .message-action-btn {
             color: rgba(255, 255, 255, 0.9);
         }
 
-        .dark-theme .mobile-menu-item {
-            color: rgba(255, 255, 255, 0.9);
-            background: transparent;
+        .dark-theme .message-action-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
         }
 
-        .dark-theme .mobile-menu-item:hover {
-            background: rgba(255, 255, 255, 0.1);
+        /* 🔥【新增】可爱主题按钮条样式 */
+        .cute-theme .message-action-bar {
+            background: rgba(255, 182, 193, 0.95);
         }
 
-        .dark-theme .mobile-menu-item.cancel-btn {
-            color: rgba(255, 255, 255, 0.9);
-            background: transparent;
-            border-top-color: rgba(255, 255, 255, 0.2);
+        .cute-theme .message-action-btn {
+            color: white;
         }
 
-        .dark-theme .mobile-menu-item.cancel-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        /* 🔥【修改】深色主题可爱风 - 纯文字风格 */
-        .dark-theme.cute-theme .mobile-menu-content {
-            background: rgba(60, 45, 50, 0.95);
-            border: 1px solid rgba(255, 182, 193, 0.3);
-        }
-
-        .dark-theme.cute-theme .mobile-menu-item:hover {
-            background: rgba(255, 182, 193, 0.15);
+        .cute-theme .message-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         /* 消息编辑指示器样式 */

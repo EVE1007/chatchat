@@ -21497,71 +21497,90 @@ async function createGroupChat(personaId) {
             messageContainer.addEventListener('click', handleClick, true);
         }
         
-        // 🔥【新增】显示手机端消息操作菜单
+        // 🔥【重新设计】显示消息上方按钮条
         function showMobileMessageMenu(messageId, event) {
             selectedMessageId = messageId;
-            
-            // 检查消息是否是用户发送的（只有用户消息可以撤回）
+
+            // 检查消息是否是用户发送的
             const messages = chatMessages[currentChatCharacter.id] || [];
             const message = messages.find(msg => msg.id === messageId);
             const isUserMessage = message && message.sender === 'sent';
-            
-            // 隐藏已存在的菜单
-            hideMobileMessageMenu();
-            
-            // 创建移动端菜单
-            const menu = document.createElement('div');
-            menu.id = 'mobile-message-menu';
-            menu.className = 'mobile-message-menu';
-            
-            const menuItems = [
-                { text: '引用', action: 'replyToMessage(selectedMessageId)', className: 'reply-btn' },
-                { text: '复制', action: 'copyMessage()', className: 'copy-btn' },
-                { text: '多选', action: 'enterMessageSelectionMode(selectedMessageId)', className: 'select-btn' }
-            ];
 
-            // 如果是用户消息，添加编辑和撤回选项
+            // 隐藏已存在的按钮条
+            hideMessageActionBar();
+
+            // 找到对应的消息容器
+            const messageContainer = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (!messageContainer) return;
+
+            // 创建按钮条
+            const actionBar = document.createElement('div');
+            actionBar.className = 'message-action-bar';
+            actionBar.id = 'message-action-bar';
+
+            // 构建按钮列表
+            const buttons = ['引用', '复制'];
             if (isUserMessage) {
-                menuItems.splice(2, 0, { text: '编辑', action: 'showEditMessageModal(selectedMessageId)', className: 'edit-btn' });
-                menuItems.splice(3, 0, { text: '撤回', action: 'deleteMessage()', className: 'recall-btn' });
+                buttons.push('编辑', '撤回');
             }
-            
-            menu.innerHTML = `
-                <div class="mobile-menu-overlay" onclick="hideMobileMessageMenu()"></div>
-                <div class="mobile-menu-content">
-                    <div class="mobile-menu-header">消息操作</div>
-                    <div class="mobile-menu-buttons">
-                        ${menuItems.map(item => `
-                            <div class="mobile-menu-item ${item.className || ''}" onclick="${item.action}; hideMobileMessageMenu();">
-                                ${item.text}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="mobile-menu-item cancel-btn" onclick="hideMobileMessageMenu()">
-                        取消
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(menu);
-            
-            // 添加显示动画
+            buttons.push('多选');
+
+            actionBar.innerHTML = buttons.map(text => {
+                let action = '';
+                switch(text) {
+                    case '引用': action = 'replyToMessage(selectedMessageId)'; break;
+                    case '复制': action = 'copyMessage()'; break;
+                    case '编辑': action = 'showEditMessageModal(selectedMessageId)'; break;
+                    case '撤回': action = 'deleteMessage()'; break;
+                    case '多选': action = 'enterMessageSelectionMode(selectedMessageId)'; break;
+                }
+                return `<button class="message-action-btn" onclick="${action}; hideMessageActionBar();">${text}</button>`;
+            }).join('');
+
+            // 添加到消息容器
+            messageContainer.appendChild(actionBar);
+
+            // 显示动画
             setTimeout(() => {
-                menu.classList.add('show');
+                actionBar.classList.add('show');
             }, 10);
+
+            // 添加全局点击监听器
+            setTimeout(() => {
+                document.addEventListener('click', hideMessageActionBarOnClickOutside);
+                document.addEventListener('touchstart', hideMessageActionBarOnClickOutside);
+            }, 100);
         }
         
-        // 🔥【新增】隐藏手机端消息操作菜单
-        function hideMobileMessageMenu() {
-            const menu = document.getElementById('mobile-message-menu');
-            if (menu) {
-                menu.classList.remove('show');
+        // 🔥【重新设计】隐藏消息按钮条
+        function hideMessageActionBar() {
+            const actionBar = document.getElementById('message-action-bar');
+            if (actionBar) {
+                actionBar.classList.remove('show');
                 setTimeout(() => {
-                    if (menu.parentNode) {
-                        menu.parentNode.removeChild(menu);
+                    if (actionBar.parentNode) {
+                        actionBar.parentNode.removeChild(actionBar);
                     }
                 }, 300);
             }
+            selectedMessageId = null;
+
+            // 移除全局点击监听器
+            document.removeEventListener('click', hideMessageActionBarOnClickOutside);
+            document.removeEventListener('touchstart', hideMessageActionBarOnClickOutside);
+        }
+
+        // 🔥【新增】点击外部隐藏按钮条
+        function hideMessageActionBarOnClickOutside(event) {
+            const actionBar = document.getElementById('message-action-bar');
+            if (actionBar && !actionBar.contains(event.target)) {
+                hideMessageActionBar();
+            }
+        }
+
+        // 🔥【兼容】保持旧函数名
+        function hideMobileMessageMenu() {
+            hideMessageActionBar();
         }
         
         // 进入消息选择模式
