@@ -3110,13 +3110,13 @@
             100% { opacity: 0; transform: translateY(10px); }
         }
         
-        /* 🔥【重新设计】消息上方按钮条样式 */
+        /* 🔥【重新设计】消息上方按钮条样式 - 白底黑字 */
         .message-action-bar {
             position: absolute;
             top: -45px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(60, 60, 60, 0.95);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-radius: 22px;
@@ -3128,8 +3128,9 @@
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             white-space: nowrap;
+            border: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .message-action-bar.show {
@@ -3139,7 +3140,7 @@
         }
 
         .message-action-btn {
-            color: white;
+            color: #333;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
@@ -3153,7 +3154,7 @@
         }
 
         .message-action-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.1);
             transform: scale(1.05);
         }
 
@@ -3164,33 +3165,16 @@
         /* 🔥【新增】消息容器相对定位，用于放置按钮条 */
         .message-container {
             position: relative;
+            /* 🔥【修复】阻止浏览器默认的长按行为 */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* 🔥【新增】深色主题按钮条样式 */
-        .dark-theme .message-action-bar {
-            background: rgba(40, 40, 40, 0.95);
-        }
-
-        .dark-theme .message-action-btn {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .dark-theme .message-action-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        /* 🔥【新增】可爱主题按钮条样式 */
-        .cute-theme .message-action-bar {
-            background: rgba(255, 182, 193, 0.95);
-        }
-
-        .cute-theme .message-action-btn {
-            color: white;
-        }
-
-        .cute-theme .message-action-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
+        /* 🔥【统一样式】所有主题下按钮条都保持白底黑字 */
 
         /* 消息编辑指示器样式 */
         .message-edited-indicator {

@@ -21474,10 +21474,15 @@ async function createGroupChat(personaId) {
                     // 在选择模式下，只处理点击选择，不处理长按
                     return;
                 }
+
+                // 🔥【修复】阻止浏览器默认的长按行为（如选择文本、上下文菜单等）
+                e.preventDefault();
+                e.stopPropagation();
+
                 isLongPress = false;
                 pressTimer = setTimeout(() => {
                     isLongPress = true;
-                    
+
                     // 🔥【新增】手机端显示操作菜单，桌面端进入多选模式
                     if (isMobile) {
                         showMobileMessageMenu(messageId, e);
