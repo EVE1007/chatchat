@@ -3165,11 +3165,7 @@
         /* 🔥【新增】消息容器相对定位，用于放置按钮条 */
         .message-container {
             position: relative;
-            /* 🔥【修复】阻止浏览器默认的长按行为 */
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
+            /* 🔥【修复】只阻止文本选择和长按菜单，保留滑动功能 */
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
         }

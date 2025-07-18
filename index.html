@@ -21475,13 +21475,13 @@ async function createGroupChat(personaId) {
                     return;
                 }
 
-                // 🔥【修复】阻止浏览器默认的长按行为（如选择文本、上下文菜单等）
-                e.preventDefault();
-                e.stopPropagation();
-
                 isLongPress = false;
                 pressTimer = setTimeout(() => {
                     isLongPress = true;
+
+                    // 🔥【修复】只在长按触发时阻止默认行为
+                    e.preventDefault();
+                    e.stopPropagation();
 
                     // 🔥【新增】手机端显示操作菜单，桌面端进入多选模式
                     if (isMobile) {
@@ -21489,7 +21489,6 @@ async function createGroupChat(personaId) {
                     } else {
                     enterMessageSelectionMode(messageId);
                     }
-                    e.preventDefault();
                 }, 500);
             };
             
@@ -21534,6 +21533,7 @@ async function createGroupChat(personaId) {
         
         // 🔥【重新设计】显示消息上方按钮条
         function showMobileMessageMenu(messageId, event) {
+            console.log('移动端长按菜单，messageId:', messageId);
             selectedMessageId = messageId;
 
             // 检查消息是否是用户发送的
@@ -21546,7 +21546,11 @@ async function createGroupChat(personaId) {
 
             // 找到对应的消息容器
             const messageContainer = document.querySelector(`[data-message-id="${messageId}"]`);
-            if (!messageContainer) return;
+            if (!messageContainer) {
+                console.log('错误：找不到消息容器');
+                return;
+            }
+            console.log('找到消息容器:', messageContainer);
 
             // 创建按钮条
             const actionBar = document.createElement('div');
