@@ -12625,6 +12625,7 @@ async function applyChatBackground(backgroundUrl) {
         // 显示消息菜单
         function showMessageMenu(messageId, event) {
             selectedMessageId = messageId;
+            console.log('桌面端右键菜单，设置selectedMessageId:', selectedMessageId);
 
             // 先隐藏现有菜单，确保清理事件监听器
             hideMessageMenu();
@@ -12663,24 +12664,31 @@ async function applyChatBackground(backgroundUrl) {
                 const action = e.target.dataset.action;
                 if (action) {
                     e.stopPropagation();
+                    console.log('菜单点击，action:', action, 'selectedMessageId:', selectedMessageId);
+
+                    // 🔥【临时修复】直接使用传入的messageId而不是全局变量
+                    const targetId = messageId;
+                    console.log('使用messageId:', targetId);
+
                     switch(action) {
                         case 'reply':
-                            replyToMessage();
+                            replyToMessage(targetId);
                             break;
                         case 'copy':
-                            copyMessage();
+                            copyMessage(targetId);
                             break;
                         case 'edit':
-                            showEditMessageModal(selectedMessageId);
+                            showEditMessageModal(targetId);
                             break;
                         case 'recall':
-                            deleteMessage();
+                            deleteMessage(targetId);
                             break;
                         case 'select':
-                            enterMessageSelectionMode(selectedMessageId);
+                            enterMessageSelectionMode(targetId);
                             break;
                     }
-                    hideMessageMenu();
+                    // 🔥【修复】手动隐藏菜单，不传递事件参数
+                    hideMessageMenu(null);
                 }
             };
 
@@ -12704,7 +12712,15 @@ async function applyChatBackground(backgroundUrl) {
         }
         
         // 隐藏消息菜单
-        function hideMessageMenu() {
+        function hideMessageMenu(event) {
+            // 🔥【修复】如果点击来自菜单内部，不隐藏菜单
+            if (event && event.target) {
+                const menu = document.getElementById('message-context-menu');
+                if (menu && menu.contains(event.target)) {
+                    return;
+                }
+            }
+
             const menu = document.getElementById('message-context-menu');
             if (menu) {
                 menu.style.display = 'none';
@@ -12727,7 +12743,11 @@ async function applyChatBackground(backgroundUrl) {
         // 🔥【修复】引用消息 - 支持传入消息ID
         function replyToMessage(messageId = null) {
             const targetMessageId = messageId || selectedMessageId;
-            if (!targetMessageId) return;
+            console.log('引用消息:', targetMessageId, '来源:', messageId ? '移动端' : '桌面端');
+            if (!targetMessageId) {
+                console.log('错误: 没有选中的消息ID');
+                return;
+            }
 
             const messages = chatMessages[currentChatCharacter.id] || [];
             const message = messages.find(msg => msg.id === targetMessageId);
@@ -12885,11 +12905,16 @@ async function applyChatBackground(backgroundUrl) {
         }
         
         // 复制消息
-        function copyMessage() {
-            if (!selectedMessageId) return;
-            
+        function copyMessage(messageId = null) {
+            const targetMessageId = messageId || selectedMessageId;
+            console.log('复制消息:', targetMessageId, '来源:', messageId ? '移动端' : '桌面端');
+            if (!targetMessageId) {
+                console.log('错误: 没有选中的消息ID');
+                return;
+            }
+
             const messages = chatMessages[currentChatCharacter.id] || [];
-            const message = messages.find(msg => msg.id === selectedMessageId);
+            const message = messages.find(msg => msg.id === targetMessageId);
             
             if (message && message.content) {
                 navigator.clipboard.writeText(message.content).then(() => {
@@ -13154,11 +13179,16 @@ async function applyChatBackground(backgroundUrl) {
         }
         
         // 删除消息
-        async function deleteMessage() {
-            if (!selectedMessageId) return;
-            
+        async function deleteMessage(messageId = null) {
+            const targetMessageId = messageId || selectedMessageId;
+            console.log('删除消息:', targetMessageId, '来源:', messageId ? '移动端' : '桌面端');
+            if (!targetMessageId) {
+                console.log('错误: 没有选中的消息ID');
+                return;
+            }
+
                 const messages = chatMessages[currentChatCharacter.id] || [];
-                const messageIndex = messages.findIndex(msg => msg.id === selectedMessageId);
+                const messageIndex = messages.findIndex(msg => msg.id === targetMessageId);
                 
             if (messageIndex === -1) {
                 hideMessageMenu();
@@ -21528,11 +21558,11 @@ async function createGroupChat(personaId) {
             actionBar.innerHTML = buttons.map(text => {
                 let action = '';
                 switch(text) {
-                    case '引用': action = 'replyToMessage(selectedMessageId)'; break;
-                    case '复制': action = 'copyMessage()'; break;
-                    case '编辑': action = 'showEditMessageModal(selectedMessageId)'; break;
-                    case '撤回': action = 'deleteMessage()'; break;
-                    case '多选': action = 'enterMessageSelectionMode(selectedMessageId)'; break;
+                    case '引用': action = `replyToMessage('${messageId}')`; break;
+                    case '复制': action = `copyMessage('${messageId}')`; break;
+                    case '编辑': action = `showEditMessageModal('${messageId}')`; break;
+                    case '撤回': action = `deleteMessage('${messageId}')`; break;
+                    case '多选': action = `enterMessageSelectionMode('${messageId}')`; break;
                 }
                 return `<button class="message-action-btn" onclick="${action}; hideMessageActionBar();">${text}</button>`;
             }).join('');
