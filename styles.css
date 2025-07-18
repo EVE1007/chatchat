@@ -3149,8 +3149,8 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
-            padding: 25px 20px;
-            max-width: 280px;
+            padding: 15px 20px;
+            max-width: 320px;
             width: 90%;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -3167,207 +3167,143 @@
             font-size: 15px;
             font-weight: 600;
             color: #333;
-            margin-bottom: 18px;
+            margin-bottom: 15px;
             opacity: 0.8;
+        }
+
+        /* 🔥【新增】一排纯文字按钮容器 */
+        .mobile-menu-buttons {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
         }
         
         .mobile-menu-item {
-            display: flex;
-            align-items: center;
-            padding: 14px 20px;
-            margin: 6px 0;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-            background: rgba(247, 247, 247, 0.95);
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            color: #333;
-            min-height: 48px;
-        }
-        
-        .mobile-menu-item:hover {
-            background: rgba(240, 240, 240, 0.95);
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .mobile-menu-item:active {
-            background: rgba(235, 235, 235, 0.95);
-            transform: translateY(0);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* 回复按钮 */
-        .mobile-menu-item.reply-btn {
-            color: #007AFF;
-        }
-        
-        .mobile-menu-item.reply-btn:hover {
-            background: rgba(0, 122, 255, 0.08);
-        }
-        
-        /* 复制按钮 */
-        .mobile-menu-item.copy-btn {
-            color: #34C759;
-        }
-        
-        .mobile-menu-item.copy-btn:hover {
-            background: rgba(52, 199, 89, 0.08);
-        }
-        
-        /* 编辑按钮 */
-        .mobile-menu-item.edit-btn {
-            color: #FF9500;
-        }
-        
-        .mobile-menu-item.edit-btn:hover {
-            background: rgba(255, 149, 0, 0.08);
-        }
-        
-        /* 撤回按钮 */
-        .mobile-menu-item.recall-btn {
-            color: #FF9500;
-        }
-        
-        .mobile-menu-item.recall-btn:hover {
-            background: rgba(255, 149, 0, 0.08);
-        }
-        
-        /* 删除按钮 - 毛玻璃风格 */
-        .mobile-menu-item.delete-btn {
-            color: white;
-            background: rgba(255, 59, 48, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .mobile-menu-item.delete-btn:hover {
-            background: rgba(255, 59, 48, 0.8);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
-        }
-        
-        /* 选择按钮 */
-        .mobile-menu-item.select-btn {
-            color: #666;
-        }
-        
-        .mobile-menu-item.select-btn:hover {
-            background: rgba(102, 102, 102, 0.08);
-        }
-        
-        /* 取消按钮 - 毛玻璃风格 */
-        .mobile-menu-item.cancel-btn {
-            color: white;
-            margin-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(74, 132, 193, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .mobile-menu-item.cancel-btn:hover {
-            background: rgba(74, 132, 193, 0.8);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(74, 132, 193, 0.3);
-        }
-
-        /* 可爱风主题 - 雾霾粉取消按钮 */
-        .cute-theme .mobile-menu-item.cancel-btn {
-            background: rgba(255, 182, 193, 0.6);
-            color: white;
-        }
-
-        .cute-theme .mobile-menu-item.cancel-btn:hover {
-            background: rgba(255, 182, 193, 0.8);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
-        }
-        
-        .menu-icon {
-            margin-right: 14px;
-            font-size: 20px;
-            width: 24px;
+            flex: 1;
             text-align: center;
-            opacity: 1;
+            padding: 12px 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: none;
+            color: #333;
+            border-radius: 8px;
+            min-height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         
-        .menu-text {
-            flex: 1;
-            font-size: 16px;
-            font-weight: 500;
-            line-height: 1.2;
+        .mobile-menu-item:hover {
+            background: rgba(240, 240, 240, 0.5);
+            transform: scale(1.05);
+        }
+
+        .mobile-menu-item:active {
+            background: rgba(220, 220, 220, 0.7);
+            transform: scale(0.95);
         }
         
-        /* 深色主题适配 */
+        /* 🔥【修改】纯文字按钮样式 - 移除特殊颜色，统一使用默认颜色 */
+        .mobile-menu-item.reply-btn,
+        .mobile-menu-item.copy-btn,
+        .mobile-menu-item.edit-btn,
+        .mobile-menu-item.recall-btn {
+            color: #333;
+        }
+
+        .mobile-menu-item.reply-btn:hover,
+        .mobile-menu-item.copy-btn:hover,
+        .mobile-menu-item.edit-btn:hover,
+        .mobile-menu-item.recall-btn:hover {
+            background: rgba(240, 240, 240, 0.5);
+        }
+        
+        /* 🔥【修改】删除和选择按钮样式 - 统一纯文字风格 */
+        .mobile-menu-item.delete-btn,
+        .mobile-menu-item.select-btn {
+            color: #333;
+            background: transparent;
+        }
+
+        .mobile-menu-item.delete-btn:hover,
+        .mobile-menu-item.select-btn:hover {
+            background: rgba(240, 240, 240, 0.5);
+            transform: scale(1.05);
+        }
+        
+        /* 🔥【修改】取消按钮样式 - 统一纯文字风格 */
+        .mobile-menu-item.cancel-btn {
+            color: #333;
+            margin-top: 8px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            background: transparent;
+            width: 100%;
+            flex: none;
+        }
+
+        .mobile-menu-item.cancel-btn:hover {
+            background: rgba(240, 240, 240, 0.5);
+            transform: scale(1.02);
+        }
+
+        /* 🔥【修改】可爱风主题 - 纯文字风格 */
+        .cute-theme .mobile-menu-content {
+            background: rgba(255, 240, 245, 0.95);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+        }
+
+        .cute-theme .mobile-menu-item {
+            color: #333;
+        }
+
+        .cute-theme .mobile-menu-item:hover {
+            background: rgba(255, 182, 193, 0.2);
+        }
+        
+        /* 🔥【删除】移除图标和文字样式，改为纯文字按钮 */
+        
+        /* 🔥【修改】深色主题适配 - 纯文字风格 */
         .dark-theme .mobile-menu-content {
             background: rgba(45, 45, 45, 0.95);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .dark-theme .mobile-menu-header {
             color: rgba(255, 255, 255, 0.9);
         }
-        
-        .dark-theme .mobile-menu-item.reply-btn {
-            background: linear-gradient(135deg, rgba(74, 132, 193, 0.3) 0%, rgba(74, 132, 193, 0.4) 100%);
-            color: #6fa4d9;
-            border-color: rgba(74, 132, 193, 0.4);
-        }
-        
-        .dark-theme .mobile-menu-item.copy-btn {
-            background: linear-gradient(135deg, rgba(52, 199, 89, 0.3) 0%, rgba(52, 199, 89, 0.4) 100%);
-            color: #4dd67d;
-            border-color: rgba(52, 199, 89, 0.4);
-        }
-        
-        .dark-theme .mobile-menu-item.edit-btn {
-            background: linear-gradient(135deg, rgba(255, 149, 0, 0.3) 0%, rgba(255, 149, 0, 0.4) 100%);
-            color: #ffb340;
-            border-color: rgba(255, 149, 0, 0.4);
-        }
-        
-        .dark-theme .mobile-menu-item.recall-btn {
-            background: linear-gradient(135deg, rgba(209, 71, 122, 0.3) 0%, rgba(209, 71, 122, 0.4) 100%);
-            color: #e06394;
-            border-color: rgba(209, 71, 122, 0.4);
-        }
-        
-        .dark-theme .mobile-menu-item.delete-btn {
-            background: rgba(255, 87, 87, 0.6);
-            color: white;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+
+        .dark-theme .mobile-menu-item {
+            color: rgba(255, 255, 255, 0.9);
+            background: transparent;
         }
 
-        .dark-theme .mobile-menu-item.select-btn {
-            background: rgba(180, 180, 180, 0.6);
-            color: white;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        .dark-theme .mobile-menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .dark-theme .mobile-menu-item.cancel-btn {
-            background: rgba(74, 132, 193, 0.6);
-            color: white;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.9);
+            background: transparent;
+            border-top-color: rgba(255, 255, 255, 0.2);
         }
 
-        /* 深色主题可爱风 - 雾霾粉取消按钮 */
-        .dark-theme.cute-theme .mobile-menu-item.cancel-btn {
-            background: rgba(255, 182, 193, 0.6);
-            color: white;
+        .dark-theme .mobile-menu-item.cancel-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 🔥【修改】深色主题可爱风 - 纯文字风格 */
+        .dark-theme.cute-theme .mobile-menu-content {
+            background: rgba(60, 45, 50, 0.95);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+        }
+
+        .dark-theme.cute-theme .mobile-menu-item:hover {
+            background: rgba(255, 182, 193, 0.15);
         }
 
         /* 消息编辑指示器样式 */
@@ -6594,35 +6530,60 @@ textarea.call-text-input {
             transform: translateY(-1px);
         }
         
-        /* 消息操作菜单 */
+        /* 🔥【修改】桌面端消息操作菜单 - 纯文字风格 */
         .message-menu {
             position: fixed;
-            background-color: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 12px;
-            box-shadow: var(--shadow-card-special);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             z-index: 1000;
             overflow: hidden;
-            min-width: 120px;
+            min-width: 140px;
+            padding: 8px;
         }
-        
+
         .message-menu-item {
-            padding: 12px 20px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 10px 16px;
             cursor: pointer;
-            font-size: 15px;
-            transition: background-color 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            text-align: center;
+            color: #333;
+            background: transparent;
+            border: none;
+            margin: 2px 0;
         }
-        
+
         .message-menu-item:hover {
-            background-color: #f5f5f5;
+            background: rgba(240, 240, 240, 0.5);
+            transform: scale(1.02);
         }
-        
-        .message-menu-item:last-child {
-            border-bottom: none;
-        }
-        
+
         .message-menu-item.danger {
-            color: #ff3b30;
+            color: #333;
+        }
+
+        /* 🔥【新增】桌面端消息菜单深色主题适配 */
+        .dark-theme .message-menu {
+            background: rgba(45, 45, 45, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dark-theme .message-menu-item {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .dark-theme .message-menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .dark-theme .message-menu-item.danger {
+            color: rgba(255, 255, 255, 0.9);
         }
 
         /* 编辑消息模态框样式 */
@@ -15015,6 +14976,74 @@ textarea.call-text-input {
                 margin: auto !important;
                 flex-shrink: 0 !important;
                 transform: translateZ(0) !important;
+            }
+
+            /* 🔥【新增】修复移动端线下模式界面设置按钮显示问题 */
+            .radio-option-button {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                padding: 8px 12px !important;
+                background: rgba(255, 255, 255, 0.8) !important;
+                border: 1px solid rgba(0, 0, 0, 0.1) !important;
+                border-radius: 8px !important;
+                cursor: pointer !important;
+                font-size: 13px !important;
+                transition: all 0.2s ease !important;
+                backdrop-filter: blur(10px) !important;
+                -webkit-backdrop-filter: blur(10px) !important;
+                margin-bottom: 6px !important;
+                width: fit-content !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+
+            .radio-option-button.selected {
+                background: var(--theme-button-bg, rgba(0, 122, 255, 0.8)) !important;
+                color: white !important;
+                border-color: var(--theme-button-bg, #007AFF) !important;
+            }
+
+            .radio-indicator {
+                width: 16px !important;
+                height: 16px !important;
+                border: 2px solid #ddd !important;
+                border-radius: 50% !important;
+                background: white !important;
+                position: relative !important;
+                transition: all 0.2s ease !important;
+                flex-shrink: 0 !important;
+                margin-right: 4px !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+
+            .radio-option-button.selected .radio-indicator {
+                border-color: white !important;
+                background: white !important;
+            }
+
+            .radio-option-button.selected .radio-indicator::after {
+                content: '✓' !important;
+                position: absolute !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                color: var(--theme-button-bg, #007AFF) !important;
+                font-size: 10px !important;
+                font-weight: bold !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+
+            .radio-option-button:not(.selected) .radio-indicator {
+                border-color: var(--theme-button-bg, #007AFF) !important;
+            }
+
+            .radio-option-button:not(.selected) .radio-indicator::after {
+                content: '' !important;
             }
         }
 

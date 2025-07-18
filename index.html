@@ -12639,11 +12639,24 @@ async function applyChatBackground(backgroundUrl) {
             }
 
             // 🔥【修复】每次都重新设置菜单内容，避免事件绑定问题
-            menu.innerHTML = `
-                <div class="message-menu-item" data-action="reply">引用</div>
-                <div class="message-menu-item" data-action="copy">复制</div>
-                <div class="message-menu-item danger" data-action="delete">删除</div>
-            `;
+            // 检查消息是否是用户发送的（只有用户消息可以编辑和撤回）
+            const messages = chatMessages[currentChatCharacter.id] || [];
+            const message = messages.find(msg => msg.id === messageId);
+            const isUserMessage = message && message.sender === 'sent';
+
+            let menuItems = [
+                '<div class="message-menu-item" data-action="reply">引用</div>',
+                '<div class="message-menu-item" data-action="copy">复制</div>'
+            ];
+
+            if (isUserMessage) {
+                menuItems.push('<div class="message-menu-item" data-action="edit">编辑</div>');
+                menuItems.push('<div class="message-menu-item" data-action="recall">撤回</div>');
+            }
+
+            menuItems.push('<div class="message-menu-item" data-action="select">多选</div>');
+
+            menu.innerHTML = menuItems.join('');
 
             // 🔥【修复】使用事件委托绑定点击事件，避免内联onclick问题
             menu.onclick = function(e) {
@@ -12657,8 +12670,14 @@ async function applyChatBackground(backgroundUrl) {
                         case 'copy':
                             copyMessage();
                             break;
-                        case 'delete':
+                        case 'edit':
+                            showEditMessageModal(selectedMessageId);
+                            break;
+                        case 'recall':
                             deleteMessage();
+                            break;
+                        case 'select':
+                            enterMessageSelectionMode(selectedMessageId);
                             break;
                     }
                     hideMessageMenu();
@@ -21496,30 +21515,30 @@ async function createGroupChat(personaId) {
             menu.className = 'mobile-message-menu';
             
             const menuItems = [
-                { text: '引用', action: 'replyToMessage(selectedMessageId)', icon: '↩️', className: 'reply-btn' },
-                { text: '复制', action: 'copyMessage()', icon: '📋', className: 'copy-btn' },
-                { text: '编辑', action: 'showEditMessageModal(selectedMessageId)', icon: '✏️', className: 'edit-btn' },
-                { text: '选择', action: 'enterMessageSelectionMode(selectedMessageId)', icon: '☑️', className: 'select-btn' }
+                { text: '引用', action: 'replyToMessage(selectedMessageId)', className: 'reply-btn' },
+                { text: '复制', action: 'copyMessage()', className: 'copy-btn' },
+                { text: '多选', action: 'enterMessageSelectionMode(selectedMessageId)', className: 'select-btn' }
             ];
-            
-            // 如果是用户消息，添加撤回选项
+
+            // 如果是用户消息，添加编辑和撤回选项
             if (isUserMessage) {
-                menuItems.splice(3, 0, { text: '撤回', action: 'deleteMessage()', icon: '🗑️', className: 'recall-btn', danger: true });
+                menuItems.splice(2, 0, { text: '编辑', action: 'showEditMessageModal(selectedMessageId)', className: 'edit-btn' });
+                menuItems.splice(3, 0, { text: '撤回', action: 'deleteMessage()', className: 'recall-btn' });
             }
             
             menu.innerHTML = `
                 <div class="mobile-menu-overlay" onclick="hideMobileMessageMenu()"></div>
                 <div class="mobile-menu-content">
                     <div class="mobile-menu-header">消息操作</div>
-                    ${menuItems.map(item => `
-                        <div class="mobile-menu-item ${item.className || ''} ${item.danger ? 'danger' : ''}" onclick="${item.action}; hideMobileMessageMenu();">
-                            <span class="menu-icon">${item.icon}</span>
-                            <span class="menu-text">${item.text}</span>
-                        </div>
-                    `).join('')}
+                    <div class="mobile-menu-buttons">
+                        ${menuItems.map(item => `
+                            <div class="mobile-menu-item ${item.className || ''}" onclick="${item.action}; hideMobileMessageMenu();">
+                                ${item.text}
+                            </div>
+                        `).join('')}
+                    </div>
                     <div class="mobile-menu-item cancel-btn" onclick="hideMobileMessageMenu()">
-                        <span class="menu-icon">❌</span>
-                        <span class="menu-text">取消</span>
+                        取消
                     </div>
                 </div>
             `;
