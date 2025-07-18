@@ -2,24 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <!-- 🔥【修复】添加正确的viewport设置，防止虚拟手机乱飞 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=3.0, user-scalable=yes">
-
-    <!-- 🔥【启用】PWA全屏功能 -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="https://i.postimg.cc/kGYP6CQw/6.png">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="EVE Chat">
-
-    <!-- 🔥【新增】PWA主题色彩 -->
-    <meta name="theme-color" content="#000000">
-    <meta name="msapplication-navbutton-color" content="#000000">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <!-- 🔥【新增】PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>EVE Chat</title>
     <script src="https://cdn.jsdelivr.net/npm/dexie/dist/dexie.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Comic+Neue:wght@400;700&family=Fredoka+One&family=Nunito:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&family=Roboto:wght@400;500&family=Raleway:wght@400;500;600&family=Lato:wght@400;700&family=Poppins:wght@400;500;600&family=Quicksand:wght@400;500;600&family=Varela+Round&display=swap" rel="stylesheet">
@@ -204,63 +187,6 @@
             color: #ffd700;
             font-size: 12px;
             z-index: 5;
-        }
-
-        /* 🔥【新增】PWA全屏模式修复 - 防止虚拟手机乱飞 */
-        @media (display-mode: standalone) {
-            /* PWA全屏模式下的修复 */
-            body {
-                overflow: hidden !important;
-                position: fixed !important;
-                width: 100% !important;
-                height: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            #phone-frame {
-                position: fixed !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                z-index: 1000 !important;
-            }
-
-            #phone-screen {
-                position: relative !important;
-                transform: none !important;
-            }
-
-            /* 防止页面滚动和缩放 */
-            html {
-                overflow: hidden !important;
-                touch-action: manipulation !important;
-            }
-        }
-
-        /* 🔥【新增】iOS Safari全屏模式额外修复 */
-        @supports (-webkit-touch-callout: none) {
-            @media (display-mode: standalone) {
-                /* iOS特定修复 */
-                body {
-                    -webkit-overflow-scrolling: touch !important;
-                    -webkit-user-select: none !important;
-                    user-select: none !important;
-                }
-
-                #phone-frame {
-                    -webkit-transform: translate(-50%, -50%) !important;
-                    transform: translate(-50%, -50%) !important;
-                    -webkit-backface-visibility: hidden !important;
-                    backface-visibility: hidden !important;
-                }
-
-                /* 防止iOS的橡皮筋效果 */
-                html, body {
-                    overscroll-behavior: none !important;
-                    -webkit-overflow-scrolling: auto !important;
-                }
-            }
         }
     </style>
 
@@ -33983,102 +33909,6 @@ async function changeMyGroupAvatar() {
             }, { passive: true });
 
             console.log('📱 [移动端优化] 输入框viewport行为修复已启动');
-        })();
-    </script>
-
-    <!-- 🔥【新增】PWA全屏模式检测和优化 -->
-    <script>
-        (function() {
-            'use strict';
-
-            console.log('📱 [PWA优化] PWA全屏模式检测启动...');
-
-            // 检测是否在PWA全屏模式下运行
-            function isPWAMode() {
-                return window.matchMedia('(display-mode: standalone)').matches ||
-                       window.navigator.standalone === true ||
-                       document.referrer.includes('android-app://');
-            }
-
-            // 检测是否为移动设备
-            function isMobileDevice() {
-                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            }
-
-            // PWA模式下的额外优化
-            function optimizeForPWA() {
-                if (isPWAMode()) {
-                    console.log('🎯 [PWA优化] 检测到PWA全屏模式，应用优化...');
-
-                    // 防止页面滚动
-                    document.body.style.overflow = 'hidden';
-                    document.documentElement.style.overflow = 'hidden';
-
-                    // 防止双击缩放
-                    document.addEventListener('dblclick', function(e) {
-                        e.preventDefault();
-                    }, { passive: false });
-
-                    // 防止长按选择
-                    document.addEventListener('selectstart', function(e) {
-                        e.preventDefault();
-                    }, { passive: false });
-
-                    // 优化虚拟手机定位
-                    const phoneFrame = document.getElementById('phone-frame');
-                    if (phoneFrame) {
-                        phoneFrame.style.position = 'fixed';
-                        phoneFrame.style.top = '50%';
-                        phoneFrame.style.left = '50%';
-                        phoneFrame.style.transform = 'translate(-50%, -50%)';
-                        phoneFrame.style.zIndex = '1000';
-                    }
-
-                    console.log('✅ [PWA优化] PWA全屏模式优化完成');
-                } else {
-                    console.log('📱 [PWA优化] 非PWA模式，跳过PWA优化');
-                }
-            }
-
-            // 显示PWA安装提示（仅移动端）
-            function showPWAInstallHint() {
-                if (isMobileDevice() && !isPWAMode()) {
-                    console.log('💡 [PWA提示] 可以将此应用添加到主屏幕以获得更好的全屏体验');
-
-                    // 可以在这里添加安装提示UI
-                    setTimeout(() => {
-                        if (typeof showToast === 'function') {
-                            showToast('💡 提示：可以将此应用添加到主屏幕获得全屏体验', 'info');
-                        }
-                    }, 3000);
-                }
-            }
-
-            // 监听显示模式变化
-            if (window.matchMedia) {
-                const mediaQuery = window.matchMedia('(display-mode: standalone)');
-                mediaQuery.addListener(function(e) {
-                    if (e.matches) {
-                        console.log('🎯 [PWA优化] 切换到PWA全屏模式');
-                        optimizeForPWA();
-                    } else {
-                        console.log('📱 [PWA优化] 退出PWA全屏模式');
-                    }
-                });
-            }
-
-            // 页面加载完成后执行优化
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() {
-                    optimizeForPWA();
-                    showPWAInstallHint();
-                });
-            } else {
-                optimizeForPWA();
-                showPWAInstallHint();
-            }
-
-            console.log('📱 [PWA优化] PWA全屏模式检测已启动');
         })();
     </script>
 
