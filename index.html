@@ -938,6 +938,7 @@
                                 <button class="memory-filter-tab active" data-type="all" onclick="switchMemoryFilter('all')">全部</button>
                                 <button class="memory-filter-tab" data-type="core" onclick="switchMemoryFilter('core')">核心记忆</button>
                                 <button class="memory-filter-tab" data-type="episodic" onclick="switchMemoryFilter('episodic')">情景记忆</button>
+                                <button class="memory-filter-tab" data-type="storyline" onclick="switchMemoryFilter('storyline')">剧情总结</button>
                                 <button class="memory-filter-tab" data-type="timeline" onclick="switchMemoryFilter('timeline')">时间线</button>
                             </div>
                         </div>
@@ -4237,6 +4238,186 @@
             console.log('🔧 升级到版本12：修复characterGroups schema问题');
         });
 
+        // 🔥【新增】版本13：添加线下模式预设表并迁移localStorage数据
+        db.version(13).stores({
+            characters: '&id, name, groupId',
+            contacts: '++id, characterId',
+            chatMessages: '&id, characterId, timestamp',
+            apiSettings: '&id',
+            worldbooks: '&id, name, isGlobal',
+            worldbookEntries: '&id, worldbookId, keyword',
+            personas: '&id, name',
+            characterGroups: '&id, name, order',
+            groupChats: '&id, name',
+            groupChatMessages: '&id, groupId, timestamp',
+            groupChatMembers: '&id, groupId, characterId',
+            customEmojis: '&id, name, category',
+            moments: '&id, authorId, timestamp',
+            momentComments: '&id, momentId, authorId, timestamp',
+            recentEmojis: '&id, lastUsed',
+            blockedCharacters: '&id, characterId, blockedBy, timestamp',
+            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
+            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
+            workingMemory: '&id, characterId, timestamp, content, context',
+            episodicMemory: '&id, characterId, date, summary, timestamp, context',
+            coreMemory: '&id, characterId, category, content, timestamp',
+            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
+            characterDiaries: '&id, characterId, date, content, timestamp, weather',
+            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
+            offlineUISettings: '&id, characterId, settings, timestamp',
+            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
+            musicCovers: '&id, songId, imageData, timestamp',
+            // 🔥【新增】线下模式预设表（移除isGlobal索引避免null值问题）
+            offlinePresets: '&id, name, content, timestamp'
+        }).upgrade(async tx => {
+
+        // 🔥【新增】版本14：修复导出导入功能，添加缺失的数据表
+        db.version(14).stores({
+            characters: '&id, name, groupId',
+            contacts: '++id, characterId',
+            chatMessages: '&id, characterId, timestamp',
+            apiSettings: '&id',
+            worldbooks: '&id, name, isGlobal',
+            worldbookEntries: '&id, worldbookId, keyword',
+            personas: '&id, name',
+            characterGroups: '&id, name, order',
+            groupChats: '&id, name',
+            groupChatMessages: '&id, groupId, timestamp',
+            groupChatMembers: '&id, groupId, characterId',
+            customEmojis: '&id, name, category',
+            moments: '&id, authorId, timestamp',
+            momentLikes: '[momentId+authorId], momentId, authorId', // 🔥【修复】重新添加点赞表
+            momentComments: '&id, momentId, authorId, timestamp',
+            recentEmojis: '&id, lastUsed',
+            blockedCharacters: '&id, characterId, blockedBy, timestamp',
+            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
+            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
+            workingMemory: '&id, characterId, timestamp, content, context',
+            episodicMemory: '&id, characterId, date, summary, timestamp, context',
+            coreMemory: '&id, characterId, category, content, timestamp',
+            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
+            characterDiaries: '&id, characterId, date, content, timestamp, weather',
+            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
+            offlineUISettings: '&id, characterId, settings, timestamp',
+            offlinePresets: '&id, name, content, timestamp',
+            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
+            musicCovers: '&id, songId, imageData, timestamp',
+            // 🔥【修复】重新添加缺失的设置相关表
+            chatSettings: '&id, chatId',
+            globalSettings: '&id',
+            wallpapers: '&id, name',
+            appIcons: '&id, appId'
+        }).upgrade(async tx => {
+            console.log('🔧 升级到版本14：修复导出导入功能，添加缺失的数据表');
+        });
+            console.log('🔧 升级到版本13：添加线下模式预设表并迁移localStorage数据');
+
+            // 🔥【新增】迁移localStorage中的线下模式预设到Dexie
+            try {
+                console.log('开始迁移线下模式预设...');
+                let presetMigratedCount = 0;
+
+                // 迁移全局预设
+                const globalPresetsKey = 'globalOfflinePresets';
+                const globalPresetsData = localStorage.getItem(globalPresetsKey);
+                if (globalPresetsData) {
+                    try {
+                        const globalPresets = JSON.parse(globalPresetsData);
+                        for (const preset of globalPresets) {
+                            await tx.offlinePresets.add({
+                                id: preset.id || `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                name: preset.name || '未命名预设',
+                                content: preset.content || '',
+                                timestamp: preset.timestamp || Date.now(),
+                                isGlobal: true
+                            });
+                            presetMigratedCount++;
+                        }
+                        console.log(`✅ 迁移全局预设 ${globalPresets.length} 个`);
+                        // 迁移完成后删除localStorage数据
+                        localStorage.removeItem(globalPresetsKey);
+                    } catch (parseError) {
+                        console.error('❌ 解析全局预设失败:', parseError);
+                    }
+                }
+
+                // 迁移旧的按角色存储的预设
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('offlinePresets_')) {
+                        const presetsData = localStorage.getItem(key);
+                        if (presetsData) {
+                            try {
+                                const presets = JSON.parse(presetsData);
+                                for (const preset of presets) {
+                                    await tx.offlinePresets.add({
+                                        id: preset.id || `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                        name: preset.name || '未命名预设',
+                                        content: preset.content || '',
+                                        timestamp: preset.timestamp || Date.now(),
+                                        isGlobal: true // 迁移时统一设为全局预设
+                                    });
+                                    presetMigratedCount++;
+                                }
+                                console.log(`✅ 迁移旧预设 ${presets.length} 个`);
+                                keysToRemove.push(key);
+                            } catch (parseError) {
+                                console.error(`❌ 解析旧预设失败:`, parseError);
+                            }
+                        }
+                    }
+                }
+
+                // 删除已迁移的localStorage数据
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+
+                console.log(`✅ 线下模式预设迁移完成，共迁移 ${presetMigratedCount} 个预设`);
+            } catch (error) {
+                console.error('❌ 迁移线下模式预设失败:', error);
+            }
+        });
+
+        // 🔥【新增】版本14：修复导出导入功能，添加缺失的数据表
+        db.version(14).stores({
+            characters: '&id, name, groupId',
+            contacts: '++id, characterId',
+            chatMessages: '&id, characterId, timestamp',
+            apiSettings: '&id',
+            worldbooks: '&id, name, isGlobal',
+            worldbookEntries: '&id, worldbookId, keyword',
+            personas: '&id, name',
+            characterGroups: '&id, name, order',
+            groupChats: '&id, name',
+            groupChatMessages: '&id, groupId, timestamp',
+            groupChatMembers: '&id, groupId, characterId',
+            customEmojis: '&id, name, category',
+            moments: '&id, authorId, timestamp',
+            momentLikes: '[momentId+authorId], momentId, authorId', // 🔥【修复】重新添加点赞表
+            momentComments: '&id, momentId, authorId, timestamp',
+            recentEmojis: '&id, lastUsed',
+            blockedCharacters: '&id, characterId, blockedBy, timestamp',
+            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
+            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
+            workingMemory: '&id, characterId, timestamp, content, context',
+            episodicMemory: '&id, characterId, date, summary, timestamp, context',
+            coreMemory: '&id, characterId, category, content, timestamp',
+            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
+            characterDiaries: '&id, characterId, date, content, timestamp, weather',
+            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
+            offlineUISettings: '&id, characterId, settings, timestamp',
+            offlinePresets: '&id, name, content, timestamp',
+            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
+            musicCovers: '&id, songId, imageData, timestamp',
+            // 🔥【修复】重新添加缺失的设置相关表
+            chatSettings: '&id, chatId',
+            globalSettings: '&id',
+            wallpapers: '&id, name',
+            appIcons: '&id, appId'
+        }).upgrade(async tx => {
+            console.log('🔧 升级到版本14：修复导出导入功能，添加缺失的数据表');
+        });
+
         // 全局变量
         let characters = [];
         let contacts = [];
@@ -4331,8 +4512,7 @@
 
             try {
 
-            // 迁移旧的线下预设数据
-            migrateOldPresets();
+            // 🔥【已移除】迁移旧的线下预设数据 - 现在由数据库版本13自动处理
 
             // 并行加载所有数据
             await Promise.all([
@@ -4617,7 +4797,7 @@
                         if (!chatMessages) chatMessages = {};
 
                         // 尝试显示设置页面
-                        showPage('settings');
+                        showApp('settings-screen');
 
                         // 延迟显示恢复模态框
                         setTimeout(() => {
@@ -5225,7 +5405,7 @@
             try {
                 const savedMessages = await db.chatMessages.toArray();
                 chatMessages = {};
-                
+
                 if (savedMessages.length === 0) {
                     // IndexedDB中没有数据，尝试从localStorage迁移
                     const localStorageData = localStorage.getItem('chatMessages');
@@ -5268,13 +5448,24 @@
                     
                     // 按时间戳排序并清理空值
                     for (const characterId in chatMessages) {
-                        // 🔥【新增】过滤掉null、undefined或无效的消息
+                        // 🔥【新增】过滤掉null、undefined或无效的消息，以及拉黑系统消息
                         chatMessages[characterId] = chatMessages[characterId]
-                            .filter(msg => msg && typeof msg === 'object' && msg.timestamp)
+                            .filter(msg => {
+                                // 基本有效性检查
+                                if (!msg || typeof msg !== 'object' || !msg.timestamp) {
+                                    return false;
+                                }
+                                // 🔥【修复】过滤掉拉黑系统消息，避免重复显示
+                                if (msg.sender === 'system' && msg.isBlockedMessage) {
+                                    return false;
+                                }
+                                return true;
+                            })
                             .sort((a, b) => a.timestamp - b.timestamp);
                     }
-                    
 
+                    // 🔥【修复】清理数据库中的拉黑系统消息
+                    await cleanupBlockedSystemMessages();
                 }
             } catch (error) {
                 console.error('加载聊天消息失败:', error);
@@ -5287,7 +5478,33 @@
                 }
             }
         }
-        
+
+        // 🔥【新增】清理数据库中的拉黑系统消息
+        async function cleanupBlockedSystemMessages() {
+            try {
+                // 获取所有聊天消息记录
+                const allMessages = await db.chatMessages.toArray();
+                const messagesToDelete = [];
+
+                // 找出所有拉黑系统消息
+                for (const msgRecord of allMessages) {
+                    if (msgRecord.messageData &&
+                        msgRecord.messageData.sender === 'system' &&
+                        msgRecord.messageData.isBlockedMessage) {
+                        messagesToDelete.push(msgRecord.id);
+                    }
+                }
+
+                // 批量删除拉黑系统消息
+                if (messagesToDelete.length > 0) {
+                    await db.chatMessages.bulkDelete(messagesToDelete);
+                    console.log(`已清理 ${messagesToDelete.length} 条拉黑系统消息`);
+                }
+            } catch (error) {
+                console.error('清理拉黑系统消息失败:', error);
+            }
+        }
+
         // 防抖保存计时器
         let saveMessagesTimer = null;
         let isSaving = false; // 防止并发保存
@@ -8448,6 +8665,11 @@ ${chatContext}${momentsContext}
             messagesToShow.forEach((message, index) => {
                 // 处理系统消息（如戳一戳、头像更换、撤回等）
                 if (message.sender === 'system') {
+                    // 🔥【修复】跳过拉黑系统消息，这些消息应该显示在对应的用户消息下方，而不是作为独立的系统消息
+                    if (message.isBlockedMessage) {
+                        return; // 跳过拉黑系统消息的独立渲染
+                    }
+
                     if (message.isPoke) {
                     const systemContainer = document.createElement('div');
                     systemContainer.className = 'poke-system-container';
@@ -9193,8 +9415,13 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                 
                 // 处理系统消息（如戳一戳、头像更换、撤回等）
                 if (message.sender === 'system') {
+                    // 🔥【修复】跳过拉黑系统消息，这些消息应该显示在对应的用户消息下方，而不是作为独立的系统消息
+                    if (message.isBlockedMessage) {
+                        continue; // 跳过拉黑系统消息的独立渲染
+                    }
+
                     let containerToInsert;
-                    
+
                     if (message.isPoke) {
                     const systemContainer = document.createElement('div');
                     systemContainer.className = 'poke-system-container';
@@ -11395,8 +11622,31 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                             // 🔥【新增】处理戳一戳后缀更新
 
                             processedMessages.push(item);
+                        } else if (typeof item === 'object' && item.type === 'recall') {
+                            // 🔥【新增】处理AI主动撤回消息
+                            if (item.target === 'previous') {
+                                // 撤回上一条消息
+                                processedMessages.push({
+                                    type: 'recall_previous',
+                                    content: '[AI撤回了上一条消息]'
+                                });
+                            }
+                        } else if (typeof item === 'object' && item.type === 'reply') {
+                            // 🔥【新增】处理AI引用回复
+                            processedMessages.push({
+                                type: 'reply_message',
+                                messageId: item.messageId,
+                                content: item.content || ''
+                            });
+                        } else if (typeof item === 'object' && item.type === 'photo') {
+                            // 🔥【新增】处理AI发送照片卡片
+                            processedMessages.push({
+                                type: 'user_photo',
+                                content: item.description || 'AI分享的照片',
+                                photoDescription: item.description
+                            });
                         } else if (typeof item === 'object' && item.type === 'recalled_message') {
-                            // 🔥【新增】处理撤回消息
+                            // 🔥【保留】处理系统撤回消息
 
                             processedMessages.push(item);
                         } else if (typeof item === 'object' && item.type === 'reply_to') {
@@ -11533,8 +11783,31 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                                 // 🔥【新增】处理戳一戳后缀更新(第二处)
 
                                 processedMessages.push(item);
+                            } else if (typeof item === 'object' && item.type === 'recall') {
+                                // 🔥【新增】处理AI主动撤回消息(第二处)
+                                if (item.target === 'previous') {
+                                    // 撤回上一条消息
+                                    processedMessages.push({
+                                        type: 'recall_previous',
+                                        content: '[AI撤回了上一条消息]'
+                                    });
+                                }
+                            } else if (typeof item === 'object' && item.type === 'reply') {
+                                // 🔥【新增】处理AI引用回复(第二处)
+                                processedMessages.push({
+                                    type: 'reply_message',
+                                    messageId: item.messageId,
+                                    content: item.content || ''
+                                });
+                            } else if (typeof item === 'object' && item.type === 'photo') {
+                                // 🔥【新增】处理AI发送照片卡片(第二处)
+                                processedMessages.push({
+                                    type: 'user_photo',
+                                    content: item.description || 'AI分享的照片',
+                                    photoDescription: item.description
+                                });
                             } else if (typeof item === 'object' && item.type === 'recalled_message') {
-                                // 🔥【新增】处理撤回消息(第二处)
+                                // 🔥【保留】处理系统撤回消息(第二处)
 
                                 processedMessages.push(item);
                             } else if (typeof item === 'object' && item.type === 'reply_to') {
@@ -12995,10 +13268,10 @@ async function applyChatBackground(backgroundUrl) {
                 charCount.textContent = this.value.length;
             });
             
-            // 聚焦并选中文本
+            // 🔥【修复】聚焦但不选中文本，光标移到末尾
             setTimeout(() => {
                 textarea.focus();
-                textarea.select();
+                textarea.setSelectionRange(textarea.value.length, textarea.value.length);
             }, 100);
         }
         
@@ -13213,11 +13486,11 @@ async function applyChatBackground(backgroundUrl) {
                     messages.splice(messageIndex, 1);
 
                 // 🔥【新增】创建撤回消息系统提醒
-                const whoRecalled = messageToDelete.sender === 'received' ? currentChatCharacter.name : '你';
+                const whoRecalled = messageToDelete.sender === 'received' ? currentChatCharacter.name : '用户';
                 const recallSystemMessage = {
                     id: Date.now().toString(),
                     sender: 'system',
-                    content: `${whoRecalled} 撤回了一条消息\n原文：${originalContent}`,
+                    content: `${whoRecalled}撤回了一条消息，原内容是："${originalContent}"`,
                     timestamp: messageToDelete.timestamp || Date.now(),
                     isRecall: true
                 };
@@ -16722,7 +16995,37 @@ ${timeInfo}${musicInfo}
 
             // 🔥【修改】群聊不包含拉黑相关指令
             const blockInstructions = isGroupChat ? '' : blacklistInstructions;
-            characterPrompt += aiImageInstructions + aiVoiceInstructions + transferInstructions + avatarChangeInstructions + currentBlockedStatus + blockInstructions + replyInstructions;
+
+            // 🔥【新增】消息操作功能说明
+            const messageActionsInstructions = `\n# 消息操作功能
+## 撤回消息
+- 你可以在发送消息后立即撤回，特别是在以下情况：
+  - 发错了内容或发给了错误的人
+  - 说了不合适的话想要收回
+  - 情绪激动时说了过激的话
+  - 想要重新组织语言表达
+- **撤回格式**：在你的回复JSON数组中使用 \`{"type": "recall", "target": "previous"}\`
+- **示例**：["刚才说错了", {"type": "recall", "target": "previous"}, "我重新说一遍..."]
+
+## 引用回复
+- 当你想要回复用户之前的某条特定消息时，可以使用引用功能
+- 特别适用于：回答用户之前的问题、澄清误解、继续之前的话题
+- **引用格式**：在你的回复JSON数组中使用 \`{"type": "reply", "messageId": "消息ID", "content": "你的回复内容"}\`
+- **注意**：消息ID会在历史记录中以[ID:xxx]的形式提供
+
+## 发送位置信息
+- 当对话涉及地点、约会、见面等场景时，你可以主动分享位置
+- **位置格式**：\`{"type": "location", "name": "地点名称", "address": "详细地址"}\`
+- **示例**：["我在咖啡厅等你", {"type": "location", "name": "星巴克", "address": "中山路123号"}]
+
+## 发送照片卡片
+- 在合适的场景下，你可以主动分享照片（如风景、美食、自拍等）
+- **照片格式**：\`{"type": "photo", "description": "照片描述"}\`
+- **示例**：["今天天气真好", {"type": "photo", "description": "窗外的蓝天白云"}]
+
+**重要提醒**：这些功能要根据角色性格和对话情境自然使用，不要为了使用而使用。`;
+
+            characterPrompt += aiImageInstructions + aiVoiceInstructions + transferInstructions + avatarChangeInstructions + currentBlockedStatus + blockInstructions + replyInstructions + messageActionsInstructions;
 
                 // 🔥【优化】智能回应图片/表情包的指令
             characterPrompt += `\n\n# **关于图片和表情包的回应原则**
@@ -17150,31 +17453,39 @@ ${timeInfo}${musicInfo}
             const historyCount = chatSettings.historyCount || 5;
 
             // 🔥【修复】使用连续工作记忆（包含跨应用事件）
+            // 🔥【安全检查】确保chatMessages已初始化
+            if (!chatMessages) {
+                console.warn('chatMessages未初始化，使用空对象');
+                chatMessages = {};
+            }
             const continuousWorkingMemory = await buildContinuousWorkingMemory(
                 character.id,
                 chatMessages[character.id] || [],
                 historyCount
             );
 
+            // 🔥【重新设计】按真正的回合数来计算历史消息
             // 从连续工作记忆中提取聊天消息
-            let recentHistory = continuousWorkingMemory
+            let allChatMessages = continuousWorkingMemory
                 .filter(event => event.type === 'chat')
-                .map(event => event.content)
-                .slice(-historyCount);
+                .map(event => event.content);
 
-            if (recentHistory.length > 0 && JSON.stringify(recentHistory[recentHistory.length - 1].content) === JSON.stringify(message)) {
-                recentHistory.pop();
+            // 移除当前要发送的消息（如果存在）
+            if (allChatMessages.length > 0 && JSON.stringify(allChatMessages[allChatMessages.length - 1].content) === JSON.stringify(message)) {
+                allChatMessages.pop();
             }
 
-            // 🔥【修复】重新设计工作记忆的回合数计算
-            // 每个"回合"包含：用户消息 + AI回复 = 1回合
+            // 🔥【核心修复】按回合计算历史消息
+            let recentHistory = calculateMessagesByRounds(allChatMessages, historyCount);
+
             // 跨应用事件按照实际发生的对话回合数计算
             const crossAppEvents = continuousWorkingMemory
                 .filter(event => event.type === 'cross_app')
                 .slice(-Math.floor(historyCount * 0.2)); // 跨应用事件占工作记忆的20%
 
+            const actualRounds = countActualRounds(recentHistory);
             console.log(`🔗 工作记忆统计:`);
-            console.log(`  📝 聊天回合数: ${Math.ceil(recentHistory.length / 2)}回合 (${recentHistory.length}条消息)`);
+            console.log(`  📝 聊天回合数: ${actualRounds}回合 (${recentHistory.length}条消息)`);
             console.log(`  🎵 跨应用事件: ${crossAppEvents.length}条`);
             console.log(`  📊 总工作记忆容量: ${historyCount}回合`);
             const messages = [{ role: 'system', content: characterPrompt }];
@@ -17210,6 +17521,16 @@ ${timeInfo}${musicInfo}
             } else {
                 // 单聊：使用原有的消息处理逻辑
                 recentHistory.forEach(msg => {
+                    // 🔥【修复】处理系统消息（如撤回消息）
+                    if (msg.sender === 'system') {
+                        // 系统消息作为用户消息发送给AI，让AI知道发生了什么
+                        messages.push({
+                            role: 'user',
+                            content: `[系统提示] ${msg.content}`
+                        });
+                        return;
+                    }
+
                     let role = msg.sender === 'sent' ? 'user' : 'assistant';
                     let content = msg.content;
 
@@ -17707,7 +18028,10 @@ ${timeInfo}${musicInfo}
             if (!messages || !Array.isArray(messages)) return [];
 
             return messages.map(msg => {
-                if (msg.sender === 'sent') {
+                // 🔥【新增】处理群聊中的系统消息
+                if (msg.sender === 'system') {
+                    return { role: 'user', content: `[系统提示] ${msg.content}` };
+                } else if (msg.sender === 'sent') {
                     // 用户消息：使用群聊设置中的昵称
                     const chatSettings = getCurrentChatSettings();
                     const myNickname = chatSettings.myChatNickname || groupChat.settings?.myNickname || '我';
@@ -23909,7 +24233,8 @@ async function createGroupChat(personaId) {
                     // AI记忆提取（根据用户设置的间隔）
                     if (messages.length % MEMORY_CONFIG.AI_EXTRACT_INTERVAL === 0) {
                         const recentMessages = messages.slice(-MEMORY_CONFIG.AI_EXTRACT_INTERVAL);
-                        await extractMemoriesWithAI(currentChatCharacter.id, recentMessages);
+                        // 🔥【修复】传入上下文ID用于记忆隔离
+                        await extractMemoriesWithAI(currentChatCharacter.id, recentMessages, currentChatCharacter.id);
                         console.log(`🧠 触发记忆提取 - 角色: ${currentChatCharacter.name}, 消息数: ${messages.length}`);
                     }
                 } catch (error) {
@@ -28133,8 +28458,13 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             
             // 处理系统消息
             if (message.sender === 'system') {
+                // 🔥【修复】跳过拉黑系统消息，这些消息应该显示在对应的用户消息下方，而不是作为独立的系统消息
+                if (message.isBlockedMessage) {
+                    return; // 跳过拉黑系统消息的独立渲染
+                }
+
                 let systemElement;
-                
+
                 if (message.isPoke) {
                     const systemContainer = document.createElement('div');
                     systemContainer.className = 'poke-system-container';
@@ -30117,59 +30447,96 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
         async function exportAllData() {
             try {
                 showToast('正在导出数据...', 'info');
-                
-                // 🔥【修复】导出所有重要数据表，包括全局记忆系统和日记数据
+
+                // 🔥【调试】检查数据库版本和表是否存在
+                console.log('🔍 数据库版本:', db.verno);
+                console.log('🔍 数据库表列表:', db.tables.map(t => t.name));
+
+                // 🔥【完善】导出所有重要数据表，确保包含全部功能数据
                 const exportData = {
-                    version: '4.0', // 更新版本号，包含日记系统
+                    version: '5.0', // 更新版本号，包含完整数据
                     exportTime: new Date().toISOString(),
+                    // 基础数据
                     characters: await db.characters.toArray(),
                     chatMessages: await db.chatMessages.toArray(),
                     chatSettings: await db.chatSettings.toArray(),
+                    contacts: await db.contacts.toArray(),
+                    // 用户面具系统
+                    personas: await db.personas.toArray(),
+                    // 表情包系统
                     customEmojis: await db.customEmojis.toArray(),
-                    wallpapers: await db.wallpapers.toArray(),
+                    recentEmojis: await db.recentEmojis.toArray(),
+                    // 世界书系统
                     worldbooks: await db.worldbooks.toArray(),
+                    worldbookEntries: await db.worldbookEntries.toArray(),
+                    // 群聊系统
                     characterGroups: await db.characterGroups.toArray(),
                     groupChats: await db.groupChats.toArray(),
-                    personas: await db.personas.toArray(),
-                    apiSettings: await db.apiSettings.toArray(),
-                    globalSettings: await db.globalSettings.toArray(),
-                    recentEmojis: await db.recentEmojis.toArray(),
-                    contacts: await db.contacts.toArray(),
-                    appIcons: await db.appIcons.toArray(),
-                    // 🔥【新增】全局记忆系统相关表
-                    coreMemories: await db.coreMemories.toArray(),
-                    episodicMemories: await db.episodicMemories.toArray(),
-                    memorySummaries: await db.memorySummaries.toArray(),
-                    memoryEvents: await db.memoryEvents.toArray(),
-                    crossAppTimeline: await db.crossAppTimeline.toArray(),
-                    // 🔥【新增】其他系统表
-                    blacklist: await db.blacklist.toArray(),
-                    friendRequests: await db.friendRequests.toArray(),
-                    characterStatus: await db.characterStatus.toArray(),
+                    groupChatMessages: await db.groupChatMessages.toArray(),
+                    groupChatMembers: await db.groupChatMembers.toArray(),
+                    // 动态系统
                     moments: await db.moments.toArray(),
                     momentLikes: await db.momentLikes.toArray(),
                     momentComments: await db.momentComments.toArray(),
-                    // 🔥【新增】日记系统表
-                    characterDiaries: await db.characterDiaries.toArray()
+                    // 记忆系统
+                    workingMemory: await db.workingMemory.toArray(),
+                    episodicMemory: await db.episodicMemory.toArray(),
+                    coreMemory: await db.coreMemory.toArray(),
+                    crossAppTimeline: await db.crossAppTimeline.toArray(),
+                    // 拉黑和好友系统
+                    blockedCharacters: await db.blockedCharacters.toArray(),
+                    friendRequests: await db.friendRequests.toArray(),
+                    characterStatus: await db.characterStatus.toArray(),
+                    // 日记系统
+                    characterDiaries: await db.characterDiaries.toArray(),
+                    // 线下模式系统
+                    offlineHistoryRecords: await db.offlineHistoryRecords.toArray(),
+                    offlineUISettings: await db.offlineUISettings.toArray(),
+                    offlinePresets: await db.offlinePresets.toArray(),
+                    // 音乐播放器系统
+                    musicPlaylist: await db.musicPlaylist.toArray(),
+                    musicCovers: await db.musicCovers.toArray(),
+                    // 设置和配置
+                    apiSettings: await db.apiSettings.toArray(),
+                    globalSettings: await db.globalSettings.toArray(),
+                    wallpapers: await db.wallpapers.toArray(),
+                    appIcons: await db.appIcons.toArray()
                 };
 
                 // 显示导出统计
                 const stats = [];
+                // 基础数据统计
                 if (exportData.characters?.length) stats.push(`角色: ${exportData.characters.length}个`);
                 if (exportData.chatMessages?.length) stats.push(`消息: ${exportData.chatMessages.length}条`);
-                if (exportData.chatSettings?.length) stats.push(`设置: ${exportData.chatSettings.length}个`);
-                if (exportData.wallpapers?.length) stats.push(`壁纸: ${exportData.wallpapers.length}个`);
-                if (exportData.worldbooks?.length) stats.push(`世界书: ${exportData.worldbooks.length}个`);
-                if (exportData.characterGroups?.length) stats.push(`分组: ${exportData.characterGroups.length}个`);
-                if (exportData.groupChats?.length) stats.push(`群聊: ${exportData.groupChats.length}个`);
                 if (exportData.personas?.length) stats.push(`面具: ${exportData.personas.length}个`);
+                if (exportData.contacts?.length) stats.push(`联系人: ${exportData.contacts.length}个`);
+                // 表情包系统
                 if (exportData.customEmojis?.length) stats.push(`表情: ${exportData.customEmojis.length}个`);
-                // 🔥【新增】记忆系统统计
-                if (exportData.coreMemories?.length) stats.push(`核心记忆: ${exportData.coreMemories.length}条`);
-                if (exportData.episodicMemories?.length) stats.push(`情节记忆: ${exportData.episodicMemories.length}条`);
-                if (exportData.crossAppTimeline?.length) stats.push(`时间线: ${exportData.crossAppTimeline.length}条`);
+                if (exportData.recentEmojis?.length) stats.push(`最近表情: ${exportData.recentEmojis.length}个`);
+                // 世界书系统
+                if (exportData.worldbooks?.length) stats.push(`世界书: ${exportData.worldbooks.length}个`);
+                if (exportData.worldbookEntries?.length) stats.push(`世界书条目: ${exportData.worldbookEntries.length}条`);
+                // 群聊系统
+                if (exportData.groupChats?.length) stats.push(`群聊: ${exportData.groupChats.length}个`);
+                if (exportData.groupChatMessages?.length) stats.push(`群聊消息: ${exportData.groupChatMessages.length}条`);
+                // 动态系统
                 if (exportData.moments?.length) stats.push(`动态: ${exportData.moments.length}条`);
+                if (exportData.momentComments?.length) stats.push(`动态评论: ${exportData.momentComments.length}条`);
+                // 记忆系统
+                if (exportData.workingMemory?.length) stats.push(`工作记忆: ${exportData.workingMemory.length}条`);
+                if (exportData.episodicMemory?.length) stats.push(`情节记忆: ${exportData.episodicMemory.length}条`);
+                if (exportData.coreMemory?.length) stats.push(`核心记忆: ${exportData.coreMemory.length}条`);
+                if (exportData.crossAppTimeline?.length) stats.push(`时间线: ${exportData.crossAppTimeline.length}条`);
+                // 日记系统
                 if (exportData.characterDiaries?.length) stats.push(`日记: ${exportData.characterDiaries.length}条`);
+                // 线下模式
+                if (exportData.offlineHistoryRecords?.length) stats.push(`线下记录: ${exportData.offlineHistoryRecords.length}条`);
+                if (exportData.offlinePresets?.length) stats.push(`线下预设: ${exportData.offlinePresets.length}个`);
+                // 音乐系统
+                if (exportData.musicPlaylist?.length) stats.push(`音乐: ${exportData.musicPlaylist.length}首`);
+                // 设置数据
+                if (exportData.chatSettings?.length) stats.push(`聊天设置: ${exportData.chatSettings.length}个`);
+                if (exportData.wallpapers?.length) stats.push(`壁纸: ${exportData.wallpapers.length}个`);
                 
                 console.log('导出数据统计:', stats.join(', '));
 
@@ -30218,28 +30585,51 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         throw new Error('无效的备份文件格式');
                     }
                     
-                    // 🔥【修复】显示导入预览，包括全局记忆系统
+                    // 🔥【完善】显示导入预览，包括所有数据表
                     const dataPreview = [];
+                    // 基础数据
                     if (data.characters?.length) dataPreview.push(`角色: ${data.characters.length}个`);
                     if (data.chatMessages?.length) dataPreview.push(`聊天消息: ${data.chatMessages.length}条`);
-                    if (data.chatSettings?.length) dataPreview.push(`聊天设置: ${data.chatSettings.length}个`);
-                    if (data.worldbooks?.length) dataPreview.push(`世界书: ${data.worldbooks.length}个`);
-                    if (data.customEmojis?.length) dataPreview.push(`自定义表情: ${data.customEmojis.length}个`);
-                    if (data.wallpapers?.length) dataPreview.push(`壁纸: ${data.wallpapers.length}个`);
-                    if (data.characterGroups?.length) dataPreview.push(`角色分组: ${data.characterGroups.length}个`);
-                    if (data.groupChats?.length) dataPreview.push(`群聊: ${data.groupChats.length}个`);
                     if (data.personas?.length) dataPreview.push(`用户面具: ${data.personas.length}个`);
-                    if (data.apiSettings?.length) dataPreview.push(`API设置: ${data.apiSettings.length}个`);
-                    if (data.globalSettings?.length) dataPreview.push(`全局设置: ${data.globalSettings.length}个`);
                     if (data.contacts?.length) dataPreview.push(`联系人: ${data.contacts.length}个`);
-                    if (data.appIcons?.length) dataPreview.push(`应用图标: ${data.appIcons.length}个`);
-                    // 🔥【新增】全局记忆系统预览
-                    if (data.coreMemories?.length) dataPreview.push(`核心记忆: ${data.coreMemories.length}条`);
-                    if (data.episodicMemories?.length) dataPreview.push(`情节记忆: ${data.episodicMemories.length}条`);
-                    if (data.crossAppTimeline?.length) dataPreview.push(`时间线记录: ${data.crossAppTimeline.length}条`);
+                    // 表情包系统
+                    if (data.customEmojis?.length) dataPreview.push(`自定义表情: ${data.customEmojis.length}个`);
+                    if (data.recentEmojis?.length) dataPreview.push(`最近表情: ${data.recentEmojis.length}个`);
+                    // 世界书系统
+                    if (data.worldbooks?.length) dataPreview.push(`世界书: ${data.worldbooks.length}个`);
+                    if (data.worldbookEntries?.length) dataPreview.push(`世界书条目: ${data.worldbookEntries.length}条`);
+                    // 群聊系统
+                    if (data.groupChats?.length) dataPreview.push(`群聊: ${data.groupChats.length}个`);
+                    if (data.groupChatMessages?.length) dataPreview.push(`群聊消息: ${data.groupChatMessages.length}条`);
+                    if (data.groupChatMembers?.length) dataPreview.push(`群聊成员: ${data.groupChatMembers.length}个`);
+                    // 动态系统
                     if (data.moments?.length) dataPreview.push(`动态: ${data.moments.length}条`);
                     if (data.momentComments?.length) dataPreview.push(`动态评论: ${data.momentComments.length}条`);
+                    if (data.momentLikes?.length) dataPreview.push(`动态点赞: ${data.momentLikes.length}条`);
+                    // 记忆系统
+                    if (data.workingMemory?.length) dataPreview.push(`工作记忆: ${data.workingMemory.length}条`);
+                    if (data.episodicMemory?.length) dataPreview.push(`情节记忆: ${data.episodicMemory.length}条`);
+                    if (data.coreMemory?.length) dataPreview.push(`核心记忆: ${data.coreMemory.length}条`);
+                    if (data.crossAppTimeline?.length) dataPreview.push(`时间线记录: ${data.crossAppTimeline.length}条`);
+                    // 拉黑和好友系统
+                    if (data.blockedCharacters?.length) dataPreview.push(`拉黑记录: ${data.blockedCharacters.length}条`);
+                    if (data.friendRequests?.length) dataPreview.push(`好友申请: ${data.friendRequests.length}条`);
+                    if (data.characterStatus?.length) dataPreview.push(`角色状态: ${data.characterStatus.length}条`);
+                    // 日记系统
                     if (data.characterDiaries?.length) dataPreview.push(`角色日记: ${data.characterDiaries.length}条`);
+                    // 线下模式
+                    if (data.offlineHistoryRecords?.length) dataPreview.push(`线下记录: ${data.offlineHistoryRecords.length}条`);
+                    if (data.offlineUISettings?.length) dataPreview.push(`线下界面设置: ${data.offlineUISettings.length}个`);
+                    if (data.offlinePresets?.length) dataPreview.push(`线下预设: ${data.offlinePresets.length}个`);
+                    // 音乐系统
+                    if (data.musicPlaylist?.length) dataPreview.push(`音乐: ${data.musicPlaylist.length}首`);
+                    if (data.musicCovers?.length) dataPreview.push(`音乐封面: ${data.musicCovers.length}个`);
+                    // 设置数据
+                    if (data.chatSettings?.length) dataPreview.push(`聊天设置: ${data.chatSettings.length}个`);
+                    if (data.apiSettings?.length) dataPreview.push(`API设置: ${data.apiSettings.length}个`);
+                    if (data.globalSettings?.length) dataPreview.push(`全局设置: ${data.globalSettings.length}个`);
+                    if (data.wallpapers?.length) dataPreview.push(`壁纸: ${data.wallpapers.length}个`);
+                    if (data.appIcons?.length) dataPreview.push(`应用图标: ${data.appIcons.length}个`);
                     
                     const previewText = dataPreview.length > 0 ? 
                         `将导入以下数据：\n${dataPreview.join('\n')}\n\n导入将覆盖现有数据，确定继续？` : 
@@ -30617,20 +31007,36 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         }
                     }
 
-                    // 🔥【新增】导入其他系统表
-                    if (data.blacklist?.length) {
+                    // 🔥【新增】导入拉黑和好友系统表
+                    if (data.blockedCharacters?.length) {
                         try {
-                            await db.blacklist.clear();
-                            const validBlacklist = data.blacklist.map(item => ({
+                            await db.blockedCharacters.clear();
+                            const validBlocked = data.blockedCharacters.map(item => ({
                                 ...item,
-                                id: item.id || `blacklist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                                id: item.id || `blocked_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
                             }));
-                            await db.blacklist.bulkPut(validBlacklist);
+                            await db.blockedCharacters.bulkPut(validBlocked);
                             importedTables++;
-                            console.log(`导入了 ${validBlacklist.length} 条拉黑记录`);
+                            console.log(`导入了 ${validBlocked.length} 条拉黑记录`);
                         } catch (error) {
                             console.error('导入拉黑记录失败:', error);
                             showToast('拉黑记录导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    if (data.friendRequests?.length) {
+                        try {
+                            await db.friendRequests.clear();
+                            const validRequests = data.friendRequests.map(req => ({
+                                ...req,
+                                id: req.id || `request_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.friendRequests.bulkPut(validRequests);
+                            importedTables++;
+                            console.log(`导入了 ${validRequests.length} 条好友申请`);
+                        } catch (error) {
+                            console.error('导入好友申请失败:', error);
+                            showToast('好友申请导入失败: ' + error.message, 'warning');
                         }
                     }
 
@@ -30700,6 +31106,187 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         } catch (error) {
                             console.error('导入动态评论失败:', error);
                             showToast('动态评论导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    // 🔥【新增】导入新记忆系统表
+                    if (data.workingMemory?.length) {
+                        try {
+                            await db.workingMemory.clear();
+                            const validWorkingMemory = data.workingMemory.map(memory => ({
+                                ...memory,
+                                id: memory.id || `working_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.workingMemory.bulkPut(validWorkingMemory);
+                            importedTables++;
+                            console.log(`导入了 ${validWorkingMemory.length} 条工作记忆`);
+                        } catch (error) {
+                            console.error('导入工作记忆失败:', error);
+                            showToast('工作记忆导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    if (data.episodicMemory?.length) {
+                        try {
+                            await db.episodicMemory.clear();
+                            const validEpisodicMemory = data.episodicMemory.map(memory => ({
+                                ...memory,
+                                id: memory.id || `episodic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.episodicMemory.bulkPut(validEpisodicMemory);
+                            importedTables++;
+                            console.log(`导入了 ${validEpisodicMemory.length} 条情节记忆`);
+                        } catch (error) {
+                            console.error('导入情节记忆失败:', error);
+                            showToast('情节记忆导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    if (data.coreMemory?.length) {
+                        try {
+                            await db.coreMemory.clear();
+                            const validCoreMemory = data.coreMemory.map(memory => ({
+                                ...memory,
+                                id: memory.id || `core_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.coreMemory.bulkPut(validCoreMemory);
+                            importedTables++;
+                            console.log(`导入了 ${validCoreMemory.length} 条核心记忆`);
+                        } catch (error) {
+                            console.error('导入核心记忆失败:', error);
+                            showToast('核心记忆导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    // 🔥【新增】导入线下模式系统表
+                    if (data.offlineHistoryRecords?.length) {
+                        try {
+                            await db.offlineHistoryRecords.clear();
+                            const validOfflineHistory = data.offlineHistoryRecords.map(record => ({
+                                ...record,
+                                id: record.id || `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.offlineHistoryRecords.bulkPut(validOfflineHistory);
+                            importedTables++;
+                            console.log(`导入了 ${validOfflineHistory.length} 条线下记录`);
+                        } catch (error) {
+                            console.error('导入线下记录失败:', error);
+                            showToast('线下记录导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    if (data.offlineUISettings?.length) {
+                        try {
+                            await db.offlineUISettings.clear();
+                            const validOfflineUI = data.offlineUISettings.map(setting => ({
+                                ...setting,
+                                id: setting.id || `ui_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.offlineUISettings.bulkPut(validOfflineUI);
+                            importedTables++;
+                            console.log(`导入了 ${validOfflineUI.length} 条线下界面设置`);
+                        } catch (error) {
+                            console.error('导入线下界面设置失败:', error);
+                            showToast('线下界面设置导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    if (data.offlinePresets?.length) {
+                        try {
+                            await db.offlinePresets.clear();
+                            const validOfflinePresets = data.offlinePresets.map(preset => ({
+                                ...preset,
+                                id: preset.id || `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.offlinePresets.bulkPut(validOfflinePresets);
+                            importedTables++;
+                            console.log(`导入了 ${validOfflinePresets.length} 条线下预设`);
+                        } catch (error) {
+                            console.error('导入线下预设失败:', error);
+                            showToast('线下预设导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    // 🔥【新增】导入音乐播放器系统表
+                    if (data.musicPlaylist?.length) {
+                        try {
+                            await db.musicPlaylist.clear();
+                            const validMusicPlaylist = data.musicPlaylist.map(song => ({
+                                ...song,
+                                id: song.id || `song_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.musicPlaylist.bulkPut(validMusicPlaylist);
+                            importedTables++;
+                            console.log(`导入了 ${validMusicPlaylist.length} 首音乐`);
+                        } catch (error) {
+                            console.error('导入音乐播放列表失败:', error);
+                            showToast('音乐播放列表导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    if (data.musicCovers?.length) {
+                        try {
+                            await db.musicCovers.clear();
+                            const validMusicCovers = data.musicCovers.map(cover => ({
+                                ...cover,
+                                id: cover.id || `cover_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.musicCovers.bulkPut(validMusicCovers);
+                            importedTables++;
+                            console.log(`导入了 ${validMusicCovers.length} 个音乐封面`);
+                        } catch (error) {
+                            console.error('导入音乐封面失败:', error);
+                            showToast('音乐封面导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    // 🔥【新增】导入世界书条目表
+                    if (data.worldbookEntries?.length) {
+                        try {
+                            await db.worldbookEntries.clear();
+                            const validWorldbookEntries = data.worldbookEntries.map(entry => ({
+                                ...entry,
+                                id: entry.id || `entry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.worldbookEntries.bulkPut(validWorldbookEntries);
+                            importedTables++;
+                            console.log(`导入了 ${validWorldbookEntries.length} 条世界书条目`);
+                        } catch (error) {
+                            console.error('导入世界书条目失败:', error);
+                            showToast('世界书条目导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    // 🔥【新增】导入群聊相关表
+                    if (data.groupChatMessages?.length) {
+                        try {
+                            await db.groupChatMessages.clear();
+                            const validGroupMessages = data.groupChatMessages.map(msg => ({
+                                ...msg,
+                                id: msg.id || `gmsg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.groupChatMessages.bulkPut(validGroupMessages);
+                            importedTables++;
+                            console.log(`导入了 ${validGroupMessages.length} 条群聊消息`);
+                        } catch (error) {
+                            console.error('导入群聊消息失败:', error);
+                            showToast('群聊消息导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    if (data.groupChatMembers?.length) {
+                        try {
+                            await db.groupChatMembers.clear();
+                            const validGroupMembers = data.groupChatMembers.map(member => ({
+                                ...member,
+                                id: member.id || `member_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.groupChatMembers.bulkPut(validGroupMembers);
+                            importedTables++;
+                            console.log(`导入了 ${validGroupMembers.length} 条群聊成员`);
+                        } catch (error) {
+                            console.error('导入群聊成员失败:', error);
+                            showToast('群聊成员导入失败: ' + error.message, 'warning');
                         }
                     }
 
@@ -34277,7 +34864,10 @@ async function changeMyGroupAvatar() {
                     }
                 }, 10);
 
-                // 创建系统提示消息（仿照其他系统消息的结构）
+                // 🔥【修复】不再将拉黑系统消息保存到聊天记录，避免重复显示
+                // 拉黑系统消息只在界面上显示，不保存到数据库
+
+                // 创建系统提示消息的显示元素
                 const centerContainer = document.createElement('div');
                 centerContainer.style.display = 'flex';
                 centerContainer.style.justifyContent = 'center';
@@ -35003,7 +35593,7 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
                     eventsText += '聊天记录：\n';
                     todayMessages.forEach(msg => {
                         const timeStr = new Date(msg.timestamp).toLocaleTimeString();
-                        const role = msg.role === 'user' ? '用户' : '我';
+                        const role = msg.role === 'user' ? '用户' : character.name;
                         eventsText += `[${timeStr}] ${role}: ${msg.content}\n`;
                     });
                 }
@@ -35019,16 +35609,16 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
                 }
 
                 const character = characters.find(c => c.id === characterId);
-                const summaryPrompt = `你是${character.name}，请为今天的活动写一份简短的记忆摘要（50-100字）：
+                const summaryPrompt = `请为${character.name}今天的活动写一份简短的记忆摘要（50-100字）：
 
 时间段：${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}
 今日活动：
 ${eventsText}
 
-请用第一人称写一份简洁的记忆摘要，重点记录重要的事件和感受：`;
+请用第三人称写一份简洁的记忆摘要，重点记录重要的事件和感受。使用"用户"指代用户，使用"${character.name}"指代角色，不要使用"我"、"你"等第一、第二人称：`;
 
                 // 调用AI生成摘要
-                const response = await callAI(summaryPrompt, character);
+                const response = await callChatAPI(summaryPrompt, character);
 
                 if (response && response.trim()) {
                     const summary = {
@@ -35138,11 +35728,20 @@ ${eventsText}
                     }
                 }
 
-                // 1. 检索核心记忆
-                const coreMemories = await db.coreMemories
-                    .where('characterId')
-                    .equals(characterId)
-                    .toArray();
+                // 1. 检索核心记忆 - 🔥【修复】添加上下文过滤
+                let coreMemories = [];
+                for (const contextId of contextIds) {
+                    const contextCoreMemories = await db.coreMemories
+                        .where('characterId')
+                        .equals(characterId)
+                        .and(memory => {
+                            // 🔥【关键修复】按上下文过滤核心记忆
+                            if (!memory.contextId) return true; // 兼容旧数据
+                            return memory.contextId === contextId;
+                        })
+                        .toArray();
+                    coreMemories = coreMemories.concat(contextCoreMemories);
+                }
 
                 // 手动排序并限制数量
                 coreMemories.sort((a, b) => (b.importance || 0) - (a.importance || 0));
@@ -35155,16 +35754,25 @@ ${eventsText}
                     });
                 }
 
-                // 2. 检索情景记忆（最近N天）
+                // 2. 检索情景记忆（最近N天）- 🔥【修复】添加上下文过滤
                 const cutoffDate = new Date();
                 cutoffDate.setDate(cutoffDate.getDate() - memoryDays);
                 const cutoffTimestamp = cutoffDate.getTime();
 
-                const episodicMemories = await db.episodicMemories
-                    .where('characterId')
-                    .equals(characterId)
-                    .and(memory => memory.timestamp >= cutoffTimestamp)
-                    .toArray();
+                let episodicMemories = [];
+                for (const contextId of contextIds) {
+                    const contextEpisodicMemories = await db.episodicMemories
+                        .where('characterId')
+                        .equals(characterId)
+                        .and(memory => {
+                            if (memory.timestamp < cutoffTimestamp) return false;
+                            // 🔥【关键修复】按上下文过滤情景记忆
+                            if (!memory.contextId) return true; // 兼容旧数据
+                            return memory.contextId === contextId;
+                        })
+                        .toArray();
+                    episodicMemories = episodicMemories.concat(contextEpisodicMemories);
+                }
 
                 // 手动排序并限制数量
                 episodicMemories.sort((a, b) => b.timestamp - a.timestamp);
@@ -35241,6 +35849,15 @@ ${eventsText}
                             } else {
                                 eventDescription = '线下剧情模式总结';
                             }
+                            // 🔥【新增】为剧情总结添加编辑按钮
+                            actionButtons = `
+                                <button class="memory-action-btn edit-btn" onclick="editStorylineSummary('${memory.id}')" title="编辑剧情总结">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="memory-action-btn view-btn" onclick="viewStorylineSummary('${memory.id}')" title="查看完整内容">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            `;
                         } else {
                             eventDescription = memory.action || memory.eventType || '未知活动';
                         }
@@ -36511,7 +37128,7 @@ ${eventsText}
                 const character = characters.find(c => c.id === characterId);
                 if (!character) return null;
 
-                // 构建摘要生成的prompt
+                // 构建摘要生成的prompt，统一使用第三人称
                 const summaryPrompt = `
 # 对话摘要任务
 
@@ -36534,6 +37151,11 @@ ${messages.map(msg => {
 2. 重要的情感变化或关键事件
 3. 双方的态度和关系变化
 4. 任何重要的决定或约定
+
+## 重要要求：统一使用第三人称
+- 用"用户"指代用户，用"${character.name}"指代角色
+- 不要使用"我"、"你"等第一、第二人称
+- 例如："用户向${character.name}询问..."而不是"你问我..."
 
 请用第三人称客观描述，保持简洁明了。`;
 
@@ -36572,7 +37194,8 @@ ${messages.map(msg => {
                                             category: memory.category || 'other',
                                             timestamp: Date.now(),
                                             type: 'core',
-                                            source: 'single_chat' // 标记来源，区分单聊和群聊
+                                            source: 'single_chat', // 标记来源，区分单聊和群聊
+                                            contextId: characterId // 🔥【修复】添加上下文ID用于记忆隔离
                                         };
 
                                         await db.coreMemories.add(coreMemory);
@@ -36591,7 +37214,8 @@ ${messages.map(msg => {
                                         importance: memory.importance,
                                         category: memory.category || 'other',
                                         timestamp: Date.now(),
-                                        source: 'single_chat' // 标记来源
+                                        source: 'single_chat', // 标记来源
+                                        contextId: characterId // 🔥【修复】添加上下文ID用于记忆隔离
                                     };
 
                                     await db.episodicMemories.add(episodicMemory);
@@ -36660,14 +37284,19 @@ ${messages.map(msg => {
         // 移除关键词提取功能，简化为纯AI提取
 
         // AI记忆提取功能（严格的核心记忆）
-        async function extractMemoriesWithAI(characterId, messages) {
+        async function extractMemoriesWithAI(characterId, messages, contextId = null) {
             if (!messages || messages.length === 0) return;
 
             try {
                 const character = characters.find(c => c.id === characterId);
                 if (!character) return;
 
-                // 构建更严格的记忆提取prompt
+                // 🔥【修复】如果没有提供contextId，使用characterId作为默认值（单聊）
+                if (!contextId) {
+                    contextId = characterId;
+                }
+
+                // 构建更严格的记忆提取prompt，统一使用第三人称
                 const extractPrompt = `
 # 记忆提取任务
 
@@ -36701,14 +37330,19 @@ ${messages.map(msg => {
 - 有趣的对话和互动
 - 日常生活的分享
 
+## 重要要求：记忆描述必须使用第三人称
+- 用"用户"指代用户，用"${character.name}"指代角色
+- 不要使用"我"、"你"等第一、第二人称
+- 例如："用户告诉${character.name}自己的生日是..."而不是"我的生日是..."
+
 请严格按照以下JSON格式返回，不要添加任何其他文字：
 
 {
   "core_memories": [
-    {"fact": "简洁的核心事实", "importance": 0.9, "category": "类别"}
+    {"fact": "简洁的核心事实（使用第三人称）", "importance": 0.9, "category": "类别"}
   ],
   "episodic_memories": [
-    {"fact": "情景描述", "importance": 0.7, "category": "类别"}
+    {"fact": "情景描述（使用第三人称）", "importance": 0.7, "category": "类别"}
   ]
 }
 
@@ -36716,7 +37350,8 @@ ${messages.map(msg => {
 1. 只返回JSON，不要有任何解释文字
 2. 如果没有符合标准的记忆，对应数组为空
 3. importance必须是数字，不要用字符串
-4. 确保JSON格式完全正确`;
+4. 确保JSON格式完全正确
+5. 所有fact字段必须使用第三人称描述`;
 
                 // 调用AI提取核心记忆
                 const response = await callChatAPI(extractPrompt, character);
@@ -36782,7 +37417,8 @@ ${messages.map(msg => {
                                     importance: memory.importance,
                                     category: memory.category || 'other',
                                     timestamp: Date.now(),
-                                    type: 'core'
+                                    type: 'core',
+                                    contextId: contextId // 🔥【修复】添加上下文ID用于记忆隔离
                                 };
 
                                 await db.coreMemories.add(coreMemory);
@@ -36811,7 +37447,8 @@ ${messages.map(msg => {
                                     fact: memory.fact,
                                     importance: memory.importance,
                                     category: memory.category || 'other',
-                                    timestamp: Date.now()
+                                    timestamp: Date.now(),
+                                    contextId: contextId // 🔥【修复】添加上下文ID用于记忆隔离
                                 };
 
                                 await db.episodicMemories.add(episodicMemory);
@@ -37070,9 +37707,223 @@ ${messages.map(msg => {
             }
         }
 
+        // 🔥【新增】按回合计算历史消息
+        function calculateMessagesByRounds(messages, maxRounds) {
+            if (!messages || messages.length === 0) return [];
+
+            // 从后往前分析消息，按回合分组
+            const rounds = [];
+            let currentRound = [];
+            let lastSender = null;
+
+            // 从最新消息开始往前分析
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                const currentSender = msg.sender;
+
+                // 如果发送者改变，或者是系统消息，开始新回合
+                if (currentSender !== lastSender || currentSender === 'system') {
+                    if (currentRound.length > 0) {
+                        rounds.unshift(currentRound); // 添加到开头
+                        currentRound = [];
+                    }
+                }
+
+                currentRound.unshift(msg); // 添加到当前回合的开头
+                lastSender = currentSender;
+
+                // 如果已经收集了足够的回合，停止
+                if (rounds.length >= maxRounds) {
+                    break;
+                }
+            }
+
+            // 添加最后一个回合
+            if (currentRound.length > 0 && rounds.length < maxRounds) {
+                rounds.unshift(currentRound);
+            }
+
+            // 只保留指定数量的回合
+            const selectedRounds = rounds.slice(-maxRounds);
+
+            // 将回合展平为消息列表
+            return selectedRounds.flat();
+        }
+
+        // 🔥【新增】计算实际回合数
+        function countActualRounds(messages) {
+            if (!messages || messages.length === 0) return 0;
+
+            let rounds = 0;
+            let lastSender = null;
+
+            for (const msg of messages) {
+                const currentSender = msg.sender;
+
+                // 如果发送者改变，或者是系统消息，计为新回合
+                if (currentSender !== lastSender || currentSender === 'system') {
+                    rounds++;
+                }
+
+                lastSender = currentSender;
+            }
+
+            return rounds;
+        }
+
+        // 🔥【新增】查看线下剧情总结的完整内容
+        async function viewStorylineSummary(memoryId) {
+            try {
+                const memory = await db.crossAppTimeline.get(memoryId);
+                if (!memory || memory.action !== 'storyline_summary') {
+                    showToast('找不到该剧情总结', 'error');
+                    return;
+                }
+
+                // 使用完整内容而不是预览内容
+                const content = memory.context?.content || memory.fullContent || '无内容';
+                const date = memory.context?.date || '未知日期';
+                const messageCount = memory.context?.messageCount || 0;
+
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                        <div class="modal-header">
+                            <h3>线下剧情总结</h3>
+                            <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="margin-bottom: 15px; color: #666; font-size: 14px;">
+                                <div>日期: ${date}</div>
+                                <div>消息数: ${messageCount}条</div>
+                            </div>
+                            <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; line-height: 1.6; white-space: pre-wrap;">${content}</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" onclick="editStorylineSummary('${memoryId}'); this.closest('.modal-overlay').remove();">编辑</button>
+                            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+            } catch (error) {
+                console.error('查看剧情总结失败:', error);
+                showToast('查看剧情总结失败', 'error');
+            }
+        }
+
+        // 🔥【新增】编辑线下剧情总结
+        async function editStorylineSummary(memoryId) {
+            try {
+                const memory = await db.crossAppTimeline.get(memoryId);
+                if (!memory || memory.action !== 'storyline_summary') {
+                    showToast('找不到该剧情总结', 'error');
+                    return;
+                }
+
+                // 使用完整内容而不是预览内容
+                const content = memory.context?.content || memory.fullContent || '';
+                const date = memory.context?.date || '未知日期';
+                const messageCount = memory.context?.messageCount || 0;
+
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 700px; max-height: 80vh;">
+                        <div class="modal-header">
+                            <h3>编辑线下剧情总结</h3>
+                            <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="margin-bottom: 15px; color: #666; font-size: 14px;">
+                                <div>日期: ${date}</div>
+                                <div>消息数: ${messageCount}条</div>
+                                <div style="color: #999; font-size: 12px; margin-top: 5px;">提示: 修改后的内容将同步到AI的工作记忆中</div>
+                            </div>
+                            <textarea id="storyline-summary-editor" style="width: 100%; height: 300px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; line-height: 1.6; resize: vertical;" placeholder="请输入剧情总结...">${content}</textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" onclick="saveStorylineSummary('${memoryId}')">保存修改</button>
+                            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">取消</button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                // 聚焦到文本框但不选中内容
+                setTimeout(() => {
+                    const textarea = document.getElementById('storyline-summary-editor');
+                    if (textarea) {
+                        textarea.focus();
+                        // 🔥【修复】将光标移到末尾，不选中任何内容
+                        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                    }
+                }, 100);
+            } catch (error) {
+                console.error('编辑剧情总结失败:', error);
+                showToast('编辑剧情总结失败', 'error');
+            }
+        }
+
+        // 🔥【新增】保存编辑后的线下剧情总结
+        async function saveStorylineSummary(memoryId) {
+            try {
+                const textarea = document.getElementById('storyline-summary-editor');
+                if (!textarea) {
+                    showToast('找不到编辑器', 'error');
+                    return;
+                }
+
+                const newContent = textarea.value.trim();
+                if (!newContent) {
+                    showToast('剧情总结不能为空', 'warning');
+                    return;
+                }
+
+                // 更新数据库中的记忆
+                const memory = await db.crossAppTimeline.get(memoryId);
+                if (!memory) {
+                    showToast('找不到该剧情总结', 'error');
+                    return;
+                }
+
+                // 更新内容
+                memory.context.content = newContent;
+                memory.timestamp = Date.now(); // 更新时间戳，让它在工作记忆中更新
+
+                await db.crossAppTimeline.put(memory);
+
+                // 关闭模态框
+                const modal = textarea.closest('.modal-overlay');
+                if (modal) {
+                    modal.remove();
+                }
+
+                // 刷新记忆查看器
+                if (currentMemoryCharacter) {
+                    await loadCharacterMemories();
+                }
+
+                showToast('剧情总结已保存，AI工作记忆已同步更新', 'success');
+                console.log('✅ 线下剧情总结已更新:', memory);
+            } catch (error) {
+                console.error('保存剧情总结失败:', error);
+                showToast('保存剧情总结失败', 'error');
+            }
+        }
+
         // 构建连续的工作记忆（包含跨应用事件，按时间滚动）
         async function buildContinuousWorkingMemory(characterId, chatMessages, userSetLimit = 50) {
             try {
+                // 🔥【安全检查】确保chatMessages是数组
+                if (!Array.isArray(chatMessages)) {
+                    console.warn('buildContinuousWorkingMemory: chatMessages不是数组，使用空数组');
+                    chatMessages = [];
+                }
+
                 // 获取聊天消息
                 const messages = chatMessages.map(msg => ({
                     type: 'chat',
@@ -37103,9 +37954,30 @@ ${messages.map(msg => {
                 const allEvents = [...messages, ...timelineEvents]
                     .sort((a, b) => a.timestamp - b.timestamp);
 
-                // 按用户设置的工作记忆限制进行滚动
-                // 跨应用事件会随着时间推进而自然滚动出去
-                const recentEvents = allEvents.slice(-userSetLimit);
+                // 🔥【修复】按回合数而不是消息条数来限制工作记忆
+                // 先提取聊天消息，按回合计算
+                const chatEvents = allEvents.filter(event => event.type === 'chat');
+                const extractedChatMessages = chatEvents.map(event => event.content);
+
+                // 按回合计算聊天消息
+                const recentChatMessages = calculateMessagesByRounds(extractedChatMessages, userSetLimit);
+
+                // 重新包装为事件格式
+                const recentChatEvents = recentChatMessages.map(msg => ({
+                    type: 'chat',
+                    timestamp: msg.timestamp,
+                    content: msg,
+                    appType: 'chat',
+                    characterId: characterId
+                }));
+
+                // 跨应用事件按时间范围过滤（与聊天消息的时间范围一致）
+                const earliestChatTime = recentChatEvents.length > 0 ? recentChatEvents[0].timestamp : 0;
+                const recentTimelineEvents = timelineEvents.filter(event => event.timestamp >= earliestChatTime);
+
+                // 合并并重新排序
+                const recentEvents = [...recentChatEvents, ...recentTimelineEvents]
+                    .sort((a, b) => a.timestamp - b.timestamp);
 
                 return recentEvents;
             } catch (error) {
@@ -37473,6 +38345,15 @@ ${messages.map(msg => {
                     }
                 });
 
+                // 🔥【新增】获取线下剧情总结
+                const storylineSummaries = await db.crossAppTimeline
+                    .where('characterId')
+                    .equals(characterId)
+                    .and(item => item.action === 'storyline_summary' && item.appType === 'offline_mode')
+                    .toArray();
+
+                console.log(`📖 线下剧情总结: ${storylineSummaries.length}条`);
+
                 // 合并所有记忆并添加类型标识
                 allMemories = [
                     ...coreMemories.filter(m => m.type === 'core').map(m => ({...m, memoryType: 'core'})),
@@ -37481,7 +38362,22 @@ ${messages.map(msg => {
                         ...m,
                         memoryType: 'timeline',
                         fact: formatTimelineEvent(m)
-                    }))
+                    })),
+                    // 🔥【新增】添加线下剧情总结
+                    ...storylineSummaries.map(m => {
+                        const fullContent = m.context?.content || '线下剧情总结';
+                        // 只显示前三行作为预览
+                        const lines = fullContent.split('\n');
+                        const preview = lines.slice(0, 3).join('\n') + (lines.length > 3 ? '\n...' : '');
+
+                        return {
+                            ...m,
+                            memoryType: 'storyline',
+                            fact: preview,
+                            summary: preview,
+                            fullContent: fullContent // 保存完整内容用于编辑
+                        };
+                    })
                 ];
 
                 // 按时间戳排序（最新的在前）
@@ -37572,6 +38468,7 @@ ${messages.map(msg => {
             const typeLabels = {
                 'core': '核心记忆',
                 'episodic': '情景记忆',
+                'storyline': '剧情总结',
                 'timeline': '时间线'
             };
 
@@ -37593,9 +38490,18 @@ ${messages.map(msg => {
                         </div>
                     ` : ''}
                     <div class="memory-item-actions">
-                        <button class="memory-action-btn" onclick="editMemory('${memory.id}', '${memory.memoryType}')">
-                            <i class="fas fa-edit"></i> 编辑
-                        </button>
+                        ${memory.memoryType === 'storyline' ? `
+                            <button class="memory-action-btn view-btn" onclick="viewStorylineSummary('${memory.id}')" title="查看完整内容">
+                                <i class="fas fa-eye"></i> 查看
+                            </button>
+                            <button class="memory-action-btn edit-btn" onclick="editStorylineSummary('${memory.id}')" title="编辑剧情总结">
+                                <i class="fas fa-edit"></i> 编辑
+                            </button>
+                        ` : `
+                            <button class="memory-action-btn" onclick="editMemory('${memory.id}', '${memory.memoryType}')">
+                                <i class="fas fa-edit"></i> 编辑
+                            </button>
+                        `}
                         <button class="memory-action-btn delete" onclick="deleteMemory('${memory.id}', '${memory.memoryType}')">
                             <i class="fas fa-trash"></i> 删除
                         </button>
@@ -37609,6 +38515,7 @@ ${messages.map(msg => {
             const icons = {
                 'core': 'star',
                 'episodic': 'calendar-day',
+                'storyline': 'book',
                 'timeline': 'clock'
             };
             return icons[type] || 'circle';
@@ -39392,7 +40299,7 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                         renderChatMessages();
                     } else {
                         // 如果当前角色不存在，返回主页
-                        showPage('home');
+                        hideApp('api-chat-screen');
                     }
                 }
 
@@ -39611,43 +40518,7 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
         let currentOfflinePreset = null;
         let offlineMessages = [];
 
-        // 迁移旧的按角色存储的预设到全局存储
-        function migrateOldPresets() {
-            const globalKey = 'globalOfflinePresets';
-            let globalPresets = JSON.parse(localStorage.getItem(globalKey) || '[]');
-
-            // 如果已经有全局预设，跳过迁移
-            if (globalPresets.length > 0) return;
-
-            // 查找所有角色的预设
-            const allPresets = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('offlinePresets_')) {
-                    const presets = JSON.parse(localStorage.getItem(key) || '[]');
-                    allPresets.push(...presets);
-                }
-            }
-
-            // 去重（基于名称和内容）
-            const uniquePresets = [];
-            allPresets.forEach(preset => {
-                const exists = uniquePresets.find(p =>
-                    p.name === preset.name && p.content === preset.content
-                );
-                if (!exists) {
-                    // 移除角色ID，因为现在是全局的
-                    const { characterId, ...cleanPreset } = preset;
-                    uniquePresets.push(cleanPreset);
-                }
-            });
-
-            // 保存到全局存储
-            if (uniquePresets.length > 0) {
-                localStorage.setItem(globalKey, JSON.stringify(uniquePresets));
-                console.log(`已迁移 ${uniquePresets.length} 个预设到全局存储`);
-            }
-        }
+        // 🔥【已废弃】迁移功能已移至数据库版本13中自动处理
 
         // 切换线下模式
         function toggleOfflineMode() {
@@ -39714,18 +40585,20 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                     <div class="modal-body">
                         <p>请选择退出方式：</p>
                         <div style="margin-top: 15px;">
-                            <button class="btn btn-primary" onclick="exitWithSummary()" id="summary-btn">
-                                <i class="fas fa-book"></i> 结束并生成剧情总结
+                            <button class="btn btn-primary" onclick="exitWithoutSummary()">
+                                <i class="fas fa-check"></i> 结束且不总结（推荐）
                             </button>
                             <button class="btn btn-secondary" onclick="exitTemporarily()">
                                 <i class="fas fa-pause"></i> 暂时离开
                             </button>
-                            <button class="btn btn-danger" onclick="exitWithoutSummary()">
-                                <i class="fas fa-times-circle"></i> 结束并放弃剧情总结
+                            <button class="btn" onclick="exitWithSummary()" id="summary-btn" style="background: #f8f9fa !important; color: #000000 !important; border: 1px solid #000000 !important; font-weight: bold !important;">
+                                <i class="fas fa-book"></i> 结束并总结
                             </button>
                         </div>
                         <p style="font-size: 12px; color: #666; margin-top: 10px;">
-                            生成记忆摘要会总结这段线下剧情的内容，包括感情发展和性格特点。
+                            • <strong>结束且不总结</strong>：直接结束，对话记录保留在聊天历史中<br>
+                            • <strong>暂时离开</strong>：可以稍后继续当前剧情对话<br>
+                            • <strong>结束并总结</strong>：生成剧情摘要，适合历史消息数设置较少的用户
                         </p>
                     </div>
                 </div>
@@ -39793,17 +40666,23 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
             showToast('已暂时离开线下模式', 'info');
         }
 
-        // 结束并放弃剧情总结
+        // 结束且不总结（推荐选项）
         function exitWithoutSummary() {
             const modal = document.querySelector('.offline-exit-modal');
             if (modal) {
                 modal.remove();
-                console.log('✅ 结束并放弃总结：模态框已关闭');
+                console.log('✅ 结束且不总结：模态框已关闭');
             } else {
-                console.log('❌ 结束并放弃总结：找不到模态框');
+                console.log('❌ 结束且不总结：找不到模态框');
             }
+
+            // 🔥【修复】清空线下消息记录，避免重复读取
+            console.log(`📝 线下模式对话已保存到聊天记录中，共${offlineMessages.length}条消息`);
+            offlineMessages = []; // 清空线下消息记录
+            saveOfflineMessages(); // 🔥【关键】保存清空状态到localStorage
+
             doExitOfflineMode();
-            showToast('已结束线下模式（未生成剧情总结）', 'info');
+            showToast('已结束线下模式，对话已保存到聊天记录', 'success');
         }
 
         // 实际执行退出线下模式
@@ -39816,6 +40695,13 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
             overlay.style.display = 'none';
             icon.className = 'fas fa-door-open';
             chatScreen.classList.remove('offline-mode-active');
+
+            // 🔥【修复】清空线下模式界面内容
+            const offlineMessagesContainer = document.getElementById('offline-chat-messages');
+            if (offlineMessagesContainer) {
+                offlineMessagesContainer.innerHTML = '';
+                console.log('✅ 已清空线下模式界面内容');
+            }
         }
 
         // 🔥【新增】生成线下模式剧情总结
@@ -39834,8 +40720,15 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                     conversationHistory += `${role}：${msg.content}\n`;
                 });
 
-                // 🔥【修改】构建剧情总结生成prompt，侧重剧情发展和情节描述
-                const summaryPrompt = `请为以下线下剧情模式的对话生成一个剧情总结，以第三人称视角描述发生的故事情节：
+                // 🔥【修改】构建剧情总结生成prompt，统一使用第三人称
+                const summaryPrompt = `请为以下线下剧情模式的对话生成一个简洁客观的剧情总结，要求：
+1. 使用客观的上帝视角，加入合理的文学性描写
+2. 避免过多的修辞和形容词
+3. 简明扼要地描述事件发生的顺序和关键情节与细节
+4. 不要添加任何不在原文中的情感描写
+5. 使用清晰的时间和因果关系
+6. 统一使用第三人称叙述：用"用户"指代用户，用"${currentChatCharacter.name}"指代角色
+7. 不要使用"我"、"你"等第一、第二人称
 
 角色信息：
 ${currentChatCharacter.name}
@@ -39843,15 +40736,16 @@ ${currentChatCharacter.name}
 对话历史：
 ${conversationHistory}
 
-请生成一个300-800字的剧情总结，要求：
-1. 以第三人称叙述的方式，像写小说一样描述这段剧情
-2. 重点描述故事情节的发展脉络和剧情转折
-3. 包含场景和氛围的生动描述
-4. 突出角色的行为、互动和情感变化
-5. 注重情景描写和故事的戏剧性
-6. 保持叙述的连贯性和文学性
+请生成一个200-800字的客观剧情总结，要求：
+1. 按时间顺序记录发生的主要事件
+2. 客观描述角色的行为和对话要点，使用"用户"和"${currentChatCharacter.name}"来指代双方
+3. 记录重要的情节转折和结果
+4. 避免过度的主观情感描述和过度修饰
+5. 使用简洁明了的语言
+6. 重点记录关键细节和对后续剧情有影响的关键信息
+7. 严格使用第三人称：用户做了什么，${currentChatCharacter.name}如何回应
 
-请以富有文学色彩的语言，生动地描述这段剧情故事：`;
+请以客观记录的方式总结这段剧情：`;
 
                 console.log('📖 剧情总结生成prompt:', summaryPrompt);
 
@@ -39923,72 +40817,82 @@ ${conversationHistory}
         }
 
         // 加载并显示已保存的预设
-        function loadAndDisplayPresets() {
-            // 预设是全局共享的，不按角色分别存储
-            const key = 'globalOfflinePresets';
-            const presets = JSON.parse(localStorage.getItem(key) || '[]');
-            const container = document.getElementById('saved-presets-list');
+        async function loadAndDisplayPresets() {
+            try {
+                // 🔥【修复】从Dexie数据库加载预设，避免isGlobal字段的索引问题
+                const allPresets = await db.offlinePresets.toArray();
+                const presets = allPresets.filter(preset => preset.isGlobal === true);
+                const container = document.getElementById('saved-presets-list');
 
-            container.innerHTML = '';
+                container.innerHTML = '';
 
-            if (presets.length === 0) {
-                return; // CSS会显示"暂无保存的预设"
-            }
-
-            presets.forEach(preset => {
-                const presetDiv = document.createElement('div');
-                presetDiv.className = 'preset-item';
-                if (currentOfflinePreset && currentOfflinePreset.id === preset.id) {
-                    presetDiv.classList.add('active');
+                if (presets.length === 0) {
+                    return; // CSS会显示"暂无保存的预设"
                 }
 
-                const presetInfo = document.createElement('div');
-                presetInfo.className = 'preset-info';
+                // 按时间戳排序，最新的在前
+                presets.sort((a, b) => b.timestamp - a.timestamp);
 
-                const presetName = document.createElement('div');
-                presetName.className = 'preset-name';
-                presetName.textContent = preset.name;
+                presets.forEach(preset => {
+                    const presetDiv = document.createElement('div');
+                    presetDiv.className = 'preset-item';
+                    if (currentOfflinePreset && currentOfflinePreset.id === preset.id) {
+                        presetDiv.classList.add('active');
+                    }
 
-                const presetPreview = document.createElement('div');
-                presetPreview.className = 'preset-preview';
-                presetPreview.textContent = preset.content.substring(0, 50) + (preset.content.length > 50 ? '...' : '');
+                    const presetInfo = document.createElement('div');
+                    presetInfo.className = 'preset-info';
 
-                presetInfo.appendChild(presetName);
-                presetInfo.appendChild(presetPreview);
+                    const presetName = document.createElement('div');
+                    presetName.className = 'preset-name';
+                    presetName.textContent = preset.name;
 
-                const presetActions = document.createElement('div');
-                presetActions.className = 'preset-actions';
+                    const presetPreview = document.createElement('div');
+                    presetPreview.className = 'preset-preview';
+                    presetPreview.textContent = preset.content.substring(0, 50) + (preset.content.length > 50 ? '...' : '');
 
-                // 使用按钮
-                const useBtn = document.createElement('button');
-                useBtn.className = 'preset-action-btn use-btn';
-                useBtn.innerHTML = '<i class="fas fa-check"></i>';
-                useBtn.title = '使用此预设';
-                useBtn.onclick = () => usePreset(preset);
+                    presetInfo.appendChild(presetName);
+                    presetInfo.appendChild(presetPreview);
 
-                // 编辑按钮
-                const editBtn = document.createElement('button');
-                editBtn.className = 'preset-action-btn edit-btn';
-                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-                editBtn.title = '编辑预设';
-                editBtn.onclick = () => editPreset(preset);
+                    const presetActions = document.createElement('div');
+                    presetActions.className = 'preset-actions';
 
-                // 删除按钮
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'preset-action-btn delete-btn';
-                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-                deleteBtn.title = '删除预设';
-                deleteBtn.onclick = () => deletePreset(preset.id);
+                    // 使用按钮
+                    const useBtn = document.createElement('button');
+                    useBtn.className = 'preset-action-btn use-btn';
+                    useBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    useBtn.title = '使用此预设';
+                    useBtn.onclick = () => usePreset(preset);
 
-                presetActions.appendChild(useBtn);
-                presetActions.appendChild(editBtn);
-                presetActions.appendChild(deleteBtn);
+                    // 编辑按钮
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'preset-action-btn edit-btn';
+                    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                    editBtn.title = '编辑预设';
+                    editBtn.onclick = () => editPreset(preset);
 
-                presetDiv.appendChild(presetInfo);
-                presetDiv.appendChild(presetActions);
+                    // 删除按钮
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'preset-action-btn delete-btn';
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteBtn.title = '删除预设';
+                    deleteBtn.onclick = () => deletePreset(preset.id);
 
-                container.appendChild(presetDiv);
-            });
+                    presetActions.appendChild(useBtn);
+                    presetActions.appendChild(editBtn);
+                    presetActions.appendChild(deleteBtn);
+
+                    presetDiv.appendChild(presetInfo);
+                    presetDiv.appendChild(presetActions);
+
+                    container.appendChild(presetDiv);
+                });
+
+                console.log(`✅ 加载了 ${presets.length} 个线下模式预设`);
+            } catch (error) {
+                console.error('❌ 加载线下模式预设失败:', error);
+                showToast('加载预设失败', 'error');
+            }
         }
 
         // 使用预设
@@ -40008,36 +40912,37 @@ ${conversationHistory}
         }
 
         // 删除预设
-        function deletePreset(presetId) {
+        async function deletePreset(presetId) {
             if (!confirm('确定要删除这个预设吗？')) {
                 return;
             }
 
-            if (!currentChatCharacter) return;
+            try {
+                // 🔥【修改】从Dexie数据库删除预设
+                const preset = await db.offlinePresets.get(presetId);
+                if (!preset) {
+                    showToast('预设不存在', 'warning');
+                    return;
+                }
 
-            // 预设是全局共享的
-            const key = 'globalOfflinePresets';
-            let presets = JSON.parse(localStorage.getItem(key) || '[]');
+                await db.offlinePresets.delete(presetId);
 
-            // 找到要删除的预设
-            const presetIndex = presets.findIndex(p => p.id === presetId);
-            if (presetIndex === -1) return;
+                // 如果删除的是当前使用的预设，清空当前预设
+                if (currentOfflinePreset && currentOfflinePreset.id === presetId) {
+                    currentOfflinePreset = null;
+                }
 
-            const deletedPreset = presets[presetIndex];
-            presets.splice(presetIndex, 1);
-            localStorage.setItem(key, JSON.stringify(presets));
-
-            // 如果删除的是当前使用的预设，清空当前预设
-            if (currentOfflinePreset && currentOfflinePreset.id === presetId) {
-                currentOfflinePreset = null;
+                await loadAndDisplayPresets(); // 刷新列表
+                showToast(`预设"${preset.name}"已删除`, 'info');
+                console.log(`✅ 删除预设: ${preset.name} (${presetId})`);
+            } catch (error) {
+                console.error('❌ 删除预设失败:', error);
+                showToast('删除预设失败', 'error');
             }
-
-            loadAndDisplayPresets(); // 刷新列表
-            showToast(`预设"${deletedPreset.name}"已删除`, 'info');
         }
 
         // 保存线下预设
-        function saveOfflinePreset() {
+        async function saveOfflinePreset() {
             const name = document.getElementById('offline-preset-name').value.trim();
             const content = document.getElementById('offline-preset-content').value.trim();
 
@@ -40051,69 +40956,99 @@ ${conversationHistory}
                 return;
             }
 
-            // 预设是全局共享的
-            const key = 'globalOfflinePresets';
-            let presets = JSON.parse(localStorage.getItem(key) || '[]');
+            try {
+                // 检查是否是编辑现有预设
+                if (window.editingPresetId) {
+                    // 🔥【修改】更新Dexie数据库中的预设
+                    const existingPreset = await db.offlinePresets.get(window.editingPresetId);
+                    if (existingPreset) {
+                        // 更新现有预设
+                        existingPreset.name = name;
+                        existingPreset.content = content;
+                        existingPreset.timestamp = Date.now(); // 更新时间戳
 
-            // 检查是否是编辑现有预设
-            if (window.editingPresetId) {
-                const presetIndex = presets.findIndex(p => p.id === window.editingPresetId);
-                if (presetIndex !== -1) {
-                    // 更新现有预设
-                    presets[presetIndex].name = name;
-                    presets[presetIndex].content = content;
-                    presets[presetIndex].updatedAt = new Date().toISOString();
+                        await db.offlinePresets.put(existingPreset);
 
-                    // 如果正在编辑的是当前使用的预设，更新当前预设
-                    if (currentOfflinePreset && currentOfflinePreset.id === window.editingPresetId) {
-                        currentOfflinePreset = presets[presetIndex];
+                        // 如果正在编辑的是当前使用的预设，更新当前预设
+                        if (currentOfflinePreset && currentOfflinePreset.id === window.editingPresetId) {
+                            currentOfflinePreset = existingPreset;
+                        }
+
+                        delete window.editingPresetId;
+
+                        await loadAndDisplayPresets(); // 刷新列表
+                        clearPresetForm();
+                        showToast(`预设"${name}"已更新`, 'success');
+                        console.log(`✅ 更新预设: ${name} (${existingPreset.id})`);
+                        return;
                     }
-
-                    localStorage.setItem(key, JSON.stringify(presets));
                     delete window.editingPresetId;
-
-                    loadAndDisplayPresets(); // 刷新列表
-                    clearPresetForm();
-                    showToast(`预设"${name}"已更新`, 'success');
-                    return;
                 }
-                delete window.editingPresetId;
+
+                // 🔥【修改】创建新预设并保存到Dexie数据库
+                const preset = {
+                    id: `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    name: name,
+                    content: content,
+                    timestamp: Date.now(),
+                    isGlobal: true
+                };
+
+                await db.offlinePresets.add(preset);
+
+                // 设置为当前预设
+                currentOfflinePreset = preset;
+
+                await loadAndDisplayPresets(); // 刷新列表
+                clearPresetForm();
+                showToast(`预设"${name}"已保存并启用`, 'success');
+                console.log(`✅ 保存新预设: ${name} (${preset.id})`);
+            } catch (error) {
+                console.error('❌ 保存预设失败:', error);
+                showToast('保存预设失败', 'error');
             }
-
-            // 创建新预设（全局共享，不记录角色ID）
-            const preset = {
-                id: Date.now().toString(),
-                name: name,
-                content: content,
-                createdAt: new Date().toISOString()
-            };
-
-            presets.push(preset);
-            localStorage.setItem(key, JSON.stringify(presets));
-
-            // 设置为当前预设
-            currentOfflinePreset = preset;
-
-            loadAndDisplayPresets(); // 刷新列表
-            clearPresetForm();
-            showToast(`预设"${name}"已保存并启用`, 'success');
         }
 
         // 加载线下消息
         function loadOfflineMessages() {
             if (!currentChatCharacter) return;
 
-            const key = `offlineMessages_${currentChatCharacter.id}`;
-            offlineMessages = JSON.parse(localStorage.getItem(key) || '[]');
-
-            // 加载全局预设
-            const presetKey = 'globalOfflinePresets';
-            const presets = JSON.parse(localStorage.getItem(presetKey) || '[]');
-            if (presets.length > 0) {
-                currentOfflinePreset = presets[presets.length - 1]; // 使用最新的预设
+            // 🔥【修复】只有当offlineMessages为空时才从localStorage加载
+            // 这样可以避免在退出后重新进入时重新加载已清空的数据
+            if (!offlineMessages || offlineMessages.length === 0) {
+                const key = `offlineMessages_${currentChatCharacter.id}`;
+                offlineMessages = JSON.parse(localStorage.getItem(key) || '[]');
+                console.log(`📱 从localStorage加载线下消息: ${offlineMessages.length}条`);
+            } else {
+                console.log(`📱 使用内存中的线下消息: ${offlineMessages.length}条`);
             }
 
+            // 🔥【修改】加载全局预设从Dexie数据库
+            loadLatestOfflinePreset();
+
             renderOfflineMessages();
+        }
+
+        // 🔥【新增】加载最新的线下模式预设
+        async function loadLatestOfflinePreset() {
+            try {
+                // 🔥【修复】避免isGlobal字段的索引问题
+                const allPresets = await db.offlinePresets.toArray();
+                const presets = allPresets.filter(preset => preset.isGlobal === true);
+
+                if (presets.length > 0) {
+                    // 按时间戳排序，使用最新的预设
+                    presets.sort((a, b) => b.timestamp - a.timestamp);
+                    currentOfflinePreset = presets[0];
+                    console.log(`✅ 加载最新预设: ${currentOfflinePreset.name}`);
+                } else {
+                    currentOfflinePreset = null;
+                    console.log('📝 没有可用的线下模式预设');
+                }
+            } catch (error) {
+                console.error('❌ 加载线下模式预设失败:', error);
+                currentOfflinePreset = null;
+            }
         }
 
         // 渲染线下消息
@@ -40872,10 +41807,10 @@ ${conversationHistory}
 
             document.body.appendChild(modal);
 
-            // 聚焦到文本框并选中所有文本
+            // 🔥【修复】聚焦到文本框但不选中文本，光标移到末尾
             const textarea = modal.querySelector('#edit-offline-message-content');
             textarea.focus();
-            textarea.select();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
 
             // 移除菜单
             const menu = document.querySelector('.offline-message-menu');
@@ -41132,19 +42067,12 @@ ${conversationHistory}
         function formatOfflineText(text) {
             if (!text) return '';
 
-            // 转义HTML特殊字符，但保留我们要处理的格式
+            // 移除所有HTML标签，保留纯文本内容
             let formattedText = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-
-            // 处理span语法：<span color="颜色">文本</span>
-            formattedText = formattedText.replace(
-                /&lt;span\s+color=&quot;([^&quot;]+)&quot;&gt;([^&lt;]+)&lt;\/span&gt;/gi,
-                '<span style="color: $1;">$2</span>'
-            );
+                .replace(/<p>/gi, '')
+                .replace(/<\/p>/gi, '\n\n')
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<[^>]*>/g, ''); // 移除所有其他HTML标签
 
             // 处理**号包裹的加粗：**文本**
             formattedText = formattedText.replace(
@@ -41160,6 +42088,9 @@ ${conversationHistory}
 
             // 处理换行
             formattedText = formattedText.replace(/\n/g, '<br>');
+
+            // 清理多余的换行
+            formattedText = formattedText.replace(/(<br>\s*){3,}/g, '<br><br>');
 
             return formattedText;
         }
@@ -41899,26 +42830,73 @@ ${conversationHistory}
             }
 
             // 判断是CSS链接还是直接字体文件
-            if (url.includes('fonts.googleapis.com') || url.includes('fonts.google.com') || url.endsWith('.css')) {
+            if (url.includes('fonts.googleapis.com') || url.includes('fonts.google.com') || url.endsWith('.css') || url.includes('fontsapi') || url.includes('css')) {
                 // Google Fonts或其他CSS链接
+                console.log('🎨 开始加载字体CSS:', url);
                 const link = document.createElement('link');
                 link.id = 'offline-custom-font-link';
                 link.rel = 'stylesheet';
                 link.href = url;
+                link.crossOrigin = 'anonymous'; // 🔥【新增】添加跨域支持
                 link.onload = function() {
-                    // 尝试从CSS中提取字体名称，或使用通用名称
-                    const fontFamily = extractFontFamilyFromGoogleFonts(url) || 'CustomFont';
+                    // 🔥【修复】尝试从CSS中提取字体名称，或使用通用名称
+                    let fontFamily = extractFontFamilyFromGoogleFonts(url) || 'CustomFont';
+                    console.log('🎨 字体CSS加载成功，提取的字体名称:', fontFamily);
+                    console.log('🎨 字体URL:', url);
+
+                    // 🔥【新增】尝试从加载的CSS中提取真正的字体名称
+                    try {
+                        const sheets = document.styleSheets;
+                        for (let i = sheets.length - 1; i >= 0; i--) {
+                            const sheet = sheets[i];
+                            if (sheet.href === url) {
+                                try {
+                                    const rules = sheet.cssRules || sheet.rules;
+                                    for (let j = 0; j < rules.length; j++) {
+                                        const rule = rules[j];
+                                        if (rule.type === CSSRule.FONT_FACE_RULE && rule.style.fontFamily) {
+                                            fontFamily = rule.style.fontFamily.replace(/['"]/g, '');
+                                            console.log('🎨 从CSS中提取到真实字体名称:', fontFamily);
+                                            break;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.log('🎨 无法读取CSS规则，使用提取的名称');
+                                }
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('🎨 CSS解析失败，使用提取的名称');
+                    }
+
                     const style = document.createElement('style');
                     style.id = 'offline-custom-font-style';
                     style.textContent = `
-                        .offline-preview-content {
+                        .offline-preview-content,
+                        #offline-mode-overlay .offline-message-content {
                             font-family: '${fontFamily}', sans-serif !important;
                         }
                     `;
                     document.head.appendChild(style);
-                    showToast('Google Fonts字体预览已应用', 'success');
+                    console.log('🎨 字体样式已应用到页面，最终字体名称:', fontFamily);
+
+                    // 🔥【新增】保存真实的字体名称到全局变量，供保存设置时使用
+                    window.previewedFontName = fontFamily;
+
+                    // 🔥【新增】验证字体是否真的被应用
+                    setTimeout(() => {
+                        const testElement = document.querySelector('#offline-mode-overlay .offline-message-content');
+                        if (testElement) {
+                            const computedStyle = window.getComputedStyle(testElement);
+                            console.log('🎨 实际应用的字体:', computedStyle.fontFamily);
+                        }
+                    }, 1000);
+
+                    showToast(`字体CSS已加载，字体名称: ${fontFamily}`, 'success');
                 };
                 link.onerror = function() {
+                    console.error('🎨 字体CSS加载失败:', url);
                     showToast('字体CSS加载失败，请检查URL', 'error');
                 };
                 document.head.appendChild(link);
@@ -41932,7 +42910,8 @@ ${conversationHistory}
                         font-family: '${fontName}';
                         src: url('${url}');
                     }
-                    .offline-preview-content {
+                    .offline-preview-content,
+                    #offline-mode-overlay .offline-message-content {
                         font-family: '${fontName}', sans-serif !important;
                     }
                 `;
@@ -41944,7 +42923,7 @@ ${conversationHistory}
         // 从Google Fonts URL中提取字体名称
         function extractFontFamilyFromGoogleFonts(url) {
             try {
-                // 匹配 family= 参数
+                // Google Fonts: 匹配 family= 参数
                 const match = url.match(/family=([^&:]+)/);
                 if (match) {
                     let fontName = decodeURIComponent(match[1]);
@@ -41959,6 +42938,24 @@ ${conversationHistory}
                     let fontName = decodeURIComponent(match2[1]);
                     fontName = fontName.replace(/\+/g, ' ').split(':')[0];
                     return fontName;
+                }
+
+                // 🔥【新增】其他字体服务：尝试从URL路径中提取
+                const pathMatch = url.match(/\/([^\/]+)\.css/);
+                if (pathMatch) {
+                    return pathMatch[1].replace(/[-_]/g, ' ');
+                }
+
+                // 🔥【新增】尝试从URL中提取数字ID或名称
+                const idMatch = url.match(/\/(\d+)\//);
+                if (idMatch) {
+                    return `CustomFont-${idMatch[1]}`;
+                }
+
+                // 🔥【新增】从域名提取服务名称
+                const domainMatch = url.match(/\/\/([^.]+)/);
+                if (domainMatch) {
+                    return `${domainMatch[1]}-Font`;
                 }
             } catch (e) {
                 console.warn('无法提取字体名称:', e);
@@ -42048,6 +43045,7 @@ ${conversationHistory}
                     wallpaperData: offlineUISettings.wallpaperData || '',
                     fontFamily: document.getElementById('offline-font-select').value,
                     fontUrl: document.getElementById('offline-font-url').value.trim(),
+                    realFontName: window.previewedFontName || '', // 🔥【新增】保存预览时确定的真实字体名称
                     userNormalTextColor: document.getElementById('offline-user-normal-text-color').value,
                     userItalicTextColor: document.getElementById('offline-user-italic-text-color').value,
                     userBoldTextColor: document.getElementById('offline-user-bold-text-color').value,
@@ -42183,14 +43181,46 @@ ${conversationHistory}
                 const url = offlineUISettings.fontUrl;
 
                 // 判断是CSS链接还是直接字体文件
-                if (url.includes('fonts.googleapis.com') || url.includes('fonts.google.com') || url.endsWith('.css')) {
+                if (url.includes('fonts.googleapis.com') || url.includes('fonts.google.com') || url.endsWith('.css') || url.includes('fontsapi') || url.includes('css')) {
                     // Google Fonts或其他CSS链接
                     const link = document.createElement('link');
                     link.id = `offline-font-link-${currentChatCharacter.id}`;
                     link.rel = 'stylesheet';
                     link.href = url;
                     link.onload = function() {
-                        const fontFamily = extractFontFamilyFromGoogleFonts(url) || 'CustomFont';
+                        // 🔥【修复】优先使用保存的真实字体名称
+                        let fontFamily = offlineUISettings.realFontName || extractFontFamilyFromGoogleFonts(url) || 'CustomFont';
+
+                        // 🔥【新增】如果没有保存的真实字体名称，尝试从CSS中提取
+                        if (!offlineUISettings.realFontName) {
+                            try {
+                                const sheets = document.styleSheets;
+                                for (let i = sheets.length - 1; i >= 0; i--) {
+                                    const sheet = sheets[i];
+                                    if (sheet.href === url) {
+                                        try {
+                                            const rules = sheet.cssRules || sheet.rules;
+                                            for (let j = 0; j < rules.length; j++) {
+                                                const rule = rules[j];
+                                                if (rule.type === CSSRule.FONT_FACE_RULE && rule.style.fontFamily) {
+                                                    fontFamily = rule.style.fontFamily.replace(/['"]/g, '');
+                                                    console.log('🎨 应用设置时从CSS中提取到真实字体名称:', fontFamily);
+                                                    break;
+                                                }
+                                            }
+                                        } catch (e) {
+                                            console.log('🎨 应用设置时无法读取CSS规则，使用提取的名称');
+                                        }
+                                        break;
+                                    }
+                                }
+                            } catch (e) {
+                                console.log('🎨 应用设置时CSS解析失败，使用提取的名称');
+                            }
+                        } else {
+                            console.log('🎨 使用保存的真实字体名称:', fontFamily);
+                        }
+
                         const style = document.createElement('style');
                         style.id = `offline-font-${currentChatCharacter.id}`;
                         style.textContent = `
@@ -42199,6 +43229,7 @@ ${conversationHistory}
                             }
                         `;
                         document.head.appendChild(style);
+                        console.log('✅ 线下模式字体已应用:', fontFamily);
                     };
                     document.head.appendChild(link);
                 } else {

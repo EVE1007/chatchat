@@ -3172,6 +3172,71 @@
 
         /* 🔥【统一样式】所有主题下按钮条都保持白底黑字 */
 
+        /* 🔥【新增】记忆查看器中的操作按钮样式 */
+        .memory-action-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            padding: 6px 8px;
+            margin: 0 3px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #333;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 28px;
+        }
+
+        .memory-action-btn:hover {
+            background: rgba(0, 123, 255, 0.1);
+            border-color: rgba(0, 123, 255, 0.3);
+            color: #007bff;
+            transform: scale(1.05);
+        }
+
+        .memory-action-btn.edit-btn:hover {
+            background: rgba(40, 167, 69, 0.1);
+            border-color: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+
+        .memory-action-btn.view-btn:hover {
+            background: rgba(23, 162, 184, 0.1);
+            border-color: rgba(23, 162, 184, 0.3);
+            color: #17a2b8;
+        }
+
+        .memory-action-btn i {
+            font-size: 11px;
+        }
+
+        /* 🔥【新增】剧情总结记忆项的特殊样式 */
+        .memory-item-type.storyline {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .memory-item[data-memory-type="storyline"] {
+            border-left: 4px solid #667eea;
+        }
+
+        .memory-item[data-memory-type="storyline"] .memory-item-content {
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 6px;
+            padding: 12px;
+            margin: 8px 0;
+            max-height: 80px;
+            overflow: hidden;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            line-clamp: 3;
+        }
+
         /* 消息编辑指示器样式 */
         .message-edited-indicator {
             position: absolute;
@@ -12966,31 +13031,39 @@ textarea.call-text-input {
             background: var(--theme-button-bg);
         }
 
-        /* 线下模式消息菜单样式 */
+        /* 🔥【修改】线下模式消息菜单样式 - 与线上模式保持一致 */
         .offline-message-menu {
+            position: fixed;
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-            padding: 8px 0;
+            z-index: 10001;
+            overflow: hidden;
             min-width: 140px;
+            padding: 8px;
             animation: fadeInScale 0.2s ease;
         }
 
         .offline-message-menu .menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            color: #333;
             display: flex;
             align-items: center;
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            font-size: 14px;
-            color: var(--text-primary);
+            background: transparent;
+            border: none;
+            margin: 2px 0;
         }
 
         .offline-message-menu .menu-item:hover {
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(240, 240, 240, 0.5);
+            transform: scale(1.02);
         }
 
         .offline-message-menu .menu-item.delete {
@@ -14200,8 +14273,11 @@ textarea.call-text-input {
 
         .memory-filter-tabs {
             display: flex;
+            flex-wrap: wrap;
             gap: 6px;
             padding-bottom: 5px;
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .memory-filter-tab {
