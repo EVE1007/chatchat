@@ -6264,6 +6264,30 @@
             checkBackgroundTimers();
         }
 
+        // 🔥【新增】暂停指定角色的主动发消息计时器（用于线下模式）
+        function pauseProactiveChatTimer(characterId) {
+            const timerKey = characterId + '_chat';
+            if (backgroundTimers[timerKey]) {
+                clearTimeout(backgroundTimers[timerKey]);
+                // 保存计时器状态，以便恢复时使用
+                backgroundTimers[timerKey + '_paused'] = true;
+                delete backgroundTimers[timerKey];
+                console.log(`⏸️ 已暂停角色 ${characters.find(c => c.id === characterId)?.name} 的主动发消息计时器`);
+            }
+        }
+
+        // 🔥【新增】恢复指定角色的主动发消息计时器（退出线下模式时）
+        function resumeProactiveChatTimer(characterId) {
+            const pausedKey = characterId + '_chat_paused';
+            if (backgroundTimers[pausedKey]) {
+                // 删除暂停标记
+                delete backgroundTimers[pausedKey];
+                // 重新安排主动聊天定时器
+                scheduleProactiveChatForCharacter(characterId);
+                console.log(`▶️ 已恢复角色 ${characters.find(c => c.id === characterId)?.name} 的主动发消息计时器`);
+            }
+        }
+
         // 🔧【调试】将重新初始化函数暴露到全局作用域，方便控制台调用
         window.reinitializeProactiveChatTimers = reinitializeProactiveChatTimers;
 
@@ -39451,12 +39475,6 @@ async function aiUnblockUser(characterId) {
         })();
         
 
-        setTimeout(() => {
-            if (typeof showToast === 'function') {
-                showToast('🔧 系统已修复数据导入和引用消息问题', 'success');
-            }
-        }, 2000);
-
         // 🔥【移除】自动清理函数已移至数据库版本7的升级逻辑中
 
         // 🔥【新增】数据库状态诊断函数
@@ -40356,6 +40374,9 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                     offlineTitle.textContent = currentChatCharacter.name;
                 }
 
+                // 🔥【新增】暂停当前角色的主动发消息计时器
+                pauseProactiveChatTimer(currentChatCharacter.id);
+
                 // 加载线下模式的消息
                 loadOfflineMessages();
 
@@ -40408,9 +40429,9 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                             </button>
                         </div>
                         <p style="font-size: 12px; color: #666; margin-top: 10px;">
-                            • <strong>结束且不总结</strong>：直接结束，对话记录保留在聊天历史中<br>
-                            • <strong>暂时离开</strong>：可以稍后继续当前剧情对话<br>
-                            • <strong>结束并总结</strong>：生成剧情摘要，适合历史消息数设置较少的用户
+                            • <strong>结束且不总结</strong>：结束剧情，对话记录保存到线下模式聊天记录中<br>
+                            • <strong>暂时离开</strong>：保留当前对话状态，可以稍后继续剧情<br>
+                            • <strong>结束并总结</strong>：生成AI剧情摘要并保存到记忆系统和聊天记录中
                         </p>
                     </div>
                 </div>
@@ -40474,12 +40495,16 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
             } else {
                 console.log('❌ 暂时离开：找不到模态框');
             }
+
+            // 🔥【修复】暂时离开时不清空消息，保持线下模式状态
+            console.log(`📝 暂时离开线下模式，保留${offlineMessages.length}条消息`);
+
             doExitOfflineMode();
             showToast('已暂时离开线下模式', 'info');
         }
 
         // 结束且不总结（推荐选项）
-        function exitWithoutSummary() {
+        async function exitWithoutSummary() {
             const modal = document.querySelector('.offline-exit-modal');
             if (modal) {
                 modal.remove();
@@ -40488,13 +40513,27 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                 console.log('❌ 结束且不总结：找不到模态框');
             }
 
-            // 🔥【修复】清空线下消息记录，避免重复读取
-            console.log(`📝 线下模式对话已保存到聊天记录中，共${offlineMessages.length}条消息`);
-            offlineMessages = []; // 清空线下消息记录
-            saveOfflineMessages(); // 🔥【关键】保存清空状态到localStorage
+            // 🔥【修复】如果有聊天记录，保存到线下模式聊天记录中
+            if (offlineMessages.length > 0) {
+                console.log(`📝 保存线下模式对话到聊天记录中，共${offlineMessages.length}条消息`);
+
+                // 生成简单的对话摘要
+                const summary = `线下模式对话记录 - ${new Date().toLocaleString()} (${offlineMessages.length}条消息)`;
+
+                // 保存到线下模式聊天记录
+                await saveOfflineHistoryRecord(summary, offlineMessages.slice());
+
+                // 清空线下消息记录
+                offlineMessages = [];
+                saveOfflineMessages(); // 保存清空状态到localStorage
+
+                showToast('已结束线下模式，对话已保存到聊天记录', 'success');
+            } else {
+                console.log('📝 没有线下模式对话需要保存');
+                showToast('已结束线下模式', 'success');
+            }
 
             doExitOfflineMode();
-            showToast('已结束线下模式，对话已保存到聊天记录', 'success');
         }
 
         // 实际执行退出线下模式
@@ -40507,6 +40546,11 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
             overlay.style.display = 'none';
             icon.className = 'fas fa-door-open';
             chatScreen.classList.remove('offline-mode-active');
+
+            // 🔥【新增】恢复当前角色的主动发消息计时器
+            if (currentChatCharacter) {
+                resumeProactiveChatTimer(currentChatCharacter.id);
+            }
 
             // 🔥【修复】清空线下模式界面内容
             const offlineMessagesContainer = document.getElementById('offline-chat-messages');
@@ -41991,7 +42035,7 @@ ${conversationHistory}
                         <div class="empty-history">
                             <i class="fas fa-history" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
                             <p>还没有线下模式聊天记录</p>
-                            <p style="font-size: 12px; color: #999;">完成线下剧情并生成总结后，聊天记录会保存在这里</p>
+                            <p style="font-size: 12px; color: #999;">完成线下剧情对话后，选择"结束且不总结"或"结束并总结"，聊天记录会保存在这里</p>
                         </div>
                     `;
                     return;
