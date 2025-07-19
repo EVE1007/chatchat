@@ -1438,19 +1438,7 @@
                                                 </button>
                                             </div>
                                         </div>
-                                        
-                                                                            <div class="setting-item">
-                                        <div class="setting-left">
-                                            <div class="setting-label">主动拨打电话</div>
-                                            <div class="setting-desc">角色在适当时机主动拨打电话</div>
-                                        </div>
-                                        <div class="setting-right">
-                                            <label class="toggle-switch">
-                                                <input type="checkbox" id="background-ai-call-enabled" class="ai-call-enabled-checkbox">
-                                                <span class="toggle-slider"></span>
-                                            </label>
-                                        </div>
-                                    </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -4166,6 +4154,10 @@
                 initGlobalMemoryDB() // 🔥【新增】初始化全局记忆数据库
             ]);
 
+            // 🔥【新增】清理已保存的拉黑系统消息
+            console.log('🧹 清理拉黑系统消息...');
+            cleanupBlockedSystemMessages();
+
             // 第二步：从角色列表生成联系人（必须在角色加载完成后）
             console.log('🔄 从角色列表生成联系人...');
             await loadContacts();
@@ -5099,10 +5091,7 @@
                                 if (!msg || typeof msg !== 'object' || !msg.timestamp) {
                                     return false;
                                 }
-                                // 🔥【修复】过滤掉拉黑系统消息，避免重复显示
-                                if (msg.sender === 'system' && msg.isBlockedMessage) {
-                                    return false;
-                                }
+                                // 保留拉黑系统消息，它们现在会正确显示
                                 return true;
                             })
                             .sort((a, b) => a.timestamp - b.timestamp);
@@ -5123,26 +5112,43 @@
             }
         }
 
-        // 🔥【新增】清理数据库中的拉黑系统消息
+        // 🔥【修复】清理数据库中重复的拉黑系统消息
         async function cleanupBlockedSystemMessages() {
             try {
                 // 获取所有聊天消息记录
                 const allMessages = await db.chatMessages.toArray();
                 const messagesToDelete = [];
 
-                // 找出所有拉黑系统消息
+                // 🔥【修复】清理重复的拉黑系统消息
+                const blockedMessagesByCharacter = {};
+
                 for (const msgRecord of allMessages) {
                     if (msgRecord.messageData &&
                         msgRecord.messageData.sender === 'system' &&
                         msgRecord.messageData.isBlockedMessage) {
-                        messagesToDelete.push(msgRecord.id);
+
+                        const characterId = msgRecord.characterId;
+                        if (!blockedMessagesByCharacter[characterId]) {
+                            blockedMessagesByCharacter[characterId] = [];
+                        }
+                        blockedMessagesByCharacter[characterId].push(msgRecord);
                     }
                 }
 
-                // 批量删除拉黑系统消息
+                // 对每个角色，只保留最新的拉黑系统消息，删除重复的
+                for (const characterId in blockedMessagesByCharacter) {
+                    const messages = blockedMessagesByCharacter[characterId];
+                    if (messages.length > 1) {
+                        // 按时间戳排序，保留最新的，删除其他的
+                        messages.sort((a, b) => (b.messageData.timestamp || 0) - (a.messageData.timestamp || 0));
+                        const toDelete = messages.slice(1); // 删除除第一个（最新）之外的所有消息
+                        messagesToDelete.push(...toDelete.map(msg => msg.id));
+                    }
+                }
+
                 if (messagesToDelete.length > 0) {
                     await db.chatMessages.bulkDelete(messagesToDelete);
-                    console.log(`已清理 ${messagesToDelete.length} 条拉黑系统消息`);
+                    console.log(`已清理 ${messagesToDelete.length} 条重复的拉黑系统消息`);
                 }
             } catch (error) {
                 console.error('清理拉黑系统消息失败:', error);
@@ -8309,10 +8315,8 @@ ${chatContext}${momentsContext}
             messagesToShow.forEach((message, index) => {
                 // 处理系统消息（如戳一戳、头像更换、撤回等）
                 if (message.sender === 'system') {
-                    // 🔥【修复】跳过拉黑系统消息，这些消息应该显示在对应的用户消息下方，而不是作为独立的系统消息
-                    if (message.isBlockedMessage) {
-                        return; // 跳过拉黑系统消息的独立渲染
-                    }
+                    // 🔥【移除】不再处理拉黑系统消息，因为它们不再保存到聊天记录中
+                    // 拉黑提示现在由 addBlockedIndicatorToMessage 函数直接在每条消息下方添加
 
                     if (message.isPoke) {
                     const systemContainer = document.createElement('div');
@@ -9059,9 +9063,28 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                 
                 // 处理系统消息（如戳一戳、头像更换、撤回等）
                 if (message.sender === 'system') {
-                    // 🔥【修复】跳过拉黑系统消息，这些消息应该显示在对应的用户消息下方，而不是作为独立的系统消息
+                    // 🔥【修复】处理拉黑系统消息 - 显示为居中的系统提示
                     if (message.isBlockedMessage) {
-                        continue; // 跳过拉黑系统消息的独立渲染
+                        const centerContainer = document.createElement('div');
+                        centerContainer.style.display = 'flex';
+                        centerContainer.style.justifyContent = 'center';
+                        centerContainer.style.margin = '4px 0';
+                        centerContainer.dataset.messageId = message.id;
+
+                        const systemContainer = document.createElement('div');
+                        systemContainer.className = 'system-message';
+                        systemContainer.textContent = message.content || '消息已发出，但被对方拒收了';
+
+                        centerContainer.appendChild(systemContainer);
+
+                        // 插入到正确位置
+                        const insertAfter = messagesContainer.querySelector('.load-more-messages');
+                        if (insertAfter) {
+                            insertAfter.parentNode.insertBefore(centerContainer, insertAfter.nextSibling);
+                        } else {
+                            messagesContainer.insertBefore(centerContainer, messagesContainer.firstChild);
+                        }
+                        continue;
                     }
 
                     let containerToInsert;
@@ -9895,13 +9918,16 @@ async function startChat(character) {
             // 🔥【新增】更新心率显示
             updateAiHeartrate();
                 
-                // 🔥【新增】立即为这个角色生成一个初始状态（如果还没有的话）
+                // 🔥【修复】只有在开启状态显示时才生成初始状态
                 setTimeout(async () => {
-                    const currentStatus = getCharacterStatus(character.id);
-                    if (!currentStatus.activity || currentStatus.activity === '在线') {
-                        await generateCharacterStatus(character.id);
-                        // 刷新状态显示
-                        renderCharacterStatus(character.id, headerContainer);
+                    const chatSettings = await getAsyncChatSettings(character.id);
+                    if (chatSettings.characterStatusEnabled) {
+                        const currentStatus = getCharacterStatus(character.id);
+                        if (!currentStatus.activity || currentStatus.activity === '在线') {
+                            await generateCharacterStatus(character.id);
+                            // 刷新状态显示
+                            renderCharacterStatus(character.id, headerContainer);
+                        }
                     }
                 }, 500);
             
@@ -19635,7 +19661,7 @@ ${timeInfo}${musicInfo}
             }
             
             // 更新通话设置
-            const aiCallCheckbox = document.querySelector('.ai-call-enabled-checkbox');
+            const aiCallCheckbox = document.getElementById('ai-call-enabled');
             if (aiCallCheckbox) {
                 aiCallCheckbox.checked = chatSettings.aiCallEnabled;
             }
@@ -19753,22 +19779,15 @@ ${timeInfo}${musicInfo}
             }
             
             // 通话设置
-            const aiCallCheckboxes = document.querySelectorAll('.ai-call-enabled-checkbox');
-            aiCallCheckboxes.forEach(checkbox => {
-                checkbox.onchange = async function() {
+            const aiCallCheckbox = document.getElementById('ai-call-enabled');
+            if (aiCallCheckbox) {
+                aiCallCheckbox.onchange = async function() {
                     const chatSettings = getCurrentChatSettings();
                     chatSettings.aiCallEnabled = this.checked;
-                    
-                    // 同步所有相关复选框的状态
-                    aiCallCheckboxes.forEach(cb => {
-                        if (cb !== this) {
-                            cb.checked = this.checked;
-                        }
-                    });
-                    
                     await saveCurrentChatSettings(chatSettings);
+                    showToast(`角色主动拨打电话已${this.checked ? '开启' : '关闭'}`, 'success');
                 };
-            });
+            }
             
             // 心率监测设置
             const aiHeartrateCheckbox = document.getElementById('ai-heartrate-enabled');
@@ -20106,26 +20125,7 @@ ${timeInfo}${musicInfo}
                 });
             }
             
-            // 绑定主动拨打电话开关事件
-            const aiCallEnabledCheckboxes = document.querySelectorAll('.ai-call-enabled-checkbox');
-            aiCallEnabledCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    // 保存设置
-                    if (currentChatCharacter) {
-                        const chatSettings = getCurrentChatSettings();
-                        chatSettings.aiCallEnabled = this.checked;
-                        
-                        // 同步所有相关复选框的状态
-                        aiCallEnabledCheckboxes.forEach(cb => {
-                            if (cb !== this) {
-                                cb.checked = this.checked;
-                            }
-                        });
-                        
-                        saveChatSettings();
-                    }
-                });
-            });
+            // 主动拨打电话开关事件已在上面的 initChatSettingsUIEvents 中处理
             
             // 绑定戳一戳功能开关事件
             const pokeEnabledCheckbox = document.getElementById('poke-enabled');
@@ -23815,6 +23815,9 @@ async function createGroupChat(personaId) {
             // 使用动画添加消息而不是重新渲染整个列表
             addMessageWithAnimation(userMessage, currentChatCharacter.id);
 
+            // 🔥【新增】检查拉黑状态并创建系统消息
+            checkAndCreateBlockedSystemMessage(userMessage, currentChatCharacter.id);
+
             // 设置待回复消息
             pendingUserMessage = userMessage;
             
@@ -24079,6 +24082,9 @@ async function createGroupChat(personaId) {
             // 添加语音消息到界面
             addMessageWithAnimation(voiceMessage, currentChatCharacter.id);
             console.log('语音消息已添加到界面');
+
+            // 🔥【新增】检查拉黑状态并创建系统消息
+            checkAndCreateBlockedSystemMessage(voiceMessage, currentChatCharacter.id);
             
             // 🔥【新增】触发角色状态更新
             triggerStatusUpdateAfterMessage(currentChatCharacter.id);
@@ -28102,9 +28108,21 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             
             // 处理系统消息
             if (message.sender === 'system') {
-                // 🔥【修复】跳过拉黑系统消息，这些消息应该显示在对应的用户消息下方，而不是作为独立的系统消息
+                // 🔥【修复】处理拉黑系统消息 - 显示为居中的系统提示
                 if (message.isBlockedMessage) {
-                    return; // 跳过拉黑系统消息的独立渲染
+                    const centerContainer = document.createElement('div');
+                    centerContainer.style.display = 'flex';
+                    centerContainer.style.justifyContent = 'center';
+                    centerContainer.style.margin = '4px 0';
+                    centerContainer.dataset.messageId = message.id;
+
+                    const systemContainer = document.createElement('div');
+                    systemContainer.className = 'system-message';
+                    systemContainer.textContent = message.content || '消息已发出，但被对方拒收了';
+
+                    centerContainer.appendChild(systemContainer);
+                    messagesContainer.insertBefore(centerContainer, typingIndicator);
+                    return;
                 }
 
                 let systemElement;
@@ -34484,7 +34502,73 @@ async function changeMyGroupAvatar() {
             messagesContainer.insertBefore(hintContainer, messagesContainer.firstChild);
         }
 
-        // 🔥【重写】为消息添加拉黑状态指示器 - 创建独立的系统消息
+        // 🔥【修复】检查拉黑状态并创建系统消息（只在发送消息时调用一次）
+        function checkAndCreateBlockedSystemMessage(userMessage, characterId) {
+            if (!currentChatCharacter || currentChatCharacter.isGroup) return; // 群聊不处理拉黑
+
+            // 检查角色是否拉黑了用户
+            const isCharacterBlocked = isBlocked(characterId, 'user');
+
+            if (isCharacterBlocked) {
+                // 🔥【修复】不保存到聊天记录，只在界面上临时显示系统提示
+                // 创建临时的系统提示元素
+                const messagesContainer = document.getElementById('api-chat-messages');
+                const systemHint = document.createElement('div');
+                systemHint.className = 'blocked-message-hint';
+                systemHint.style.cssText = `
+                    text-align: center;
+                    color: #999;
+                    font-size: 12px;
+                    padding: 4px 8px;
+                    margin: 2px 0;
+                    background: transparent;
+                    border: none;
+                    display: block;
+                    max-width: 80%;
+                    width: fit-content;
+                    margin-left: auto;
+                    margin-right: auto;
+                `;
+                systemHint.textContent = '消息已发出，但被对方拒收了';
+
+                // 添加到界面
+                messagesContainer.appendChild(systemHint);
+
+                // 滚动到底部
+                setTimeout(() => {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, 100);
+            }
+        }
+
+        // 🔥【新增】清理已保存的拉黑系统消息
+        function cleanupBlockedSystemMessages() {
+            let hasChanges = false;
+
+            // 遍历所有聊天记录
+            Object.keys(chatMessages).forEach(characterId => {
+                const messages = chatMessages[characterId];
+                const originalLength = messages.length;
+
+                // 过滤掉拉黑系统消息
+                chatMessages[characterId] = messages.filter(msg =>
+                    !(msg.sender === 'system' && msg.isBlockedMessage)
+                );
+
+                if (chatMessages[characterId].length !== originalLength) {
+                    hasChanges = true;
+                    console.log(`🧹 [清理] 从角色 ${characterId} 的聊天记录中移除了 ${originalLength - chatMessages[characterId].length} 条拉黑系统消息`);
+                }
+            });
+
+            // 如果有变化，保存到数据库
+            if (hasChanges) {
+                saveChatMessages();
+                console.log('🧹 [清理] 拉黑系统消息清理完成，已保存到数据库');
+            }
+        }
+
+        // 🔥【修复】为消息添加拉黑状态指示器 - 显示红色感叹号和系统提示
         function addBlockedIndicatorToMessage(messageContainer, message, characterId) {
             if (!currentChatCharacter) return;
 
@@ -34529,59 +34613,70 @@ async function changeMyGroupAvatar() {
             }
 
             if (shouldShowIndicator) {
+                // 🔥【修复】检查是否已经有指示器，避免重复添加
+                const existingIndicator = messageContainer.querySelector('.message-blocked-indicator');
+                const existingHint = messageContainer.nextElementSibling?.classList.contains('blocked-message-hint-inline');
+
+                if (existingIndicator && existingHint) {
+                    return; // 已经有指示器和提示了，不重复添加
+                }
+
                 // 创建拉黑指示器（红色感叹号）
-                const indicator = document.createElement('div');
-                indicator.className = 'message-blocked-indicator';
-                indicator.innerHTML = '!';
-                indicator.title = '消息已发出，但被对方拒收了';
+                if (!existingIndicator) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'message-blocked-indicator';
+                    indicator.innerHTML = '!';
+                    indicator.title = '消息已发出，但被对方拒收了';
 
-                // 添加指示器到消息容器
-                messageContainer.style.position = 'relative';
-                messageContainer.appendChild(indicator);
+                    // 添加指示器到消息容器
+                    messageContainer.style.position = 'relative';
+                    messageContainer.appendChild(indicator);
 
-                // 🔥【新增】动态定位感叹号到气泡外侧
-                setTimeout(() => {
-                    const bubble = messageContainer.querySelector('.message-bubble');
-                    if (bubble) {
-                        // 获取气泡相对于消息容器的位置
-                        const containerRect = messageContainer.getBoundingClientRect();
-                        const bubbleRect = bubble.getBoundingClientRect();
+                    // 🔥【新增】动态定位感叹号到气泡外侧
+                    setTimeout(() => {
+                        const bubble = messageContainer.querySelector('.message-bubble');
+                        if (bubble) {
+                            // 获取气泡相对于消息容器的位置
+                            const containerRect = messageContainer.getBoundingClientRect();
+                            const bubbleRect = bubble.getBoundingClientRect();
 
-                        if (message.sender === 'sent') {
-                            // 用户消息：感叹号在气泡左边
-                            const bubbleLeftOffset = bubbleRect.left - containerRect.left;
-                            indicator.style.left = (bubbleLeftOffset - 20) + 'px'; // 16px感叹号宽度 + 4px间距
-                            indicator.style.right = 'auto';
-                        } else if (message.sender === 'received') {
-                            // 🔥【修复】角色消息：感叹号在气泡右下角外侧3px处
-                            const bubbleRightOffset = bubbleRect.right - containerRect.left;
-                            indicator.style.left = (bubbleRightOffset + 3) + 'px'; // 气泡右边 + 3px间距
-                            indicator.style.right = 'auto';
+                            if (message.sender === 'sent') {
+                                // 用户消息：感叹号在气泡左边
+                                const bubbleLeftOffset = bubbleRect.left - containerRect.left;
+                                indicator.style.left = (bubbleLeftOffset - 20) + 'px'; // 16px感叹号宽度 + 4px间距
+                                indicator.style.right = 'auto';
+                            } else if (message.sender === 'received') {
+                                // 🔥【修复】角色消息：感叹号在气泡右下角外侧3px处
+                                const bubbleRightOffset = bubbleRect.right - containerRect.left;
+                                indicator.style.left = (bubbleRightOffset + 3) + 'px'; // 气泡右边 + 3px间距
+                                indicator.style.right = 'auto';
+                            }
                         }
-                    }
-                }, 10);
+                    }, 10);
+                }
 
-                // 🔥【修复】不再将拉黑系统消息保存到聊天记录，避免重复显示
-                // 拉黑系统消息只在界面上显示，不保存到数据库
+                // 🔥【新增】在消息下方添加系统提示
+                if (!existingHint) {
+                    const systemHint = document.createElement('div');
+                    systemHint.className = 'blocked-message-hint-inline';
+                    systemHint.style.cssText = `
+                        text-align: center;
+                        color: #999;
+                        font-size: 12px;
+                        padding: 2px 8px;
+                        margin: 2px 0 8px 0;
+                        background: transparent;
+                        border: none;
+                        display: block;
+                        max-width: 80%;
+                        width: fit-content;
+                        margin-left: auto;
+                        margin-right: auto;
+                    `;
+                    systemHint.textContent = '消息已发出，但被对方拒收了';
 
-                // 创建系统提示消息的显示元素
-                const centerContainer = document.createElement('div');
-                centerContainer.style.display = 'flex';
-                centerContainer.style.justifyContent = 'center';
-                centerContainer.style.margin = '4px 0';
-
-                const systemContainer = document.createElement('div');
-                systemContainer.className = 'system-message';
-                systemContainer.textContent = '消息已发出，但被对方拒收了';
-
-                centerContainer.appendChild(systemContainer);
-
-                // 将系统提示插入到当前消息后面
-                const messagesContainer = messageContainer.parentNode;
-                if (messagesContainer && messageContainer.nextSibling) {
-                    messagesContainer.insertBefore(centerContainer, messageContainer.nextSibling);
-                } else if (messagesContainer) {
-                    messagesContainer.appendChild(centerContainer);
+                    // 在消息容器后面插入系统提示
+                    messageContainer.parentNode.insertBefore(systemHint, messageContainer.nextSibling);
                 }
             }
         }
@@ -35120,23 +35215,41 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
         }
         
         // 启动状态更新定时器
-        function startCharacterStatusTimer() {
+        async function startCharacterStatusTimer() {
             clearCharacterStatusTimer(); // 先清除现有定时器
-            
+
+            // 🔥【优化】首先检查是否有任何角色启用了状态显示
+            let hasStatusEnabled = false;
+            for (const character of characters) {
+                if (contacts.includes(character.id)) {
+                    const chatSettings = await getAsyncChatSettings(character.id);
+                    if (chatSettings.characterStatusEnabled) {
+                        hasStatusEnabled = true;
+                        break;
+                    }
+                }
+            }
+
+            // 如果没有任何角色启用状态显示，不启动定时器
+            if (!hasStatusEnabled) {
+                console.log('没有角色启用状态显示，跳过启动状态更新定时器');
+                return;
+            }
+
             const interval = getStatusUpdateInterval();
             console.log('启动角色状态更新定时器，间隔:', interval / 1000, '秒');
-            
+
             characterStatusTimer = setInterval(async () => {
-                // 🔥【修复】首先检查是否有任何角色启用了状态显示
+                // 检查是否有任何角色启用了状态显示
                 let hasStatusEnabled = false;
-                
+
                 for (const character of characters) {
                     if (contacts.includes(character.id)) {
                         // 检查该角色的聊天设置中是否启用了状态显示
                         const chatSettings = await getAsyncChatSettings(character.id);
                         if (chatSettings.characterStatusEnabled) {
                             hasStatusEnabled = true;
-                            
+
                             // 检查是否需要更新状态
                             const shouldUpdate = await shouldUpdateCharacterStatus(character.id);
                             if (shouldUpdate) {
@@ -35145,9 +35258,11 @@ ${worldBookContext}${chatContext}请根据你的人设、当前剧情和聊天�
                         }
                     }
                 }
-                
-                // 如果没有任何角色启用状态显示，跳过后续操作
+
+                // 如果没有任何角色启用状态显示，停止定时器
                 if (!hasStatusEnabled) {
+                    console.log('没有角色启用状态显示，停止状态更新定时器');
+                    clearCharacterStatusTimer();
                     return;
                 }
                 
