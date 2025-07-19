@@ -3153,42 +3153,35 @@
                 <div class="modal" id="icon-picker-modal">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <div class="modal-title">选择应用图标</div>
+                            <div class="modal-title">更改应用图标</div>
                             <button class="modal-close" onclick="hideModal('icon-picker-modal')">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <div class="icon-options">
-                                <div class="icon-option" onclick="selectAppIcon('chat-screen', 'fas fa-comment-dots')">
-                                    <div class="icon-preview">
-                                        <i class="fas fa-comment-dots"></i>
-                                    </div>
-                                    <span>Chat</span>
+                            <!-- 应用列表 -->
+                            <div class="app-list-section">
+                                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px;">选择要修改的应用</h4>
+                                <div id="app-list-container" class="app-list-grid">
+                                    <!-- 动态生成应用列表 -->
                                 </div>
-                                <div class="icon-option" onclick="selectAppIcon('weibo-screen', 'fab fa-weibo')">
-                                    <div class="icon-preview">
-                                        <i class="fab fa-weibo"></i>
-                                    </div>
-                                    <span>社交网络</span>
-                                </div>
+                            </div>
 
-                                <div class="icon-option" onclick="selectAppIcon('album-screen', 'fas fa-images')">
-                                    <div class="icon-preview">
-                                        <i class="fas fa-images"></i>
+                            <!-- 图标上传区域 -->
+                            <div class="icon-upload-section" id="icon-upload-section" style="display: none;">
+                                <h4 style="margin: 20px 0 15px 0; color: #333; font-size: 16px;">上传新图标</h4>
+                                <div class="upload-area" onclick="triggerIconUpload()">
+                                    <div class="upload-placeholder" id="upload-placeholder">
+                                        <i class="fas fa-cloud-upload-alt" style="font-size: 32px; color: #999; margin-bottom: 10px;"></i>
+                                        <div style="color: #666;">点击选择图片</div>
+                                        <div style="color: #999; font-size: 12px; margin-top: 5px;">支持 JPG、PNG 格式</div>
                                     </div>
-                                    <span>相册</span>
+                                    <img id="icon-preview-img" class="icon-preview-img" style="display: none;">
                                 </div>
+                                <input type="file" id="custom-icon-upload" accept="image/*" class="file-input-hidden">
                             </div>
-                            <div class="settings-item upload-custom-item" onclick="uploadCustomIcon()">
-                                <div class="settings-item-left">
-                                    <div>从相册选择</div>
-                                </div>
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
-                            <input type="file" id="custom-icon-upload" accept="image/*" class="file-input-hidden">
                         </div>
                         <div class="modal-footer">
                             <button class="modal-button modal-secondary" onclick="hideModal('icon-picker-modal')">取消</button>
-                            <button class="modal-button modal-primary" onclick="applyIconSelection()">应用</button>
+                            <button class="modal-button modal-primary" id="apply-icon-btn" onclick="applyIconChange()" style="display: none;">应用</button>
                         </div>
                     </div>
                 </div>
@@ -4383,7 +4376,8 @@
                 loadApiSettings(),
                 loadCustomEmojis(),
                 loadGlobalWorldbookSettings(), // 确保加载全局世界书设置
-                initGlobalMemoryDB() // 🔥【新增】初始化全局记忆数据库
+                initGlobalMemoryDB(), // 🔥【新增】初始化全局记忆数据库
+                loadCustomAppIcons() // 加载自定义应用图标
             ]);
 
             // 🔥【新增】清理已保存的拉黑系统消息
@@ -4551,9 +4545,12 @@
             
             // 初始化头像上传功能
             initializeAvatarUpload();
-            
+
             // 初始化表情包上传功能
             initializeEmojiUpload();
+
+            // 初始化应用图标上传功能
+            initializeIconUpload();
             
             // 确保工具面板初始隐藏
             const toolsPanel = document.getElementById('tools-panel');
@@ -13177,45 +13174,226 @@ async function applyChatBackground(backgroundUrl) {
             document.getElementById('custom-wallpaper-upload').click();
         }
         
+        // 全局变量
+        let selectedAppForIcon = null;
+        let uploadedIconImage = null;
+
         // 显示图标选择器
         function showIconPicker() {
+            generateAppList();
             showModal('icon-picker-modal');
         }
-        
-        // 选择应用图标
-        function selectAppIcon(appId, iconClass) {
-            selectedAppIcon = { appId, iconClass };
+
+        // 生成应用列表
+        function generateAppList() {
+            const container = document.getElementById('app-list-container');
+            container.innerHTML = '';
+
+            // 获取所有应用的信息
+            const apps = [
+                // 主屏幕应用
+                { id: 'chat-screen', name: 'Chat', selector: '.mini-app[onclick="showApp(\'chat-screen\')"] .mini-app-icon' },
+                { id: 'worldbook-screen', name: '世界书', selector: '.mini-app[onclick*="worldbook-screen"] .mini-app-icon' },
+                { id: 'game-screen', name: '游戏', selector: '.mini-app[onclick="showApp(\'game-screen\')"] .mini-app-icon' },
+                { id: 'forum-screen', name: '论坛', selector: '.mini-app[onclick="showApp(\'forum-screen\')"] .mini-app-icon' },
+                // Dock栏应用
+                { id: 'messages-screen', name: '短信', selector: '.dock-app[onclick="showApp(\'messages-screen\')"] .dock-app-icon' },
+                { id: 'settings-screen', name: '设置', selector: '.dock-app[onclick="showApp(\'settings-screen\')"] .dock-app-icon' },
+                { id: 'memory-viewer-screen', name: '记忆', selector: '.dock-app[onclick="showApp(\'memory-viewer-screen\')"] .dock-app-icon' }
+            ];
+
+            apps.forEach(app => {
+                const appElement = document.querySelector(app.selector);
+                if (appElement) {
+                    const appItem = document.createElement('div');
+                    appItem.className = 'app-item-selector';
+                    appItem.onclick = () => selectAppForIcon(app.id, app.name, app.selector);
+
+                    // 获取当前图标
+                    const iconHtml = appElement.innerHTML;
+
+                    appItem.innerHTML = `
+                        <div class="app-item-icon">
+                            ${iconHtml}
+                        </div>
+                        <div class="app-item-name">${app.name}</div>
+                    `;
+
+                    container.appendChild(appItem);
+                }
+            });
         }
-        
-        // 上传自定义图标
-        function uploadCustomIcon() {
+
+        // 选择要修改图标的应用
+        function selectAppForIcon(appId, appName, selector) {
+            selectedAppForIcon = { id: appId, name: appName, selector: selector };
+
+            // 更新选中状态
+            document.querySelectorAll('.app-item-selector').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+
+            // 显示上传区域
+            document.getElementById('icon-upload-section').style.display = 'block';
+
+            // 重置上传状态
+            resetIconUpload();
+        }
+
+        // 触发图标上传
+        function triggerIconUpload() {
+            if (!selectedAppForIcon) {
+                alert('请先选择要修改的应用');
+                return;
+            }
             document.getElementById('custom-icon-upload').click();
         }
-        
-        // 应用图标选择
-        function applyIconSelection() {
-            if (selectedAppIcon && customIconImage) {
-                // 更新应用图标
-                const appIcon = document.querySelector(`.app[onclick="showApp('${selectedAppIcon.appId}')"] .app-icon`);
-                if (appIcon) {
-                    appIcon.innerHTML = '';
-                    appIcon.style.backgroundImage = `url(${customIconImage})`;
-                    
-                    // 保存到本地存储
-                    let savedIcons = {};
-                    try {
-                        savedIcons = JSON.parse(localStorage.getItem('appIcons') || '{}');
-                    } catch (error) {
-                        console.error('解析本地存储的 appIcons 失败:', error);
-                        savedIcons = {};
-                    }
-                    savedIcons[selectedAppIcon.appId] = customIconImage;
-                    localStorage.setItem('appIcons', JSON.stringify(savedIcons));
-                }
-            } else if (selectedAppIcon) {
-                saveAppIcons();
+
+        // 重置图标上传
+        function resetIconUpload() {
+            uploadedIconImage = null;
+            document.getElementById('upload-placeholder').style.display = 'block';
+            document.getElementById('icon-preview-img').style.display = 'none';
+            document.querySelector('.upload-area').classList.remove('has-image');
+            document.getElementById('apply-icon-btn').style.display = 'none';
+        }
+
+        // 应用图标更改
+        async function applyIconChange() {
+            if (!selectedAppForIcon || !uploadedIconImage) {
+                alert('请选择应用和上传图标');
+                return;
             }
-            hideModal('icon-picker-modal');
+
+            try {
+                // 更新应用图标
+                const appIconElement = document.querySelector(selectedAppForIcon.selector);
+                if (appIconElement) {
+                    appIconElement.innerHTML = `<img src="${uploadedIconImage}" alt="${selectedAppForIcon.name}" class="app-icon-img">`;
+                }
+
+                // 保存到IndexedDB
+                await saveCustomAppIcon(selectedAppForIcon.id, uploadedIconImage);
+
+                showToast('应用图标已更新！', 'success');
+                hideModal('icon-picker-modal');
+
+                // 重置状态
+                selectedAppForIcon = null;
+                uploadedIconImage = null;
+            } catch (error) {
+                console.error('更新应用图标失败:', error);
+                showToast('更新失败，请重试', 'error');
+            }
+        }
+
+        // 保存自定义应用图标到IndexedDB
+        async function saveCustomAppIcon(appId, imageData) {
+            try {
+                await db.appIcons.put({
+                    id: appId,
+                    appId: appId,
+                    imageData: imageData,
+                    updatedAt: new Date()
+                });
+                console.log('应用图标已保存:', appId);
+            } catch (error) {
+                console.error('保存应用图标失败:', error);
+                throw error;
+            }
+        }
+
+        // 加载自定义应用图标
+        async function loadCustomAppIcons() {
+            try {
+                const customIcons = await db.appIcons.toArray();
+                customIcons.forEach(iconData => {
+                    if (iconData.imageData) {
+                        // 查找对应的应用图标元素并更新
+                        const apps = [
+                            { id: 'chat-screen', selector: '.mini-app[onclick="showApp(\'chat-screen\')"] .mini-app-icon' },
+                            { id: 'worldbook-screen', selector: '.mini-app[onclick*="worldbook-screen"] .mini-app-icon' },
+                            { id: 'game-screen', selector: '.mini-app[onclick="showApp(\'game-screen\')"] .mini-app-icon' },
+                            { id: 'forum-screen', selector: '.mini-app[onclick="showApp(\'forum-screen\')"] .mini-app-icon' },
+                            { id: 'messages-screen', selector: '.dock-app[onclick="showApp(\'messages-screen\')"] .dock-app-icon' },
+                            { id: 'settings-screen', selector: '.dock-app[onclick="showApp(\'settings-screen\')"] .dock-app-icon' },
+                            { id: 'memory-viewer-screen', selector: '.dock-app[onclick="showApp(\'memory-viewer-screen\')"] .dock-app-icon' }
+                        ];
+
+                        const app = apps.find(a => a.id === iconData.appId);
+                        if (app) {
+                            const appIconElement = document.querySelector(app.selector);
+                            if (appIconElement) {
+                                appIconElement.innerHTML = `<img src="${iconData.imageData}" alt="${iconData.appId}" class="app-icon-img">`;
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('加载自定义应用图标失败:', error);
+            }
+        }
+
+        // 初始化应用图标上传功能
+        function initializeIconUpload() {
+            const iconInput = document.getElementById('custom-icon-upload');
+            if (!iconInput) {
+                console.error('找不到custom-icon-upload元素');
+                return;
+            }
+
+            // 移除旧的事件监听器（如果存在）
+            iconInput.removeEventListener('change', handleIconUpload);
+
+            // 添加新的事件监听器
+            iconInput.addEventListener('change', handleIconUpload);
+            console.log('应用图标上传事件监听器已绑定');
+        }
+
+        // 处理图标上传
+        async function handleIconUpload(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+
+                // 检查文件类型
+                if (!file.type.startsWith('image/')) {
+                    alert('请选择图片文件');
+                    return;
+                }
+
+                // 检查文件大小（限制为5MB）
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('图片文件不能超过5MB');
+                    return;
+                }
+
+                try {
+                    // 压缩图片
+                    const compressedImage = await compressImage(file, 200, 0.8);
+
+                    // 更新预览
+                    const uploadArea = document.querySelector('.upload-area');
+                    const placeholder = document.getElementById('upload-placeholder');
+                    const previewImg = document.getElementById('icon-preview-img');
+
+                    placeholder.style.display = 'none';
+                    previewImg.src = compressedImage;
+                    previewImg.style.display = 'block';
+                    uploadArea.classList.add('has-image');
+
+                    // 保存图片数据
+                    uploadedIconImage = compressedImage;
+
+                    // 显示应用按钮
+                    document.getElementById('apply-icon-btn').style.display = 'inline-block';
+
+                    showToast('图片上传成功！', 'success');
+                } catch (error) {
+                    console.error('处理图片失败:', error);
+                    showToast('图片处理失败，请重试', 'error');
+                }
+            }
         }
         
         // 更改聊天主题颜色
