@@ -44179,6 +44179,46 @@ ${conversationHistory}
             });
         }
 
+document.addEventListener('visibilitychange', function() {
+    const phoneScreen = document.getElementById('phone-screen');
+    if (!phoneScreen) return;
+
+    if (document.visibilityState === 'visible') {
+        // 页面变为可见状态
+        console.log("✅ 页面恢复可见，正在恢复动画和定时器...");
+        
+        // 1. 恢复所有 CSS 动画
+        phoneScreen.style.animationPlayState = 'running';
+        const animatedElements = document.querySelectorAll('[style*="animation"]');
+        animatedElements.forEach(el => el.style.animationPlayState = 'running');
+
+        // 2. 强制浏览器进行一次重绘，清除残留的线条
+        // 这是一个常用的小技巧，通过快速改变一个不影响布局的属性来触发重绘
+        phoneScreen.style.opacity = '0.99';
+        setTimeout(() => {
+            phoneScreen.style.opacity = '1';
+        }, 16); // 16ms 约等于一帧的时间
+
+        // 3. 如果您有通过 setInterval 启动的复杂JS动画，可以在这里重新启动它们
+        // 例如：重新启动时钟（虽然时钟通常影响不大，但作为示例）
+        if (typeof updateTime === 'function') {
+           // 如果之前有清除定时器，在这里重新设置
+           // setInterval(updateTime, 1000);
+        }
+
+    } else {
+        // 页面变为隐藏状态
+        console.log("💤 页面已隐藏，暂停动画以节省资源...");
+
+        // 1. 暂停所有 CSS 动画
+        phoneScreen.style.animationPlayState = 'paused';
+        const animatedElements = document.querySelectorAll('[style*="animation"]');
+        animatedElements.forEach(el => el.style.animationPlayState = 'paused');
+
+        // 2. 如果有复杂的JS动画定时器，可以在这里清除它们
+        // clearInterval(yourAnimationTimer);
+    }
+});
     </script>
 </body>
 </html>
