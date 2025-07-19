@@ -12979,8 +12979,125 @@ textarea.call-text-input {
             box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
         }
 
-        /* 响应式设计 */
-        @media (max-width: 480px) {
+        /* 大屏幕适配 (宽度 > 400px) */
+        @media (min-width: 401px) {
+            #home-grid {
+                width: 85%;
+                gap: 18px;
+            }
+
+            .mini-app-icon {
+                width: 60px;
+                height: 60px;
+                border-radius: 18px;
+            }
+
+            .mini-app-icon i {
+                font-size: 24px;
+            }
+
+            .mini-app {
+                font-size: 12px;
+            }
+
+            .large-app-icon {
+                width: 65px;
+                height: 65px;
+                border-radius: 20px;
+            }
+
+            .large-app-icon i {
+                font-size: 28px;
+            }
+
+            .large-app {
+                font-size: 13px;
+            }
+
+            .anniversary-name {
+                font-size: 15px;
+            }
+
+            .anniversary-countdown {
+                font-size: 18px;
+            }
+
+            .photo-placeholder i {
+                font-size: 28px;
+            }
+
+            .photo-placeholder {
+                font-size: 13px;
+            }
+
+            #dock-bar {
+                width: 90%;
+                bottom: 25px;
+            }
+
+            .dock-container {
+                padding: 12px 18px;
+            }
+
+            .dock-app-icon {
+                width: 55px;
+                height: 55px;
+                border-radius: 16px;
+            }
+
+            .dock-app-icon i {
+                font-size: 24px;
+            }
+
+            .dock-app {
+                font-size: 12px;
+            }
+        }
+
+        /* 中等屏幕适配 (宽度 481px - 400px) */
+        @media (max-width: 480px) and (min-width: 401px) {
+            #home-grid {
+                width: 88%;
+                gap: 15px;
+            }
+
+            .mini-app-icon {
+                width: 55px;
+                height: 55px;
+                border-radius: 16px;
+            }
+
+            .mini-app-icon i {
+                font-size: 22px;
+            }
+
+            .large-app-icon {
+                width: 58px;
+                height: 58px;
+                border-radius: 17px;
+            }
+
+            .large-app-icon i {
+                font-size: 26px;
+            }
+
+            .dock-app-icon {
+                width: 50px;
+                height: 50px;
+                border-radius: 15px;
+            }
+
+            .dock-app-icon i {
+                font-size: 22px;
+            }
+
+            .dock-app {
+                font-size: 11px;
+            }
+        }
+
+        /* 小屏幕适配 (宽度 ≤ 400px) */
+        @media (max-width: 400px) {
             #home-grid {
                 width: 95%;
                 gap: 10px;
