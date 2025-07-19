@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>EVE Chat</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/dexie/dist/dexie.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Comic+Neue:wght@400;700&family=Fredoka+One&family=Nunito:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&family=Roboto:wght@400;500&family=Raleway:wght@400;500;600&family=Lato:wght@400;700&family=Poppins:wght@400;500;600&family=Quicksand:wght@400;500;600&family=Varela+Round&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
@@ -3785,225 +3786,130 @@
 
 
     <script>
-        // 初始化Dexie数据库
+        // 🔥【完全修复】初始化Dexie数据库 - 解决版本升级死循环问题
         const db = new Dexie('PhoneChatDB');
         window.activeGlobalWorldbooks = []; // 用于存储当前激活的全局世界书ID
-        
-        // 版本1：原始表结构
-        db.version(1).stores({
-            characters: '&id, name',
-            contacts: '&id, characterId', 
+
+        // 🔥【新增】数据库重置功能
+        async function resetDatabase() {
+            try {
+                console.log('🔄 开始重置数据库...');
+
+                // 关闭数据库连接
+                if (db.isOpen()) {
+                    db.close();
+                }
+
+                // 删除数据库
+                await db.delete();
+                console.log('✅ 数据库已删除');
+
+                // 重新打开数据库（会自动创建新的）
+                await db.open();
+                console.log('✅ 数据库已重新创建');
+
+                return true;
+            } catch (error) {
+                console.error('❌ 重置数据库失败:', error);
+                return false;
+            }
+        }
+
+        // 🔥【新增】检查数据库健康状态
+        async function checkDatabaseHealth() {
+            try {
+                await db.open();
+
+                // 测试基本表访问
+                const testTables = ['characters', 'chatMessages', 'apiSettings'];
+                for (const tableName of testTables) {
+                    await db[tableName].count();
+                }
+
+                console.log('✅ 数据库健康检查通过');
+                return true;
+            } catch (error) {
+                console.error('❌ 数据库健康检查失败:', error);
+                return false;
+            }
+        }
+
+        // 🔥【最终版本15】统一的数据库结构定义 - 包含所有表的最终形态
+        db.version(15).stores({
+            // 基础数据表
+            characters: '&id, name, groupId',
+            contacts: '++id, characterId',
             chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            customEmojis: '&id, description',
-            wallpapers: '&id, type',
-            worldbooks: '&id, name',
-            groupChats: '&id, name',
+
+            // 用户面具系统
             personas: '&id, name',
+
+            // 表情包系统
+            customEmojis: '&id, name, category',
+            recentEmojis: '&id, lastUsed',
+
+            // 世界书系统
+            worldbooks: '&id, name, isGlobal',
+            worldbookEntries: '&id, worldbookId, keyword',
+
+            // 群聊系统
+            characterGroups: '&id, name, order',
+            groupChats: '&id, name',
+            groupChatMessages: '&id, groupId, timestamp',
+            groupChatMembers: '&id, groupId, characterId',
+
+            // 动态系统
+            moments: '&id, authorId, timestamp',
+            momentLikes: '[momentId+authorId], momentId, authorId',
+            momentComments: '&id, momentId, authorId, timestamp',
+
+            // 记忆系统
+            workingMemory: '&id, characterId, timestamp, content, context',
+            episodicMemory: '&id, characterId, date, summary, timestamp, context',
+            episodicMemories: '&id, characterId, fact, importance, timestamp, category',
+            memorySummaries: '&id, characterId, date, summary, timestamp, context',
+            memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
+            coreMemory: '&id, characterId, category, content, timestamp',
+            coreMemories: '&id, characterId, fact, importance, timestamp, type, category',
+            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
+
+            // 拉黑和好友系统
+            blacklist: '&id, blockerId, blockedId, timestamp, cooldownMinutes, reason',
+            blockedCharacters: '&id, characterId, blockedBy, timestamp',
+            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
+            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
+
+            // 日记系统
+            characterDiaries: '&id, characterId, date, content, timestamp, weather',
+
+            // 线下模式系统
+            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
+            offlineUISettings: '&id, characterId, settings, timestamp',
+            offlinePresets: '&id, name, content, timestamp',
+
+            // 音乐播放器系统
+            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
+            musicCovers: '&id, songId, imageData, timestamp',
+
+            // 设置和配置
+            apiSettings: '&id',
             globalSettings: '&id',
+            wallpapers: '&id, name',
             appIcons: '&id, appId',
             chatSettings: '&id, chatId'
-        });
-        
-        // 版本2：添加动态相关表
-        db.version(2).stores({
-            characters: '&id, name',
-            contacts: '&id, characterId', 
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            customEmojis: '&id, description',
-            wallpapers: '&id, type',
-            worldbooks: '&id, name',
-            groupChats: '&id, name',
-            personas: '&id, name',
-            globalSettings: '&id',
-            appIcons: '&id, appId',
-            chatSettings: '&id, chatId',
-            // 动态相关表
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId',
-            momentComments: '&id, momentId, authorId, timestamp'
-        });
-
-        // 版本3：添加最近使用表情包表
-        db.version(3).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            customEmojis: '&id, description',
-            wallpapers: '&id, type',
-            worldbooks: '&id, name, isGlobal',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            personas: '&id, name',
-            globalSettings: '&id',
-            appIcons: '&id, appId',
-            chatSettings: '&id, chatId',
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed'
-        });
-
-        // 版本4：添加拉黑系统和角色状态
-        db.version(4).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            customEmojis: '&id, description',
-            wallpapers: '&id, type',
-            worldbooks: '&id, name, isGlobal',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            personas: '&id, name',
-            globalSettings: '&id',
-            appIcons: '&id, appId',
-            chatSettings: '&id, chatId',
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            // 🔥【新增】拉黑系统相关表
-            blacklist: '&id, blockerId, blockedId, timestamp, cooldownMinutes, reason',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate'
-        });
-
-        // 版本5：添加全局记忆系统
-        db.version(5).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            customEmojis: '&id, description',
-            wallpapers: '&id, type',
-            worldbooks: '&id, name, isGlobal',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            personas: '&id, name',
-            globalSettings: '&id',
-            appIcons: '&id, appId',
-            chatSettings: '&id, chatId',
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blacklist: '&id, blockerId, blockedId, timestamp, cooldownMinutes, reason',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            // 🔥【新增】全局记忆系统相关表
-            coreMemories: '&id, characterId, fact, importance, timestamp',
-            memorySummaries: '&id, characterId, date, summary, timestamp, context',
-            memoryEvents: '&id, characterIds, eventType, timestamp, context'
-        });
-
-        // 版本6：重新设计记忆系统
-        db.version(6).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            customEmojis: '&id, description',
-            wallpapers: '&id, type',
-            worldbooks: '&id, name, isGlobal',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            personas: '&id, name',
-            globalSettings: '&id',
-            appIcons: '&id, appId',
-            chatSettings: '&id, chatId',
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blacklist: '&id, blockerId, blockedId, timestamp, cooldownMinutes, reason',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            // 🔥【重新设计】记忆系统相关表
-            coreMemories: '&id, characterId, fact, importance, timestamp, type, category',
-            episodicMemories: '&id, characterId, fact, importance, timestamp, category',
-            memorySummaries: '&id, characterId, date, summary, timestamp, context',
-            memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
-            // 🔥【新增】线下模式聊天记录表
-            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages, messageCount'
-        }).upgrade(tx => {
-            // 数据迁移逻辑
-            console.log('升级到版本6：重新设计记忆系统');
-        });
-
-        // 🔥【新增】版本7：修复游戏功能回档后的数据库问题
-        db.version(7).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            customEmojis: '&id, description',
-            wallpapers: '&id, type',
-            worldbooks: '&id, name, isGlobal',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            personas: '&id, name',
-            globalSettings: '&id',
-            appIcons: '&id, appId',
-            chatSettings: '&id, chatId',
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blacklist: '&id, blockerId, blockedId, timestamp, cooldownMinutes, reason',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            // 🔥【修复】确保记忆系统表结构正确
-            coreMemories: '&id, characterId, fact, importance, timestamp, type, category',
-            episodicMemories: '&id, characterId, fact, importance, timestamp, category',
-            memorySummaries: '&id, characterId, date, summary, timestamp, context',
-            memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId'
         }).upgrade(async tx => {
-            console.log('🔧 升级到版本7：修复游戏功能回档后的数据库问题');
-        });
+            console.log('🔧 升级到版本15：统一数据库结构，解决版本升级问题');
 
-        // 🔥【新增】版本9：添加日记系统表，将localStorage日记数据迁移到Dexie
-        db.version(9).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            customEmojis: '&id, description',
-            worldbooks: '&id, title',
-            personas: '&id, name',
-            characterGroups: '&id, name, order',
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blacklist: '&id, blockerId, blockedId, timestamp, cooldownMinutes, reason',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            // 🔥【修复】记忆系统表结构，确保包含所有必需字段
-            coreMemories: '&id, characterId, fact, importance, timestamp, type, category',
-            episodicMemories: '&id, characterId, fact, importance, timestamp, category',
-            memorySummaries: '&id, characterId, date, summary, timestamp, context',
-            memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
-            // 🔥【新增】日记系统表
-            characterDiaries: '&id, characterId, date, content, timestamp, weather'
-        }).upgrade(async tx => {
-            console.log('🔧 升级到版本9：添加日记系统表并迁移localStorage数据');
-
-            // 🔥【新增】迁移localStorage中的日记数据到Dexie
+            // 🔥【数据迁移】从localStorage迁移各种数据到Dexie
             try {
+                // 迁移日记数据
                 console.log('开始迁移日记数据...');
                 let migratedCount = 0;
 
-                // 遍历localStorage中的所有键
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
 
-                    // 迁移今日日记数据 (格式: diary_characterId_YYYY-MM-DD)
+                    // 迁移今日日记数据
                     if (key && key.startsWith('diary_') && key.match(/diary_[^_]+_\d{4}-\d{2}-\d{2}$/)) {
                         const parts = key.split('_');
                         const characterId = parts[1];
@@ -4011,19 +3917,23 @@
                         const content = localStorage.getItem(key);
 
                         if (content && characterId && date) {
-                            await tx.characterDiaries.add({
-                                id: `${characterId}_${date}`,
-                                characterId: characterId,
-                                date: date,
-                                content: content,
-                                timestamp: new Date(date).getTime(),
-                                weather: '☀️' // 默认天气
-                            });
-                            migratedCount++;
+                            try {
+                                await tx.characterDiaries.add({
+                                    id: `${characterId}_${date}`,
+                                    characterId: characterId,
+                                    date: date,
+                                    content: content,
+                                    timestamp: new Date(date).getTime(),
+                                    weather: '☀️'
+                                });
+                                migratedCount++;
+                            } catch (e) {
+                                // 忽略重复数据错误
+                            }
                         }
                     }
 
-                    // 迁移过往日记列表数据 (格式: past_diaries_characterId)
+                    // 迁移过往日记列表数据
                     if (key && key.startsWith('past_diaries_')) {
                         const characterId = key.replace('past_diaries_', '');
                         const pastDiariesStr = localStorage.getItem(key);
@@ -4034,9 +3944,7 @@
                                 for (const diary of pastDiaries) {
                                     if (diary.date && diary.content) {
                                         const diaryId = `${characterId}_${diary.date}`;
-                                        // 检查是否已存在，避免重复
-                                        const existing = await tx.characterDiaries.get(diaryId);
-                                        if (!existing) {
+                                        try {
                                             await tx.characterDiaries.add({
                                                 id: diaryId,
                                                 characterId: characterId,
@@ -4046,6 +3954,8 @@
                                                 weather: diary.weather || '☀️'
                                             });
                                             migratedCount++;
+                                        } catch (e) {
+                                            // 忽略重复数据错误
                                         }
                                     }
                                 }
@@ -4058,85 +3968,10 @@
 
                 console.log(`✅ 日记数据迁移完成，共迁移 ${migratedCount} 条日记`);
 
-            } catch (error) {
-                console.error('迁移日记数据时出错:', error);
-            }
-
-            // 清理可能存在的无效游戏事件记录
-            try {
-                if (tx.crossAppTimeline) {
-                    const invalidEvents = await tx.crossAppTimeline.where('appType').equals('game').and(event => {
-                        return !event.action || event.action === undefined || !event.context;
-                    }).toArray();
-
-                    if (invalidEvents.length > 0) {
-                        console.log(`🧹 清理 ${invalidEvents.length} 条无效游戏事件记录`);
-                        for (const event of invalidEvents) {
-                            await tx.crossAppTimeline.delete(event.id);
-                        }
-                        console.log('✅ 无效游戏事件清理完成');
-                    } else {
-                        console.log('✅ 未发现无效游戏事件记录');
-                    }
-                }
-
-                // 清理可能存在的无效记忆事件记录
-                if (tx.memoryEvents) {
-                    const invalidMemoryEvents = await tx.memoryEvents.where('eventType').equals('game').and(event => {
-                        return !event.context || !event.context.action || event.context.action === undefined;
-                    }).toArray();
-
-                    if (invalidMemoryEvents.length > 0) {
-                        console.log(`🧹 清理 ${invalidMemoryEvents.length} 条无效记忆事件记录`);
-                        for (const event of invalidMemoryEvents) {
-                            await tx.memoryEvents.delete(event.id);
-                        }
-                        console.log('✅ 无效记忆事件清理完成');
-                    }
-                }
-
-            } catch (error) {
-                console.warn('清理无效事件时出错:', error);
-            }
-        });
-
-        // 🔥【新增】版本10：添加线下模式界面设置表
-        db.version(10).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            customEmojis: '&id, description',
-            worldbooks: '&id, name, isGlobal',
-            worldbookEntries: '&id, worldbookId, keyword',
-            characterGroups: '&id, name, order',
-            wallpapers: '&id, name',
-            appIcons: '&id, appId',
-            chatSettings: '&id, chatId',
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blockedCharacters: '&id, characterId, blockedBy, timestamp',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            workingMemory: '&id, characterId, timestamp, content, context',
-            episodicMemory: '&id, characterId, date, summary, timestamp, context',
-            coreMemory: '&id, characterId, category, content, timestamp',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
-            characterDiaries: '&id, characterId, date, content, timestamp, weather',
-            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
-            // 🔥【新增】线下模式界面设置表
-            offlineUISettings: '&id, characterId, settings, timestamp'
-        }).upgrade(async tx => {
-            console.log('🔧 升级到版本10：添加线下模式界面设置表');
-
-            // 🔥【新增】迁移localStorage中的线下模式设置到Dexie
-            try {
+                // 迁移线下模式界面设置
                 console.log('开始迁移线下模式界面设置...');
-                let migratedCount = 0;
+                let settingsMigratedCount = 0;
 
-                // 遍历localStorage中的所有键
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
                     if (key && key.startsWith('offlineUISettings_')) {
@@ -4152,168 +3987,17 @@
                                     settings: settings,
                                     timestamp: Date.now()
                                 });
-                                migratedCount++;
-                                console.log(`✅ 迁移角色 ${characterId} 的界面设置`);
-
-                                // 迁移完成后删除localStorage数据
-                                localStorage.removeItem(key);
-                            } catch (parseError) {
-                                console.warn(`⚠️ 跳过无效的设置数据: ${key}`, parseError);
+                                settingsMigratedCount++;
+                            } catch (e) {
+                                // 忽略重复数据错误
                             }
                         }
                     }
                 }
 
-                console.log(`✅ 线下模式界面设置迁移完成，共迁移 ${migratedCount} 个设置`);
-            } catch (error) {
-                console.error('❌ 迁移线下模式界面设置失败:', error);
-            }
-        });
+                console.log(`✅ 线下模式界面设置迁移完成，共迁移 ${settingsMigratedCount} 个设置`);
 
-        // 🔥【新增】版本11：添加音乐播放器相关表
-        db.version(11).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            worldbooks: '&id, name, isGlobal',
-            worldbookEntries: '&id, worldbookId, keyword',
-            personas: '&id, name',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            groupChatMessages: '&id, groupId, timestamp',
-            groupChatMembers: '&id, groupId, characterId',
-            customEmojis: '&id, name, category',
-            moments: '&id, authorId, timestamp',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blockedCharacters: '&id, characterId, blockedBy, timestamp',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            workingMemory: '&id, characterId, timestamp, content, context',
-            episodicMemory: '&id, characterId, date, summary, timestamp, context',
-            coreMemory: '&id, characterId, category, content, timestamp',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
-            characterDiaries: '&id, characterId, date, content, timestamp, weather',
-            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
-            offlineUISettings: '&id, characterId, settings, timestamp',
-            // 🔥【新增】音乐播放器相关表
-            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
-            musicCovers: '&id, songId, imageData, timestamp'
-        }).upgrade(async tx => {
-            console.log('🔧 升级到版本11：添加音乐播放器相关表');
-        });
-
-        // 🔥【新增】版本12：修复characterGroups schema问题
-        db.version(12).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            worldbooks: '&id, name, isGlobal',
-            worldbookEntries: '&id, worldbookId, keyword',
-            personas: '&id, name',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            groupChatMessages: '&id, groupId, timestamp',
-            groupChatMembers: '&id, groupId, characterId',
-            customEmojis: '&id, name, category',
-            moments: '&id, authorId, timestamp',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blockedCharacters: '&id, characterId, blockedBy, timestamp',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            workingMemory: '&id, characterId, timestamp, content, context',
-            episodicMemory: '&id, characterId, date, summary, timestamp, context',
-            coreMemory: '&id, characterId, category, content, timestamp',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
-            characterDiaries: '&id, characterId, date, content, timestamp, weather',
-            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
-            offlineUISettings: '&id, characterId, settings, timestamp',
-            // 🔥【修复】音乐播放器相关表
-            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
-            musicCovers: '&id, songId, imageData, timestamp'
-        }).upgrade(async tx => {
-            console.log('🔧 升级到版本12：修复characterGroups schema问题');
-        });
-
-        // 🔥【新增】版本13：添加线下模式预设表并迁移localStorage数据
-        db.version(13).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            worldbooks: '&id, name, isGlobal',
-            worldbookEntries: '&id, worldbookId, keyword',
-            personas: '&id, name',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            groupChatMessages: '&id, groupId, timestamp',
-            groupChatMembers: '&id, groupId, characterId',
-            customEmojis: '&id, name, category',
-            moments: '&id, authorId, timestamp',
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blockedCharacters: '&id, characterId, blockedBy, timestamp',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            workingMemory: '&id, characterId, timestamp, content, context',
-            episodicMemory: '&id, characterId, date, summary, timestamp, context',
-            coreMemory: '&id, characterId, category, content, timestamp',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
-            characterDiaries: '&id, characterId, date, content, timestamp, weather',
-            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
-            offlineUISettings: '&id, characterId, settings, timestamp',
-            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
-            musicCovers: '&id, songId, imageData, timestamp',
-            // 🔥【新增】线下模式预设表（移除isGlobal索引避免null值问题）
-            offlinePresets: '&id, name, content, timestamp'
-        }).upgrade(async tx => {
-
-        // 🔥【新增】版本14：修复导出导入功能，添加缺失的数据表
-        db.version(14).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            worldbooks: '&id, name, isGlobal',
-            worldbookEntries: '&id, worldbookId, keyword',
-            personas: '&id, name',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            groupChatMessages: '&id, groupId, timestamp',
-            groupChatMembers: '&id, groupId, characterId',
-            customEmojis: '&id, name, category',
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId', // 🔥【修复】重新添加点赞表
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blockedCharacters: '&id, characterId, blockedBy, timestamp',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            workingMemory: '&id, characterId, timestamp, content, context',
-            episodicMemory: '&id, characterId, date, summary, timestamp, context',
-            coreMemory: '&id, characterId, category, content, timestamp',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
-            characterDiaries: '&id, characterId, date, content, timestamp, weather',
-            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
-            offlineUISettings: '&id, characterId, settings, timestamp',
-            offlinePresets: '&id, name, content, timestamp',
-            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
-            musicCovers: '&id, songId, imageData, timestamp',
-            // 🔥【修复】重新添加缺失的设置相关表
-            chatSettings: '&id, chatId',
-            globalSettings: '&id',
-            wallpapers: '&id, name',
-            appIcons: '&id, appId'
-        }).upgrade(async tx => {
-            console.log('🔧 升级到版本14：修复导出导入功能，添加缺失的数据表');
-        });
-            console.log('🔧 升级到版本13：添加线下模式预设表并迁移localStorage数据');
-
-            // 🔥【新增】迁移localStorage中的线下模式预设到Dexie
-            try {
+                // 迁移线下模式预设
                 console.log('开始迁移线下模式预设...');
                 let presetMigratedCount = 0;
 
@@ -4324,99 +4008,37 @@
                     try {
                         const globalPresets = JSON.parse(globalPresetsData);
                         for (const preset of globalPresets) {
-                            await tx.offlinePresets.add({
-                                id: preset.id || `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                                name: preset.name || '未命名预设',
-                                content: preset.content || '',
-                                timestamp: preset.timestamp || Date.now(),
-                                isGlobal: true
-                            });
-                            presetMigratedCount++;
+                            try {
+                                await tx.offlinePresets.add({
+                                    id: preset.id || `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                    name: preset.name || '未命名预设',
+                                    content: preset.content || '',
+                                    timestamp: preset.timestamp || Date.now()
+                                });
+                                presetMigratedCount++;
+                            } catch (e) {
+                                // 忽略重复数据错误
+                            }
                         }
-                        console.log(`✅ 迁移全局预设 ${globalPresets.length} 个`);
-                        // 迁移完成后删除localStorage数据
-                        localStorage.removeItem(globalPresetsKey);
                     } catch (parseError) {
                         console.error('❌ 解析全局预设失败:', parseError);
                     }
                 }
 
-                // 迁移旧的按角色存储的预设
-                const keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && key.startsWith('offlinePresets_')) {
-                        const presetsData = localStorage.getItem(key);
-                        if (presetsData) {
-                            try {
-                                const presets = JSON.parse(presetsData);
-                                for (const preset of presets) {
-                                    await tx.offlinePresets.add({
-                                        id: preset.id || `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                                        name: preset.name || '未命名预设',
-                                        content: preset.content || '',
-                                        timestamp: preset.timestamp || Date.now(),
-                                        isGlobal: true // 迁移时统一设为全局预设
-                                    });
-                                    presetMigratedCount++;
-                                }
-                                console.log(`✅ 迁移旧预设 ${presets.length} 个`);
-                                keysToRemove.push(key);
-                            } catch (parseError) {
-                                console.error(`❌ 解析旧预设失败:`, parseError);
-                            }
-                        }
-                    }
-                }
-
-                // 删除已迁移的localStorage数据
-                keysToRemove.forEach(key => localStorage.removeItem(key));
-
                 console.log(`✅ 线下模式预设迁移完成，共迁移 ${presetMigratedCount} 个预设`);
+
             } catch (error) {
-                console.error('❌ 迁移线下模式预设失败:', error);
+                console.error('数据迁移过程中出错:', error);
             }
         });
 
-        // 🔥【新增】版本14：修复导出导入功能，添加缺失的数据表
-        db.version(14).stores({
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
-            apiSettings: '&id',
-            worldbooks: '&id, name, isGlobal',
-            worldbookEntries: '&id, worldbookId, keyword',
-            personas: '&id, name',
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            groupChatMessages: '&id, groupId, timestamp',
-            groupChatMembers: '&id, groupId, characterId',
-            customEmojis: '&id, name, category',
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId', // 🔥【修复】重新添加点赞表
-            momentComments: '&id, momentId, authorId, timestamp',
-            recentEmojis: '&id, lastUsed',
-            blockedCharacters: '&id, characterId, blockedBy, timestamp',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-            workingMemory: '&id, characterId, timestamp, content, context',
-            episodicMemory: '&id, characterId, date, summary, timestamp, context',
-            coreMemory: '&id, characterId, category, content, timestamp',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
-            characterDiaries: '&id, characterId, date, content, timestamp, weather',
-            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
-            offlineUISettings: '&id, characterId, settings, timestamp',
-            offlinePresets: '&id, name, content, timestamp',
-            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
-            musicCovers: '&id, songId, imageData, timestamp',
-            // 🔥【修复】重新添加缺失的设置相关表
-            chatSettings: '&id, chatId',
-            globalSettings: '&id',
-            wallpapers: '&id, name',
-            appIcons: '&id, appId'
-        }).upgrade(async tx => {
-            console.log('🔧 升级到版本14：修复导出导入功能，添加缺失的数据表');
-        });
+
+
+
+
+
+
+
 
         // 全局变量
         let characters = [];
@@ -4512,22 +4134,41 @@
 
             try {
 
-            // 🔥【已移除】迁移旧的线下预设数据 - 现在由数据库版本13自动处理
+            // 🔥【新增】数据库健康检查
+            console.log('🔍 开始数据库健康检查...');
+            const isHealthy = await checkDatabaseHealth();
+            if (!isHealthy) {
+                console.warn('⚠️ 数据库健康检查失败，尝试重置...');
+                const resetSuccess = await resetDatabase();
+                if (!resetSuccess) {
+                    throw new Error('数据库重置失败，请手动清除浏览器数据');
+                }
+                console.log('✅ 数据库已重置，继续初始化...');
+            } else {
+                console.log('✅ 数据库健康检查通过');
+            }
 
-            // 并行加载所有数据
+            // 🔥【已移除】迁移旧的线下预设数据 - 现在由数据库版本15自动处理
+
+            // 🔥【架构修复】按正确顺序加载数据
+            console.log('🔄 开始按顺序加载数据...');
+
+            // 第一步：加载基础数据
             await Promise.all([
                 loadCharacterGroups(), // 先加载分组
-                loadCharacters(),
-                loadContacts(),
+                loadCharacters(), // 加载角色
                 loadChatMessages(),
                 loadMemoryConfig(), // 加载记忆配置
-
                 loadChatSettings(),
                 loadApiSettings(),
                 loadCustomEmojis(),
                 loadGlobalWorldbookSettings(), // 确保加载全局世界书设置
                 initGlobalMemoryDB() // 🔥【新增】初始化全局记忆数据库
             ]);
+
+            // 第二步：从角色列表生成联系人（必须在角色加载完成后）
+            console.log('🔄 从角色列表生成联系人...');
+            await loadContacts();
 
             // 🔥【新增】加载置顶数据
             loadPinnedConversations();
@@ -5355,28 +4996,31 @@
             alert('存储使用情况:\n' + usage.join('\n'));
         }
         
-        // 加载联系人数据 - 使用IndexedDB（包含数据迁移）
+        // 🔥【架构修复】加载联系人数据 - 从角色列表自动生成
         async function loadContacts() {
             try {
-                const savedContacts = await db.contacts.toArray();
-        // 关键修复：过滤掉所有无效的联系人数据，确保列表干净
-        contacts = savedContacts
-            .map(contact => contact.characterId) // 提取ID
-            .filter(id => id !== undefined && id !== null); // 只保留有效的ID
+                // 🔥【关键修复】不再依赖独立的contacts表，直接从characters生成
+                console.log('🔄 从角色列表生成联系人列表...');
 
-        // 自动清理重复的联系人ID，增强数据库稳定性
-        const uniqueContacts = [...new Set(contacts)];
-        if (uniqueContacts.length < contacts.length) {
-            console.warn('发现了重复的联系人ID，已自动清理。');
-            contacts = uniqueContacts;
-            // 清理后，立即用干净的数据覆盖数据库
-            await saveContacts();
-        }
+                // 确保characters已经加载
+                if (!characters || characters.length === 0) {
+                    console.log('⚠️ 角色列表为空，尝试重新加载角色数据');
+                    await loadCharacters();
+                }
 
+                // 从角色列表生成联系人ID列表
+                contacts = characters
+                    .filter(char => char && char.id) // 只保留有效的角色
+                    .map(char => char.id); // 提取角色ID
+
+                console.log(`✅ 从 ${characters.length} 个角色生成了 ${contacts.length} 个联系人`);
+
+                // 🔥【新增】自动保存到数据库以保持兼容性
+                await saveContacts();
 
             } catch (error) {
-                console.error('加载联系人失败:', error);
-        contacts = []; // 如果出错，确保联系人列表为空，防止程序崩溃
+                console.error('❌ 生成联系人列表失败:', error);
+                contacts = []; // 如果出错，确保联系人列表为空，防止程序崩溃
             }
         }
         
@@ -7574,17 +7218,17 @@ ${chatContext}${momentsContext}
                 }
             }
 
-            // 🔥【修改】渲染单人聊天 - 支持置顶排序
-            const sortedContacts = [...contacts].sort((a, b) => {
-                const aPinned = isPinned(a);
-                const bPinned = isPinned(b);
+            // 🔥【关键修复】渲染单人聊天 - 直接使用角色列表而不是联系人列表
+            const sortedCharacters = [...characters].sort((a, b) => {
+                const aPinned = isPinned(a.id);
+                const bPinned = isPinned(b.id);
                 if (aPinned && !bPinned) return -1;
                 if (!aPinned && bPinned) return 1;
                 return 0;
             });
 
-            sortedContacts.forEach(contactId => {
-                const character = characters.find(c => c.id === contactId);
+            sortedCharacters.forEach(character => {
+                // 直接使用角色对象，不需要再查找
                 if (character) {
                     // 🔥【修复】获取该聊天的昵称设置
                     const savedSettings = localStorage.getItem(`chatSettings_${character.id}`);
@@ -30559,8 +30203,7 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             }
         }
 
-        // 导入数据
-        // 🔥【修复】导入数据 - 增强错误处理和数据验证
+        // 🔥【终极修复】导入数据 - 专门解决联系人和消息显示问题
         function importDataFromFile() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -30723,8 +30366,88 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         }
                     }
 
-                    // 🔥【修复】移除批量导入，使用单独的导入逻辑避免重复处理
-                    
+                    // 🔥【架构修复】不再需要单独导入联系人数据，因为联系人现在从角色列表自动生成
+                    console.log('ℹ️ 跳过联系人导入，联系人将从角色列表自动生成');
+
+                    // 🔥【新增】导入记忆系统数据
+                    // 导入核心记忆
+                    if (data.coreMemory?.length || data.coreMemories?.length) {
+                        try {
+                            const coreMemoryData = data.coreMemory || data.coreMemories || [];
+                            console.log('🔄 开始导入核心记忆，原始数据:', coreMemoryData.length, '条');
+                            await db.coreMemory.clear();
+                            if (data.coreMemories?.length) {
+                                await db.coreMemories.clear();
+                            }
+
+                            const validCoreMemories = coreMemoryData.map(memory => ({
+                                ...memory,
+                                id: memory.id || `core_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+
+                            await db.coreMemory.bulkAdd(validCoreMemories);
+                            if (data.coreMemories?.length) {
+                                await db.coreMemories.bulkAdd(validCoreMemories);
+                            }
+                            importedTables++;
+                            console.log(`✅ 成功导入了 ${validCoreMemories.length} 条核心记忆`);
+                        } catch (error) {
+                            console.error('❌ 导入核心记忆失败:', error);
+                            showToast('核心记忆导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    // 导入情景记忆
+                    if (data.episodicMemory?.length || data.episodicMemories?.length || data.memorySummaries?.length) {
+                        try {
+                            const episodicData = data.episodicMemory || data.episodicMemories || data.memorySummaries || [];
+                            console.log('🔄 开始导入情景记忆，原始数据:', episodicData.length, '条');
+                            await db.episodicMemory.clear();
+                            if (data.episodicMemories?.length) {
+                                await db.episodicMemories.clear();
+                            }
+                            if (data.memorySummaries?.length) {
+                                await db.memorySummaries.clear();
+                            }
+
+                            const validEpisodicMemories = episodicData.map(memory => ({
+                                ...memory,
+                                id: memory.id || `episodic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+
+                            await db.episodicMemory.bulkAdd(validEpisodicMemories);
+                            if (data.episodicMemories?.length) {
+                                await db.episodicMemories.bulkAdd(validEpisodicMemories);
+                            }
+                            if (data.memorySummaries?.length) {
+                                await db.memorySummaries.bulkAdd(validEpisodicMemories);
+                            }
+                            importedTables++;
+                            console.log(`✅ 成功导入了 ${validEpisodicMemories.length} 条情景记忆`);
+                        } catch (error) {
+                            console.error('❌ 导入情景记忆失败:', error);
+                            showToast('情景记忆导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
+                    // 导入工作记忆
+                    if (data.workingMemory?.length) {
+                        try {
+                            console.log('🔄 开始导入工作记忆，原始数据:', data.workingMemory.length, '条');
+                            await db.workingMemory.clear();
+                            const validWorkingMemories = data.workingMemory.map(memory => ({
+                                ...memory,
+                                id: memory.id || `working_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                            }));
+                            await db.workingMemory.bulkAdd(validWorkingMemories);
+                            importedTables++;
+                            console.log(`✅ 成功导入了 ${validWorkingMemories.length} 条工作记忆`);
+                        } catch (error) {
+                            console.error('❌ 导入工作记忆失败:', error);
+                            showToast('工作记忆导入失败: ' + error.message, 'warning');
+                        }
+                    }
+
                     // 导入其他可能的数据
                     if (data.worldbooks?.length) {
                         try {
@@ -30892,22 +30615,7 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         }
                     }
                     
-                    // 导入联系人
-                    if (data.contacts?.length) {
-                        try {
-                            await db.contacts.clear();
-                            const validContacts = data.contacts.map(contact => ({
-                                ...contact,
-                                id: contact.id || `contact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                            }));
-                            await db.contacts.bulkPut(validContacts);
-                            importedTables++;
-                            console.log(`导入了 ${validContacts.length} 个联系人`);
-                        } catch (error) {
-                            console.error('导入联系人失败:', error);
-                            showToast('联系人导入失败: ' + error.message, 'warning');
-                        }
-                    }
+
                     
                     // 导入应用图标
                     if (data.appIcons?.length) {
@@ -30923,39 +30631,6 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         } catch (error) {
                             console.error('导入应用图标失败:', error);
                             showToast('应用图标导入失败: ' + error.message, 'warning');
-                        }
-                    }
-
-                    // 🔥【新增】导入全局记忆系统相关表
-                    if (data.coreMemories?.length) {
-                        try {
-                            await db.coreMemories.clear();
-                            const validCoreMemories = data.coreMemories.map(memory => ({
-                                ...memory,
-                                id: memory.id || `core_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                            }));
-                            await db.coreMemories.bulkPut(validCoreMemories);
-                            importedTables++;
-                            console.log(`导入了 ${validCoreMemories.length} 条核心记忆`);
-                        } catch (error) {
-                            console.error('导入核心记忆失败:', error);
-                            showToast('核心记忆导入失败: ' + error.message, 'warning');
-                        }
-                    }
-
-                    if (data.episodicMemories?.length) {
-                        try {
-                            await db.episodicMemories.clear();
-                            const validEpisodicMemories = data.episodicMemories.map(memory => ({
-                                ...memory,
-                                id: memory.id || `episodic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                            }));
-                            await db.episodicMemories.bulkPut(validEpisodicMemories);
-                            importedTables++;
-                            console.log(`导入了 ${validEpisodicMemories.length} 条情节记忆`);
-                        } catch (error) {
-                            console.error('导入情节记忆失败:', error);
-                            showToast('情节记忆导入失败: ' + error.message, 'warning');
                         }
                     }
 
@@ -31309,23 +30984,45 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                         }
                     }
 
-                    // 重新加载所有数据
-                    await loadCharacterGroups();
-                    await loadCharacters();
-                    await loadChatMessages();
-                    await loadChatSettings();
-                    await loadPersonas();
-                    await loadGroupChats();
-                    await loadWallpaper();
-                    await loadAppIcons();
-                    await loadWorldbooks();
+                    // 🔥【架构修复】按正确顺序重新加载所有数据
+                    console.log('🔄 开始重新加载所有数据...');
+
+                    // 第一步：加载基础数据
+                    await Promise.all([
+                        loadCharacterGroups(),
+                        loadCharacters(), // 先加载角色
+                        loadChatMessages(),
+                        loadChatSettings(),
+                        loadPersonas(),
+                        loadGroupChats(),
+                        loadWallpaper(),
+                        loadAppIcons(),
+                        loadWorldbooks(),
+                        loadMemoryConfig() // 加载记忆配置
+                    ]);
+
+                    // 第二步：从角色列表生成联系人（必须在角色加载完成后）
+                    console.log('🔄 从角色列表重新生成联系人...');
+                    await loadContacts();
+
+                    console.log('✅ 所有数据重新加载完成');
+
+                    // 🔥【关键修复】重新渲染所有界面
+                    console.log('🔄 开始重新渲染界面...');
                     renderCharacterList();
-                    renderMessageList();
+                    renderMessageList(); // 🔥【关键】这应该现在显示对话框了
                     renderPersonaList();
                     calculateStorageUsage();
+                    console.log('✅ 界面重新渲染完成');
                     
-                    showToast(`导入成功！共导入 ${importedTables} 个数据表`, 'success');
-                    console.log(`数据导入完成，共导入 ${importedTables} 个数据表`);
+                    showToast(`🎉 导入成功！共导入 ${importedTables} 个数据表`, 'success');
+                    console.log(`✅ 数据导入完成，共导入 ${importedTables} 个数据表`);
+
+                    // 🔥【新增】延迟刷新页面以确保所有状态更新
+                    setTimeout(() => {
+                        console.log('🔄 强制刷新页面以确保所有状态更新...');
+                        location.reload();
+                    }, 2000);
                 } catch (error) {
                     console.error('导入失败:', error);
                     showToast('导入失败：' + error.message, 'error');
