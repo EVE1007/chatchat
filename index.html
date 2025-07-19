@@ -272,54 +272,160 @@
                 </div>
             </div>
                 
-                <!-- 应用图标 -->
-                <div id="app-grid">
-                    <div class="app-row">
-                        <a href="#" class="app" onclick="showApp('chat-screen')">
-                            <div class="app-icon">
-                                <img src="https://i.postimg.cc/dVSd9QBz/IMG-3063.jpg" alt="Chat" class="app-icon-img">
+                <!-- 主屏幕四块布局 -->
+                <div id="home-grid">
+                    <!-- 左上角：图片小组件 -->
+                    <div class="home-section top-left">
+                        <div class="widget photo-widget" onclick="showPhotoWidgetOptions()">
+                            <div class="photo-widget-content" id="photo-widget-content">
+                                <div class="photo-placeholder" id="photo-placeholder">
+                                    <i class="fas fa-image"></i>
+                                    <span>点击添加图片</span>
+                                </div>
+                                <img class="photo-widget-image" id="photo-widget-image" style="display: none;">
                             </div>
-                            <span>Chat</span>
-                        </a>
-                        <a href="#" class="app" onclick="showApp('worldbook-screen'); switchWorldbookTab('global');">
-                            <div class="app-icon">
-                                <img src="https://i.postimg.cc/Xqz3zPz7/IMG-3080.jpg" alt="世界书" class="app-icon-img">
+                        </div>
+                    </div>
+
+                    <!-- 右上角：两个应用 -->
+                    <div class="home-section top-right">
+                        <div class="apps-grid-2">
+                            <a href="#" class="mini-app" onclick="showApp('chat-screen')">
+                                <div class="mini-app-icon">
+                                    <img src="https://i.postimg.cc/dVSd9QBz/IMG-3063.jpg" alt="Chat" class="app-icon-img">
+                                </div>
+                                <span>Chat</span>
+                            </a>
+                            <a href="#" class="mini-app" onclick="showApp('worldbook-screen'); switchWorldbookTab('global');">
+                                <div class="mini-app-icon">
+                                    <img src="https://i.postimg.cc/Xqz3zPz7/IMG-3080.jpg" alt="世界书" class="app-icon-img">
+                                </div>
+                                <span>世界书</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 左下角：两个应用 -->
+                    <div class="home-section bottom-left">
+                        <div class="apps-grid-2">
+                            <a href="#" class="mini-app" onclick="showApp('game-screen')">
+                                <div class="mini-app-icon">
+                                    <i class="fas fa-gamepad"></i>
+                                </div>
+                                <span>游戏</span>
+                            </a>
+                            <a href="#" class="mini-app" onclick="showApp('forum-screen')">
+                                <div class="mini-app-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <span>论坛</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 右下角：纪念日小组件 -->
+                    <div class="home-section bottom-right">
+                        <div class="widget anniversary-widget" onclick="showApp('anniversary-screen')" style="cursor: pointer;">
+                            <div class="anniversary-widget-content" id="anniversary-widget-content">
+                                <div class="anniversary-placeholder" id="anniversary-placeholder">
+                                    <i class="fas fa-heart"></i>
+                                    <span>暂无纪念日</span>
+                                </div>
+                                <div class="anniversary-display" id="anniversary-display" style="display: none;">
+                                    <div class="anniversary-name" id="widget-anniversary-name"></div>
+                                    <div class="anniversary-countdown" id="widget-anniversary-countdown"></div>
+                                    <div class="anniversary-date" id="widget-anniversary-date"></div>
+                                </div>
                             </div>
-                            <span>世界书</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- iPhone风格Dock栏 -->
+                <div id="dock-bar">
+                    <div class="dock-container">
+                        <a href="#" class="dock-app" onclick="showApp('messages-screen')">
+                            <div class="dock-app-icon">
+                                <i class="fas fa-comment-dots"></i>
+                            </div>
+                            <span>短信</span>
                         </a>
-                        <a href="#" class="app" onclick="showApp('settings-screen')">
-                            <div class="app-icon">
+                        <a href="#" class="dock-app" onclick="showApp('settings-screen')">
+                            <div class="dock-app-icon">
                                 <img src="https://i.postimg.cc/764L3jpF/IMG-3079.jpg" alt="设置" class="app-icon-img">
                             </div>
                             <span>设置</span>
                         </a>
-                    </div>
-                    <div class="app-row">
-                        <a href="#" class="app" onclick="showApp('memory-viewer-screen')">
-                            <div class="app-icon">
+                        <a href="#" class="dock-app" onclick="showApp('memory-viewer-screen')">
+                            <div class="dock-app-icon">
                                 <i class="fas fa-brain"></i>
                             </div>
                             <span>记忆</span>
-                        </a>
-                        <a href="#" class="app" onclick="showApp('game-screen')">
-                            <div class="app-icon">
-                                <i class="fas fa-gamepad"></i>
-                            </div>
-                            <span>游戏</span>
-                        </a>
-
-                    </div>
-                    <div class="app-row">
-                        <a href="#" class="app" onclick="showApp('forum-screen')">
-                            <div class="app-icon">
-                                <i class="fas fa-comments"></i>
-                            </div>
-                            <span>论坛</span>
                         </a>
                     </div>
                 </div>
 
                 
+                <!-- 纪念日界面 -->
+                <div id="anniversary-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="app-header">
+                        <button class="back-button" onclick="hideApp('anniversary-screen')">‹</button>
+                        <div class="app-title">纪念日</div>
+                        <div class="add-anniversary-btn" onclick="showAnniversaryForm()">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    </div>
+                    <div class="app-content">
+                        <div id="anniversary-list" class="anniversary-list">
+                            <!-- 纪念日列表将通过JS动态生成 -->
+                            <div class="anniversary-empty-state">
+                                <i class="fas fa-heart"></i>
+                                <p>还没有纪念日</p>
+                                <p>点击右上角 + 添加重要的日子</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 短信界面 -->
+                <div id="messages-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon">
+                                <div class="app-battery-level"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="app-header">
+                        <button class="back-button" onclick="hideApp('messages-screen')">‹</button>
+                        <div class="app-title">短信</div>
+                        <div class="add-message-btn" onclick="showNewMessageForm()">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                    </div>
+                    <div class="app-content">
+                        <div id="messages-list" class="messages-list">
+                            <!-- 短信列表将通过JS动态生成 -->
+                            <div class="messages-empty-state">
+                                <i class="fas fa-comment-dots"></i>
+                                <p>暂无短信</p>
+                                <p>这是一个预留功能</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 聊天界面 -->
                 <div id="chat-screen" class="app-screen">
                     <div class="app-status-bar">
@@ -642,6 +748,107 @@
                         <div class="modal-footer">
                             <button class="btn btn-secondary" onclick="closeOfflineHistoryModal()">关闭</button>
                             <button class="btn btn-danger" onclick="clearAllOfflineHistory()">清空所有记录</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 纪念日表单模态框 -->
+                <div id="anniversary-form-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="anniversary-form-title">添加纪念日</h3>
+                            <button class="modal-close" onclick="closeAnniversaryForm()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="anniversary-name">纪念日名称</label>
+                                <input type="text" id="anniversary-name" placeholder="例如：生日、结婚纪念日..." maxlength="50">
+                            </div>
+                            <div class="form-group">
+                                <label for="anniversary-date">日期</label>
+                                <input type="date" id="anniversary-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="anniversary-type">类型</label>
+                                <select id="anniversary-type">
+                                    <option value="birthday">生日</option>
+                                    <option value="anniversary">纪念日</option>
+                                    <option value="holiday">节日</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="anniversary-description">描述（可选）</label>
+                                <textarea id="anniversary-description" rows="3" placeholder="添加一些备注..." maxlength="200"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="anniversary-yearly" checked>
+                                    每年重复
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="anniversary-notify">
+                                    提前提醒
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeAnniversaryForm()">取消</button>
+                            <button class="btn btn-primary" onclick="saveAnniversary()">保存</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图片小组件设置模态框 -->
+                <div id="photo-widget-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>图片小组件</h3>
+                            <button class="modal-close" onclick="closePhotoWidgetModal()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="widget-photo-upload">选择图片</label>
+                                <input type="file" id="widget-photo-upload" accept="image/*" onchange="handlePhotoWidgetUpload(this)">
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-secondary" onclick="clearPhotoWidget()">清除图片</button>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closePhotoWidgetModal()">关闭</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 纪念日小组件设置模态框 -->
+                <div id="anniversary-widget-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>纪念日小组件</h3>
+                            <button class="modal-close" onclick="closeAnniversaryWidgetModal()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="widget-anniversary-select">选择要显示的纪念日</label>
+                                <select id="widget-anniversary-select" onchange="updateAnniversaryWidget()">
+                                    <option value="">请选择纪念日</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-secondary" onclick="clearAnniversaryWidget()">清除显示</button>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeAnniversaryWidgetModal()">关闭</button>
                         </div>
                     </div>
                 </div>
@@ -2592,6 +2799,28 @@
                             </div>
                             <i class="fas fa-chevron-right"></i>
                         </div>
+                        <div class="settings-item">
+                            <div class="settings-item-left">
+                                <div>
+                                    <div class="setting-label">状态栏图标</div>
+                                    <div class="setting-desc">自定义时间右侧显示的图标或文字</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="text" id="status-icon-input" placeholder="🐾" maxlength="5"
+                                       style="width: 50px; padding: 6px 8px; border: 1px solid var(--theme-input-border, rgba(0, 0, 0, 0.08));
+                                              border-radius: var(--theme-input-radius, 15px); background: var(--theme-form-bg, rgba(255, 255, 255, 0.8));
+                                              font-size: 14px; text-align: center;"
+                                       onchange="updateStatusIcon()">
+                                <button onclick="resetStatusIcon()"
+                                        style="padding: 6px 10px; background: var(--theme-button-secondary-bg, rgba(255, 255, 255, 0.8));
+                                               border: 1px solid var(--theme-button-secondary-border, rgba(0, 0, 0, 0.1));
+                                               border-radius: var(--theme-input-radius, 15px); color: var(--theme-button-secondary-color, #555);
+                                               font-size: 12px; cursor: pointer; flex-shrink: 0;">
+                                    重置
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -3822,8 +4051,8 @@
             }
         }
 
-        // 🔥【最终版本15】统一的数据库结构定义 - 包含所有表的最终形态
-        db.version(15).stores({
+        // 🔥【最终版本16】统一的数据库结构定义 - 包含所有表的最终形态
+        db.version(16).stores({
             // 基础数据表
             characters: '&id, name, groupId',
             contacts: '++id, characterId',
@@ -3884,9 +4113,12 @@
             globalSettings: '&id',
             wallpapers: '&id, name',
             appIcons: '&id, appId',
-            chatSettings: '&id, chatId'
+            chatSettings: '&id, chatId',
+
+            // 纪念日系统
+            anniversaries: '&id, name, date, type, yearly'
         }).upgrade(async tx => {
-            console.log('🔧 升级到版本15：统一数据库结构，解决版本升级问题');
+            console.log('🔧 升级到版本16：添加纪念日系统，统一数据库结构');
 
             // 🔥【数据迁移】从localStorage迁移各种数据到Dexie
             try {
@@ -4169,6 +4401,7 @@
             loadPhoneBorderSetting();
             loadScreenSize();
             loadFontSizeSettings();
+            loadStatusIconSetting();
             
             // 加载动态图片设置
             await loadMomentsImages();
@@ -4187,6 +4420,12 @@
 
             // 初始化记忆查看器
             await initMemoryViewer();
+
+            // 初始化纪念日系统
+            await loadAnniversaryList();
+
+            // 初始化小组件
+            initializeWidgets();
             
             // 渲染界面 - 添加数据验证
             try {
@@ -4462,9 +4701,11 @@
             
             // 隐藏主屏幕组件
             const clockContainer = document.getElementById('clock-container');
-            const appGrid = document.getElementById('app-grid');
+            const homeGrid = document.getElementById('home-grid');
+            const dockBar = document.getElementById('dock-bar');
             if (clockContainer) clockContainer.style.display = 'none';
-            if (appGrid) appGrid.style.display = 'none';
+            if (homeGrid) homeGrid.style.display = 'none';
+            if (dockBar) dockBar.style.display = 'none';
             
             // 显示目标界面
             document.getElementById(appId).style.display = 'flex';
@@ -4473,7 +4714,12 @@
             if (appId === 'chat-screen') {
                 renderMessageList();
             }
-            
+
+            // 如果是纪念日界面，加载纪念日列表
+            if (appId === 'anniversary-screen') {
+                loadAnniversaryList();
+            }
+
             // 如果是API设置界面，初始化设置
             if (appId === 'api-settings-screen') {
                 // 延迟一点时间确保DOM已渲染
@@ -4518,9 +4764,11 @@
             if (!hasVisibleApp) {
                 // 显示主屏幕组件
                 const clockContainer = document.getElementById('clock-container');
-                const appGrid = document.getElementById('app-grid');
+                const homeGrid = document.getElementById('home-grid');
+                const dockBar = document.getElementById('dock-bar');
                 if (clockContainer) clockContainer.style.display = 'block';
-                if (appGrid) appGrid.style.display = 'flex';
+                if (homeGrid) homeGrid.style.display = 'grid';
+                if (dockBar) dockBar.style.display = 'block';
             }
         }
         
@@ -4534,7 +4782,397 @@
         function hideModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
-        
+
+        // 纪念日功能
+        let anniversaries = [];
+        let editingAnniversaryId = null;
+
+        // 显示纪念日表单
+        function showAnniversaryForm(anniversaryId = null) {
+            editingAnniversaryId = anniversaryId;
+            const modal = document.getElementById('anniversary-form-modal');
+            const title = document.getElementById('anniversary-form-title');
+
+            if (anniversaryId) {
+                // 编辑模式
+                title.textContent = '编辑纪念日';
+                const anniversary = anniversaries.find(a => a.id === anniversaryId);
+                if (anniversary) {
+                    document.getElementById('anniversary-name').value = anniversary.name;
+                    document.getElementById('anniversary-date').value = anniversary.date;
+                    document.getElementById('anniversary-type').value = anniversary.type;
+                    document.getElementById('anniversary-description').value = anniversary.description || '';
+                    document.getElementById('anniversary-yearly').checked = anniversary.yearly;
+                    document.getElementById('anniversary-notify').checked = anniversary.notify;
+                }
+            } else {
+                // 新建模式
+                title.textContent = '添加纪念日';
+                clearAnniversaryForm();
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        // 关闭纪念日表单
+        function closeAnniversaryForm() {
+            document.getElementById('anniversary-form-modal').style.display = 'none';
+            clearAnniversaryForm();
+            editingAnniversaryId = null;
+        }
+
+        // 清空纪念日表单
+        function clearAnniversaryForm() {
+            document.getElementById('anniversary-name').value = '';
+            document.getElementById('anniversary-date').value = '';
+            document.getElementById('anniversary-type').value = 'birthday';
+            document.getElementById('anniversary-description').value = '';
+            document.getElementById('anniversary-yearly').checked = true;
+            document.getElementById('anniversary-notify').checked = false;
+        }
+
+        // 保存纪念日
+        async function saveAnniversary() {
+            const name = document.getElementById('anniversary-name').value.trim();
+            const date = document.getElementById('anniversary-date').value;
+            const type = document.getElementById('anniversary-type').value;
+            const description = document.getElementById('anniversary-description').value.trim();
+            const yearly = document.getElementById('anniversary-yearly').checked;
+            const notify = document.getElementById('anniversary-notify').checked;
+
+            if (!name || !date) {
+                showToast('请填写纪念日名称和日期', 'error');
+                return;
+            }
+
+            const anniversaryData = {
+                id: editingAnniversaryId || Date.now().toString(),
+                name,
+                date,
+                type,
+                description,
+                yearly,
+                notify,
+                createdAt: editingAnniversaryId ? anniversaries.find(a => a.id === editingAnniversaryId).createdAt : new Date().toISOString()
+            };
+
+            try {
+                if (editingAnniversaryId) {
+                    // 更新现有纪念日
+                    await db.anniversaries.put(anniversaryData);
+                    const index = anniversaries.findIndex(a => a.id === editingAnniversaryId);
+                    if (index !== -1) {
+                        anniversaries[index] = anniversaryData;
+                    }
+                    showToast('纪念日已更新', 'success');
+                } else {
+                    // 添加新纪念日
+                    await db.anniversaries.add(anniversaryData);
+                    anniversaries.push(anniversaryData);
+                    showToast('纪念日已添加', 'success');
+                }
+
+                closeAnniversaryForm();
+                loadAnniversaryList();
+            } catch (error) {
+                console.error('保存纪念日失败:', error);
+                showToast('保存失败，请重试', 'error');
+            }
+        }
+
+        // 加载纪念日列表
+        async function loadAnniversaryList() {
+            try {
+                // 确保数据库已初始化
+                if (!db || !db.anniversaries) {
+                    console.warn('数据库未初始化，跳过纪念日加载');
+                    anniversaries = [];
+                    renderAnniversaryList();
+                    return;
+                }
+
+                anniversaries = await db.anniversaries.orderBy('date').toArray();
+                renderAnniversaryList();
+            } catch (error) {
+                console.error('加载纪念日列表失败:', error);
+                // 不显示错误提示，避免初始化时的干扰
+                anniversaries = [];
+                renderAnniversaryList();
+            }
+        }
+
+        // 渲染纪念日列表
+        function renderAnniversaryList() {
+            const container = document.getElementById('anniversary-list');
+
+            if (anniversaries.length === 0) {
+                container.innerHTML = `
+                    <div class="anniversary-empty-state">
+                        <i class="fas fa-heart"></i>
+                        <p>还没有纪念日</p>
+                        <p>点击右上角 + 添加重要的日子</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const now = new Date();
+            const currentYear = now.getFullYear();
+
+            container.innerHTML = anniversaries.map(anniversary => {
+                const anniversaryDate = new Date(anniversary.date);
+                let nextDate = new Date(currentYear, anniversaryDate.getMonth(), anniversaryDate.getDate());
+
+                // 如果今年的日期已过，计算明年的日期
+                if (nextDate < now) {
+                    nextDate.setFullYear(currentYear + 1);
+                }
+
+                const daysUntil = Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24));
+                const countdownText = daysUntil === 0 ? '今天！' :
+                                    daysUntil === 1 ? '明天' :
+                                    `还有 ${daysUntil} 天`;
+
+                return `
+                    <div class="anniversary-item" onclick="showAnniversaryForm('${anniversary.id}')">
+                        <div class="anniversary-item-header">
+                            <div>
+                                <div class="anniversary-item-name">${anniversary.name}</div>
+                                <div class="anniversary-item-date">${formatDate(anniversary.date)}</div>
+                            </div>
+                            <div class="anniversary-item-type ${anniversary.type}">${getTypeText(anniversary.type)}</div>
+                        </div>
+                        <div class="anniversary-item-countdown">${countdownText}</div>
+                        ${anniversary.description ? `<div class="anniversary-item-description">${anniversary.description}</div>` : ''}
+                        <div class="anniversary-item-actions" onclick="event.stopPropagation()">
+                            <button class="anniversary-action-btn anniversary-edit-btn" onclick="showAnniversaryForm('${anniversary.id}')">
+                                编辑
+                            </button>
+                            <button class="anniversary-action-btn anniversary-delete-btn" onclick="deleteAnniversary('${anniversary.id}')">
+                                删除
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 更新纪念日小组件
+            const savedAnniversary = localStorage.getItem('anniversaryWidgetSelection');
+            if (savedAnniversary) {
+                const anniversary = anniversaries.find(a => a.id === savedAnniversary);
+                if (anniversary) {
+                    displayAnniversaryWidget(anniversary);
+                } else {
+                    // 如果选中的纪念日被删除了，清除小组件
+                    clearAnniversaryWidget();
+                }
+            }
+        }
+
+        // 删除纪念日
+        async function deleteAnniversary(anniversaryId) {
+            if (confirm('确定要删除这个纪念日吗？')) {
+                try {
+                    await db.anniversaries.delete(anniversaryId);
+                    anniversaries = anniversaries.filter(a => a.id !== anniversaryId);
+                    renderAnniversaryList();
+                    showToast('纪念日已删除', 'success');
+                } catch (error) {
+                    console.error('删除纪念日失败:', error);
+                    showToast('删除失败，请重试', 'error');
+                }
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return `${date.getMonth() + 1}月${date.getDate()}日`;
+        }
+
+        // 获取类型文本
+        function getTypeText(type) {
+            const typeMap = {
+                birthday: '生日',
+                anniversary: '纪念日',
+                holiday: '节日',
+                other: '其他'
+            };
+            return typeMap[type] || '其他';
+        }
+
+        // 显示新短信表单（预留功能）
+        function showNewMessageForm() {
+            showToast('短信功能正在开发中', 'info');
+        }
+
+        // 图片小组件功能
+        function showPhotoWidgetOptions() {
+            document.getElementById('photo-widget-modal').style.display = 'flex';
+        }
+
+        function closePhotoWidgetModal() {
+            document.getElementById('photo-widget-modal').style.display = 'none';
+        }
+
+        function handlePhotoWidgetUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const imageData = e.target.result;
+
+                    // 保存到localStorage
+                    localStorage.setItem('photoWidgetImage', imageData);
+
+                    // 更新显示
+                    updatePhotoWidget(imageData);
+
+                    showToast('图片已设置', 'success');
+                    closePhotoWidgetModal();
+                };
+
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updatePhotoWidget(imageData) {
+            const placeholder = document.getElementById('photo-placeholder');
+            const image = document.getElementById('photo-widget-image');
+
+            if (imageData) {
+                placeholder.style.display = 'none';
+                image.src = imageData;
+                image.style.display = 'block';
+
+                // 确保图片正确缩放
+                image.onload = function() {
+                    // 图片已加载，CSS会自动处理缩放
+                };
+            } else {
+                placeholder.style.display = 'block';
+                image.style.display = 'none';
+            }
+        }
+
+        function clearPhotoWidget() {
+            localStorage.removeItem('photoWidgetImage');
+            updatePhotoWidget(null);
+            showToast('图片已清除', 'success');
+            closePhotoWidgetModal();
+        }
+
+        // 纪念日小组件功能
+        function showAnniversaryWidgetOptions() {
+            // 更新选择列表
+            updateAnniversaryWidgetSelect();
+            document.getElementById('anniversary-widget-modal').style.display = 'flex';
+        }
+
+        function closeAnniversaryWidgetModal() {
+            document.getElementById('anniversary-widget-modal').style.display = 'none';
+        }
+
+        function updateAnniversaryWidgetSelect() {
+            const select = document.getElementById('widget-anniversary-select');
+            const currentSelection = localStorage.getItem('anniversaryWidgetSelection');
+
+            // 清空选项
+            select.innerHTML = '<option value="">请选择纪念日</option>';
+
+            // 添加纪念日选项
+            anniversaries.forEach(anniversary => {
+                const option = document.createElement('option');
+                option.value = anniversary.id;
+                option.textContent = anniversary.name;
+                if (anniversary.id === currentSelection) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        }
+
+        function updateAnniversaryWidget() {
+            const select = document.getElementById('widget-anniversary-select');
+            const selectedId = select.value;
+
+            if (selectedId) {
+                const anniversary = anniversaries.find(a => a.id === selectedId);
+                if (anniversary) {
+                    localStorage.setItem('anniversaryWidgetSelection', selectedId);
+                    displayAnniversaryWidget(anniversary);
+                    showToast('纪念日小组件已更新', 'success');
+                }
+            } else {
+                clearAnniversaryWidget();
+            }
+        }
+
+        function displayAnniversaryWidget(anniversary) {
+            const placeholder = document.getElementById('anniversary-placeholder');
+            const display = document.getElementById('anniversary-display');
+            const nameEl = document.getElementById('widget-anniversary-name');
+            const countdownEl = document.getElementById('widget-anniversary-countdown');
+            const dateEl = document.getElementById('widget-anniversary-date');
+
+            // 计算倒计时
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const anniversaryDate = new Date(anniversary.date);
+            let nextDate = new Date(currentYear, anniversaryDate.getMonth(), anniversaryDate.getDate());
+
+            if (nextDate < now) {
+                nextDate.setFullYear(currentYear + 1);
+            }
+
+            const daysUntil = Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24));
+            const countdownText = daysUntil === 0 ? '今天！' :
+                                daysUntil === 1 ? '明天' :
+                                `${daysUntil}天`;
+
+            // 更新显示
+            nameEl.textContent = anniversary.name;
+            countdownEl.textContent = countdownText;
+            dateEl.textContent = formatDate(anniversary.date);
+
+            placeholder.style.display = 'none';
+            display.style.display = 'block';
+        }
+
+        function clearAnniversaryWidget() {
+            localStorage.removeItem('anniversaryWidgetSelection');
+            const placeholder = document.getElementById('anniversary-placeholder');
+            const display = document.getElementById('anniversary-display');
+
+            placeholder.style.display = 'block';
+            display.style.display = 'none';
+
+            showToast('纪念日小组件已清除', 'success');
+        }
+
+        // 初始化小组件
+        function initializeWidgets() {
+            try {
+                // 初始化图片小组件
+                const savedImage = localStorage.getItem('photoWidgetImage');
+                if (savedImage) {
+                    updatePhotoWidget(savedImage);
+                }
+
+                // 初始化纪念日小组件
+                const savedAnniversary = localStorage.getItem('anniversaryWidgetSelection');
+                if (savedAnniversary && anniversaries && anniversaries.length > 0) {
+                    const anniversary = anniversaries.find(a => a.id === savedAnniversary);
+                    if (anniversary) {
+                        displayAnniversaryWidget(anniversary);
+                    }
+                }
+            } catch (error) {
+                console.error('初始化小组件失败:', error);
+            }
+        }
+
         // 切换照片文字显示
         function togglePhotoText(container, description) {
             const overlay = container.querySelector('.photo-text-overlay');
@@ -28008,7 +28646,42 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 }
             }
         }
-        
+
+        // 更新状态栏图标
+        function updateStatusIcon() {
+            const input = document.getElementById('status-icon-input');
+            const icon = input.value.trim() || '🐾';
+
+            // 更新CSS变量
+            document.documentElement.style.setProperty('--status-icon', `"${icon}"`);
+
+            // 保存到本地存储
+            localStorage.setItem('statusIcon', icon);
+        }
+
+        // 重置状态栏图标
+        function resetStatusIcon() {
+            const input = document.getElementById('status-icon-input');
+            input.value = '🐾';
+            updateStatusIcon();
+        }
+
+
+
+        // 加载状态栏图标设置
+        function loadStatusIconSetting() {
+            const saved = localStorage.getItem('statusIcon');
+            const input = document.getElementById('status-icon-input');
+            const icon = saved || '🐾';
+
+            if (input) {
+                input.value = icon;
+            }
+
+            // 应用设置
+            document.documentElement.style.setProperty('--status-icon', `"${icon}"`);
+        }
+
         // 加载边框设置
         function loadPhoneBorderSetting() {
             const saved = localStorage.getItem('phoneBorderEnabled');

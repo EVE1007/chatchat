@@ -1332,7 +1332,7 @@
         }
         
         #status-bar-time::after {
-            content: "🐾";
+            content: var(--status-icon, "🐾");
             margin-left: 4px;
             font-size: 12px;
         }
@@ -1389,10 +1389,10 @@
             text-align: center;
             color: white;
             text-shadow: var(--text-shadow-md);
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             flex-shrink: 0;
-            margin-top: 90px;
-            padding-top: 20px;
+            margin-top: 70px;
+            padding-top: 15px;
         }
         
         #main-time {
@@ -1407,25 +1407,255 @@
         
 
         
-        #app-grid {
+        /* 主屏幕四块布局 */
+        #home-grid {
             position: absolute;
-            top: 55%;
+            top: 58%;
             left: 50%;
             transform: translate(-50%, -50%);
+            width: 92%;
+            aspect-ratio: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 12px;
+            margin-top: 0px;
+        }
+
+        .home-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            padding: 6px;
+        }
+
+        /* 小组件样式 */
+        .widget {
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .widget:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 图片小组件 */
+        .photo-widget-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+
+        .photo-placeholder {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            position: absolute;
+            z-index: 2;
+        }
+
+        .photo-placeholder i {
+            font-size: 32px;
+            margin-bottom: 8px;
+            display: block;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .photo-widget-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 16px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* 纪念日小组件 */
+        .anniversary-widget-content {
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
-            width: 100%;
-            padding: 20px;
-            margin-top: 40px;
+            justify-content: center;
+            text-align: center;
+            padding: 15px;
         }
-        
-        .app-row {
+
+        .anniversary-placeholder {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .anniversary-placeholder i {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: block;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .anniversary-display {
+            width: 100%;
+        }
+
+        .anniversary-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+            text-shadow: var(--text-shadow-sm);
+        }
+
+        .anniversary-countdown {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ff69b4;
+            margin-bottom: 4px;
+            text-shadow: var(--text-shadow-sm);
+        }
+
+        .anniversary-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: var(--text-shadow-sm);
+        }
+
+        /* 右上角四个应用网格 */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+        }
+
+        /* 两个应用网格 */
+        .apps-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr;
+            gap: 12px;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+        }
+
+        .mini-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            text-shadow: var(--text-shadow-sm);
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .mini-app:hover {
+            transform: scale(1.05);
+        }
+
+        .mini-app:active {
+            transform: scale(0.95);
+        }
+
+        .mini-app-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            background-color: var(--color-white);
             display: flex;
             justify-content: center;
-            gap: 25px;
+            align-items: center;
+            font-size: 18px;
+            margin-bottom: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+            overflow: hidden;
+        }
+
+        .mini-app-icon i {
+            font-size: 24px;
+            color: var(--color-gray-dark);
+        }
+
+        .mini-app-icon .app-icon-img {
             width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 左下角大应用 */
+        .large-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            text-shadow: var(--text-shadow-sm);
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.2s ease;
+        }
+
+        .large-app:hover {
+            transform: scale(1.02);
+        }
+
+        .large-app:active {
+            transform: scale(0.98);
+        }
+
+        .large-app-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            transition: transform 0.2s ease;
+            color: white;
+        }
+
+        .large-app-icon i {
+            font-size: 28px;
+            color: white;
         }
         
         .app {
@@ -1468,7 +1698,79 @@
         .app .label {
             color: white;
         }
-        
+
+        /* iPhone风格Dock栏样式 */
+        #dock-bar {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 300px;
+            z-index: 100;
+        }
+
+        .dock-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dock-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            color: white;
+            text-shadow: var(--text-shadow-sm);
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .dock-app:hover {
+            transform: translateY(-2px);
+        }
+
+        .dock-app:active {
+            transform: translateY(0) scale(0.95);
+        }
+
+        .dock-app-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            background-color: var(--color-white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin-bottom: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            transition: transform 0.2s ease;
+            overflow: hidden;
+        }
+
+        .dock-app-icon i {
+            font-size: 24px;
+            color: var(--color-gray-dark);
+        }
+
+        .dock-app-icon .app-icon-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         /* 应用页面样式 */
         .app-screen {
             position: absolute;
@@ -1508,7 +1810,7 @@
         }
         
         .app-status-time::after {
-            content: "🐾";
+            content: var(--status-icon, "🐾");
             margin-left: 4px;
             font-size: 12px;
         }
@@ -12446,6 +12748,366 @@ textarea.call-text-input {
 
         .diary-entry.expanded .diary-entry-preview {
             display: none;
+        }
+
+        /* 纪念日应用样式 */
+        .anniversary-list {
+            padding: 20px;
+        }
+
+        .anniversary-empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .anniversary-empty-state i {
+            font-size: 48px;
+            color: #ff69b4;
+            margin-bottom: 20px;
+        }
+
+        .anniversary-empty-state p {
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .anniversary-item {
+            background: var(--bg-white-90);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .anniversary-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .anniversary-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .anniversary-item-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .anniversary-item-type {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .anniversary-item-type.birthday {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+        }
+
+        .anniversary-item-type.anniversary {
+            background: linear-gradient(135deg, #ff69b4, #ff8fa3);
+        }
+
+        .anniversary-item-type.holiday {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+        }
+
+        .anniversary-item-type.other {
+            background: linear-gradient(135deg, #a8e6cf, #88d8a3);
+        }
+
+        .anniversary-item-date {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .anniversary-item-countdown {
+            font-size: 14px;
+            color: #ff69b4;
+            font-weight: 600;
+        }
+
+        .anniversary-item-description {
+            font-size: 13px;
+            color: #888;
+            line-height: 1.4;
+            margin-top: 8px;
+        }
+
+        .anniversary-item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .anniversary-action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .anniversary-edit-btn {
+            background: #007AFF;
+            color: white;
+        }
+
+        .anniversary-delete-btn {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .anniversary-action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* 短信应用样式 */
+        .messages-list {
+            padding: 20px;
+        }
+
+        .messages-empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .messages-empty-state i {
+            font-size: 48px;
+            color: #007AFF;
+            margin-bottom: 20px;
+        }
+
+        .messages-empty-state p {
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        /* 纪念日表单样式 */
+        #anniversary-form-modal .form-group {
+            margin-bottom: 20px;
+        }
+
+        #anniversary-form-modal label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        #anniversary-form-modal input,
+        #anniversary-form-modal select,
+        #anniversary-form-modal textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        #anniversary-form-modal input:focus,
+        #anniversary-form-modal select:focus,
+        #anniversary-form-modal textarea:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        #anniversary-form-modal .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        #anniversary-form-modal .checkbox-label input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        /* 小组件模态框样式 */
+        #photo-widget-modal .form-group,
+        #anniversary-widget-modal .form-group {
+            margin-bottom: 20px;
+        }
+
+        #photo-widget-modal label,
+        #anniversary-widget-modal label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        #photo-widget-modal input,
+        #photo-widget-modal select,
+        #anniversary-widget-modal input,
+        #anniversary-widget-modal select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        #photo-widget-modal input:focus,
+        #photo-widget-modal select:focus,
+        #anniversary-widget-modal input:focus,
+        #anniversary-widget-modal select:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            #home-grid {
+                width: 95%;
+                gap: 10px;
+            }
+
+            .mini-app-icon {
+                width: 45px;
+                height: 45px;
+                border-radius: 12px;
+            }
+
+            .mini-app-icon i {
+                font-size: 20px;
+            }
+
+            .mini-app {
+                font-size: 10px;
+            }
+
+            .large-app-icon {
+                width: 50px;
+                height: 50px;
+                border-radius: 15px;
+            }
+
+            .large-app-icon i {
+                font-size: 24px;
+            }
+
+            .large-app {
+                font-size: 12px;
+            }
+
+            .anniversary-name {
+                font-size: 14px;
+            }
+
+            .anniversary-countdown {
+                font-size: 16px;
+            }
+
+            .photo-placeholder i {
+                font-size: 24px;
+            }
+
+            .photo-placeholder {
+                font-size: 12px;
+            }
+
+            #dock-bar {
+                width: 95%;
+                bottom: 20px;
+            }
+
+            .dock-container {
+                padding: 10px 15px;
+            }
+
+            .dock-app-icon {
+                width: 45px;
+                height: 45px;
+                border-radius: 12px;
+            }
+
+            .dock-app-icon i {
+                font-size: 20px;
+            }
+
+            .dock-app {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            #home-grid {
+                gap: 8px;
+            }
+
+            .mini-app-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+            }
+
+            .mini-app-icon i {
+                font-size: 18px;
+            }
+
+            .mini-app {
+                font-size: 9px;
+            }
+
+            .large-app-icon {
+                width: 45px;
+                height: 45px;
+                border-radius: 12px;
+            }
+
+            .large-app-icon i {
+                font-size: 20px;
+            }
+
+            .anniversary-name {
+                font-size: 12px;
+            }
+
+            .anniversary-countdown {
+                font-size: 14px;
+            }
+
+            .dock-container {
+                padding: 8px 12px;
+            }
+
+            .dock-app-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+            }
+
+            .dock-app-icon i {
+                font-size: 18px;
+            }
+
+            .dock-app {
+                font-size: 10px;
+            }
         }
 
         .diary-entry.expanded .diary-entry-full {
