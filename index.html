@@ -4347,6 +4347,9 @@
 
             try {
 
+            // 🔥【新增】初始化窗口ID，确保线下模式数据隔离
+            initializeWindowId();
+
             // 🔥【新增】数据库健康检查
             console.log('🔍 开始数据库健康检查...');
             const isHealthy = await checkDatabaseHealth();
@@ -41199,6 +41202,46 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
         let currentOfflinePreset = null;
         let offlineMessages = [];
 
+        // 🔥【新增】窗口唯一标识符，确保不同窗口的线下模式数据完全隔离
+        let windowId = null;
+
+        // 初始化窗口ID
+        function initializeWindowId() {
+            // 尝试从sessionStorage获取现有的窗口ID
+            windowId = sessionStorage.getItem('windowId');
+
+            if (!windowId) {
+                // 生成新的窗口ID
+                windowId = `window_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                sessionStorage.setItem('windowId', windowId);
+            }
+
+            console.log('🪟 窗口ID已初始化:', windowId);
+
+            // 🔥【新增】监听窗口关闭事件，清理当前窗口的线下模式数据
+            window.addEventListener('beforeunload', cleanupWindowOfflineData);
+        }
+
+        // 🔥【新增】清理当前窗口的线下模式数据
+        function cleanupWindowOfflineData() {
+            if (!windowId) return;
+
+            try {
+                // 清理localStorage中的线下消息数据
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.includes(`_${windowId}`)) {
+                        localStorage.removeItem(key);
+                        console.log(`🧹 清理窗口数据: ${key}`);
+                    }
+                });
+
+                console.log(`🪟 窗口${windowId}的线下模式数据已清理`);
+            } catch (error) {
+                console.error('清理窗口线下模式数据失败:', error);
+            }
+        }
+
         // 🔥【已废弃】迁移功能已移至数据库版本13中自动处理
 
         // 切换线下模式
@@ -41718,16 +41761,17 @@ ${conversationHistory}
 
         // 加载线下消息
         function loadOfflineMessages() {
-            if (!currentChatCharacter) return;
+            if (!currentChatCharacter || !windowId) return;
 
             // 🔥【修复】只有当offlineMessages为空时才从localStorage加载
             // 这样可以避免在退出后重新进入时重新加载已清空的数据
             if (!offlineMessages || offlineMessages.length === 0) {
-                const key = `offlineMessages_${currentChatCharacter.id}`;
+                // 🔥【修复】加入窗口ID，确保不同窗口的线下消息完全隔离
+                const key = `offlineMessages_${currentChatCharacter.id}_${windowId}`;
                 offlineMessages = JSON.parse(localStorage.getItem(key) || '[]');
-                console.log(`📱 从localStorage加载线下消息: ${offlineMessages.length}条`);
+                console.log(`📱 从localStorage加载线下消息 (窗口${windowId}): ${offlineMessages.length}条`);
             } else {
-                console.log(`📱 使用内存中的线下消息: ${offlineMessages.length}条`);
+                console.log(`📱 使用内存中的线下消息 (窗口${windowId}): ${offlineMessages.length}条`);
             }
 
             // 🔥【修改】加载全局预设从Dexie数据库
@@ -42243,10 +42287,12 @@ ${conversationHistory}
 
         // 保存线下消息
         function saveOfflineMessages() {
-            if (!currentChatCharacter) return;
+            if (!currentChatCharacter || !windowId) return;
 
-            const key = `offlineMessages_${currentChatCharacter.id}`;
+            // 🔥【修复】加入窗口ID，确保不同窗口的线下消息完全隔离
+            const key = `offlineMessages_${currentChatCharacter.id}_${windowId}`;
             localStorage.setItem(key, JSON.stringify(offlineMessages));
+            console.log(`💾 保存线下消息到localStorage (窗口${windowId}): ${offlineMessages.length}条`);
         }
 
         // 重新生成线下模式的最后一条AI回复
@@ -43032,14 +43078,18 @@ ${conversationHistory}
 
         // 加载线下模式界面设置
         async function loadOfflineUISettings() {
+            if (!currentChatCharacter || !windowId) return;
+
             const characterId = currentChatCharacter.id;
 
             try {
-                // 🔥【修改】从Dexie数据库加载设置（每个角色独立）
-                const settingsRecord = await db.offlineUISettings.get(`${characterId}_ui_settings`);
+                // 🔥【修复】从Dexie数据库加载设置（加入窗口ID隔离）
+                const settingsRecord = await db.offlineUISettings.get(`${characterId}_${windowId}_ui_settings`);
                 if (settingsRecord && settingsRecord.settings) {
                     offlineUISettings = settingsRecord.settings;
+                    console.log(`✅ 从数据库加载线下模式界面设置 (窗口${windowId})`);
                 } else {
+                    console.log(`📝 未找到窗口${windowId}的设置，使用默认设置`);
                     // 默认设置
                     offlineUISettings = {
                         myBubbleColor: '#007AFF',
@@ -43081,14 +43131,22 @@ ${conversationHistory}
 
                 // 如果Dexie加载失败，尝试从localStorage加载（兼容性）
                 try {
-                    const savedSettings = localStorage.getItem(`offlineUISettings_${characterId}`);
+                    // 🔥【修复】尝试加载带窗口ID的设置，如果没有则尝试旧格式
+                    let savedSettings = localStorage.getItem(`offlineUISettings_${characterId}_${windowId}`);
+                    if (!savedSettings) {
+                        // 尝试加载旧格式的设置（不带窗口ID）
+                        savedSettings = localStorage.getItem(`offlineUISettings_${characterId}`);
+                    }
+
                     if (savedSettings) {
                         offlineUISettings = JSON.parse(savedSettings);
-                        console.log('✅ 从localStorage加载设置成功');
+                        console.log(`✅ 从localStorage加载设置成功 (窗口${windowId})`);
 
-                        // 立即迁移到Dexie
+                        // 立即迁移到Dexie（使用新的窗口ID格式）
                         await saveOfflineUISettingsToDB();
+                        // 清理旧格式的localStorage数据
                         localStorage.removeItem(`offlineUISettings_${characterId}`);
+                        localStorage.removeItem(`offlineUISettings_${characterId}_${windowId}`);
                         console.log('✅ 设置已迁移到Dexie数据库');
                     }
                 } catch (fallbackError) {
@@ -43788,25 +43846,28 @@ ${conversationHistory}
 
         // 🔥【新增】保存设置到Dexie数据库
         async function saveOfflineUISettingsToDB() {
-            if (!currentChatCharacter || !offlineUISettings) return;
+            if (!currentChatCharacter || !offlineUISettings || !windowId) return;
 
             const characterId = currentChatCharacter.id;
 
             try {
+                // 🔥【修复】加入窗口ID，确保不同窗口的UI设置完全隔离
                 await db.offlineUISettings.put({
-                    id: `${characterId}_ui_settings`,
+                    id: `${characterId}_${windowId}_ui_settings`,
                     characterId: characterId,
+                    windowId: windowId,
                     settings: offlineUISettings,
                     timestamp: Date.now()
                 });
-                console.log('✅ 线下模式界面设置已保存到数据库');
+                console.log(`✅ 线下模式界面设置已保存到数据库 (窗口${windowId})`);
             } catch (error) {
                 console.error('❌ 保存线下模式界面设置到数据库失败:', error);
 
                 // 如果Dexie保存失败，回退到localStorage
                 try {
-                    localStorage.setItem(`offlineUISettings_${characterId}`, JSON.stringify(offlineUISettings));
-                    console.log('✅ 已回退保存到localStorage');
+                    // 🔥【修复】localStorage键名也加入窗口ID
+                    localStorage.setItem(`offlineUISettings_${characterId}_${windowId}`, JSON.stringify(offlineUISettings));
+                    console.log(`✅ 已回退保存到localStorage (窗口${windowId})`);
                 } catch (fallbackError) {
                     console.error('❌ 回退保存到localStorage也失败:', fallbackError);
                     throw new Error('保存设置失败');
@@ -44104,28 +44165,35 @@ ${conversationHistory}
 
         // 在进入线下模式时加载并应用界面设置
         async function loadAndApplyOfflineUISettings() {
-            if (!currentChatCharacter) return;
+            if (!currentChatCharacter || !windowId) return;
 
             const characterId = currentChatCharacter.id;
 
             try {
-                // 🔥【修改】从Dexie数据库加载设置
-                const settingsRecord = await db.offlineUISettings.get(`${characterId}_ui_settings`);
+                // 🔥【修复】从Dexie数据库加载设置（加入窗口ID隔离）
+                const settingsRecord = await db.offlineUISettings.get(`${characterId}_${windowId}_ui_settings`);
                 if (settingsRecord && settingsRecord.settings) {
                     offlineUISettings = settingsRecord.settings;
                     applyOfflineUISettings();
-                    console.log('✅ 线下模式界面设置已加载并应用');
+                    console.log(`✅ 线下模式界面设置已加载并应用 (窗口${windowId})`);
                 } else {
                     // 如果数据库中没有设置，尝试从localStorage加载（兼容性）
-                    const savedSettings = localStorage.getItem(`offlineUISettings_${characterId}`);
+                    let savedSettings = localStorage.getItem(`offlineUISettings_${characterId}_${windowId}`);
+                    if (!savedSettings) {
+                        // 尝试加载旧格式的设置（不带窗口ID）
+                        savedSettings = localStorage.getItem(`offlineUISettings_${characterId}`);
+                    }
+
                     if (savedSettings) {
                         offlineUISettings = JSON.parse(savedSettings);
                         applyOfflineUISettings();
 
-                        // 立即迁移到Dexie
+                        // 立即迁移到Dexie（使用新的窗口ID格式）
                         await saveOfflineUISettingsToDB();
+                        // 清理旧格式的localStorage数据
                         localStorage.removeItem(`offlineUISettings_${characterId}`);
-                        console.log('✅ 设置已从localStorage迁移到Dexie');
+                        localStorage.removeItem(`offlineUISettings_${characterId}_${windowId}`);
+                        console.log(`✅ 设置已从localStorage迁移到Dexie (窗口${windowId})`);
                     }
                 }
             } catch (error) {
