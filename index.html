@@ -41218,11 +41218,12 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
 
             console.log('🪟 窗口ID已初始化:', windowId);
 
-            // 🔥【新增】监听窗口关闭事件，清理当前窗口的线下模式数据
-            window.addEventListener('beforeunload', cleanupWindowOfflineData);
+            // 🔥【修复】移除beforeunload监听器，以防止刷新时清除数据
+            // window.addEventListener('beforeunload', cleanupWindowOfflineData);
         }
 
-        // 🔥【新增】清理当前窗口的线下模式数据
+        // 🔥【修复】删除cleanupWindowOfflineData函数，以防止刷新时清除数据
+        /*
         function cleanupWindowOfflineData() {
             if (!windowId) return;
 
@@ -41241,6 +41242,7 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                 console.error('清理窗口线下模式数据失败:', error);
             }
         }
+        */
 
         // 🔥【已废弃】迁移功能已移至数据库版本13中自动处理
 
@@ -41250,6 +41252,10 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                 showToast('请先选择一个角色', 'warning');
                 return;
             }
+
+            // 🔥【修复】在切换模式前，强制清空旧的聊天记录数组
+            // 这将确保每次都为当前角色加载正确的聊天记录
+            offlineMessages = [];
 
             isOfflineMode = !isOfflineMode;
             const overlay = document.getElementById('offline-mode-overlay');
@@ -43912,6 +43918,14 @@ ${conversationHistory}
             const offlineOverlay = document.getElementById('offline-mode-overlay');
             if (!offlineOverlay) return;
 
+            // 🔥【修复】获取聊天消息容器并重置背景
+            const chatMessages = offlineOverlay.querySelector('.offline-chat-messages');
+            if (chatMessages) {
+                // 先清除旧背景
+                chatMessages.style.backgroundImage = '';
+                chatMessages.style.backgroundColor = ''; // 同样重置背景色
+            }
+
             // 确保设置有默认值
             const myBubbleColor = offlineUISettings.myBubbleColor || '#007AFF';
             const aiBubbleColor = offlineUISettings.aiBubbleColor || '#f0f0f0';
@@ -43956,7 +43970,6 @@ ${conversationHistory}
             });
 
             // 应用背景壁纸
-            const chatMessages = offlineOverlay.querySelector('.offline-chat-messages');
             if (chatMessages && offlineUISettings.wallpaperData) {
                 chatMessages.style.backgroundImage = `url(${offlineUISettings.wallpaperData})`;
                 chatMessages.style.backgroundSize = 'cover';
