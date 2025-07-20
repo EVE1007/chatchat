@@ -11549,7 +11549,7 @@ async function startChat(character) {
             // 主要提醒文字
             const mainText = document.createElement('div');
             mainText.style.marginBottom = '2px';
-            mainText.textContent = `${displayName} 撤回了一条消息`;
+            mainText.textContent = `对方撤回了一条消息`;
             
             // 原文显示
             const originalText = document.createElement('div');
@@ -11569,7 +11569,7 @@ async function startChat(character) {
                 id: `recalled_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 sender: 'system',
                 type: 'recalled_message',
-                content: `${displayName} 撤回了一条消息\n原文：${messageContent}`,
+                content: `对方撤回了一条消息\n原文：${messageContent}`,
                 originalContent: messageContent,
                     timestamp: Date.now()
                 };
@@ -14130,7 +14130,7 @@ async function applyChatBackground(backgroundUrl) {
                     messages.splice(messageIndex, 1);
 
                 // 🔥【新增】创建撤回消息系统提醒
-                const whoRecalled = messageToDelete.sender === 'received' ? currentChatCharacter.name : '你';
+                const whoRecalled = messageToDelete.sender === 'received' ? '对方' : '你';
                 const recallSystemMessage = {
                     id: Date.now().toString(),
                     sender: 'system',
