@@ -1710,7 +1710,7 @@
                                     <div class="setting-item" onclick="showBlacklistSettings()">
                                         <div class="setting-left">
                                             <div class="setting-label" id="block-manage-label">拉黑管理</div>
-                                            <div class="setting-desc" id="block-manage-desc">拉黑/解除拉黑，设置冷静时间</div>
+                                            <div class="setting-desc" id="block-manage-desc">拉黑/解除拉黑管理</div>
                                         </div>
                                         <div class="setting-right">
                                             <i class="fas fa-chevron-right"></i>
@@ -4084,7 +4084,7 @@
             crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
 
             // 拉黑和好友系统
-            blacklist: '&id, blockerId, blockedId, timestamp, cooldownMinutes, reason',
+            blacklist: '&id, blockerId, blockedId, timestamp, reason',
             blockedCharacters: '&id, characterId, blockedBy, timestamp',
             friendRequests: '&id, fromId, toId, timestamp, status, type, message',
             characterStatus: '&id, characterId, status, activity, location, lastUpdate',
@@ -7886,16 +7886,19 @@ ${chatContext}${momentsContext}
                 }
             }
 
-            // 🔥【关键修复】渲染单人聊天 - 直接使用角色列表而不是联系人列表
-            const sortedCharacters = [...characters].sort((a, b) => {
+            // 🔥【修复】只渲染存在于 contacts 列表中的单人对话
+            const singleChats = characters.filter(character => contacts.includes(character.id));
+
+            const sortedSingleChats = singleChats.sort((a, b) => {
                 const aPinned = isPinned(a.id);
                 const bPinned = isPinned(b.id);
                 if (aPinned && !bPinned) return -1;
                 if (!aPinned && bPinned) return 1;
+                // 你可以在这里添加按最后消息时间的排序逻辑
                 return 0;
             });
 
-            sortedCharacters.forEach(character => {
+            sortedSingleChats.forEach(character => {
                 // 直接使用角色对象，不需要再查找
                 if (character) {
                     // 🔥【修复】获取该聊天的昵称设置
@@ -12916,45 +12919,143 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
             alert('气泡颜色设置功能开发中...\n\n当前可以通过以下方式设置：\n• 修改对方气泡颜色\n• 修改我方气泡颜色');
         }
         
-        // 清空聊天记录
-        async function clearChatHistory() {
+        // 🔥【新增】显示带选项的清空历史记录模态框
+        function showClearHistoryOptionsModal() {
             if (!currentChatCharacter) return;
-            
-            if (confirm(`确定要清空与 ${currentChatCharacter.name} 的所有聊天记录和聊天设置吗？\n\n此操作将重置所有专属设置（背景、气泡样式等），不可恢复！`)) {
-                // 清空聊天记录
-                chatMessages[currentChatCharacter.id] = [];
+
+            // 创建模态框的HTML结构
+            const modalHTML = `
+                <div id="clear-history-options-modal" class="modal" style="display: flex;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">清空聊天记录</h3>
+                            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <p style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                                你确定要清空与 <strong>${currentChatCharacter.name}</strong> 的聊天记录吗？
+                            </p>
+                            <div class="setting-section">
+                                <div class="section-header" style="padding: 0 0 10px 0;">
+                                    <i class="fas fa-brain section-icon"></i>
+                                    <span class="section-title">同步清除相关记忆</span>
+                                </div>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-option">
+                                        <input type="checkbox" id="clear-core-memory" value="core" checked>
+                                        <span class="checkbox-custom"></span>
+                                        <div class="checkbox-content">
+                                            <div class="checkbox-title">核心记忆</div>
+                                            <div class="checkbox-desc">角色记住的关键信息（如生日、关系）。</div>
+                                        </div>
+                                    </label>
+                                    <label class="checkbox-option">
+                                        <input type="checkbox" id="clear-episodic-memory" value="episodic" checked>
+                                        <span class="checkbox-custom"></span>
+                                        <div class="checkbox-content">
+                                            <div class="checkbox-title">情景记忆</div>
+                                            <div class="checkbox-desc">日常互动和经历的记忆。</div>
+                                        </div>
+                                    </label>
+                                    <label class="checkbox-option">
+                                        <input type="checkbox" id="clear-timeline" value="timeline" checked>
+                                        <span class="checkbox-custom"></span>
+                                        <div class="checkbox-content">
+                                            <div class="checkbox-title">时间线</div>
+                                            <div class="checkbox-desc">所有活动的详细时间记录。</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <p style="margin-top: 15px; font-size: 12px; color: #999;">
+                                <strong>提示：</strong>聊天设置（如身份、背景）将会被保留。
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="modal-button modal-secondary" onclick="this.closest('.modal').remove()">取消</button>
+                            <button class="modal-button modal-primary" style="background-color: #ff3b30;" onclick="executeClearHistory()">确认清空</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 添加到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 🔥【新增】根据用户的选择执行清除操作
+        async function executeClearHistory() {
+            const characterId = currentChatCharacter.id;
+            console.log(`🧹 开始清理角色 ${characterId} 的聊天数据...`);
+            showToast('正在进行深度清理...', 'info');
+
+            // 获取用户选择
+            const clearCore = document.getElementById('clear-core-memory')?.checked || false;
+            const clearEpisodic = document.getElementById('clear-episodic-memory')?.checked || false;
+            const clearTimeline = document.getElementById('clear-timeline')?.checked || false;
+
+            // 移除模态框
+            const modal = document.getElementById('clear-history-options-modal');
+            if (modal) modal.remove();
+
+            try {
+                // 1. 清空聊天消息 (总是执行)
+                chatMessages[characterId] = [];
                 await saveChatMessages();
-                
-                // [核心修复] 删除并重置聊天设置
-                try {
-                    // 从数据库中删除设置
-                    await db.chatSettings.delete(currentChatCharacter.id);
-                    // 从内存中删除设置
-                    if (chatSettings[currentChatCharacter.id]) {
-                        delete chatSettings[currentChatCharacter.id];
+                console.log('✅ 聊天消息已清空');
+
+                // 2. 根据用户的勾选，选择性地清除记忆
+                const contextId = characterId;
+
+                if (clearCore) {
+                    const coreMemoriesToDelete = await db.coreMemories.where({ characterId: characterId, contextId: contextId }).primaryKeys();
+                    if (coreMemoriesToDelete.length > 0) {
+                        await db.coreMemories.bulkDelete(coreMemoriesToDelete);
+                        console.log(`✅ 清除了 ${coreMemoriesToDelete.length} 条核心记忆`);
                     }
-                    // 删除localStorage中的备份设置
-                    localStorage.removeItem(`chatSettings_${currentChatCharacter.id}`);
-                    
-                    // 重置角色对象中的背景设置
-                    if (currentChatCharacter) {
-                        currentChatCharacter.background = null;
-                        await saveCharacters();
-                    }
-                    
-                    console.log(`✅ 已删除与 ${currentChatCharacter.name} 的聊天设置`);
-                    
-                    // 重新应用默认背景
-                    await applyChatBackground(null);
-                } catch (error) {
-                    console.error(`删除聊天设置失败:`, error);
                 }
-                
-                renderChatMessages(currentChatCharacter.id);
-                renderMessageList(); // 更新消息列表
-                showToast('聊天记录和设置已清空', 'success');
+
+                if (clearEpisodic) {
+                    const episodicMemoriesToDelete = await db.episodicMemories.where({ characterId: characterId, contextId: contextId }).primaryKeys();
+                    if (episodicMemoriesToDelete.length > 0) {
+                        await db.episodicMemories.bulkDelete(episodicMemoriesToDelete);
+                        console.log(`✅ 清除了 ${episodicMemoriesToDelete.length} 条情景记忆`);
+                    }
+                }
+
+                if (clearTimeline) {
+                    const timelineEventsToDelete = await db.crossAppTimeline.where({ characterId: characterId }).and(event => event.context && event.context.id === contextId).primaryKeys();
+                    if (timelineEventsToDelete.length > 0) {
+                        await db.crossAppTimeline.bulkDelete(timelineEventsToDelete);
+                        console.log(`✅ 清除了 ${timelineEventsToDelete.length} 条时间线记录`);
+                    }
+
+                    const memorySummariesToDelete = await db.memorySummaries.where({ characterId: characterId }).and(summary => summary.context && summary.context.id === contextId).primaryKeys();
+                    if (memorySummariesToDelete.length > 0) {
+                        await db.memorySummaries.bulkDelete(memorySummariesToDelete);
+                        console.log(`✅ 清除了 ${memorySummariesToDelete.length} 条记忆摘要`);
+                    }
+                }
+
+                // 3. 刷新界面
+                renderChatMessages(characterId);
+                renderMessageList();
+
+                showToast('所选数据已彻底清除！', 'success');
+                console.log(`🧹 角色 ${characterId} 的数据清理完成`);
+
                 hideChatSettings();
+
+            } catch (error) {
+                console.error('深度清理失败:', error);
+                showToast('清理失败，请检查控制台', 'error');
             }
+        }
+
+        // 清空聊天记录
+        function clearChatHistory() {
+            // 🔥【最终修复】不再直接执行删除，而是调用新的函数来显示带选项的模态框
+            showClearHistoryOptionsModal();
         }
         
         // 选择颜色
@@ -13999,11 +14100,11 @@ async function applyChatBackground(backgroundUrl) {
                     messages.splice(messageIndex, 1);
 
                 // 🔥【新增】创建撤回消息系统提醒
-                const whoRecalled = messageToDelete.sender === 'received' ? currentChatCharacter.name : '用户';
+                const whoRecalled = messageToDelete.sender === 'received' ? currentChatCharacter.name : '你';
                 const recallSystemMessage = {
                     id: Date.now().toString(),
                     sender: 'system',
-                    content: `${whoRecalled}撤回了一条消息，原内容是："${originalContent}"`,
+                    content: `${whoRecalled}撤回了一条消息，原文是："${originalContent}"`,
                     timestamp: messageToDelete.timestamp || Date.now(),
                     isRecall: true
                 };
@@ -22726,6 +22827,38 @@ async function createGroupChat(personaId) {
                             timestamp: Date.now() + i * 100
                         };
                     }
+                } else if (msgData.type === 'recall_previous') {
+                    // 🔥【新增】处理AI撤回上一条消息
+                    console.log('🔥 AI请求撤回上一条消息:', msgData);
+
+                    // 查找上一条AI消息
+                    const allMessages = chatMessages[currentChatCharacter.id] || [];
+                    let lastAIMessageIndex = -1;
+
+                    for (let j = allMessages.length - 1; j >= 0; j--) {
+                        if (allMessages[j].sender === 'received') {
+                            lastAIMessageIndex = j;
+                            break;
+                        }
+                    }
+
+                    if (lastAIMessageIndex !== -1) {
+                        const messageToRecall = allMessages[lastAIMessageIndex];
+                        console.log('🔥 找到要撤回的消息:', messageToRecall);
+
+                        // 调用撤回消息处理函数
+                        await handleRecalledMessage(messageToRecall.content, messageToRecall.id);
+                    } else {
+                        console.warn('🔥 没有找到可撤回的AI消息');
+                        // 如果没有找到消息，显示一条提示
+                        aiMessage = {
+                            id: (Date.now() + i).toString(),
+                            sender: 'received',
+                            content: '[AI撤回了上一条消息]',
+                            timestamp: Date.now() + i * 100
+                        };
+                    }
+                    continue; // 跳过正常的消息处理流程
                 } else if (msgData.type === 'change_avatar') {
                         if (msgData.avatar_url) {
                             // 🔥【修复】先处理占位符替换，再验证和执行头像更换
@@ -23193,7 +23326,8 @@ async function createGroupChat(personaId) {
         await saveChatMessages();
                 renderChatMessages(characterId);
             } finally {
-                // 重置重新生成标志
+                // 🔥【修复】在这里也清除待回复消息，并重置重新生成标志
+                pendingUserMessage = null;
                 window._isRegenerating = false;
             }
             
@@ -23377,12 +23511,37 @@ async function createGroupChat(personaId) {
                     const msgData = aiMessages[i];
                     let aiMessage;
                     
-                    if (typeof msgData === 'object' && msgData.type === 'voice_message') {
-                        aiMessage = { 
+                    if (typeof msgData === 'object' && msgData.type === 'recall_previous') {
+                        // 🔥【新增】处理AI撤回上一条消息
+                        console.log('🔥 [续写] AI请求撤回上一条消息:', msgData);
+
+                        // 查找上一条AI消息
+                        const allMessages = chatMessages[continuingCharacterId] || [];
+                        let lastAIMessageIndex = -1;
+
+                        for (let j = allMessages.length - 1; j >= 0; j--) {
+                            if (allMessages[j].sender === 'received') {
+                                lastAIMessageIndex = j;
+                                break;
+                            }
+                        }
+
+                        if (lastAIMessageIndex !== -1) {
+                            const messageToRecall = allMessages[lastAIMessageIndex];
+                            console.log('🔥 [续写] 找到要撤回的消息:', messageToRecall);
+
+                            // 调用撤回消息处理函数
+                            await handleRecalledMessage(messageToRecall.content, messageToRecall.id);
+                        } else {
+                            console.warn('🔥 [续写] 没有找到可撤回的AI消息');
+                        }
+                        continue; // 跳过正常的消息处理流程
+                    } else if (typeof msgData === 'object' && msgData.type === 'voice_message') {
+                        aiMessage = {
                             id: (Date.now() + i).toString(),
                             sender: 'received',
-                            type: 'voice_message', 
-                            content: msgData.content, 
+                            type: 'voice_message',
+                            content: msgData.content,
                             timestamp: Date.now() + i * 100
                         };
                     } else if (typeof msgData === 'object' && msgData.type === 'ai_image') {
@@ -24083,6 +24242,38 @@ async function createGroupChat(personaId) {
                     timestamp: Date.now() + i * 100
                 };
             }
+        } else if (msgData.type === 'recall_previous') {
+            // 🔥【新增】处理AI撤回上一条消息
+            console.log('🔥 AI请求撤回上一条消息:', msgData);
+
+            // 查找上一条AI消息
+            const allMessages = chatMessages[replyingCharacterId] || [];
+            let lastAIMessageIndex = -1;
+
+            for (let j = allMessages.length - 1; j >= 0; j--) {
+                if (allMessages[j].sender === 'received') {
+                    lastAIMessageIndex = j;
+                    break;
+                }
+            }
+
+            if (lastAIMessageIndex !== -1) {
+                const messageToRecall = allMessages[lastAIMessageIndex];
+                console.log('🔥 找到要撤回的消息:', messageToRecall);
+
+                // 调用撤回消息处理函数
+                await handleRecalledMessage(messageToRecall.content, messageToRecall.id);
+            } else {
+                console.warn('🔥 没有找到可撤回的AI消息');
+                // 如果没有找到消息，显示一条提示
+                aiMessage = {
+                    id: (Date.now() + i).toString(),
+                    sender: 'received',
+                    content: '[AI撤回了上一条消息]',
+                    timestamp: Date.now() + i * 100
+                };
+            }
+            continue; // 跳过正常的消息处理流程
         } else if (msgData.type === 'voice_call') {
             // 🔥【新增】处理AI主动发起语音通话
             console.log('🔔 AI请求发起语音通话:', msgData);
@@ -34256,26 +34447,26 @@ async function changeMyGroupAvatar() {
                             // 这里不需要立即保存，后面会统一保存
                         }
 
-                        // 3. 正确处理单聊和群聊的删除
-                    const groupIndex = groupChats.findIndex(g => g.id === conversationId);
-                    if (groupIndex > -1) {
+                        // 3. 🔥【修复】区分单聊和群聊的删除逻辑
+                        const groupIndex = groupChats.findIndex(g => g.id === conversationId);
+                        if (groupIndex > -1) {
                             // 如果是群聊，从群聊列表中删除
-                        groupChats.splice(groupIndex, 1);
-                    } else {
-                            // 如果是单聊，从联系人列表中移除
-                        const contactIndex = contacts.indexOf(conversationId);
-                        if (contactIndex > -1) {
-                            contacts.splice(contactIndex, 1);
+                            groupChats.splice(groupIndex, 1);
+                        } else {
+                            // 如果是单聊，从联系人列表中移除 (这代表移除了一个"活跃对话")
+                            const contactIndex = contacts.indexOf(conversationId);
+                            if (contactIndex > -1) {
+                                contacts.splice(contactIndex, 1);
+                            }
                         }
                     }
-                    }
 
-                    // 4. [异步保存] 等待所有数据保存操作完成
+                    // 4. 异步保存所有更改
                     await Promise.all([
                         saveChatMessages(),
                         saveGroupChats(),
-                        saveContacts(),
-                        saveCharacters() // 确保保存角色数据，包括背景设置
+                        saveContacts()
+                        // 🔥【修复】不再需要保存 characters，因为我们没有修改角色本身
                     ]);
 
                     // 5. 退出多选模式并刷新UI
@@ -35004,17 +35195,7 @@ async function changeMyGroupAvatar() {
                         <i class="fas fa-cog section-icon"></i>
                         <span class="section-title">拉黑设置</span>
                     </div>
-                    <div class="setting-card">
-                        <div class="setting-item">
-                            <div class="setting-left">
-                                <div class="setting-label">冷静时间（分钟）</div>
-                                <div class="setting-desc">拉黑后需要等待的时间才能申请好友</div>
-                            </div>
-                            <div class="setting-right">
-                                <input type="number" id="cooldown-minutes" min="5" max="1440" value="30" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
 
                 <div class="settings-section">
@@ -35065,10 +35246,9 @@ async function changeMyGroupAvatar() {
     <script>
         // 拉黑系统全局变量 - 检查是否已存在，避免重复声明
         if (typeof blacklistData === 'undefined') {
-            var blacklistData = []; 
-            var friendRequestsData = []; 
+            var blacklistData = [];
+            var friendRequestsData = [];
             var characterStatusData = [];
-            var defaultCooldownMinutes = 30;
         }
 
         // 加载拉黑系统数据
@@ -35091,38 +35271,24 @@ async function changeMyGroupAvatar() {
             );
         }
 
-        // 检查是否在冷静期
-        function isInCooldown(blockerId, blockedId) {
-            const record = blacklistData.find(r => 
-                r.blockerId === blockerId && 
-                r.blockedId === blockedId && 
-                r.unblocked
-            );
-            
-            if (!record || !record.unblockTimestamp) return false;
-            
-            const cooldownEnd = new Date(new Date(record.unblockTimestamp).getTime() + (record.cooldownMinutes * 60 * 1000));
-            return new Date() < cooldownEnd;
-        }
+
 
         // 拉黑角色
-        async function blockCharacter(characterId, reason = '', cooldownMinutes = null) {
+        async function blockCharacter(characterId, reason = '') {
             try {
                 const now = new Date();
-                const cooldown = cooldownMinutes || defaultCooldownMinutes;
-                
+
                 if (isBlocked('user', characterId)) {
                     showToast('该角色已被拉黑', 'warning');
                     return;
                 }
-                
+
                 const blockRecord = {
                     id: `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                     blockerId: 'user',
                     blockedId: characterId,
                     timestamp: now.toISOString(),
                     reason: reason,
-                    cooldownMinutes: cooldown,
                     unblocked: false
                 };
                 
@@ -35249,7 +35415,6 @@ async function changeMyGroupAvatar() {
                     blockedId: 'user',
                     timestamp: now.toISOString(),
                     reason: reason,
-                    cooldownMinutes: 0, // 角色拉黑用户不需要冷静时间
                     unblocked: false
                 };
                 
@@ -35579,12 +35744,6 @@ async function changeMyGroupAvatar() {
                 const statusDesc = document.getElementById('blacklist-status-desc');
                 const actionLabel = document.getElementById('block-action-label');
                 const actionDesc = document.getElementById('block-action-desc');
-                const cooldownContainer = document.querySelector('.cooldown-setting');
-
-                // 确保冷静时间设置在单聊中显示
-                if (cooldownContainer) {
-                    cooldownContainer.style.display = 'block';
-                }
 
                 if (isUserBlocked) {
                     statusDesc.textContent = '你已拉黑此角色';
@@ -35596,7 +35755,6 @@ async function changeMyGroupAvatar() {
                     actionDesc.textContent = '阻止该角色向你发送消息';
                 }
 
-                document.getElementById('cooldown-minutes').value = defaultCooldownMinutes;
                 document.getElementById('blacklist-settings-modal').style.display = 'flex';
             }
         }
@@ -35612,7 +35770,7 @@ async function changeMyGroupAvatar() {
                     descElement.textContent = '屏蔽/取消屏蔽群聊消息通知';
                 } else {
                     labelElement.textContent = '拉黑管理';
-                    descElement.textContent = '拉黑/解除拉黑，设置冷静时间';
+                    descElement.textContent = '拉黑/解除拉黑管理';
                 }
             }
         }
@@ -35625,7 +35783,6 @@ async function changeMyGroupAvatar() {
             const statusDesc = document.getElementById('blacklist-status-desc');
             const actionLabel = document.getElementById('block-action-label');
             const actionDesc = document.getElementById('block-action-desc');
-            const cooldownContainer = document.querySelector('.cooldown-setting');
 
             // 修改界面文案为屏蔽相关
             if (isMuted) {
@@ -35636,11 +35793,6 @@ async function changeMyGroupAvatar() {
                 statusDesc.textContent = '正常接收群聊消息';
                 actionLabel.textContent = '屏蔽此群聊';
                 actionDesc.textContent = '不再接收该群聊的消息通知';
-            }
-
-            // 隐藏冷静时间设置（群聊屏蔽不需要冷静时间）
-            if (cooldownContainer) {
-                cooldownContainer.style.display = 'none';
             }
 
             document.getElementById('blacklist-settings-modal').style.display = 'flex';
@@ -35685,13 +35837,7 @@ async function changeMyGroupAvatar() {
         // 显示好友申请模态框
         function showFriendRequestModal() {
             if (!currentChatCharacter) return;
-            
-            // 检查是否在冷静期
-            if (isInCooldown(currentChatCharacter.id, 'user')) {
-                showToast('还在冷静期内，请稍后再试', 'warning');
-                return;
-            }
-            
+
             document.getElementById('friend-request-message').value = '';
             document.getElementById('friend-request-modal').style.display = 'flex';
         }
@@ -35792,7 +35938,6 @@ async function changeMyGroupAvatar() {
             } else {
                 // 单聊拉黑逻辑
                 const isUserBlocked = isBlocked('user', characterId);
-                const cooldownMinutes = parseInt(document.getElementById('cooldown-minutes').value) || 30;
 
                 if (isUserBlocked) {
                     if (confirm(`确定要解除对 ${currentChatCharacter.name} 的拉黑吗？`)) {
@@ -35800,8 +35945,8 @@ async function changeMyGroupAvatar() {
                         hideBlacklistSettings();
                     }
                 } else {
-                    if (confirm(`确定要拉黑 ${currentChatCharacter.name} 吗？\n\n冷静时间：${cooldownMinutes}分钟`)) {
-                        blockCharacter(characterId, '', cooldownMinutes);
+                    if (confirm(`确定要拉黑 ${currentChatCharacter.name} 吗？`)) {
+                        blockCharacter(characterId, '');
                         hideBlacklistSettings();
                     }
                 }
@@ -35923,9 +36068,11 @@ async function changeMyGroupAvatar() {
                 // 构建上下文信息
                 let chatContext = '';
                 if (recentMessages.length > 0) {
+                    // 🔥【修复】使用实际用户名而不是"用户"
+                    const userName = getCurrentPersonaName();
                     chatContext = '最近的聊天记录：\n' +
                         recentMessages.map(msg => {
-                            if (msg.sender === 'sent') return `用户：${msg.content}`;
+                            if (msg.sender === 'sent') return `${userName}：${msg.content}`;
                             if (msg.sender === 'received') return `${character.name}：${msg.content}`;
                             return '';
                         }).filter(Boolean).join('\n') + '\n\n';
