@@ -3467,9 +3467,18 @@
         /* 🔥【新增】消息容器相对定位，用于放置按钮条 */
         .message-container {
             position: relative;
-            /* 🔥【修复】只阻止文本选择和长按菜单，保留滑动功能 */
+            /* 🔥【增强】全面禁用Safari长按菜单和文本选择 */
             -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
             -webkit-tap-highlight-color: transparent;
+            /* 🔥【新增】禁用Safari的长按上下文菜单 */
+            -webkit-context-menu: none;
+            /* 🔥【新增】禁用iOS Safari的文本选择和复制粘贴 */
+            -webkit-user-drag: none;
+            -webkit-user-modify: read-only;
         }
 
         /* 🔥【统一样式】所有主题下按钮条都保持白底黑字 */
@@ -15911,6 +15920,19 @@ textarea.call-text-input {
             body {
                 /* iOS Safari专用修复 */
                 position: fixed !important;
+                /* 🔥【增强】全面禁用Safari长按菜单 */
+                -webkit-touch-callout: none !important;
+                -webkit-user-select: none !important;
+                -webkit-tap-highlight-color: transparent !important;
+            }
+
+            /* 🔥【新增】针对所有可能触发长按的元素 */
+            .message-bubble, .offline-message-content, .message-item, .contact-item {
+                -webkit-touch-callout: none !important;
+                -webkit-user-select: none !important;
+                -webkit-context-menu: none !important;
+                -webkit-user-drag: none !important;
+            }
                 width: 100% !important;
                 height: 100% !important;
                 overflow: hidden !important;
