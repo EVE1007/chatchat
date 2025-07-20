@@ -41417,6 +41417,21 @@ ${dbCharacters.filter(c => c.name === '张三' || c.name === '李四').map(c => 
                 // 保存到线下模式聊天记录
                 await saveOfflineHistoryRecord(summary, offlineMessages.slice());
 
+                // 🔥【关键修复】确保线下模式消息已经保存到主聊天记录中
+                // 检查主聊天记录中是否包含所有线下消息
+                const characterId = currentChatCharacter.id;
+                if (chatMessages[characterId]) {
+                    const offlineMessagesInMain = chatMessages[characterId].filter(msg => msg.isOfflineMode);
+                    console.log(`📊 主聊天记录中的线下消息: ${offlineMessagesInMain.length}条`);
+                    console.log(`📊 当前线下消息数组: ${offlineMessages.length}条`);
+
+                    // 确保主聊天记录已保存
+                    await saveChatMessages(characterId);
+                    console.log('✅ 已确保线下模式消息保存到主聊天记录中');
+                } else {
+                    console.warn('⚠️ 主聊天记录为空，这可能导致记忆连接问题');
+                }
+
                 // 清空线下消息记录
                 offlineMessages = [];
                 saveOfflineMessages(); // 保存清空状态到localStorage
@@ -41528,6 +41543,21 @@ ${conversationHistory}
 
                     // 🔥【新增】保存聊天记录到历史记录
                     saveOfflineHistoryRecord(summary.trim(), offlineMessages.slice());
+
+                    // 🔥【关键修复】确保线下模式消息已经保存到主聊天记录中
+                    // 检查主聊天记录中是否包含所有线下消息
+                    const characterId = currentChatCharacter.id;
+                    if (chatMessages[characterId]) {
+                        const offlineMessagesInMain = chatMessages[characterId].filter(msg => msg.isOfflineMode);
+                        console.log(`📊 主聊天记录中的线下消息: ${offlineMessagesInMain.length}条`);
+                        console.log(`📊 当前线下消息数组: ${offlineMessages.length}条`);
+
+                        // 确保主聊天记录已保存
+                        await saveChatMessages(characterId);
+                        console.log('✅ 已确保线下模式消息保存到主聊天记录中');
+                    } else {
+                        console.warn('⚠️ 主聊天记录为空，这可能导致记忆连接问题');
+                    }
 
                     // 🔥【修复】清空线下模式消息
                     offlineMessages = [];
