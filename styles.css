@@ -4694,14 +4694,9 @@ textarea.call-text-input {
             font-size: 16px;
             resize: none;
             max-height: 100px;
-            min-height: 20px; /* 🔥【新增】设置最小高度 */
             outline: none;
             box-shadow: var(--text-shadow-light);
             box-sizing: border-box;
-            line-height: 1.4; /* 🔥【新增】设置行高以支持多行显示 */
-            overflow-y: auto; /* 🔥【新增】超出最大高度时显示滚动条 */
-            white-space: pre-wrap; /* 🔥【新增】保留换行符和空格 */
-            word-wrap: break-word; /* 🔥【新增】长单词自动换行 */
         }
         
         .send-button {
@@ -13495,9 +13490,6 @@ textarea.call-text-input {
             max-height: 120px;
             min-height: 20px;
             font-family: var(--theme-font-family);
-            overflow-y: auto; /* 🔥【新增】超出最大高度时显示滚动条 */
-            white-space: pre-wrap; /* 🔥【新增】保留换行符和空格 */
-            word-wrap: break-word; /* 🔥【新增】长单词自动换行 */
         }
 
         .offline-button-group {
