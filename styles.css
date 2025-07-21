@@ -15953,8 +15953,7 @@ textarea.call-text-input {
                 user-select: none !important;
                 -webkit-context-menu: none !important;
                 -webkit-user-drag: none !important;
-                width: 100% !important;
-                height: 100% !important;
+                /* 🔥【修复】移除强制宽高100%，保持原有的max-width限制 */
                 overflow: hidden !important;
             }
         }
