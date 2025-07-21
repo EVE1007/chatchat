@@ -3996,6 +3996,16 @@
 
 
     <script>
+        // 🔥【新增修复】定义一个Promise来确保数据完全加载后再执行后续操作
+        let dataLoadedPromise;
+        let resolveDataLoaded;
+
+        function initializeDataLoadPromise() {
+            dataLoadedPromise = new Promise(resolve => {
+                resolveDataLoaded = resolve;
+            });
+        }
+
         // 🔥【完全修复】初始化Dexie数据库 - 解决版本升级死循环问题
         const db = new Dexie('PhoneChatDB');
         window.activeGlobalWorldbooks = []; // 用于存储当前激活的全局世界书ID
@@ -4129,7 +4139,7 @@
                         const date = parts[2];
                         const content = localStorage.getItem(key);
 
-                        if (content && characterId && date) {
+                        if (content) {
                             try {
                                 await tx.characterDiaries.add({
                                     id: `${characterId}_${date}`,
@@ -4137,112 +4147,97 @@
                                     date: date,
                                     content: content,
                                     timestamp: new Date(date).getTime(),
-                                    weather: '☀️'
+                                    weather: null
                                 });
                                 migratedCount++;
                             } catch (e) {
-                                // 忽略重复数据错误
-                            }
-                        }
-                    }
-
-                    // 迁移过往日记列表数据
-                    if (key && key.startsWith('past_diaries_')) {
-                        const characterId = key.replace('past_diaries_', '');
-                        const pastDiariesStr = localStorage.getItem(key);
-
-                        if (pastDiariesStr) {
-                            try {
-                                const pastDiaries = JSON.parse(pastDiariesStr);
-                                for (const diary of pastDiaries) {
-                                    if (diary.date && diary.content) {
-                                        const diaryId = `${characterId}_${diary.date}`;
-                                        try {
-                                            await tx.characterDiaries.add({
-                                                id: diaryId,
-                                                characterId: characterId,
-                                                date: diary.date,
-                                                content: diary.content,
-                                                timestamp: new Date(diary.date).getTime(),
-                                                weather: diary.weather || '☀️'
-                                            });
-                                            migratedCount++;
-                                        } catch (e) {
-                                            // 忽略重复数据错误
-                                        }
-                                    }
-                                }
-                            } catch (parseError) {
-                                console.warn(`解析过往日记数据失败: ${key}`, parseError);
+                                console.log(`日记数据已存在，跳过: ${key}`);
                             }
                         }
                     }
                 }
 
-                console.log(`✅ 日记数据迁移完成，共迁移 ${migratedCount} 条日记`);
-
-                // 迁移线下模式界面设置
-                console.log('开始迁移线下模式界面设置...');
-                let settingsMigratedCount = 0;
-
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && key.startsWith('offlineUISettings_')) {
-                        const characterId = key.replace('offlineUISettings_', '');
-                        const settingsData = localStorage.getItem(key);
-
-                        if (settingsData) {
-                            try {
-                                const settings = JSON.parse(settingsData);
-                                await tx.offlineUISettings.add({
-                                    id: `${characterId}_ui_settings`,
-                                    characterId: characterId,
-                                    settings: settings,
-                                    timestamp: Date.now()
-                                });
-                                settingsMigratedCount++;
-                            } catch (e) {
-                                // 忽略重复数据错误
-                            }
-                        }
-                    }
+                if (migratedCount > 0) {
+                    console.log(`✅ 成功迁移 ${migratedCount} 条日记数据`);
                 }
-
-                console.log(`✅ 线下模式界面设置迁移完成，共迁移 ${settingsMigratedCount} 个设置`);
-
-                // 迁移线下模式预设
-                console.log('开始迁移线下模式预设...');
-                let presetMigratedCount = 0;
-
-                // 迁移全局预设
-                const globalPresetsKey = 'globalOfflinePresets';
-                const globalPresetsData = localStorage.getItem(globalPresetsKey);
-                if (globalPresetsData) {
-                    try {
-                        const globalPresets = JSON.parse(globalPresetsData);
-                        for (const preset of globalPresets) {
-                            try {
-                                await tx.offlinePresets.add({
-                                    id: preset.id || `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                                    name: preset.name || '未命名预设',
-                                    content: preset.content || '',
-                                    timestamp: preset.timestamp || Date.now()
-                                });
-                                presetMigratedCount++;
-                            } catch (e) {
-                                // 忽略重复数据错误
-                            }
-                        }
-                    } catch (parseError) {
-                        console.error('❌ 解析全局预设失败:', parseError);
-                    }
-                }
-
-                console.log(`✅ 线下模式预设迁移完成，共迁移 ${presetMigratedCount} 个预设`);
 
             } catch (error) {
-                console.error('数据迁移过程中出错:', error);
+                console.error('数据迁移失败:', error);
             }
+        });
+
+        // 🔥【新增版本18】添加心声系统
+        db.version(18).stores({
+            // 基础数据表
+            characters: '&id, name, groupId',
+            contacts: '++id, characterId',
+            chatMessages: '&id, characterId, timestamp',
+
+            // 用户面具系统
+            personas: '&id, name',
+
+            // 表情包系统
+            customEmojis: '&id, name, category',
+            recentEmojis: '&id, lastUsed',
+
+            // 世界书系统
+            worldbooks: '&id, name, isGlobal',
+            worldbookEntries: '&id, worldbookId, keyword',
+
+            // 群聊系统
+            characterGroups: '&id, name, order',
+            groupChats: '&id, name',
+            groupChatMessages: '&id, groupId, timestamp',
+            groupChatMembers: '&id, groupId, characterId',
+
+            // 动态系统
+            moments: '&id, authorId, timestamp',
+            momentLikes: '[momentId+authorId], momentId, authorId',
+            momentComments: '&id, momentId, authorId, timestamp',
+
+            // 记忆系统
+            workingMemory: '&id, characterId, timestamp, content, context',
+            episodicMemory: '&id, characterId, date, summary, timestamp, context',
+            episodicMemories: '&id, characterId, fact, importance, timestamp, category',
+            memorySummaries: '&id, characterId, date, summary, timestamp, context',
+            memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
+            coreMemory: '&id, characterId, category, content, timestamp',
+            coreMemories: '&id, characterId, fact, importance, timestamp, type, category',
+            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
+
+            // 拉黑和好友系统
+            blacklist: '&id, blockerId, blockedId, timestamp, reason',
+            blockedCharacters: '&id, characterId, blockedBy, timestamp',
+            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
+            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
+
+            // 日记系统
+            characterDiaries: '&id, characterId, date, content, timestamp, weather',
+
+            // 线下模式系统
+            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
+            offlineUISettings: '&id, characterId, settings, timestamp',
+            offlinePresets: '&id, name, content, timestamp',
+
+            // 音乐播放器系统
+            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
+            musicCovers: '&id, songId, imageData, timestamp',
+
+            // 设置和配置
+            apiSettings: '&id',
+            globalSettings: '&id',
+            wallpapers: '&id, name',
+            appIcons: '&id, appId',
+            chatSettings: '&id, chatId',
+
+            // 纪念日系统
+            anniversaries: '&id, name, date, type, yearly',
+
+            // 🔥【新增】心声系统
+            innerThoughts: '&id, messageId, characterId, content, timestamp'
+        }).upgrade(async tx => {
+            console.log('🔧 升级到版本18：添加心声系统');
+            // 心声系统表已自动创建，无需额外初始化
         });
 
 
@@ -4343,6 +4338,7 @@
 
         // 初始化应用
         document.addEventListener('DOMContentLoaded', async function() {
+            initializeDataLoadPromise(); // 🔥【新增修复】初始化数据加载Promise
             updateTime();
 
             // 🔥【新增】增强Safari长按禁用
@@ -4659,6 +4655,10 @@
             setInterval(updateTime, 1000);
             initBatteryManager();
             
+            // 🔥【新增修复】在所有数据加载完成后，发送"绿灯"信号
+            resolveDataLoaded();
+            console.log('✅ 所有初始数据加载完成，信号已发送。');
+
             // 🔥【新增】初始化全局动态发布系统
             setTimeout(async () => {
                 try {
@@ -4668,7 +4668,29 @@
                     console.error('❌ 全局动态发布系统初始化失败:', error);
                 }
             }, 3000); // 延迟3秒确保数据完全加载
-            
+
+            // 🔥【新增修复】在所有数据加载后，尝试恢复上次打开的聊天
+            const lastChatId = sessionStorage.getItem('currentChatCharacterId');
+            if (lastChatId) {
+                console.log('🔄 正在恢复上次打开的聊天:', lastChatId);
+                // 等待数据加载的"绿灯"信号
+                dataLoadedPromise.then(() => {
+                    const character = characters.find(c => c.id === lastChatId);
+                    const group = groupChats.find(g => g.id === lastChatId);
+                    const chatEntity = character || group;
+
+                    if (chatEntity) {
+                        // 使用微小的延迟确保UI渲染完成
+                        setTimeout(() => {
+                            startChat(chatEntity);
+                        }, 100);
+                    } else {
+                        console.warn('无法找到上次聊天的角色/群组:', lastChatId);
+                        sessionStorage.removeItem('currentChatCharacterId');
+                    }
+                });
+            }
+
             } catch (error) {
                 console.error('应用初始化失败:', error);
                 console.error('错误详情:', error.stack);
@@ -8944,11 +8966,18 @@ ${chatContext}${momentsContext}
         let currentMessageOffset = 0;
         const MESSAGE_LIMIT = 50;
         
-        // 渲染聊天消息
+        // 🔥【新增】同步包装函数，用于向后兼容
         function renderChatMessages(characterId, loadMore = false) {
+            renderChatMessagesAsync(characterId, loadMore).catch(error => {
+                console.error('渲染聊天消息失败:', error);
+            });
+        }
+
+        // 渲染聊天消息（异步版本）
+        async function renderChatMessagesAsync(characterId, loadMore = false) {
             const messagesContainer = document.getElementById('api-chat-messages');
             const allMessages = chatMessages[characterId] || [];
-            const chatSettings = getCurrentChatSettings();
+            const chatSettings = await getAsyncChatSettings(characterId); // 🔥【修复】使用异步版本确保获取正确的设置
             
             if (!loadMore) {
                 // 重新渲染时清空容器并重置偏移量
@@ -10570,6 +10599,8 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
         
         // 开始与角色聊天
 async function startChat(character) {
+    await dataLoadedPromise; // 🔥【新增修复】等待数据加载完成
+
     // [核心修复] 记录上一个聊天ID，用于清理
     const previousChatId = currentChatCharacter ? currentChatCharacter.id : null;
 
@@ -13567,6 +13598,11 @@ async function applyChatBackground(backgroundUrl) {
                 '<div class="message-menu-item" data-action="copy">复制</div>'
             ];
 
+            // 🔥【新增】只有AI角色消息才显示心声选项
+            if (!isUserMessage) {
+                menuItems.push('<div class="message-menu-item" data-action="inner-thoughts">心声</div>');
+            }
+
             if (isUserMessage) {
                 menuItems.push('<div class="message-menu-item" data-action="edit">编辑</div>');
                 menuItems.push('<div class="message-menu-item" data-action="recall">撤回</div>');
@@ -13599,6 +13635,9 @@ async function applyChatBackground(backgroundUrl) {
                             break;
                         case 'recall':
                             deleteMessage(targetId);
+                            break;
+                        case 'inner-thoughts':
+                            showInnerThoughtsModal(targetId);
                             break;
                         case 'select':
                             enterMessageSelectionMode(targetId);
@@ -22501,6 +22540,12 @@ async function createGroupChat(personaId) {
 
             // 构建按钮列表
             const buttons = ['引用', '复制'];
+
+            // 🔥【新增】只有AI角色消息才显示心声选项
+            if (!isUserMessage) {
+                buttons.push('心声');
+            }
+
             if (isUserMessage) {
                 buttons.push('编辑', '撤回');
             }
@@ -22511,6 +22556,7 @@ async function createGroupChat(personaId) {
                 switch(text) {
                     case '引用': action = `replyToMessage('${messageId}')`; break;
                     case '复制': action = `copyMessage('${messageId}')`; break;
+                    case '心声': action = `showInnerThoughtsModal('${messageId}')`; break;
                     case '编辑': action = `showEditMessageModal('${messageId}')`; break;
                     case '撤回': action = `deleteMessage('${messageId}')`; break;
                     case '多选': action = `enterMessageSelectionMode('${messageId}')`; break;
@@ -35272,6 +35318,36 @@ async function changeMyGroupAvatar() {
         </div>
     </div>
 
+    <!-- 🔥【新增】心声模态框 -->
+    <div id="inner-thoughts-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg class="ear-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M17 4C17 4 20 4 20 7C20 10 17 10 17 13C17 16 20 16 20 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    心声
+                </h3>
+                <button class="modal-close" onclick="hideInnerThoughtsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="inner-thoughts-content" class="inner-thoughts-content">
+                    <div class="inner-thoughts-loading">
+                        <div class="loading-spinner"></div>
+                        <p>正在读取角色的内心想法...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-secondary inner-thoughts-refresh-btn" onclick="refreshInnerThoughts(selectedMessageId)">
+                    <i class="fas fa-sync-alt"></i> 重新生成
+                </button>
+                <button class="modal-secondary" onclick="hideInnerThoughtsModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 🚫【拉黑系统】JavaScript核心功能 -->
     <script>
         // 拉黑系统全局变量 - 检查是否已存在，避免重复声明
@@ -40181,6 +40257,198 @@ async function aiUnblockUser(characterId) {
         }
 
         console.log('🚫 角色拉黑/解除拉黑通知功能已加载');
+
+        // 🔥【新增】心声功能
+        // 显示心声模态框
+        async function showInnerThoughtsModal(messageId) {
+            if (!messageId) return;
+
+            const modal = document.getElementById('inner-thoughts-modal');
+            const content = document.getElementById('inner-thoughts-content');
+
+            // 显示模态框
+            modal.style.display = 'flex';
+
+            try {
+                // 检查数据库中是否有缓存的心声
+                const cachedThought = await db.innerThoughts.get(messageId);
+
+                if (cachedThought) {
+                    console.log('🔄 使用数据库缓存的心声内容');
+                    displayInnerThoughts(cachedThought.content, messageId);
+                } else {
+                    console.log('🆕 生成新的心声内容');
+                    // 显示加载状态
+                    content.innerHTML = `
+                        <div class="inner-thoughts-loading">
+                            <div class="loading-spinner"></div>
+                            <p>正在读取角色的内心想法...</p>
+                        </div>
+                    `;
+
+                    // 生成心声
+                    await generateInnerThoughts(messageId);
+                }
+            } catch (error) {
+                console.error('加载心声失败:', error);
+                displayInnerThoughtsError('加载心声数据失败');
+            }
+        }
+
+        // 隐藏心声模态框
+        function hideInnerThoughtsModal() {
+            const modal = document.getElementById('inner-thoughts-modal');
+            modal.style.display = 'none';
+        }
+
+        // 生成角色心声
+        async function generateInnerThoughts(messageId, forceRegenerate = false) {
+            try {
+                const messages = chatMessages[currentChatCharacter.id] || [];
+                const targetMessage = messages.find(msg => msg.id === messageId);
+
+                if (!targetMessage || targetMessage.sender !== 'received') {
+                    throw new Error('无法找到对应的AI消息');
+                }
+
+                const character = currentChatCharacter;
+                if (!character) {
+                    throw new Error('当前角色信息不存在');
+                }
+
+                // 如果不是强制重新生成，检查数据库缓存
+                if (!forceRegenerate) {
+                    const cachedThought = await db.innerThoughts.get(messageId);
+                    if (cachedThought) {
+                        displayInnerThoughts(cachedThought.content, messageId);
+                        return;
+                    }
+                }
+
+                // 构建心声生成的prompt
+                const prompt = buildInnerThoughtsPrompt(targetMessage, character, messages);
+
+                // 调用AI生成心声
+                const response = await generateAIResponse(prompt, character);
+
+                if (response && response.trim()) {
+                    const thoughts = response.trim();
+
+                    // 保存到数据库
+                    await db.innerThoughts.put({
+                        id: messageId,
+                        messageId: messageId,
+                        characterId: character.id,
+                        content: thoughts,
+                        timestamp: Date.now()
+                    });
+
+                    console.log('💾 心声已保存到数据库');
+                    displayInnerThoughts(thoughts, messageId);
+                } else {
+                    throw new Error('AI未能生成心声内容');
+                }
+
+            } catch (error) {
+                console.error('生成心声失败:', error);
+                displayInnerThoughtsError(error.message);
+            }
+        }
+
+        // 构建心声生成的prompt
+        function buildInnerThoughtsPrompt(targetMessage, character, allMessages) {
+            // 获取目标消息前后的上下文
+            const messageIndex = allMessages.findIndex(msg => msg.id === targetMessage.id);
+            const contextStart = Math.max(0, messageIndex - 3);
+            const contextEnd = Math.min(allMessages.length, messageIndex + 1);
+            const contextMessages = allMessages.slice(contextStart, contextEnd);
+
+            // 构建对话上下文
+            const conversationContext = contextMessages.map(msg => {
+                if (msg.sender === 'sent') {
+                    return `用户：${msg.content}`;
+                } else if (msg.sender === 'received') {
+                    return `${character.name}：${msg.content}`;
+                }
+                return '';
+            }).filter(Boolean).join('\n');
+
+            const prompt = `# 角色心声分析任务
+
+你是 ${character.name}，以下是你的基本信息：
+${character.bio || '暂无详细信息'}
+
+## 对话上下文：
+${conversationContext}
+
+## 任务要求：
+请分析你在说出"${targetMessage.content}"这句话时的内心想法。
+
+## 输出要求：
+1. 以第一人称视角描述内心想法
+2. 内容应该真实反映角色的性格和当时的心理状态
+3. 可以包含：对用户话语的真实感受、内心的小纠结、未说出口的想法、情感波动等
+4. 字数控制在50-150字之间
+5. 语气要符合角色性格，自然真实
+6. 直接输出心声内容，不要加任何格式标记
+
+请开始分析：`;
+
+            return prompt;
+        }
+
+        // 显示心声内容
+        function displayInnerThoughts(thoughts, messageId) {
+            const content = document.getElementById('inner-thoughts-content');
+            content.innerHTML = `
+                <div class="inner-thoughts-text">${thoughts}</div>
+            `;
+
+            // 更新刷新按钮的onclick事件
+            const refreshBtn = document.querySelector('.inner-thoughts-refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.onclick = () => refreshInnerThoughts(messageId);
+            }
+        }
+
+        // 刷新心声内容
+        async function refreshInnerThoughts(messageId) {
+            if (!messageId) return;
+
+            const content = document.getElementById('inner-thoughts-content');
+
+            // 显示刷新加载状态
+            content.innerHTML = `
+                <div class="inner-thoughts-loading">
+                    <div class="loading-spinner"></div>
+                    <p>正在重新生成心声...</p>
+                </div>
+            `;
+
+            try {
+                // 删除数据库中的旧心声
+                await db.innerThoughts.delete(messageId);
+                console.log('🗑️ 已删除旧心声缓存');
+
+                // 强制重新生成心声
+                await generateInnerThoughts(messageId, true);
+            } catch (error) {
+                console.error('刷新心声失败:', error);
+                displayInnerThoughtsError('刷新心声失败');
+            }
+        }
+
+        // 显示心声生成错误
+        function displayInnerThoughtsError(errorMessage) {
+            const content = document.getElementById('inner-thoughts-content');
+            content.innerHTML = `
+                <div style="text-align: center; color: #ff3b30; padding: 20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p>生成心声失败</p>
+                    <p style="font-size: 12px; color: #666; margin-top: 10px;">${errorMessage}</p>
+                </div>
+            `;
+        }
         
         // 🔥【修复脚本】解决数据导入失败和引用消息刷新后消失的问题
         console.log('🔧 正在应用系统修复...');

@@ -16142,6 +16142,92 @@ textarea.call-text-input {
 
         #memory-share-modal .checkbox-title {
             font-size: 14px;
+        }
+
+        /* 🔥【新增】心声模态框样式 */
+        #inner-thoughts-modal .modal-content {
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .inner-thoughts-content {
+            min-height: 150px;
+            padding: 20px;
+            background: rgba(248, 249, 250, 0.8);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .inner-thoughts-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            color: #666;
+        }
+
+        .inner-thoughts-loading p {
+            margin: 15px 0 0 0;
+            font-size: 14px;
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #e0e0e0;
+            border-top: 2px solid #007AFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .inner-thoughts-text {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* 心声刷新按钮 - 位于模态框底部 */
+        .inner-thoughts-refresh-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .inner-thoughts-refresh-btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .inner-thoughts-refresh-btn:hover i {
+            transform: rotate(180deg);
+        }
+
+        /* 可爱主题下的心声模态框 */
+        body[data-theme="cute"] .inner-thoughts-content {
+            background: rgba(255, 240, 245, 0.9);
+            border-color: rgba(255, 182, 193, 0.3);
+        }
+
+        body[data-theme="cute"] .loading-spinner {
+            border-top-color: var(--theme-button-bg);
+        }
+
+        body[data-theme="cute"] .inner-thoughts-refresh-btn:hover {
+            color: var(--theme-button-bg);
+        }
+
+        /* 耳朵图标样式 */
+        .ear-icon {
+            margin-right: 8px;
+            opacity: 0.8;
+        }
             font-weight: 500;
             color: #333;
             margin-bottom: 2px;
