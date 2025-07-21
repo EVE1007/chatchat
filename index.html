@@ -4545,11 +4545,58 @@
                 });
             }
             
-            // 按Enter键发送消息
-            document.getElementById('api-chat-input').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault(); // 防止换行
-                    sendApiMessage();
+            // 🔥【修改】支持换行功能
+            // 电脑端：Enter发送，Shift+Enter换行
+            // 手机端：短按Enter发送，长按Enter换行
+            let enterPressTimer = null;
+            let isLongPress = false;
+
+
+
+            document.getElementById('api-chat-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                    if (isMobile) {
+                        // 手机端：检测长按
+                        if (!enterPressTimer) {
+                            isLongPress = false;
+                            enterPressTimer = setTimeout(() => {
+                                isLongPress = true;
+                                // 长按换行 - 不阻止默认行为
+                            }, 500); // 500ms判定为长按
+                        }
+                    } else {
+                        // 电脑端：Shift+Enter换行，Enter发送
+                        if (e.shiftKey) {
+                            // Shift+Enter换行 - 不阻止默认行为，让textarea自然换行
+                            return;
+                        } else {
+                            // Enter发送消息
+                            e.preventDefault();
+                            sendApiMessage();
+                        }
+                    }
+                }
+            });
+
+            document.getElementById('api-chat-input').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                    if (isMobile && enterPressTimer) {
+                        clearTimeout(enterPressTimer);
+
+                        if (!isLongPress) {
+                            // 短按发送消息
+                            e.preventDefault();
+                            sendApiMessage();
+                        }
+                        // 长按的情况已经在keydown中处理了（允许换行）
+
+                        enterPressTimer = null;
+                        isLongPress = false;
+                    }
                 }
             });
 
@@ -25373,12 +25420,58 @@ async function createGroupChat(personaId) {
                     }
                 };
 
-                // 支持回车发送
+                // 🔥【修改】语音输入框支持换行功能
+                // 电脑端：Enter发送，Shift+Enter换行
+                // 手机端：短按Enter发送，长按Enter换行
+                let voiceEnterPressTimer = null;
+                let voiceIsLongPress = false;
+
                 textInput.onkeydown = (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        console.log('语音输入框：用户按回车键发送');
-                        sendBtn.click();
+                    if (e.key === 'Enter') {
+                        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                        if (isMobile) {
+                            // 手机端：检测长按
+                            if (!voiceEnterPressTimer) {
+                                voiceIsLongPress = false;
+                                voiceEnterPressTimer = setTimeout(() => {
+                                    voiceIsLongPress = true;
+                                    // 长按换行 - 不阻止默认行为
+                                }, 500); // 500ms判定为长按
+                            }
+                        } else {
+                            // 电脑端：Shift+Enter换行，Enter发送
+                            if (e.shiftKey) {
+                                // Shift+Enter换行 - 不阻止默认行为，让textarea自然换行
+                                return;
+                            } else {
+                                // Enter发送消息
+                                e.preventDefault();
+                                console.log('语音输入框：用户按Enter发送');
+                                sendBtn.click();
+                            }
+                        }
+                    }
+                };
+
+                textInput.onkeyup = (e) => {
+                    if (e.key === 'Enter') {
+                        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                        if (isMobile && voiceEnterPressTimer) {
+                            clearTimeout(voiceEnterPressTimer);
+
+                            if (!voiceIsLongPress) {
+                                // 短按发送消息
+                                e.preventDefault();
+                                console.log('语音输入框：用户短按Enter发送');
+                                sendBtn.click();
+                            }
+                            // 长按的情况已经在keydown中处理了（允许换行）
+
+                            voiceEnterPressTimer = null;
+                            voiceIsLongPress = false;
+                        }
                     }
                 };
             });
@@ -43586,14 +43679,61 @@ ${conversationHistory}
             return formattedText;
         }
 
-        // 监听输入框回车事件
+        // 🔥【修改】线下模式支持换行功能
+        // 电脑端：Enter发送，Shift+Enter换行
+        // 手机端：短按Enter发送，长按Enter换行
         document.addEventListener('DOMContentLoaded', function() {
             const offlineInput = document.getElementById('offline-input');
             if (offlineInput) {
+
+
+                let offlineEnterPressTimer = null;
+                let offlineIsLongPress = false;
+
                 offlineInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendOfflineMessage();
+                    if (e.key === 'Enter') {
+                        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                        if (isMobile) {
+                            // 手机端：检测长按
+                            if (!offlineEnterPressTimer) {
+                                offlineIsLongPress = false;
+                                offlineEnterPressTimer = setTimeout(() => {
+                                    offlineIsLongPress = true;
+                                    // 长按换行 - 不阻止默认行为
+                                }, 500); // 500ms判定为长按
+                            }
+                        } else {
+                            // 电脑端：Shift+Enter换行，Enter发送
+                            if (e.shiftKey) {
+                                // Shift+Enter换行 - 不阻止默认行为，让textarea自然换行
+                                return;
+                            } else {
+                                // Enter发送消息
+                                e.preventDefault();
+                                sendOfflineMessage();
+                            }
+                        }
+                    }
+                });
+
+                offlineInput.addEventListener('keyup', function(e) {
+                    if (e.key === 'Enter') {
+                        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                        if (isMobile && offlineEnterPressTimer) {
+                            clearTimeout(offlineEnterPressTimer);
+
+                            if (!offlineIsLongPress) {
+                                // 短按发送消息
+                                e.preventDefault();
+                                sendOfflineMessage();
+                            }
+                            // 长按的情况已经在keydown中处理了（允许换行）
+
+                            offlineEnterPressTimer = null;
+                            offlineIsLongPress = false;
+                        }
                     }
                 });
             }
