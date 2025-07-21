@@ -3844,15 +3844,33 @@
                         <input type="text" id="song-artist-input" placeholder="艺术家" class="song-input half-width">
                     </div>
                     <div class="input-row">
-                        <input type="text" id="song-url-input" placeholder="歌曲URL" class="song-input half-width">
+                        <input type="text" id="song-url-input" placeholder="歌曲URL或选择本地文件" class="song-input half-width">
+                        <div class="file-input-wrapper half-width">
+                            <button onclick="document.getElementById('local-music-input').click()" class="upload-btn" style="width: 100%; padding: 8px;">
+                                <i class="fas fa-file-audio"></i> 本地音乐
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-row">
                         <div class="file-input-wrapper half-width">
                             <input type="file" id="song-cover-input" accept="image/*" class="file-input" title="选择封面图片">
                             <span class="file-input-text">未选封面</span>
                         </div>
+                        <div class="file-input-wrapper half-width">
+                            <button onclick="document.getElementById('lyrics-file-input').click()" class="upload-btn" style="width: 100%; padding: 8px;">
+                                <i class="fas fa-file-text"></i> 歌词文件
+                            </button>
+                        </div>
                     </div>
                     <div class="lyrics-input-section">
-                        <textarea id="song-lyrics-input" placeholder="歌词（每行一句，可选）" class="lyrics-textarea"></textarea>
+                        <textarea id="song-lyrics-input" placeholder="歌词（每行一句，可选）或上传歌词文件" class="lyrics-textarea"></textarea>
+                        <div style="display: flex; gap: 8px; margin-top: 8px; font-size: 11px; color: #666;">
+                            <span>支持格式：LRC、bin等歌词文件</span>
+                        </div>
                     </div>
+                    <!-- 隐藏的文件输入 -->
+                    <input type="file" id="local-music-input" accept="audio/*" style="display: none;">
+                    <input type="file" id="lyrics-file-input" accept=".lrc,.bin" style="display: none;">
                     <button onclick="addCustomSong()" class="add-song-btn">
                         添加歌曲
                     </button>
@@ -3981,15 +3999,7 @@
                 <i class="fas fa-power-off"></i>
             </button>
 
-            <!-- 歌词进度调节按钮 -->
-            <div class="lyric-adjust-controls">
-                <button class="lyric-adjust-btn" onclick="adjustLyricTiming(-0.5)" title="歌词后退0.5秒">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <button class="lyric-adjust-btn" onclick="adjustLyricTiming(0.5)" title="歌词前进0.5秒">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
+
         </div>
     </div>
 
@@ -15615,6 +15625,138 @@ function onWorldbookAddClick() {
 
         // ================== 音乐播放器功能 ==================
 
+        // LRC歌词解析函数
+        function parseLRC(lrcContent) {
+            if (!lrcContent) return { lyrics: ['♪ 暂无歌词'], timings: [] };
+
+            const lines = lrcContent.split('\n');
+            const lyrics = [];
+            const timings = [];
+            const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+
+            for (const line of lines) {
+                let match;
+                const matches = [];
+
+                // 找到所有时间标签
+                while ((match = timeRegex.exec(line)) !== null) {
+                    const minutes = parseInt(match[1]);
+                    const seconds = parseInt(match[2]);
+                    const milliseconds = parseInt(match[3].padEnd(3, '0'));
+                    const totalSeconds = minutes * 60 + seconds + milliseconds / 1000;
+                    matches.push(totalSeconds);
+                }
+
+                const text = line.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, '').trim();
+
+                if (text && !text.startsWith('[')) {
+                    // 为每个时间标签创建一个歌词条目
+                    if (matches.length > 0) {
+                        for (const time of matches) {
+                            lyrics.push(text);
+                            timings.push(time);
+                        }
+                    } else {
+                        lyrics.push(text);
+                        timings.push(null); // 没有时间标签
+                    }
+                }
+            }
+
+            // 如果有时间信息，按时间排序
+            if (timings.some(t => t !== null)) {
+                const combined = lyrics.map((lyric, index) => ({
+                    text: lyric,
+                    time: timings[index]
+                })).filter(item => item.time !== null).sort((a, b) => a.time - b.time);
+
+                return {
+                    lyrics: combined.map(item => item.text),
+                    timings: combined.map(item => item.time),
+                    hasTimings: true
+                };
+            }
+
+            return {
+                lyrics: lyrics.length > 0 ? lyrics : ['♪ 暂无歌词'],
+                timings: [],
+                hasTimings: false
+            };
+        }
+
+        // 网易云音乐bin格式歌词解析函数
+        function parseNeteaseBin(binData) {
+            try {
+                const uint8Array = new Uint8Array(binData);
+
+                // 网易云音乐bin格式解析
+                // 跳过文件头部分（通常前几个字节是标识符）
+                let offset = 0;
+
+                // 查找可能的文本开始位置
+                while (offset < uint8Array.length - 4) {
+                    // 寻找可能的JSON开始标记 '{'
+                    if (uint8Array[offset] === 0x7B ||
+                        (uint8Array[offset] ^ 0x64) === 0x7B ||
+                        (uint8Array[offset] ^ 0x4E) === 0x7B) {
+                        break;
+                    }
+                    offset++;
+                }
+
+                // 尝试多种解密方式
+                const decryptMethods = [
+                    // 方法1: 直接读取
+                    () => new TextDecoder('utf-8').decode(uint8Array.slice(offset)),
+                    // 方法2: XOR 0x64
+                    () => {
+                        let text = '';
+                        for (let i = offset; i < uint8Array.length; i++) {
+                            text += String.fromCharCode(uint8Array[i] ^ 0x64);
+                        }
+                        return text;
+                    },
+                    // 方法3: XOR 0x4E (另一种常见的密钥)
+                    () => {
+                        let text = '';
+                        for (let i = offset; i < uint8Array.length; i++) {
+                            text += String.fromCharCode(uint8Array[i] ^ 0x4E);
+                        }
+                        return text;
+                    }
+                ];
+
+                for (const method of decryptMethods) {
+                    try {
+                        const text = method();
+
+                        // 尝试解析为JSON
+                        try {
+                            const jsonData = JSON.parse(text);
+                            if (jsonData.lyric) {
+                                return parseLRC(jsonData.lyric);
+                            }
+                            if (jsonData.lrc && jsonData.lrc.lyric) {
+                                return parseLRC(jsonData.lrc.lyric);
+                            }
+                        } catch (e) {
+                            // 如果不是JSON，检查是否是直接的LRC格式
+                            if (text.includes('[') && text.includes(']')) {
+                                return parseLRC(text);
+                            }
+                        }
+                    } catch (e) {
+                        continue; // 尝试下一种方法
+                    }
+                }
+
+                return { lyrics: ['♪ bin歌词解析失败', '♪ 请尝试使用LRC格式歌词'], timings: [], hasTimings: false };
+            } catch (error) {
+                console.error('解析bin歌词失败:', error);
+                return { lyrics: ['♪ 歌词解析失败'], timings: [], hasTimings: false };
+            }
+        }
+
         // 音乐播放器状态
         let musicPlayer = {
             isPlaying: false,
@@ -15633,8 +15775,7 @@ function onWorldbookAddClick() {
             listeningTimer: null,
             activeChatId: null, // 记录开启听歌的聊天窗口ID
             isActive: false, // 记录音乐播放器是否处于活跃状态
-            lyricOffset: 0, // 歌词时间偏移量（秒）
-            lastManualAdjustTime: 0 // 最后一次手动调整的时间戳
+
         };
 
         // 初始化音乐播放器
@@ -16178,7 +16319,31 @@ function onWorldbookAddClick() {
             }
 
             const lyrics = musicPlayer.currentSong.lyrics;
-            const currentIndex = musicPlayer.currentLyricIndex;
+            let currentIndex = musicPlayer.currentLyricIndex;
+
+            // 如果有时间同步信息，根据当前播放时间计算歌词索引
+            if (musicPlayer.currentSong.hasTimedLyrics &&
+                musicPlayer.currentSong.lyricsTimings &&
+                musicPlayer.audioElement &&
+                !musicPlayer.audioElement.paused) {
+
+                const currentTime = musicPlayer.audioElement.currentTime;
+                const timings = musicPlayer.currentSong.lyricsTimings;
+
+                // 找到当前时间对应的歌词索引
+                let newIndex = 0;
+                for (let i = 0; i < timings.length; i++) {
+                    if (currentTime >= timings[i]) {
+                        newIndex = i;
+                    } else {
+                        break;
+                    }
+                }
+
+                currentIndex = newIndex;
+                musicPlayer.currentLyricIndex = currentIndex;
+            }
+
             const currentLyric = lyrics[currentIndex] || '♪';
 
             // 更新新的当前歌词显示区域
@@ -16201,45 +16366,38 @@ function onWorldbookAddClick() {
             // 更新完整歌词模式并实现滚动
             const fullLyricsEl = document.getElementById('full-lyrics-display');
             if (fullLyricsEl) {
-                // 只在歌词内容改变时重新渲染HTML
-                const currentHTML = fullLyricsEl.innerHTML;
-                const newHTML = lyrics.map((lyric, index) => {
-                    const isActive = index === currentIndex;
-                    const isEmpty = lyric.trim() === '';
-                    return `<div class="lyric-line ${isActive ? 'active' : ''} ${isEmpty ? 'empty' : ''}" data-index="${index}" onclick="seekToLyric(${index})" style="padding: 8px 0; cursor: pointer; transition: all 0.3s ease; ${isActive ? 'color: #007AFF; font-weight: bold; transform: scale(1.05);' : 'color: #666;'} ${isEmpty ? 'height: 20px;' : ''}">${lyric || '&nbsp;'}</div>`;
-                }).join('');
-
-                if (currentHTML !== newHTML) {
+                // 检查是否需要重新渲染歌词列表
+                const existingLines = fullLyricsEl.querySelectorAll('.lyric-line');
+                if (existingLines.length !== lyrics.length) {
+                    // 重新渲染歌词列表
+                    const newHTML = lyrics.map((lyric, index) => {
+                        const isEmpty = lyric.trim() === '';
+                        return `<div class="lyric-line ${isEmpty ? 'empty' : ''}" data-index="${index}" onclick="seekToLyric(${index})">${lyric || '&nbsp;'}</div>`;
+                    }).join('');
                     fullLyricsEl.innerHTML = newHTML;
                 }
 
-                // 滚动到当前歌词 - 只在歌词模式下执行
+                // 更新活跃状态
+                const allLines = fullLyricsEl.querySelectorAll('.lyric-line');
+                allLines.forEach((line, index) => {
+                    line.classList.toggle('active', index === currentIndex);
+                });
+
+                // 使用transform实现平滑滚动 - 只在歌词模式下执行
                 if (!musicPlayer.isVinylMode) {
-                    const activeLyricEl = fullLyricsEl.querySelector('.lyric-line.active');
-                    if (activeLyricEl) {
-                        // 找到正确的滚动容器
-                        const container = document.querySelector('.full-lyrics-container');
-                        if (container) {
-                            // 确保容器可见
-                            const lyricsMode = document.getElementById('lyrics-mode');
-                            if (lyricsMode && lyricsMode.style.display !== 'none') {
-                                // 使用 setTimeout 确保DOM已经渲染完成
-                                setTimeout(() => {
-                                    const containerHeight = container.clientHeight;
-                                    const containerScrollTop = container.scrollTop;
-                                    const lyricTop = activeLyricEl.offsetTop;
-                                    const lyricHeight = activeLyricEl.clientHeight;
+                    const container = document.querySelector('.full-lyrics-container');
+                    const lyricsMode = document.getElementById('lyrics-mode');
 
-                                    // 计算滚动位置，让当前歌词显示在容器中央
-                                    const targetScrollTop = lyricTop - (containerHeight / 2);
+                    if (container && lyricsMode && lyricsMode.style.display !== 'none') {
+                        const activeLyricEl = fullLyricsEl.querySelector('.lyric-line.active');
+                        if (activeLyricEl && currentIndex >= 0) {
+                            const containerHeight = container.clientHeight;
 
-                                    // 强制滚动到当前歌词位置
-                                    container.scrollTo({
-                                        top: Math.max(0, targetScrollTop),
-                                        behavior: 'smooth'
-                                    });
-                                }, 100);
-                            }
+                          // 调整位置让歌词再靠上一点：使用1/4位置而不是1/3
+                            const offset = (containerHeight / 4) - activeLyricEl.offsetTop - (activeLyricEl.offsetHeight / 2);
+
+                            // 使用transform实现平滑滚动
+                            fullLyricsEl.style.transform = `translateY(${offset}px)`;
                         }
                     }
                 }
@@ -16322,40 +16480,48 @@ function onWorldbookAddClick() {
 
                 // 时间显示由timeupdate事件处理，这里不重复更新
 
-                // 更新歌词（简化的同步算法）
+                // 更新歌词
                 if (musicPlayer.currentSong && musicPlayer.currentSong.lyrics && musicPlayer.currentSong.lyrics.length > 0) {
-                    const totalDuration = musicPlayer.audioElement ? musicPlayer.audioElement.duration : 300;
-                    const lyricsCount = musicPlayer.currentSong.lyrics.length;
-                    const currentTime = musicPlayer.currentTime;
-
                     let newLyricIndex = 0;
 
-                    if (totalDuration > 0 && lyricsCount > 0) {
-                        // 超简化算法：直接根据播放进度计算歌词索引，无前奏
-                        // 每句歌词平均分配时间
-                        const timePerLyric = totalDuration / lyricsCount;
-                        // 应用歌词偏移量
-                        const adjustedTime = currentTime + musicPlayer.lyricOffset;
-                        newLyricIndex = Math.min(
-                            Math.max(Math.floor(adjustedTime / timePerLyric), 0),
-                            lyricsCount - 1
-                        );
+                    // 如果有时间同步信息，使用精确的时间同步
+                    if (musicPlayer.currentSong.hasTimedLyrics && musicPlayer.currentSong.lyricsTimings) {
+                        const currentTime = musicPlayer.audioElement ? musicPlayer.audioElement.currentTime : musicPlayer.currentTime;
+                        const timings = musicPlayer.currentSong.lyricsTimings;
 
+                        const adjustedTime = currentTime;
 
+                        // 找到当前时间对应的歌词索引
+                        for (let i = 0; i < timings.length; i++) {
+                            if (adjustedTime >= timings[i]) {
+                                newLyricIndex = i;
+                            } else {
+                                break;
+                            }
+                        }
+                    } else {
+                        // 使用简化算法（平均分配时间）
+                        const totalDuration = musicPlayer.audioElement ? musicPlayer.audioElement.duration : 300;
+                        const lyricsCount = musicPlayer.currentSong.lyrics.length;
+                        const currentTime = musicPlayer.currentTime;
+
+                        if (totalDuration > 0 && lyricsCount > 0) {
+                            const timePerLyric = totalDuration / lyricsCount;
+                            const adjustedTime = currentTime;
+                            newLyricIndex = Math.min(
+                                Math.max(Math.floor(adjustedTime / timePerLyric), 0),
+                                lyricsCount - 1
+                            );
+                        }
                     }
 
-                    // 检查是否在手动调整后的保护期内（3秒内不自动更新歌词索引）
-                    const now = Date.now();
-                    const timeSinceLastManualAdjust = now - (musicPlayer.lastManualAdjustTime || 0);
-                    const protectionPeriod = 3000; // 3秒保护期
-
-                    // 如果不在保护期内，且歌词索引需要更新，则更新
-                    if (timeSinceLastManualAdjust > protectionPeriod && newLyricIndex !== musicPlayer.currentLyricIndex) {
+                    // 更新歌词索引
+                    if (newLyricIndex !== musicPlayer.currentLyricIndex) {
                         musicPlayer.currentLyricIndex = newLyricIndex;
                         updateLyrics();
                     }
                 }
-            }, 500); // 改为500ms更新一次，让歌词切换更流畅
+            }, musicPlayer.currentSong && musicPlayer.currentSong.hasTimedLyrics ? 200 : 500); // 有时间同步时更频繁更新
         }
 
         // 获取当前角色名称
@@ -16464,48 +16630,7 @@ function onWorldbookAddClick() {
             updatePlayModeButton();
         }
 
-        // 调整歌词时间偏移
-        function adjustLyricTiming(seconds) {
-            musicPlayer.lyricOffset += seconds;
 
-            // 记录最后一次手动调整的时间戳
-            musicPlayer.lastManualAdjustTime = Date.now();
-
-            // 显示调整提示
-            const currentLyricText = document.getElementById('current-lyric-text');
-            const originalText = currentLyricText.textContent;
-
-            // 显示调整信息
-            currentLyricText.textContent = `歌词时间${seconds > 0 ? '前进' : '后退'}了${Math.abs(seconds)}秒`;
-
-            // 2秒后恢复显示
-            setTimeout(() => {
-                currentLyricText.textContent = originalText;
-            }, 1500);
-
-            // 立即重新计算歌词索引并更新显示
-            if (musicPlayer.currentSong && musicPlayer.currentSong.lyrics && musicPlayer.currentSong.lyrics.length > 0) {
-                const totalDuration = musicPlayer.audioElement ? musicPlayer.audioElement.duration : 0;
-                const lyricsCount = musicPlayer.currentSong.lyrics.length;
-                const currentTime = musicPlayer.currentTime;
-
-                if (totalDuration > 0 && lyricsCount > 0) {
-                    // 重新计算歌词索引，应用新的偏移量
-                    const timePerLyric = totalDuration / lyricsCount;
-                    const adjustedTime = currentTime + musicPlayer.lyricOffset;
-                    const newLyricIndex = Math.min(
-                        Math.max(Math.floor(adjustedTime / timePerLyric), 0),
-                        lyricsCount - 1
-                    );
-
-
-                    musicPlayer.currentLyricIndex = newLyricIndex;
-                }
-            }
-
-            // 立即更新歌词显示
-            updateLyrics();
-        }
 
         // 更新播放模式按钮显示
         function updatePlayModeButton() {
@@ -16660,14 +16785,29 @@ function onWorldbookAddClick() {
             const artistInput = document.getElementById('song-artist-input');
             const coverInput = document.getElementById('song-cover-input');
             const lyricsInput = document.getElementById('song-lyrics-input');
+            const localMusicInput = document.getElementById('local-music-input');
+            const lyricsFileInput = document.getElementById('lyrics-file-input');
 
-            const url = urlInput.value.trim();
+            let url = urlInput.value.trim();
             const title = titleInput.value.trim();
             const artist = artistInput.value.trim();
-            const lyricsText = lyricsInput.value.trim();
+            let lyricsText = lyricsInput.value.trim();
+            let isLocalFile = false;
 
-            if (!url || !title || !artist) {
-                alert('请填写完整的歌曲信息');
+            // 检查是否选择了本地音乐文件
+            if (localMusicInput.files && localMusicInput.files[0]) {
+                const audioFile = localMusicInput.files[0];
+                url = URL.createObjectURL(audioFile);
+                isLocalFile = true;
+
+                // 如果没有填写标题，使用文件名
+                if (!title) {
+                    titleInput.value = audioFile.name.replace(/\.[^/.]+$/, "");
+                }
+            }
+
+            if (!url || !titleInput.value.trim() || !artist) {
+                alert('请填写完整的歌曲信息或选择本地音乐文件');
                 return;
             }
 
@@ -16700,23 +16840,81 @@ function onWorldbookAddClick() {
                     });
                 }
 
-                // 处理歌词 - 按行分割
-                const lyricsArray = lyricsText ? lyricsText.split('\n').map(line => line.trim()).filter(line => line.length > 0) : [];
+                // 处理歌词文件
+                let lyricsArray = [];
+
+                // 检查是否上传了歌词文件
+                if (lyricsFileInput.files && lyricsFileInput.files[0]) {
+                    const lyricsFile = lyricsFileInput.files[0];
+                    const fileName = lyricsFile.name.toLowerCase();
+
+                    if (fileName.endsWith('.lrc')) {
+                        // LRC格式歌词
+                        const lrcContent = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.onerror = reject;
+                            reader.readAsText(lyricsFile, 'utf-8');
+                        });
+                        const lrcResult = parseLRC(lrcContent);
+                        lyricsArray = lrcResult.lyrics;
+                        // 保存时间信息到歌曲数据中
+                        if (lrcResult.hasTimings) {
+                            window.tempLyricsTimings = lrcResult.timings;
+                        }
+                    } else if (fileName.endsWith('.bin')) {
+                        // bin格式歌词
+                        const binData = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.onerror = reject;
+                            reader.readAsArrayBuffer(lyricsFile);
+                        });
+                        const binResult = parseNeteaseBin(binData);
+                        lyricsArray = binResult.lyrics;
+                        if (binResult.hasTimings) {
+                            window.tempLyricsTimings = binResult.timings;
+                        }
+                    } else {
+                        // 其他文本格式，尝试作为普通文本处理
+                        const textContent = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.onerror = reject;
+                            reader.readAsText(lyricsFile, 'utf-8');
+                        });
+                        lyricsArray = textContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                    }
+                }
+                // 使用手动输入的歌词
+                else if (lyricsText) {
+                    lyricsArray = lyricsText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                }
+
+                // 如果没有歌词，使用默认歌词
+                if (lyricsArray.length === 0) {
+                    lyricsArray = ['♪ 暂无歌词'];
+                }
 
 
 
                 // 添加歌曲到数据库
                 await db.musicPlaylist.add({
                     id: songId,
-                    title: title,
+                    title: titleInput.value.trim(),
                     artist: artist,
                     album: '',
                     duration: '0:00',
                     url: url,
                     coverImage: coverImageId,
                     lyrics: lyricsArray,
+                    lyricsTimings: window.tempLyricsTimings || [],
+                    hasTimedLyrics: !!(window.tempLyricsTimings && window.tempLyricsTimings.length > 0),
                     addedTime: Date.now()
                 });
+
+                // 清理临时变量
+                delete window.tempLyricsTimings;
 
                 // 清空输入框
                 urlInput.value = '';
@@ -16724,6 +16922,8 @@ function onWorldbookAddClick() {
                 artistInput.value = '';
                 coverInput.value = '';
                 lyricsInput.value = '';
+                localMusicInput.value = '';
+                lyricsFileInput.value = '';
 
                 // 重置文件选择框显示文字
                 const fileText = document.querySelector('.file-input-text');
@@ -44955,6 +45155,53 @@ document.addEventListener('visibilitychange', function() {
 
         // 2. 如果有复杂的JS动画定时器，可以在这里清除它们
         // clearInterval(yourAnimationTimer);
+    }
+});
+
+// 添加音乐播放器文件选择事件监听器
+document.addEventListener('DOMContentLoaded', function() {
+    // 本地音乐文件选择
+    const localMusicInput = document.getElementById('local-music-input');
+    if (localMusicInput) {
+        localMusicInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const urlInput = document.getElementById('song-url-input');
+                const titleInput = document.getElementById('song-title-input');
+
+                urlInput.placeholder = `已选择: ${file.name}`;
+                urlInput.style.color = '#007AFF';
+                urlInput.value = ''; // 清空URL输入
+
+                // 自动填充歌曲标题
+                if (!titleInput.value.trim()) {
+                    titleInput.value = file.name.replace(/\.[^/.]+$/, "");
+                }
+            }
+        });
+    }
+
+    // 歌词文件选择
+    const lyricsFileInput = document.getElementById('lyrics-file-input');
+    if (lyricsFileInput) {
+        lyricsFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const lyricsInput = document.getElementById('song-lyrics-input');
+                const fileName = file.name.toLowerCase();
+                let fileType = '歌词文件';
+
+                if (fileName.endsWith('.lrc')) {
+                    fileType = 'LRC歌词';
+                } else if (fileName.endsWith('.bin')) {
+                    fileType = 'bin歌词';
+                }
+
+                lyricsInput.placeholder = `已选择${fileType}: ${file.name}`;
+                lyricsInput.style.color = '#007AFF';
+                lyricsInput.value = ''; // 清空手动输入的歌词
+            }
+        });
     }
 });
     </script>
