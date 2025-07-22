@@ -11778,8 +11778,8 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
 正确格式示例：
 ["普通文本消息"]
 ["消息1", "消息2"]
-[{"type": "reply_to", "message_id": "消息ID", "content": "引用回复内容"}] (常用功能，自然使用)
-[{"type": "recall", "target": "previous"}] (撤回功能，说错话时使用)
+[{"type": "reply_to", "message_id": "消息ID", "content": "引用回复内容"}] (正常功能，自然使用)
+[{"type": "recall", "target": "previous"}] (撤回功能，说错话或后悔时使用)
 [{"type": "voice_message", "content": "语音内容"}]
 [{"type": "emoji", "description": "表情包描述"}]
 [{"type": "ai_image", "description": "图片描述"}]
@@ -23178,7 +23178,16 @@ async function createGroupChat(personaId) {
                     response = await callChatAPI(transferPrompt, currentChatCharacter);
                 } else {
                     // 普通文本消息
-                    response = await callChatAPI(userMessage.content, currentChatCharacter);
+                    let finalPrompt = userMessage.content; // 默认使用原始消息内容
+
+                    // 🔥【关键修复】检查用户消息是否为引用回复
+                    if (userMessage.replyTo) {
+                        const quoteText = summarizeLastMessage({ content: userMessage.replyTo.content });
+                        finalPrompt = `[回复 ${userMessage.replyTo.senderName} 的消息: "${quoteText}"] ${userMessage.content}`;
+                        console.log('✅ [重新生成] 构建用户引用提示:', finalPrompt);
+                    }
+
+                    response = await callChatAPI(finalPrompt, currentChatCharacter);
                 }
                 const aiMessages = parseAiResponse(response);
 
@@ -24450,7 +24459,20 @@ async function createGroupChat(personaId) {
                     response = await callChatAPI(transferPrompt, currentChatCharacter);
                 } else {
                     // 普通文本消息、位置消息、语音消息等
-                    response = await callChatAPI(pendingUserMessage.content, currentChatCharacter);
+                    let finalPrompt = pendingUserMessage.content; // 默认使用原始消息内容
+
+                    // 🔥【关键修复】检查当前用户消息是否为引用回复
+                    if (pendingUserMessage.replyTo) {
+                        // 使用 summarizeLastMessage 函数来截断被引用的消息内容
+                        const quoteText = summarizeLastMessage({ content: pendingUserMessage.replyTo.content });
+
+                        // 构建带有引用上下文的提示字符串
+                        // 例如: [回复 AI的昵称 的消息: "你好呀"]: 我也很好
+                        finalPrompt = `[回复 ${pendingUserMessage.replyTo.senderName} 的消息: "${quoteText}"] ${pendingUserMessage.content}`;
+                        console.log('✅ 构建用户引用提示:', finalPrompt);
+                    }
+
+                    response = await callChatAPI(finalPrompt, currentChatCharacter);
                 }
                 
                 const aiMessages = parseAiResponse(response);
