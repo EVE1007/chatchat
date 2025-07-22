@@ -3853,7 +3853,7 @@
                     </div>
                     <div class="input-row">
                         <div class="file-input-wrapper half-width">
-                            <input type="file" id="song-cover-input" accept="image/*" class="file-input" title="选择封面图片">
+                            <input type="file" id="song-cover-input" accept="image/*,.jpg,.jpeg,.png,.gif,.webp" class="file-input" title="选择封面图片">
                             <span class="file-input-text">未选封面</span>
                         </div>
                         <div class="file-input-wrapper half-width">
@@ -3869,8 +3869,8 @@
                         </div>
                     </div>
                     <!-- 隐藏的文件输入 -->
-                    <input type="file" id="local-music-input" accept="audio/*" style="display: none;">
-                    <input type="file" id="lyrics-file-input" accept=".lrc,.bin" style="display: none;">
+                    <input type="file" id="local-music-input" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg,.flac" style="display: none;">
+                    <input type="file" id="lyrics-file-input" accept=".lrc,.txt,.bin,text/plain" style="display: none;">
                     <button onclick="addCustomSong()" class="add-song-btn">
                         添加歌曲
                     </button>
@@ -3934,7 +3934,7 @@
                 </div>
 
                 <!-- 隐藏的文件上传输入 -->
-                <input type="file" id="album-cover-input" accept="image/*" style="display: none;" onchange="handleAlbumUpload(event)">
+                <input type="file" id="album-cover-input" accept="image/*,.jpg,.jpeg,.png,.gif,.webp" style="display: none;" onchange="handleAlbumUpload(event)">
 
                 <!-- 完整歌词模式 -->
                 <div id="lyrics-mode" class="music-view-mode" style="display: none;">
@@ -12565,7 +12565,7 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
             // 临时创建一个文件输入框，避免干扰原有的头像上传功能
             const tempInput = document.createElement('input');
             tempInput.type = 'file';
-            tempInput.accept = 'image/*';
+            tempInput.accept = 'image/*,.jpg,.jpeg,.png,.gif,.webp';
             tempInput.style.display = 'none';
             document.body.appendChild(tempInput);
             
@@ -25724,7 +25724,7 @@ async function createGroupChat(personaId) {
         function addMomentImage() {
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = 'image/*';
+            input.accept = 'image/*,.jpg,.jpeg,.png,.gif,.webp';
             input.multiple = true;
             input.onchange = function(event) {
                 const files = Array.from(event.target.files);
@@ -28948,7 +28948,7 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
         function changeCoverImage() {
             const input = document.createElement("input");
             input.type = "file";
-            input.accept = "image/*";
+            input.accept = "image/*,.jpg,.jpeg,.png,.gif,.webp";
             input.onchange = async function(e) {
                 const file = e.target.files[0];
                 if (file) {
@@ -28981,7 +28981,7 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = 'image/*';
+            input.accept = 'image/*,.jpg,.jpeg,.png,.gif,.webp';
             input.onchange = async function(e) {
                 const file = e.target.files[0];
                 if (file) {
@@ -33879,7 +33879,7 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             
             const tempInput = document.createElement('input');
             tempInput.type = 'file';
-            tempInput.accept = 'image/*';
+            tempInput.accept = 'image/*,.jpg,.jpeg,.png,.gif,.webp';
             tempInput.style.display = 'none';
             document.body.appendChild(tempInput);
             
@@ -34197,7 +34197,7 @@ async function changeMyGroupAvatar() {
     // 创建一个临时的文件输入框
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/*,.jpg,.jpeg,.png,.gif,.webp';
     input.style.display = 'none';
 
     // 当用户选择了文件后
