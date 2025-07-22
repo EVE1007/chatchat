@@ -3865,12 +3865,12 @@
                     <div class="lyrics-input-section">
                         <textarea id="song-lyrics-input" placeholder="歌词（每行一句，可选）或上传歌词文件" class="lyrics-textarea"></textarea>
                         <div style="display: flex; gap: 8px; margin-top: 8px; font-size: 11px; color: #666;">
-                            <span>支持格式：LRC、bin等歌词文件</span>
+                            <span>支持格式：LRC、TXT、bin等歌词文件（iPhone用户可选择任意文件）</span>
                         </div>
                     </div>
                     <!-- 隐藏的文件输入 -->
                     <input type="file" id="local-music-input" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg,.flac" style="display: none;">
-                    <input type="file" id="lyrics-file-input" accept=".lrc,.txt,.bin,text/plain" style="display: none;">
+                    <input type="file" id="lyrics-file-input" style="display: none;">
                     <button onclick="addCustomSong()" class="add-song-btn">
                         添加歌曲
                     </button>
@@ -45323,6 +45323,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     fileType = 'LRC歌词';
                 } else if (fileName.endsWith('.bin')) {
                     fileType = 'bin歌词';
+                } else if (fileName.endsWith('.txt')) {
+                    fileType = 'TXT歌词';
+                } else {
+                    // 对于其他文件类型，给出提示但仍然允许选择
+                    fileType = '文件';
+                    console.log('选择的文件可能不是标准歌词格式，但仍会尝试处理:', file.name);
                 }
 
                 lyricsInput.placeholder = `已选择${fileType}: ${file.name}`;
