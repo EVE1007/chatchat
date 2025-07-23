@@ -604,47 +604,110 @@
                         <div class="app-status-time"></div>
                         <div class="app-battery-container">
                             <span class="battery-text">ᰔᩚ</span>
-                            <div class="app-battery-icon">
-                                <div class="app-battery-level"></div>
-                            </div>
+                            <div class="app-battery-icon"><div class="app-battery-level"></div></div>
                         </div>
                     </div>
                     <div class="app-header">
                         <button class="back-button" onclick="hideApp('forum-screen')">‹</button>
                         <div class="app-title">论坛</div>
+                        <div class="add-forum-btn" onclick="showCreateForumScreen()">
+                            <i class="fas fa-plus"></i>
+                        </div>
                     </div>
                     <div class="app-content">
-                        <div class="forum-categories">
-                            <div class="forum-category">
-                                <div class="category-icon">
-                                    <i class="fas fa-fire"></i>
-                                </div>
-                                <div class="category-info">
-                                    <div class="category-name">热门话题</div>
-                                    <div class="category-desc">最受欢迎的讨论</div>
+                        <div id="forum-archive-list" class="forum-archive-list">
+                            <div class="forum-empty-state">
+                                <i class="fas fa-comments"></i>
+                                <p>还没有创建任何论坛</p>
+                                <p>点击右上角 + 创建你的第一个论坛</p>
                             </div>
-                                <div class="category-count">128</div>
-                            </div>
-                            <div class="forum-category">
-                                <div class="category-icon">
-                                    <i class="fas fa-gamepad"></i>
-                            </div>
-                                <div class="category-info">
-                                    <div class="category-name">游戏讨论</div>
-                                    <div class="category-desc">分享游戏心得</div>
-                                </div>
-                                <div class="category-count">89</div>
-                                </div>
-                            <div class="forum-category">
-                                <div class="category-icon">
-                                    <i class="fas fa-heart"></i>
-                                </div>
-                                <div class="category-info">
-                                    <div class="category-name">角色互动</div>
-                                    <div class="category-desc">与AI角色的故事</div>
-                                </div>
-                                <div class="category-count">256</div>
-                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 创建论坛界面 -->
+                <div id="create-forum-screen" class="app-screen">
+                    <div class="app-header">
+                        <button class="back-button" onclick="hideApp('create-forum-screen')">‹</button>
+                        <div class="app-title">创建新论坛</div>
+                    </div>
+                    <div class="app-content">
+                        <div class="form-group">
+                            <label class="form-label">论坛名称</label>
+                            <input type="text" id="forum-name-input" class="form-input" placeholder="给这个世界线起个名字吧">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">选择角色 (可多选)</label>
+                            <div id="forum-character-selection" class="selection-grid"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">选择你的身份</label>
+                            <div id="forum-persona-selection" class="selection-grid single-selection"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">补充世界观 (可选)</label>
+                            <textarea id="forum-worldview-input" class="form-textarea" rows="4" placeholder="补充一些背景故事或设定..."></textarea>
+                        </div>
+                        <button class="form-submit" onclick="createForum()">进入论坛</button>
+                    </div>
+                </div>
+
+                <!-- 帖子列表界面 -->
+                <div id="forum-view-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon"><div class="app-battery-level"></div></div>
+                        </div>
+                    </div>
+                    <div class="app-header">
+                        <button class="back-button" onclick="backToForumArchives()">‹</button>
+                        <div class="app-title" id="forum-view-title">论坛</div>
+                        <div class="header-actions">
+                            <span class="action-btn" onclick="refreshPosts()" title="刷新帖子">
+                                <i class="fas fa-redo"></i>
+                            </span>
+                            <span class="action-btn" onclick="showForumProfile()" title="个人主页">
+                                <i class="fas fa-user"></i>
+                            </span>  </div>
+                    </div>
+                    <div class="app-content">
+                        <div id="forum-posts-list" class="post-list">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 帖子详情和回复界面 -->
+                <div id="post-view-screen" class="app-screen">
+                    <div class="app-header">
+                        <button class="back-button" onclick="hideApp('post-view-screen')">‹ 返回</button>
+                        <div class="app-title">帖子详情</div>
+                        <button id="favorite-btn" class="header-action-btn" onclick="toggleFavoritePost()" title="收藏"><i class="far fa-star"></i></button>
+                    </div>
+                    <div class="app-content" id="post-view-content">
+                    </div>
+                    <div class="reply-input-area">
+                        <input type="text" id="reply-input" placeholder="输入你的回复...">
+                        <button onclick="sendReply()">发送</button>
+                    </div>
+                </div>
+
+                <!-- 论坛个人主页/收藏夹 -->
+                <div id="forum-profile-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon"><div class="app-battery-level"></div></div>
+                        </div>
+                    </div>
+                    <div class="app-header">
+                        <button class="back-button" onclick="backToCurrentForum()">‹</button>
+                        <div class="app-title">个人主页</div>
+                    </div>
+                    <div class="app-content">
+                        <div id="favorite-posts-list" class="post-list">
                         </div>
                     </div>
                 </div>
@@ -4064,120 +4127,10 @@
             }
         }
 
-        // 🔥【最终版本16】统一的数据库结构定义 - 包含所有表的最终形态
-        db.version(16).stores({
-            // 基础数据表
-            characters: '&id, name, groupId',
-            contacts: '++id, characterId',
-            chatMessages: '&id, characterId, timestamp',
 
-            // 用户面具系统
-            personas: '&id, name',
-
-            // 表情包系统
-            customEmojis: '&id, name, category',
-            recentEmojis: '&id, lastUsed',
-
-            // 世界书系统
-            worldbooks: '&id, name, isGlobal',
-            worldbookEntries: '&id, worldbookId, keyword',
-
-            // 群聊系统
-            characterGroups: '&id, name, order',
-            groupChats: '&id, name',
-            groupChatMessages: '&id, groupId, timestamp',
-            groupChatMembers: '&id, groupId, characterId',
-
-            // 动态系统
-            moments: '&id, authorId, timestamp',
-            momentLikes: '[momentId+authorId], momentId, authorId',
-            momentComments: '&id, momentId, authorId, timestamp',
-
-            // 记忆系统
-            workingMemory: '&id, characterId, timestamp, content, context',
-            episodicMemory: '&id, characterId, date, summary, timestamp, context',
-            episodicMemories: '&id, characterId, fact, importance, timestamp, category',
-            memorySummaries: '&id, characterId, date, summary, timestamp, context',
-            memoryEvents: '&id, characterIds, eventType, timestamp, context, eventData, importance',
-            coreMemory: '&id, characterId, category, content, timestamp',
-            coreMemories: '&id, characterId, fact, importance, timestamp, type, category',
-            crossAppTimeline: '&id, characterId, appType, action, timestamp, context, messageId',
-
-            // 拉黑和好友系统
-            blacklist: '&id, blockerId, blockedId, timestamp, reason',
-            blockedCharacters: '&id, characterId, blockedBy, timestamp',
-            friendRequests: '&id, fromId, toId, timestamp, status, type, message',
-            characterStatus: '&id, characterId, status, activity, location, lastUpdate',
-
-            // 日记系统
-            characterDiaries: '&id, characterId, date, content, timestamp, weather',
-
-            // 线下模式系统
-            offlineHistoryRecords: '&id, characterId, timestamp, summary, messages',
-            offlineUISettings: '&id, characterId, settings, timestamp',
-            offlinePresets: '&id, name, content, timestamp',
-
-            // 音乐播放器系统
-            musicPlaylist: '&id, title, artist, album, duration, url, coverImage, lyrics, addedTime',
-            musicCovers: '&id, songId, imageData, timestamp',
-
-            // 设置和配置
-            apiSettings: '&id',
-            globalSettings: '&id',
-            wallpapers: '&id, name',
-            appIcons: '&id, appId',
-            chatSettings: '&id, chatId',
-
-            // 纪念日系统
-            anniversaries: '&id, name, date, type, yearly'
-        }).upgrade(async tx => {
-            console.log('🔧 升级到版本16：添加纪念日系统，统一数据库结构');
-
-            // 🔥【数据迁移】从localStorage迁移各种数据到Dexie
-            try {
-                // 迁移日记数据
-                console.log('开始迁移日记数据...');
-                let migratedCount = 0;
-
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-
-                    // 迁移今日日记数据
-                    if (key && key.startsWith('diary_') && key.match(/diary_[^_]+_\d{4}-\d{2}-\d{2}$/)) {
-                        const parts = key.split('_');
-                        const characterId = parts[1];
-                        const date = parts[2];
-                        const content = localStorage.getItem(key);
-
-                        if (content) {
-                            try {
-                                await tx.characterDiaries.add({
-                                    id: `${characterId}_${date}`,
-                                    characterId: characterId,
-                                    date: date,
-                                    content: content,
-                                    timestamp: new Date(date).getTime(),
-                                    weather: null
-                                });
-                                migratedCount++;
-                            } catch (e) {
-                                console.log(`日记数据已存在，跳过: ${key}`);
-                            }
-                        }
-                    }
-                }
-
-                if (migratedCount > 0) {
-                    console.log(`✅ 成功迁移 ${migratedCount} 条日记数据`);
-                }
-
-            } catch (error) {
-                console.error('数据迁移失败:', error);
-            }
-        });
-
-        // 🔥【新增版本18】添加心声系统
-        db.version(18).stores({
+        // 🔥【最终版本19】统一的数据库结构定义 - 包含心声和论坛系统
+        db.version(19).stores({
+            // --- 保留所有旧的表结构 ---
             // 基础数据表
             characters: '&id, name, groupId',
             contacts: '++id, characterId',
@@ -4243,20 +4196,36 @@
             // 纪念日系统
             anniversaries: '&id, name, date, type, yearly',
 
-            // 🔥【新增】心声系统
-            innerThoughts: '&id, messageId, characterId, content, timestamp'
+            // 心声系统
+            innerThoughts: '&id, messageId, characterId, content, timestamp',
+
+            // --- 🔥【新增】论坛功能相关表 ---
+            forums: '++id, name', // 论坛存档表，name不设为唯一索引，在应用层面处理重复检查
+            forumPosts: '++id, forumId, timestamp', // 帖子表
+            forumReplies: '++id, postId, timestamp', // 回复表
+            forumFavorites: '++id, [userId+postId]' // 收藏夹，确保用户对一个帖子只能收藏一次
         }).upgrade(async tx => {
-            console.log('🔧 升级到版本18：添加心声系统');
-            // 心声系统表已自动创建，无需额外初始化
+            console.log('🔧 升级到版本19：添加心声和论坛系统');
+
+            // 🔥【安全迁移】检查并保护现有用户数据
+            try {
+                // 检查是否有现有数据需要保护
+                const existingCharacters = await tx.characters.count();
+                const existingMessages = await tx.chatMessages.count();
+
+                if (existingCharacters > 0 || existingMessages > 0) {
+                    console.log(`✅ 检测到现有用户数据：${existingCharacters}个角色，${existingMessages}条消息`);
+                    console.log('✅ 心声和论坛系统表已安全添加，现有数据完全保留');
+                } else {
+                    console.log('✅ 新用户安装，心声和论坛系统表已创建');
+                }
+
+                // 新表会自动创建：innerThoughts, forums, forumPosts, forumReplies, forumFavorites
+
+            } catch (error) {
+                console.error('⚠️ 数据迁移检查失败，但不影响功能:', error);
+            }
         });
-
-
-
-
-
-
-
-
 
         // 全局变量
         let characters = [];
@@ -4459,6 +4428,9 @@
 
             // 初始化小组件
             initializeWidgets();
+
+            // 🔥【新增】初始化论坛应用
+            initializeForumApp();
             
             // 渲染界面 - 添加数据验证
             try {
@@ -34953,6 +34925,423 @@ async function changeMyGroupAvatar() {
                     showToast('删除失败，请检查控制台错误信息', 'error');
                 }
             }
+        }
+
+        // --- 论坛功能 ---
+
+        let currentForumId = null;
+
+        // 显示创建论坛界面
+        function showCreateForumScreen() {
+            hideApp('forum-screen');
+            const characterContainer = document.getElementById('forum-character-selection');
+            const personaContainer = document.getElementById('forum-persona-selection');
+
+            // 渲染角色和身份面具选项
+            characterContainer.innerHTML = characters.map(char => `
+                <div class="selection-item" data-id="${char.id}" onclick="toggleSelection(this)">
+                    <img src="${char.avatarUrl || createDefaultAvatar(char.name)}" alt="${char.name}">
+                    <div class="selection-item-name">${char.name}</div>
+                </div>
+            `).join('');
+
+            personaContainer.innerHTML = personas.map(p => `
+                <div class="selection-item" data-id="${p.id}" onclick="toggleSelection(this, true)">
+                    <img src="${p.avatarUrl || createDefaultAvatar(p.name)}" alt="${p.name}">
+                    <div class="selection-item-name">${p.name}</div>
+                </div>
+            `).join('');
+
+            showApp('create-forum-screen');
+        }
+
+        // 多选/单选切换
+        function toggleSelection(element, isSingle = false) {
+            const container = element.parentElement;
+            if (isSingle) {
+                // 单选逻辑
+                const currentlySelected = container.querySelector('.selected');
+                if (currentlySelected) {
+                    currentlySelected.classList.remove('selected');
+                }
+            }
+            element.classList.toggle('selected');
+        }
+
+        // 创建新论坛
+        async function createForum() {
+            const name = document.getElementById('forum-name-input').value.trim();
+            const worldview = document.getElementById('forum-worldview-input').value.trim();
+
+            const selectedCharElements = document.querySelectorAll('#forum-character-selection .selected');
+            const selectedPersonaElement = document.querySelector('#forum-persona-selection .selected');
+
+            if (!name) return alert('请输入论坛名称');
+            if (selectedCharElements.length === 0) return alert('请至少选择一个角色');
+            if (!selectedPersonaElement) return alert('请选择你的身份');
+
+            const characterIds = Array.from(selectedCharElements).map(el => el.dataset.id);
+            const personaId = selectedPersonaElement.dataset.id;
+
+            try {
+                // 检查论坛名称是否重复
+                const existingForum = await db.forums.where('name').equals(name).first();
+                if (existingForum) {
+                    alert('论坛名称已存在，请选择其他名称');
+                    return;
+                }
+
+                const newForum = {
+                    name,
+                    characterIds,
+                    personaId,
+                    worldview,
+                    createdAt: Date.now()
+                };
+
+                currentForumId = await db.forums.add(newForum);
+                showToast(`论坛 "${name}" 创建成功！正在生成帖子...`, 'success');
+
+                hideApp('create-forum-screen');
+                await loadAndDisplayForum(currentForumId, true); // true表示这是第一次加载，需要生成帖子
+            } catch (error) {
+                console.error("创建论坛失败:", error);
+                alert("创建论坛失败，请重试。");
+            }
+        }
+
+        // 渲染论坛存档列表
+        async function renderForumArchives() {
+            const forums = await db.forums.toArray();
+            const listContainer = document.getElementById('forum-archive-list');
+
+            if (forums.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="forum-empty-state">
+                        <i class="fas fa-comments"></i>
+                        <p>还没有创建任何论坛</p>
+                        <p>点击右上角 + 创建你的第一个论坛</p>
+                    </div>`;
+                return;
+            }
+
+            listContainer.innerHTML = forums.sort((a, b) => b.createdAt - a.createdAt).map(forum => `
+                <div class="forum-archive-item" onclick="loadAndDisplayForum('${forum.id}')">
+                    <div class="forum-archive-title">${forum.name}</div>
+                    <div class="forum-archive-meta">
+                        <span>👥 ${forum.characterIds.length} 个角色</span>
+                        <span>${new Date(forum.createdAt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 加载并显示一个论坛
+        async function loadAndDisplayForum(forumId, shouldGeneratePosts = false) {
+            currentForumId = forumId;
+            const forum = await db.forums.get(parseInt(forumId));
+            if (!forum) {
+                alert("找不到该论坛");
+                return;
+            }
+
+            document.getElementById('forum-view-title').innerText = forum.name;
+            hideApp('forum-screen');
+            showApp('forum-view-screen');
+
+            if (shouldGeneratePosts) {
+                await generateForumPosts(forumId);
+            }
+            await renderForumPosts(forumId);
+        }
+
+        // 返回论坛存档列表
+        async function backToForumArchives() {
+            // 🔥【修复】先显示论坛主页，再隐藏当前页面，避免闪现主屏幕
+            await renderForumArchives();
+            showApp('forum-screen');
+            hideApp('forum-view-screen');
+        }
+
+        // 生成论坛帖子
+        async function generateForumPosts(forumId) {
+            const forum = await db.forums.get(parseInt(forumId));
+            const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
+            const persona = personas.find(p => p.id === forum.personaId);
+
+            let prompt = `你是一个论坛的内容生成AI。请为一个名为 "${forum.name}" 的论坛生成5个初始帖子。
+
+世界观设定:
+${forum.worldview || '无补充设定，请基于角色人设自由发挥。'}
+
+论坛成员:
+${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
+- ${persona.name} (用户): ${persona.description}
+
+请生成5个帖子的标题和内容，格式为JSON数组，每个帖子是一个对象:
+[
+  { "authorName": "角色名或用户名", "title": "帖子标题", "content": "帖子正文" },
+  ...
+]
+
+要求:
+- 帖子要生动真实，有生活气息。
+- 话题可以围绕角色的日常、烦恼、趣事，也可以是向用户或其他角色提问。
+- 标题要吸引人，内容要有细节。
+- authorName 必须是上面列表中的名字之一。
+`;
+
+            showToast('AI正在生成帖子，请稍候...', 'info');
+            try {
+                const response = await callChatAPI(prompt, forumCharacters[0]); // 使用第一个角色作为API调用的主体
+                const posts = JSON.parse(response);
+
+                for (const post of posts) {
+                    const author = characters.find(c => c.name === post.authorName) || personas.find(p => p.name === post.authorName);
+                    await db.forumPosts.add({
+                        forumId: parseInt(forumId),
+                        title: post.title,
+                        content: post.content,
+                        authorId: author.id,
+                        authorName: author.name,
+                        authorAvatar: author.avatarUrl,
+                        timestamp: Date.now() - Math.random() * 86400000 // 随机时间戳，看起来更真实
+                    });
+                }
+            } catch (error) {
+                console.error("生成帖子失败:", error);
+                alert("AI生成帖子失败，请检查API设置或刷新重试。");
+            }
+        }
+
+        // 渲染帖子列表
+        async function renderForumPosts(forumId) {
+            const posts = await db.forumPosts.where('forumId').equals(parseInt(forumId)).reverse().sortBy('timestamp');
+            const listContainer = document.getElementById('forum-posts-list');
+
+            if (posts.length === 0) {
+                listContainer.innerHTML = `<div class="forum-empty-state"><p>这个论坛还没有帖子</p></div>`;
+                return;
+            }
+
+            listContainer.innerHTML = posts.map(post => `
+                <div class="post-item" onclick="showPostView(${post.id})">
+                    <div class="post-title">${post.title}</div>
+                    <div class="post-meta">
+                        <span class="post-author">${post.authorName}</span>
+                        <span>${formatTime(post.timestamp)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 刷新帖子
+        async function refreshPosts() {
+            if (!currentForumId) return;
+            await generateForumPosts(currentForumId);
+            await renderForumPosts(currentForumId);
+            showToast("新帖子已刷新！", "success");
+        }
+
+        // 显示帖子详情
+        async function showPostView(postId) {
+            const post = await db.forumPosts.get(postId);
+            if (!post) return;
+
+            window.currentPostId = postId; // 存储当前帖子ID
+
+            const contentContainer = document.getElementById('post-view-content');
+            contentContainer.innerHTML = `
+                <div class="post-full-content">
+                    <div class="post-full-title">${post.title}</div>
+                    <div class="post-full-meta">由 ${post.authorName} 发布于 ${new Date(post.timestamp).toLocaleString()}</div>
+                    <div class="post-full-body">${post.content.replace(/\n/g, '<br>')}</div>
+                </div>
+                <div class="replies-section">
+                    <h3>回复</h3>
+                    <div id="replies-list"></div>
+                </div>
+            `;
+
+            // 更新收藏按钮状态
+            const isFav = await db.forumFavorites.where('[userId+postId]').equals(['user', postId]).first();
+            const favIcon = document.querySelector('#favorite-btn i');
+            favIcon.className = isFav ? 'fas fa-star' : 'far fa-star';
+
+            await renderReplies(postId);
+            showApp('post-view-screen');
+        }
+
+        // 渲染回复
+        async function renderReplies(postId) {
+            const replies = await db.forumReplies.where('postId').equals(postId).sortBy('timestamp');
+            const listContainer = document.getElementById('replies-list');
+
+            listContainer.innerHTML = replies.map(reply => `
+                <div class="reply-item">
+                    <img class="reply-avatar" src="${reply.authorAvatar || createDefaultAvatar(reply.authorName)}" alt="${reply.authorName}">
+                    <div class="reply-body">
+                        <div class="reply-author">${reply.authorName}</div>
+                        <div class="reply-content">${reply.content.replace(/\n/g, '<br>')}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 发送回复
+        async function sendReply() {
+            const input = document.getElementById('reply-input');
+            const content = input.value.trim();
+            if (!content || !window.currentPostId) return;
+
+            const forum = await db.forums.get(currentForumId);
+            const persona = personas.find(p => p.id === forum.personaId);
+
+            const reply = {
+                postId: window.currentPostId,
+                authorId: 'user',
+                authorName: persona.name,
+                authorAvatar: persona.avatarUrl,
+                content: content,
+                timestamp: Date.now()
+            };
+
+            await db.forumReplies.add(reply);
+            input.value = '';
+            await renderReplies(window.currentPostId);
+
+            // 触发NPC回复
+            triggerNpcReply(window.currentPostId);
+        }
+
+        // 触发NPC回复
+        async function triggerNpcReply(postId) {
+            const post = await db.forumPosts.get(postId);
+            const forum = await db.forums.get(post.forumId);
+            const replies = await db.forumReplies.where('postId').equals(postId).toArray();
+            const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
+            const persona = personas.find(p => p.id === forum.personaId);
+
+            // 随机选择一个NPC进行回复
+            const replyingChar = forumCharacters[Math.floor(Math.random() * forumCharacters.length)];
+
+            let prompt = `你正在一个名为 "${forum.name}" 的论坛里。
+世界观: ${forum.worldview || '无'}
+你的身份是 ${replyingChar.name}，人设: ${replyingChar.bio}
+
+当前帖子标题: "${post.title}"
+帖子内容: "${post.content}"
+
+以下是最近的几条回复:
+${replies.slice(-5).map(r => `${r.authorName}: ${r.content}`).join('\n')}
+
+现在请你作为 ${replyingChar.name}，对这个帖子或最新的回复发表你的看法。回复要自然、简短，符合你的人设。直接输出回复内容，不要用JSON。`;
+
+            try {
+                const response = await callChatAPI(prompt, replyingChar);
+                const replyContent = Array.isArray(response) ? response[0] : response;
+
+                if (replyContent) {
+                    const npcReply = {
+                        postId: postId,
+                        authorId: replyingChar.id,
+                        authorName: replyingChar.name,
+                        authorAvatar: replyingChar.avatarUrl,
+                        content: replyContent,
+                        timestamp: Date.now()
+                    };
+                    await db.forumReplies.add(npcReply);
+                    await renderReplies(postId);
+                }
+            } catch (error) {
+                console.error("NPC回复失败:", error);
+            }
+        }
+
+        // 收藏/取消收藏帖子
+        async function toggleFavoritePost() {
+            if (!window.currentPostId) return;
+
+            const postId = window.currentPostId;
+            const existingFav = await db.forumFavorites.where('[userId+postId]').equals(['user', postId]).first();
+            const favIcon = document.querySelector('#favorite-btn i');
+
+            if (existingFav) {
+                await db.forumFavorites.delete(existingFav.id);
+                favIcon.className = 'far fa-star';
+                showToast('已取消收藏', 'info');
+            } else {
+                await db.forumFavorites.add({ userId: 'user', postId: postId, timestamp: Date.now() });
+                favIcon.className = 'fas fa-star';
+                showToast('收藏成功！', 'success');
+            }
+        }
+
+        // 显示个人主页
+        async function showForumProfile() {
+            // 🔥【修复】先加载数据和显示页面，再隐藏当前页面，避免闪现主屏幕
+            const favoriteRecords = await db.forumFavorites.where('userId').equals('user').toArray();
+            const postIds = favoriteRecords.map(fav => fav.postId);
+            const favoritePosts = await db.forumPosts.where('id').anyOf(postIds).toArray();
+
+            const listContainer = document.getElementById('favorite-posts-list');
+            if (favoritePosts.length === 0) {
+                listContainer.innerHTML = `<div class="forum-empty-state"><p>你还没有收藏任何帖子</p></div>`;
+            } else {
+                listContainer.innerHTML = favoritePosts.sort((a,b) => b.timestamp - a.timestamp).map(post => `
+                    <div class="post-item" onclick="showPostView(${post.id})">
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-meta">
+                            <span class="post-author">${post.authorName}</span>
+                            <span>${formatTime(post.timestamp)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            showApp('forum-profile-screen');
+            hideApp('forum-view-screen');
+        }
+
+        // 🔥【新增】从个人主页返回当前论坛社区
+        async function backToCurrentForum() {
+            if (!currentForumId) {
+                // 如果没有当前论坛ID，返回论坛主页
+                hideApp('forum-profile-screen');
+                await renderForumArchives();
+                showApp('forum-screen');
+                return;
+            }
+
+            // 返回当前论坛社区页面
+            const forum = await db.forums.get(parseInt(currentForumId));
+            if (forum) {
+                document.getElementById('forum-view-title').innerText = forum.name;
+                await renderForumPosts(currentForumId);
+                showApp('forum-view-screen');
+                hideApp('forum-profile-screen');
+            } else {
+                // 论坛不存在，返回论坛主页
+                hideApp('forum-profile-screen');
+                await renderForumArchives();
+                showApp('forum-screen');
+            }
+        }
+
+        // 初始化论坛应用
+        function initializeForumApp() {
+            // 绑定论坛应用图标点击事件
+            const forumAppIcon = document.querySelector('.mini-app[onclick*="forum-screen"]');
+            if (forumAppIcon) {
+                // 移除原有的onclick属性
+                forumAppIcon.removeAttribute('onclick');
+                // 添加新的事件监听器
+                forumAppIcon.addEventListener('click', async () => {
+                    await renderForumArchives();
+                    showApp('forum-screen');
+                });
+            }
+            console.log('✅ 论坛应用初始化完成');
         }
 
     </script>
