@@ -675,10 +675,10 @@
                     <div class="app-content">
                         <div id="forum-posts-list" class="post-list">
                         </div>
-                        <!-- 用户发帖悬浮按钮 -->
-                        <div class="floating-post-btn" onclick="showCreatePostModal()" title="发帖">
-                            <i class="fas fa-plus"></i>
-                        </div>
+                    </div>
+                    <!-- 用户发帖悬浮按钮 -->
+                    <div class="floating-post-btn" onclick="showCreatePostModal()" title="发帖">
+                        <i class="fas fa-plus"></i>
                     </div>
                 </div>
 
@@ -719,6 +719,9 @@
                     <div class="app-content" id="post-view-content">
                     </div>
                     <div class="reply-input-area">
+                        <button id="anonymous-toggle" class="anonymous-toggle-btn" onclick="toggleAnonymousMode()" title="匿名回复">
+                            <i class="fas fa-user-secret"></i>
+                        </button>
                         <input type="text" id="reply-input" placeholder="输入你的回复...">
                         <button onclick="sendReply()">发送</button>
                     </div>
@@ -736,6 +739,9 @@
                     <div class="app-header">
                         <button class="back-button" onclick="backToCurrentForum()">‹</button>
                         <div class="app-title">个人主页</div>
+                        <button class="header-action-btn" onclick="showVoteHistory()" title="投票历史">
+                            <i class="fas fa-vote-yea"></i>
+                        </button>
                     </div>
                     <div class="app-content">
                         <div id="favorite-posts-list" class="post-list">
@@ -12834,30 +12840,7 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
             100% { transform: rotate(360deg); }
         }
 
-        /* 悬浮发帖按钮 */
-        .floating-post-btn {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            background: #007AFF;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
 
-        .floating-post-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
-        }
 
         /* 发帖模态框 */
         .modal-overlay {
@@ -35285,6 +35268,421 @@ async function changeMyGroupAvatar() {
 
         let currentForumId = null;
 
+        // 【新增】处理用户投票的函数
+        async function handlePollVote(optionElement, optionId) {
+            const pollElement = optionElement.closest('.forum-poll');
+            const postId = window.currentPostId;
+
+            // 检查用户是否已经投票
+            const userVotedOption = localStorage.getItem(`poll_voted_${postId}`);
+            if (pollElement.classList.contains('voted') || (userVotedOption && userVotedOption !== 'null')) {
+                showToast('您已经投过票了', 'info');
+                return;
+            }
+
+            if (!postId) return;
+
+            try {
+                const post = await db.forumPosts.get(postId);
+                if (!post) return;
+
+                // 【修复】确保使用统一的optionId提取逻辑
+                let finalOptionId = optionId;
+                if (!finalOptionId) {
+                    const textContent = optionElement.querySelector('.option-text')?.textContent || '';
+                    finalOptionId = textContent.replace(/\s+/g, '_').toLowerCase();
+                }
+
+
+
+                // 初始化投票数据结构
+                if (!post.pollData) {
+                    post.pollData = {
+                        totalVotes: 0,
+                        options: {}
+                    };
+                }
+
+                // 【智能匹配】如果当前ID不存在，尝试查找相似的键并统一
+                let actualOptionId = finalOptionId;
+                if (!post.pollData.options[finalOptionId]) {
+                    const textContent = optionElement.querySelector('.option-text')?.textContent || '';
+
+                    // 查找是否有相似的键
+                    for (const existingKey of Object.keys(post.pollData.options)) {
+                        if (existingKey.includes(textContent.toLowerCase()) ||
+                            textContent.toLowerCase().includes(existingKey) ||
+                            existingKey.includes(finalOptionId) ||
+                            finalOptionId.includes(existingKey)) {
+                            actualOptionId = existingKey;
+
+                            break;
+                        }
+                    }
+
+                    // 如果还是没有找到，初始化新键
+                    if (!post.pollData.options[actualOptionId]) {
+                        post.pollData.options[actualOptionId] = 0;
+                    }
+                }
+
+                // 更新票数
+                const oldVotes = post.pollData.options[actualOptionId];
+                post.pollData.options[actualOptionId]++;
+                post.pollData.totalVotes++;
+
+
+
+                // 保存回数据库
+                await db.forumPosts.put(post);
+
+                // 标记为已投票，并更新UI
+                pollElement.classList.add('voted');
+                updatePollUI(postId, post.pollData);
+
+                // 【增强】保存详细的投票记录
+                const optionText = optionElement.querySelector('.option-text')?.textContent || '';
+                saveVoteRecord(postId, actualOptionId, optionText, post.title);
+
+                showToast('投票成功！', 'success');
+            } catch (error) {
+                console.error("投票失败:", error);
+                showToast('投票失败，请重试', 'error');
+            }
+        }
+
+        // 【新增】更新投票UI的函数
+        function updatePollUI(postId, pollData) {
+            const pollElement = document.querySelector(`.post-full-body .forum-poll`);
+            if (!pollElement) {
+                    return;
+            }
+
+            const totalVotes = pollData.totalVotes || 0;
+            const options = pollElement.querySelectorAll('.poll-option');
+
+            // 检查用户是否已投过票，并获取投票的选项
+            const userVotedOption = localStorage.getItem(`poll_voted_${postId}`);
+            if (userVotedOption && userVotedOption !== 'null') {
+                pollElement.classList.add('voted');
+            }
+
+            options.forEach((option, index) => {
+                // 【核心修复】统一使用onclick属性中的ID，如果没有则生成一致的ID
+                const onclickAttr = option.getAttribute('onclick');
+                let optionId = '';
+
+                if (onclickAttr) {
+                    // 尝试多种正则表达式模式来提取ID
+                    const patterns = [
+                        /'([^']+)'/,           // 单引号
+                        /"([^"]+)"/,           // 双引号
+                        /handlePollVote\([^,]+,\s*['"]([^'"]+)['"]\)/  // 完整函数调用
+                    ];
+
+                    for (const pattern of patterns) {
+                        const match = onclickAttr.match(pattern);
+                        if (match && match[1]) {
+                            optionId = match[1];
+                            break;
+                        }
+                    }
+                }
+
+                // 如果还是没有找到ID，使用文本内容生成，但要与投票时保持一致
+                if (!optionId) {
+                    const textContent = option.querySelector('.option-text')?.textContent || '';
+                    optionId = textContent.replace(/\s+/g, '_').toLowerCase();
+
+                    // 【重要】如果没有onclick属性，我们需要动态添加一个
+                    if (!onclickAttr) {
+                        option.setAttribute('onclick', `handlePollVote(this, '${optionId}')`);
+                    }
+                }
+
+
+
+                // 检查这个ID在投票数据中是否存在
+                let votes = pollData.options[optionId] || 0;
+
+                // 【备用方案】如果当前ID没有数据，尝试查找相似的键
+                if (votes === 0 && Object.keys(pollData.options).length > 0) {
+                    const textContent = option.querySelector('.option-text')?.textContent || '';
+                    for (const [key, value] of Object.entries(pollData.options)) {
+                        if (key.includes(textContent.toLowerCase()) || textContent.toLowerCase().includes(key)) {
+                            votes = value;
+                            optionId = key; // 使用找到的键
+
+                            break;
+                        }
+                    }
+                }
+
+                const percentage = totalVotes > 0 ? ((votes / totalVotes) * 100).toFixed(1) : 0;
+
+                // 【新增】高亮用户投票的选项
+                if (userVotedOption && (optionId === userVotedOption ||
+                    userVotedOption.includes(optionId) ||
+                    optionId.includes(userVotedOption))) {
+                    option.classList.add('user-voted');
+                } else {
+                    option.classList.remove('user-voted');
+                }
+
+                const voteCountElement = option.querySelector('.vote-count');
+                const resultBarElement = option.querySelector('.result-bar');
+
+                if (voteCountElement) {
+                    voteCountElement.textContent = `${votes}票 (${percentage}%)`;
+                }
+                if (resultBarElement) {
+                    resultBarElement.style.width = `${percentage}%`;
+                }
+            });
+
+
+        }
+
+        // 【新增】为投票生成智能假数据的函数
+        async function generateSmartPollData(postId, post) {
+            // 检查是否已经生成过假数据
+            if (post.pollData && post.pollData.totalVotes > 0) {
+                updatePollUI(postId, post.pollData);
+                return;
+            }
+
+            const pollElement = document.querySelector(`.post-full-body .forum-poll`);
+            if (!pollElement) return;
+
+            const options = pollElement.querySelectorAll('.poll-option');
+            if (options.length === 0) return;
+
+            // 获取当前论坛信息，用于生成符合世界观的数据
+            const forum = await db.forums.get(parseInt(currentForumId));
+            const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
+
+            // 根据论坛类型和世界观生成合理的投票数据
+            const pollData = {
+                totalVotes: 0,
+                options: {}
+            };
+
+            // 生成基础投票数：根据论坛活跃度
+            const baseVotes = Math.floor(Math.random() * 50) + 20; // 20-70票基础
+            const isPopularTopic = post.title.includes('【投票】') || post.title.includes('人气') || post.title.includes('最');
+            const totalVotes = isPopularTopic ? baseVotes + Math.floor(Math.random() * 80) : baseVotes;
+
+            // 为每个选项分配票数
+            const optionVotes = [];
+            let remainingVotes = totalVotes;
+
+            options.forEach((option, index) => {
+                const optionText = option.querySelector('.option-text')?.textContent || '';
+
+                // 根据选项内容和世界观调整权重
+                let weight = 1;
+
+                // 娱乐圈论坛：明星相关选项更受欢迎
+                if (forum.worldview && forum.worldview.includes('娱乐')) {
+                    if (forumCharacters.some(c => optionText.includes(c.name))) {
+                        weight = 1.5; // 论坛成员相关选项更受欢迎
+                    }
+                }
+
+                // 校园论坛：实用性选项更受欢迎
+                if (forum.worldview && forum.worldview.includes('校园')) {
+                    if (optionText.includes('食堂') || optionText.includes('图书馆') || optionText.includes('宿舍')) {
+                        weight = 1.3;
+                    }
+                }
+
+                // 生成该选项的票数（带一些随机性）
+                const baseVoteForOption = Math.floor((remainingVotes / (options.length - index)) * weight);
+                const randomVariation = Math.floor(Math.random() * 10) - 5; // -5到+5的随机变化
+                const finalVotes = Math.max(0, Math.min(remainingVotes, baseVoteForOption + randomVariation));
+
+                optionVotes.push(finalVotes);
+                remainingVotes -= finalVotes;
+            });
+
+            // 将剩余票数随机分配给各选项
+            while (remainingVotes > 0) {
+                const randomIndex = Math.floor(Math.random() * options.length);
+                optionVotes[randomIndex]++;
+                remainingVotes--;
+            }
+
+            // 保存投票数据
+            options.forEach((option, index) => {
+                const onclickAttr = option.getAttribute('onclick');
+                let optionId = '';
+                if (onclickAttr) {
+                    const match = onclickAttr.match(/'([^']+)'/);
+                    if (match && match[1]) {
+                        optionId = match[1];
+                    } else {
+                        const textContent = option.querySelector('.option-text')?.textContent || '';
+                        optionId = textContent.replace(/\s+/g, '_').toLowerCase();
+                    }
+                }
+
+                pollData.options[optionId] = optionVotes[index];
+                pollData.totalVotes += optionVotes[index];
+            });
+
+            // 保存到数据库
+            post.pollData = pollData;
+            await db.forumPosts.put(post);
+
+            // 更新UI显示
+            updatePollUI(postId, pollData);
+
+
+        }
+
+        // 【新增】清理旧的投票记录，保留最近的投票
+        function cleanOldVoteRecords(maxRecords = 100) {
+            try {
+                // 获取所有投票相关的localStorage键
+                const voteKeys = Object.keys(localStorage)
+                    .filter(key => key.startsWith('poll_voted_'))
+                    .map(key => {
+                        const postId = key.replace('poll_voted_', '');
+                        return {
+                            key: key,
+                            postId: parseInt(postId),
+                            timestamp: Date.now() // 简化处理，使用当前时间
+                        };
+                    })
+                    .sort((a, b) => b.postId - a.postId); // 按帖子ID降序排列（新帖子ID通常更大）
+
+                // 如果超过限制，删除旧的记录
+                if (voteKeys.length > maxRecords) {
+                    const toDelete = voteKeys.slice(maxRecords);
+                    toDelete.forEach(item => {
+                        localStorage.removeItem(item.key);
+                    });
+                    console.log(`🧹 [投票清理] 已清理 ${toDelete.length} 条旧投票记录，保留最近 ${maxRecords} 条`);
+                }
+            } catch (error) {
+                console.error('清理投票记录失败:', error);
+            }
+        }
+
+        // 【新增】增强版投票记录保存，包含更多信息
+        function saveVoteRecord(postId, optionId, optionText, postTitle) {
+            try {
+                // 保存基本的投票选择（用于防重复投票）
+                localStorage.setItem(`poll_voted_${postId}`, optionId);
+
+                // 保存详细的投票记录（用于历史查看）
+                const voteRecord = {
+                    postId: postId,
+                    postTitle: postTitle || '未知帖子',
+                    optionId: optionId,
+                    optionText: optionText || '未知选项',
+                    timestamp: Date.now(),
+                    date: new Date().toLocaleString()
+                };
+
+                localStorage.setItem(`vote_detail_${postId}`, JSON.stringify(voteRecord));
+
+                // 执行清理，保留最近100条记录
+                cleanOldVoteRecords(100);
+
+            } catch (error) {
+                console.error('保存投票记录失败:', error);
+                // 如果localStorage满了，尝试清理后重试
+                cleanOldVoteRecords(50);
+                try {
+                    localStorage.setItem(`poll_voted_${postId}`, optionId);
+                } catch (retryError) {
+                    console.error('重试保存投票记录仍然失败:', retryError);
+                }
+            }
+        }
+
+        // 【新增】获取用户的投票历史
+        function getUserVoteHistory(limit = 20) {
+            try {
+                const voteDetails = Object.keys(localStorage)
+                    .filter(key => key.startsWith('vote_detail_'))
+                    .map(key => {
+                        try {
+                            return JSON.parse(localStorage.getItem(key));
+                        } catch {
+                            return null;
+                        }
+                    })
+                    .filter(record => record !== null)
+                    .sort((a, b) => b.timestamp - a.timestamp)
+                    .slice(0, limit);
+
+                return voteDetails;
+            } catch (error) {
+                console.error('获取投票历史失败:', error);
+                return [];
+            }
+        }
+
+        // 【新增】显示投票历史
+        function showVoteHistory() {
+            const voteHistory = getUserVoteHistory(50);
+
+            if (voteHistory.length === 0) {
+                showToast('您还没有投票记录', 'info');
+                return;
+            }
+
+            const historyHtml = voteHistory.map(record => `
+                <div class="vote-history-item">
+                    <div class="vote-post-title">${record.postTitle}</div>
+                    <div class="vote-choice">选择了：${record.optionText}</div>
+                    <div class="vote-date">${record.date}</div>
+                </div>
+            `).join('');
+
+            const modalHtml = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="modal-content vote-history-modal" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h3>我的投票历史</h3>
+                            <button class="modal-close" onclick="closeModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="vote-history-list">
+                                ${historyHtml}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+                            <button class="btn btn-danger" onclick="clearVoteHistory()">清空历史</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        // 【新增】清空投票历史
+        function clearVoteHistory() {
+            if (confirm('确定要清空所有投票历史吗？此操作不可恢复。')) {
+                try {
+                    // 清空所有投票相关的localStorage
+                    Object.keys(localStorage)
+                        .filter(key => key.startsWith('poll_voted_') || key.startsWith('vote_detail_'))
+                        .forEach(key => localStorage.removeItem(key));
+
+                    showToast('投票历史已清空', 'success');
+                    closeModal();
+                } catch (error) {
+                    console.error('清空投票历史失败:', error);
+                    showToast('清空失败', 'error');
+                }
+            }
+        }
+
         // 显示创建论坛界面
         function showCreateForumScreen() {
             hideApp('forum-screen');
@@ -35425,10 +35823,10 @@ async function changeMyGroupAvatar() {
             const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
             const persona = personas.find(p => p.id === forum.personaId);
 
-            // --- 核心修改：使用全新的、为论坛专门设计的Prompt ---
+            // 新的、更健壮的Prompt指令
             let prompt = `
 # 角色：论坛内容生成AI
-你的任务是为一个名为 "${forum.name}" 的虚拟论坛生成10个初始帖子，让这个社区看起来充满活力。
+你的任务是为一个名为 "${forum.name}" 的虚拟论坛生成10个初始帖子。
 
 ## 论坛背景设定:
 世界观: ${forum.worldview || '一个现代都市，大家分享日常生活。'}
@@ -35438,20 +35836,57 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
 - ${persona.name} (这是用户, 人设: ${persona.description})
 
 ## 帖子生成指令:
-请严格遵循以下要求，生成10个帖子的标题和内容。
+请严格遵循以下要求，生成10个帖子的JSON对象。
 
 ### 内容要求:
-1.  **真实感**: 帖子要生动真实，充满生活气息，就像真人在发帖一样。
-2.  **多样性**: 话题要多样，可以是成员的日常分享、趣事、烦恼，也可以是向大家提问，或者发起一个讨论。
-3.  **发帖人分配**:
-    - 80-100%的帖子应该由虚构的NPC路人发布，使用符合世界观的网名
-    - 0-20%的帖子由上述论坛成员发布（10条帖子中最多0-2条），但要考虑身份合理性：
-      * 如果是明星、影帝等公众人物，发帖概率应该极低，且要用网名+括号标注身份
-      * 如果是普通学生、上班族等，可以偶尔发帖
-      * 内容要严格符合该角色的人设和身份
-    - 用户不在自动生成范围内，用户可以通过悬浮按钮主动发帖
-4.  **互动性**: 帖子内容可以引发其他角色的互动，比如@某人，或者讨论大家都关心的话题。
-5.  **世界观契合**: 所有内容都必须符合论坛的背景设定。例如，校园论坛就发校园相关内容；娱乐圈论坛就多一些八卦、作品讨论和生活分享。
+1.  **真实感与多样性**: 帖子要生动真实，话题多样，符合成员人设。
+2.  **发帖人分配**: 大部分帖子由NPC路人发布，0-2个帖子由论坛成员发布（公众人物发帖概率低）。
+3.  **互动性**: 帖子可以引发讨论，比如@某人。
+
+### **【新增功能】互动内容生成 (可选):**
+- 你有大约20%的概率，为合适的帖子（如人气比拼、意见征集）额外添加一个互动投票。
+- 如果决定添加投票，**必须**在JSON对象中增加一个名为 "interactiveContent" 的字段。
+
+### **【极其重要】输出格式:**
+你的回复**必须**是一个严格的JSON数组。每个帖子是一个对象，包含以下字段：
+- \`authorName\`: "网名" 或 "网名(真实身份)"
+- \`title\`: "帖子标题"
+- \`content\`: "帖子的**纯文本**正文内容。这里**禁止**包含任何HTML代码。"
+- \`interactiveContent\` (可选): 如果有投票，则此字段包含投票的HTML代码。如果没投票，则**必须省略**此字段。
+
+**投票HTML模板 (必须严格遵守):**
+\`\`\`html
+<div class="forum-poll">
+    <h4>【投票】这里是投票的标题</h4>
+    <div class="poll-option" onclick="handlePollVote(this, '选项1的ID')">
+        <span class="option-text">选项1的文字</span>
+        <div class="result-bar-bg"><div class="result-bar"></div></div>
+        <span class="vote-count">0票</span>
+    </div>
+    <div class="poll-option" onclick="handlePollVote(this, '选项2的ID')">
+        <span class="option-text">选项2的文字</span>
+        <div class="result-bar-bg"><div class="result-bar"></div></div>
+        <span class="vote-count">0票</span>
+    </div>
+</div>
+\`\`\`
+
+**JSON输出示例:**
+\`\`\`json
+[
+  {
+    "authorName": "篮球少年",
+    "title": "下午有人一起打球吗？",
+    "content": "天气不错，三缺二，有兄弟来吗？"
+  },
+  {
+    "authorName": "美食探险家",
+    "title": "【投票】大家觉得食堂新品哪个最好吃？",
+    "content": "这周食堂出了几个新菜，我感觉麻辣香锅 YYDS，你们觉得呢？都来投个票！",
+    "interactiveContent": "<div class='forum-poll'><h4>【投票】食堂新品哪个最好吃？</h4><div class='poll-option' onclick='handlePollVote(this, \\"xiangguo\\")'><span class='option-text'>麻辣香锅</span><div class='result-bar-bg'><div class='result-bar'></div></div><span class='vote-count'>0票</span></div><div class='poll-option' onclick='handlePollVote(this, \\"suancaiyu\\")'><span class='option-text'>酸菜鱼</span><div class='result-bar-bg'><div class='result-bar'></div></div><span class='vote-count'>0票</span></div></div>"
+  }
+]
+\`\`\`
 
 ### **【极其重要】输出格式:**
 你的回复**必须**是一个严格的、不包含任何额外解释文字的JSON数组格式。每个帖子是一个对象，包含"authorName", "title", "content"三个字段。
@@ -35516,12 +35951,19 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                 for (const post of posts) {
                     console.log('🔥 [论坛] 处理帖子:', post);
                     if (post.authorName && post.title && post.content) {
-                        // 检查是否是论坛成员（包含括号的格式）
+
+                        // 【核心修改】将纯文本内容和互动内容合并
+                        let finalContent = post.content;
+                        if (post.interactiveContent) {
+                            // 将互动HTML附加到纯文本内容的后面
+                            finalContent += `\n\n${post.interactiveContent}`;
+
+                        }
+
+                        // 查找作者信息... (这部分逻辑与之前相同)
                         let author = null;
                         let authorName = post.authorName;
                         let authorAvatar = null;
-
-                        // 如果是"网名(真实身份)"格式，提取真实身份
                         const realNameMatch = post.authorName.match(/^(.+)\((.+)\)$/);
                         if (realNameMatch) {
                             const realName = realNameMatch[2];
@@ -35530,8 +35972,6 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                                 authorAvatar = author.avatarUrl;
                             }
                         }
-
-                        // 如果没有找到真实角色，说明是NPC，使用默认头像
                         if (!author) {
                             authorAvatar = createDefaultAvatar(authorName);
                         }
@@ -35539,11 +35979,11 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                         const savedPost = await db.forumPosts.add({
                             forumId: parseInt(forumId),
                             title: post.title,
-                            content: post.content,
+                            content: finalContent, // 【核心修改】保存合并后的内容
                             authorId: author ? author.id : null,
                             authorName: authorName,
                             authorAvatar: authorAvatar,
-                            timestamp: Date.now() - Math.floor(Math.random() * 86400000) // 随机时间戳
+                            timestamp: Date.now() - Math.floor(Math.random() * 86400000)
                         });
                         console.log('🔥 [论坛] 帖子已保存:', savedPost);
                     }
@@ -35598,15 +36038,34 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
             `;
 
             try {
-                // 先清除当前论坛的所有帖子和回复
-                await db.forumPosts.where('forumId').equals(parseInt(currentForumId)).delete();
-                await db.forumReplies.where('postId').anyOf(
-                    await db.forumPosts.where('forumId').equals(parseInt(currentForumId)).primaryKeys()
-                ).delete();
+                // --- 核心修复开始 ---
+
+                // 1. 首先，获取所有用户已收藏的帖子ID
+                const favoriteRecords = await db.forumFavorites.where({ userId: 'user' }).toArray();
+                const favoritedPostIds = new Set(favoriteRecords.map(fav => fav.postId));
+                console.log('保留的收藏帖子ID:', Array.from(favoritedPostIds));
+
+                // 2. 找出当前论坛中所有未被收藏的帖子
+                const allPostsInForum = await db.forumPosts.where('forumId').equals(parseInt(currentForumId)).toArray();
+                const postsToDeleteIds = allPostsInForum
+                    .filter(post => !favoritedPostIds.has(post.id))
+                    .map(post => post.id);
+                console.log('准备删除的帖子ID:', postsToDeleteIds);
+
+                // 3. 只删除未被收藏的帖子及其回复
+                if (postsToDeleteIds.length > 0) {
+                    await db.forumPosts.bulkDelete(postsToDeleteIds);
+                    await db.forumReplies.where('postId').anyOf(postsToDeleteIds).delete();
+                    console.log(`成功删除了 ${postsToDeleteIds.length} 条未收藏的帖子及其回复。`);
+                } else {
+                    console.log('没有需要删除的未收藏帖子。');
+                }
+
+                // --- 核心修复结束 ---
 
                 await generateForumPosts(currentForumId);
                 await renderForumPosts(currentForumId);
-                showToast("新帖子已刷新！", "success");
+                showToast("新帖子已刷新！收藏的帖子已保留。", "success");
             } catch (error) {
                 console.error('刷新帖子失败:', error);
                 showToast('刷新失败: ' + error.message, 'error');
@@ -35632,6 +36091,7 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
             if (!post) return;
 
             window.currentPostId = postId; // 存储当前帖子ID
+            currentForumId = post.forumId; // 【修复】确保设置当前论坛ID
 
             // 立即显示帖子内容和加载动画
             const contentContainer = document.getElementById('post-view-content');
@@ -35639,7 +36099,7 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                 <div class="post-full-content">
                     <div class="post-full-title">${post.title}</div>
                     <div class="post-full-meta">由 ${post.authorName} 发布于 ${new Date(post.timestamp).toLocaleString()}</div>
-                    <div class="post-full-body">${post.content.replace(/\n/g, '<br>')}</div>
+                    <div class="post-full-body" id="post-body-container"></div>
                 </div>
                 <div class="replies-section">
                     <h3>回复</h3>
@@ -35659,6 +36119,25 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                     </div>
                 </div>
             `;
+
+            // 【核心修改】安全地渲染帖子内容
+            const postBodyContainer = document.getElementById('post-body-container');
+            const postContent = post.content || '';
+
+            if (postContent.trim().startsWith('<')) {
+                // 如果内容看起来是HTML，进行安全处理后渲染
+                // 简单安全过滤：移除<script>标签
+                const sanitizedContent = postContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+                postBodyContainer.innerHTML = sanitizedContent;
+
+                // 【新增】如果帖子包含投票，生成智能假数据
+                if (sanitizedContent.includes('forum-poll')) {
+                    await generateSmartPollData(postId, post);
+                }
+            } else {
+                // 如果是纯文本，正常渲染
+                postBodyContainer.innerHTML = postContent.replace(/\n/g, '<br>');
+            }
 
             // 更新收藏按钮状态
             const isFav = await db.forumFavorites.where('[userId+postId]').equals(['user', postId]).first();
@@ -35727,10 +36206,14 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
 1. **真实感**: 评论要像真人写的，有不同的观点和语气
 2. **多样性**: 包括赞同、反对、提问、分享经验等不同类型
 3. **角色分配**:
-   - 70%由虚构的路人网友评论（请创造符合世界观的网友昵称）
-   - 30%由上述角色评论，要符合人设
+   - 85%由虚构的路人网友评论（请创造符合世界观的网友昵称）
+   - 15%由上述角色评论，要符合人设，且不要让所有角色都出现
 4. **互动性**: 评论之间可以有回应和讨论
 5. **长度适中**: 每条评论1-3句话即可
+6. **表情使用**: 可以适当使用emoji、颜文字或文字表情包，但每个帖子下的所有评论中不超过2个
+   - emoji: 😊😂🤔👍❤️🎉😭🙄等
+   - 颜文字: (╯°□°）╯ ┻━┻、(｡◕‿◕｡)、(￣▽￣)、╮(╯▽╰)╭等
+   - 文字表情包: 我可以来吃饭吗就一勺.jpg、小猫后空翻.gif、狗头保命.jpg、这就离谱.png、社死现场.gif、有内味了.jpg、真香.gif、柠檬精.png、我酸了.jpg、打工人.gif、emo了.png、绝绝子.jpg等
 
 ### 输出格式:
 严格的JSON数组，不要其他文字：
@@ -35774,7 +36257,8 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
                             content: reply.content,
                             authorName: reply.authorName,
                             authorAvatar: author ? author.avatarUrl : createDefaultAvatar(reply.authorName),
-                            timestamp: Date.now() + i * 1000 // 错开时间戳
+                            timestamp: Date.now() + i * 1000, // 错开时间戳
+                            likes: Math.floor(Math.random() * 100) // 关键新增：生成0-99的随机点赞数
                         });
                     }
                 }
@@ -35784,19 +36268,22 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             }
         }
 
-        // 渲染回复
+        // 渲染回复 (已美化版本)
         async function renderReplies(postId) {
             const replies = await db.forumReplies.where('postId').equals(postId).sortBy('timestamp');
             const listContainer = document.getElementById('replies-list');
 
-            // 获取用户的点赞状态
             const userLikes = await db.replyLikes.where('userId').equals('user').toArray();
             const likedReplyIds = new Set(userLikes.map(like => like.replyId));
 
+            // SVG图标定义
+            const svgThumbsUpOutline = `<svg viewBox="0 0 24 24"><path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V3a.75.75 0 0 1 .75-.75A2.25 2.25 0 0 1 16.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558-.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.727a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507C2.28 19.482 3.105 20 3.994 20H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z"></path></svg>`;
+            const svgThumbsUpFilled = `<svg viewBox="0 0 24 24"><path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V3a.75.75 0 0 1 .75-.75A2.25 2.25 0 0 1 16.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558-.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.727a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507C2.28 19.482 3.105 20 3.994 20H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" fill="currentColor"></path></svg>`;
+
             listContainer.innerHTML = replies.map(reply => {
                 const isLiked = likedReplyIds.has(reply.id);
-                const heartIcon = isLiked ? 'fas fa-heart' : 'far fa-heart';
                 const likedClass = isLiked ? 'liked' : '';
+                const thumbsUpIcon = isLiked ? svgThumbsUpFilled : svgThumbsUpOutline;
 
                 return `
                     <div class="reply-item" data-reply-id="${reply.id}">
@@ -35805,13 +36292,12 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
                             <div class="reply-author">${reply.authorName}</div>
                             <div class="reply-content">${reply.content.replace(/\n/g, '<br>')}</div>
                             <div class="reply-actions">
-                                <button class="reply-action-btn ${likedClass}" onclick="likeReply(${reply.id})" title="点赞">
-                                    <i class="${heartIcon}"></i>
+                                <button class="reply-action-btn like-btn ${likedClass}" onclick="likeReply(${reply.id})" title="点赞">
+                                    ${thumbsUpIcon}
                                     <span class="like-count">${reply.likes || 0}</span>
                                 </button>
                                 <button class="reply-action-btn" onclick="replyToComment(${reply.id}, '${reply.authorName}')" title="回复">
                                     <i class="far fa-comment"></i>
-                                    回复
                                 </button>
                             </div>
                         </div>
@@ -36001,46 +36487,36 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             }
         }
 
-        // 点赞评论
+        // 点赞评论 (已美化版本)
         async function likeReply(replyId) {
             try {
                 const reply = await db.forumReplies.get(replyId);
                 if (!reply) return;
 
-                // 检查是否已经点赞
+                const likeBtn = document.querySelector(`[data-reply-id="${replyId}"] .like-btn`);
+                const likeCountSpan = likeBtn.querySelector('.like-count');
+
+                // SVG图标定义 (与renderReplies中保持一致)
+                const svgThumbsUpOutline = `<svg viewBox="0 0 24 24"><path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V3a.75.75 0 0 1 .75-.75A2.25 2.25 0 0 1 16.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558-.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.727a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507C2.28 19.482 3.105 20 3.994 20H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z"></path></svg>`;
+                const svgThumbsUpFilled = `<svg viewBox="0 0 24 24"><path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V3a.75.75 0 0 1 .75-.75A2.25 2.25 0 0 1 16.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558-.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.727a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507C2.28 19.482 3.105 20 3.994 20H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" fill="currentColor"></path></svg>`;
+
                 const existingLike = await db.replyLikes.where('[userId+replyId]').equals(['user', replyId]).first();
 
                 if (existingLike) {
                     // 取消点赞
                     await db.replyLikes.delete(existingLike.id);
                     reply.likes = Math.max(0, (reply.likes || 0) - 1);
-                } else {
-                    // 添加点赞
-                    await db.replyLikes.add({
-                        userId: 'user',
-                        replyId: replyId,
-                        timestamp: Date.now()
-                    });
-                    reply.likes = (reply.likes || 0) + 1;
-                }
-
-                // 更新数据库
-                await db.forumReplies.update(replyId, { likes: reply.likes });
-
-                // 更新UI
-                const likeBtn = document.querySelector(`[data-reply-id="${replyId}"] .reply-action-btn`);
-                const likeCount = likeBtn.querySelector('.like-count');
-                const icon = likeBtn.querySelector('i');
-
-                if (existingLike) {
                     likeBtn.classList.remove('liked');
-                    icon.className = 'far fa-heart';
+                    likeBtn.innerHTML = svgThumbsUpOutline + `<span class="like-count">${reply.likes || 0}</span>`;
                 } else {
+                    // 点赞
+                    await db.replyLikes.add({ userId: 'user', replyId: replyId, timestamp: Date.now() });
+                    reply.likes = (reply.likes || 0) + 1;
                     likeBtn.classList.add('liked');
-                    icon.className = 'fas fa-heart';
+                    likeBtn.innerHTML = svgThumbsUpFilled + `<span class="like-count">${reply.likes || 0}</span>`;
                 }
 
-                likeCount.textContent = reply.likes || 0;
+                await db.forumReplies.update(replyId, { likes: reply.likes });
 
             } catch (error) {
                 console.error('点赞失败:', error);
@@ -36059,34 +36535,110 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             }
         }
 
-        // 处理AI角色对评论的智能回复
-        async function handleAIReplyToComment(userContent, postId) {
+        // 【新增】智能回复概率系统
+        async function handleSmartReplySystem(userContent, postId) {
             try {
-                // 检查用户是否@了某个AI角色
-                const mentionMatch = userContent.match(/@(\S+)/);
-                if (!mentionMatch) return;
-
-                const mentionedName = mentionMatch[1];
-
-                // 查找被@的角色
                 const post = await db.forumPosts.get(postId);
                 const forum = await db.forums.get(post.forumId);
                 const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
-                const mentionedCharacter = forumCharacters.find(c => c.name === mentionedName);
 
-                if (!mentionedCharacter) return;
+                if (forumCharacters.length === 0) return;
+
+                // 检查是否@了某个角色或NPC
+                const mentionMatch = userContent.match(/@(\S+)/);
+                let replyProbability = 0;
+                let preferredType = null; // 'character' 或 'npc'
+                let targetCharacter = null;
+
+                if (mentionMatch) {
+                    const mentionedName = mentionMatch[1];
+
+                    // 查找被@的角色
+                    const mentionedCharacter = forumCharacters.find(c => c.name === mentionedName);
+
+                    if (mentionedCharacter) {
+                        // @了角色：60%概率角色回复，40%概率NPC回复
+                        if (Math.random() < 0.6) {
+                            preferredType = 'character';
+                            targetCharacter = mentionedCharacter;
+                            replyProbability = 1; // 100%回复
+                        } else {
+                            preferredType = 'npc';
+                            replyProbability = 1; // 100%回复
+                        }
+                    } else {
+                        // @了NPC（或不存在的用户）：70%概率NPC回复，30%概率角色回复
+                        if (Math.random() < 0.7) {
+                            preferredType = 'npc';
+                            replyProbability = 1; // 100%回复
+                        } else {
+                            preferredType = 'character';
+                            replyProbability = 1; // 100%回复
+                        }
+                    }
+                } else {
+                    // 普通回复/匿名回复：70%概率被回复，30%概率无回复
+                    if (Math.random() < 0.7) {
+                        // 随机选择角色或NPC回复
+                        preferredType = Math.random() < 0.5 ? 'character' : 'npc';
+                        replyProbability = 1;
+                    } else {
+                        return; // 30%概率不回复
+                    }
+                }
+
+                // 执行回复
+                if (replyProbability > 0) {
+                    if (preferredType === 'character') {
+                        await handleCharacterReply(userContent, postId, targetCharacter);
+                    } else {
+                        await handleNpcReply(userContent, postId);
+                    }
+                }
+
+            } catch (error) {
+                console.error('智能回复系统错误:', error);
+            }
+        }
+
+        // 【修改】处理角色回复
+        async function handleCharacterReply(userContent, postId, targetCharacter = null) {
+            try {
+                const post = await db.forumPosts.get(postId);
+                const forum = await db.forums.get(post.forumId);
+                const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
+
+                // 如果没有指定目标角色，随机选择一个（降低出现频率）
+                let replyingCharacter = targetCharacter;
+                if (!replyingCharacter) {
+                    // 随机选择，但避免总是选择同一个角色
+                    const availableCharacters = forumCharacters.filter(c => {
+                        // 简单的冷却机制：避免同一角色连续回复
+                        return Math.random() < 0.6; // 60%概率该角色可以回复
+                    });
+
+                    if (availableCharacters.length === 0) {
+                        // 如果所有角色都在冷却，随机选择一个
+                        replyingCharacter = forumCharacters[Math.floor(Math.random() * forumCharacters.length)];
+                    } else {
+                        replyingCharacter = availableCharacters[Math.floor(Math.random() * availableCharacters.length)];
+                    }
+                }
+
+                if (!replyingCharacter) return;
 
                 // 获取帖子和评论的上下文
                 const replies = await db.forumReplies.where('postId').equals(postId).sortBy('timestamp');
                 const recentReplies = replies.slice(-5); // 最近5条评论作为上下文
 
                 // 构建AI回复的prompt
+                const isDirectMention = userContent.includes(`@${replyingCharacter.name}`);
                 const prompt = `
-# 角色：${mentionedCharacter.name}
-${mentionedCharacter.bio}
+# 角色：${replyingCharacter.name}
+${replyingCharacter.bio}
 
 ## 情况：
-你在论坛中被用户@了，需要回复用户的评论。
+你在论坛中${isDirectMention ? '被用户@了' : '看到了用户的评论'}，需要回复用户的评论。
 
 ## 帖子信息：
 标题：${post.title}
@@ -36095,7 +36647,7 @@ ${mentionedCharacter.bio}
 ## 最近的评论上下文：
 ${recentReplies.map(r => `${r.authorName}：${r.content}`).join('\n')}
 
-## 用户刚刚@你说：
+## 用户刚刚${isDirectMention ? '@你' : ''}说：
 ${userContent}
 
 ## 回复要求：
@@ -36103,38 +36655,98 @@ ${userContent}
 2. 针对用户的@内容进行回应
 3. 回复要自然、有趣，不要太正式
 4. 控制在1-2句话内
-5. 可以适当使用表情符号
+5. 可以适当使用emoji、颜文字或文字表情包，但整条回复中不超过1个
+6. **表情使用建议**：
+   - emoji: 😊😂🤔👍❤️🎉😭🙄等
+   - 颜文字: (╯°□°）╯ ┻━┻、(｡◕‿◕｡)、(￣▽￣)、╮(╯▽╰)╭等
+   - 文字表情包: 我可以来吃饭吗就一勺.jpg、小猫后空翻.gif、狗头保命.jpg、这就离谱.png、社死现场.gif、有内味了.jpg、真香.gif、柠檬精.png、我酸了.jpg、打工人.gif、emo了.png、绝绝子.jpg等
+7. **重要**：只返回回复的文本内容，不要包含任何JSON、引号、格式标记
 
-请直接回复内容，不要其他格式：`;
+请直接回复内容（纯文本）：`;
 
                 // 调用AI生成回复
                 const aiReply = await callChatAPI([{
                     role: 'user',
                     content: prompt
-                }], mentionedCharacter.id);
+                }], replyingCharacter.id);
 
                 if (aiReply && aiReply.trim()) {
+                    // 【修复】清理AI回复内容，移除JSON格式和多余引号
+                    let cleanedReply = aiReply.trim();
+
+                    // 移除可能的JSON格式包装
+                    if (cleanedReply.startsWith('{') && cleanedReply.endsWith('}')) {
+                        try {
+                            const parsed = JSON.parse(cleanedReply);
+                            cleanedReply = parsed.content || parsed.reply || parsed.message || cleanedReply;
+                        } catch (e) {
+                            // 如果不是有效JSON，保持原内容
+                        }
+                    }
+
+                    // 移除多余的引号
+                    cleanedReply = cleanedReply.replace(/^["']|["']$/g, '');
+
+                    // 移除可能的格式标记
+                    cleanedReply = cleanedReply.replace(/```json|```/g, '');
+
                     // 添加AI角色的回复到数据库
                     const characterReply = {
                         postId: postId,
-                        authorId: mentionedCharacter.id,
-                        authorName: mentionedCharacter.name,
-                        authorAvatar: mentionedCharacter.avatarUrl,
-                        content: aiReply.trim(),
-                        timestamp: Date.now() + 1000 // 稍微延后一点，确保在用户回复之后
+                        authorId: replyingCharacter.id,
+                        authorName: replyingCharacter.name,
+                        authorAvatar: replyingCharacter.avatarUrl,
+                        content: cleanedReply.trim(),
+                        timestamp: Date.now() + 100 // 稍微延后一点，确保在用户回复之后
                     };
 
                     await db.forumReplies.add(characterReply);
-
-                    // 延迟一下再刷新，模拟真实回复时间
-                    setTimeout(async () => {
-                        await renderReplies(postId);
-                    }, 1500);
+                    await renderReplies(postId);
                 }
 
             } catch (error) {
                 console.error('AI角色回复失败:', error);
             }
+        }
+
+        // 【新增】匿名模式状态
+        let isAnonymousMode = false;
+
+        // 【新增】切换匿名模式
+        function toggleAnonymousMode() {
+            isAnonymousMode = !isAnonymousMode;
+            const toggleBtn = document.getElementById('anonymous-toggle');
+            const replyInput = document.getElementById('reply-input');
+
+            if (isAnonymousMode) {
+                toggleBtn.classList.add('active');
+                toggleBtn.title = '匿名模式已开启，点击关闭';
+                replyInput.placeholder = '匿名回复...';
+            } else {
+                toggleBtn.classList.remove('active');
+                toggleBtn.title = '匿名回复';
+                replyInput.placeholder = '输入你的回复...';
+            }
+        }
+
+        // 【新增】生成匿名用户名
+        function generateAnonymousName() {
+            const prefixes = [
+                '热心网友', '路过网友', '匿名用户', '神秘的', '低调的',
+                '潜水网友', '吃瓜网友', '围观网友', '装深沉', '安静的',
+                '佛系的', '淡定的', '装忧郁', '理性的', '客观的'
+            ];
+
+            const suffixes = [
+                '小白', '小黑', '小红', '小蓝', '小绿', '小紫', '好心人', '小黄',
+                '阿强', '阿明', '小狗', '小猫', '被人亲', '被人打', '同学', '一只猹',
+                '小A', '小B', '小C', '小D', '小E', '小F', '小G', '小H'
+            ];
+
+            const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+            const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+
+            return `${prefix}${suffix}（我）`;
         }
 
         // 发送回复
@@ -36143,41 +36755,93 @@ ${userContent}
             const content = input.value.trim();
             if (!content || !window.currentPostId) return;
 
-            const forum = await db.forums.get(currentForumId);
-            const persona = personas.find(p => p.id === forum.personaId);
+            // 【修复】如果没有currentForumId，从当前帖子获取论坛ID
+            if (!currentForumId) {
+                const post = await db.forumPosts.get(window.currentPostId);
+                if (post) {
+                    currentForumId = post.forumId;
+                } else {
+                    showToast('找不到帖子信息', 'error');
+                    return;
+                }
+            }
 
-            const reply = {
-                postId: window.currentPostId,
-                authorId: 'user',
-                authorName: persona.name,
-                authorAvatar: persona.avatarUrl,
-                content: content,
-                timestamp: Date.now()
-            };
+            const forum = await db.forums.get(parseInt(currentForumId));
+            if (!forum) {
+                showToast('找不到当前论坛信息', 'error');
+                return;
+            }
+
+            let persona = null;
+            if (!isAnonymousMode) {
+                persona = personas.find(p => p.id === forum.personaId);
+                if (!persona) {
+                    showToast('找不到用户身份信息', 'error');
+                    return;
+                }
+            }
+
+            let reply;
+
+            if (isAnonymousMode) {
+                // 匿名回复
+                reply = {
+                    postId: window.currentPostId,
+                    authorId: 'anonymous',
+                    authorName: generateAnonymousName(),
+                    authorAvatar: createDefaultAvatar('匿名'),
+                    content: content,
+                    timestamp: Date.now(),
+                    isAnonymous: true
+                };
+            } else {
+                // 正常回复（使用身份面具）
+                reply = {
+                    postId: window.currentPostId,
+                    authorId: 'user',
+                    authorName: persona.name,
+                    authorAvatar: persona.avatarUrl,
+                    content: content,
+                    timestamp: Date.now(),
+                    isAnonymous: false
+                };
+            }
 
             await db.forumReplies.add(reply);
             input.value = '';
             await renderReplies(window.currentPostId);
 
-            // 检查是否@了某个AI角色，如果是则触发该角色的智能回复
-            await handleAIReplyToComment(content, window.currentPostId);
-
-            // 触发NPC回复
-            triggerNpcReply(window.currentPostId);
+            // 【新逻辑】智能回复概率系统
+            await handleSmartReplySystem(content, window.currentPostId);
         }
 
-        // 触发NPC回复
-        async function triggerNpcReply(postId) {
-            const post = await db.forumPosts.get(postId);
-            const forum = await db.forums.get(post.forumId);
-            const replies = await db.forumReplies.where('postId').equals(postId).toArray();
-            const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
-            const persona = personas.find(p => p.id === forum.personaId);
+        // 【修改】处理NPC回复
+        async function handleNpcReply(userContent, postId) {
+            try {
+                const post = await db.forumPosts.get(postId);
+                const forum = await db.forums.get(post.forumId);
+                const replies = await db.forumReplies.where('postId').equals(postId).toArray();
+                const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
 
-            // 随机选择一个NPC进行回复
-            const replyingChar = forumCharacters[Math.floor(Math.random() * forumCharacters.length)];
+                if (forumCharacters.length === 0) return;
 
-            let prompt = `你正在一个名为 "${forum.name}" 的论坛里。
+                // 【改进】更智能的NPC选择，降低出现频率
+                const availableCharacters = forumCharacters.filter(c => {
+                    // 避免同一角色频繁出现
+                    return Math.random() < 0.4; // 40%概率该角色可以作为NPC回复
+                });
+
+                let replyingChar;
+                if (availableCharacters.length === 0) {
+                    // 如果所有角色都在冷却，随机选择一个
+                    replyingChar = forumCharacters[Math.floor(Math.random() * forumCharacters.length)];
+                } else {
+                    replyingChar = availableCharacters[Math.floor(Math.random() * availableCharacters.length)];
+                }
+
+                // 改进的NPC回复prompt，考虑用户的具体回复
+                const isDirectMention = userContent.includes(`@${replyingChar.name}`);
+                let prompt = `你正在一个名为 "${forum.name}" 的论坛里。
 世界观: ${forum.worldview || '无'}
 你的身份是 ${replyingChar.name}，人设: ${replyingChar.bio}
 
@@ -36187,46 +36851,99 @@ ${userContent}
 以下是最近的几条回复:
 ${replies.slice(-5).map(r => `${r.authorName}: ${r.content}`).join('\n')}
 
-现在请你作为 ${replyingChar.name}，对这个帖子或最新的回复发表你的看法。回复要自然、简短，符合你的人设。直接输出回复内容，不要用JSON。`;
+用户刚刚${isDirectMention ? '@你' : ''}说: "${userContent}"
 
-            try {
-                const response = await callChatAPI(prompt, replyingChar);
-                const replyContent = Array.isArray(response) ? response[0] : response;
+现在请你作为 ${replyingChar.name}，${isDirectMention ? '回应用户的@' : '对这个讨论发表看法'}。
 
-                if (replyContent) {
+## 回复要求：
+1. 回复要自然、简短，符合你的人设
+2. 控制在1-2句话内
+3. 可以适当使用emoji、颜文字或文字表情包，但整条回复中不超过1个
+4. **表情使用建议**：
+   - emoji: 😊😂🤔👍❤️🎉😭🙄等
+   - 颜文字: (╯°□°）╯ ┻━┻、(｡◕‿◕｡)、(￣▽￣)、╮(╯▽╰)╭等
+   - 文字表情包: 我可以来吃饭吗就一勺.jpg、小猫后空翻.gif、狗头保命.jpg、这就离谱.png、社死现场.gif、有内味了.jpg、真香.gif、柠檬精.png、我酸了.jpg、打工人.gif、emo了.png、绝绝子.jpg等
+5. 直接输出回复内容，不要用JSON格式
+
+请回复：`;
+
+                const response = await callChatAPI([{
+                    role: 'user',
+                    content: prompt
+                }], replyingChar.id);
+
+                if (response && response.trim()) {
+                    // 清理回复内容
+                    let cleanedReply = response.trim();
+                    cleanedReply = cleanedReply.replace(/^["']|["']$/g, '');
+                    cleanedReply = cleanedReply.replace(/```json|```/g, '');
+
                     const npcReply = {
                         postId: postId,
                         authorId: replyingChar.id,
                         authorName: replyingChar.name,
                         authorAvatar: replyingChar.avatarUrl,
-                        content: replyContent,
-                        timestamp: Date.now()
+                        content: cleanedReply,
+                        timestamp: Date.now() + 200 // 稍微延后一点，确保在用户回复之后
                     };
+
                     await db.forumReplies.add(npcReply);
                     await renderReplies(postId);
                 }
+
             } catch (error) {
                 console.error("NPC回复失败:", error);
             }
         }
 
-        // 收藏/取消收藏帖子
+        // 收藏/取消收藏帖子 (已修复并增加调试日志的版本)
         async function toggleFavoritePost() {
-            if (!window.currentPostId) return;
+            console.log('--- [论坛收藏] 功能触发 ---');
 
-            const postId = window.currentPostId;
-            const existingFav = await db.forumFavorites.where('[userId+postId]').equals(['user', postId]).first();
+            if (!window.currentPostId) {
+                console.error('【错误】收藏失败，因为 window.currentPostId 未设置。');
+                showToast('错误：没有帖子ID', 'error');
+                return;
+            }
+
+            // 确保postId是数字类型，这对于数据库查询至关重要
+            const postId = parseInt(window.currentPostId);
             const favIcon = document.querySelector('#favorite-btn i');
 
-            if (existingFav) {
-                await db.forumFavorites.delete(existingFav.id);
-                favIcon.className = 'far fa-star';
-                showToast('已取消收藏', 'info');
-            } else {
-                await db.forumFavorites.add({ userId: 'user', postId: postId, timestamp: Date.now() });
-                favIcon.className = 'fas fa-star';
-                showToast('收藏成功！', 'success');
+            console.log(`[论坛收藏] 准备为帖子 ID: ${postId} (类型: ${typeof postId}) 切换收藏状态`);
+
+            if (!favIcon) {
+                console.error('【错误】找不到收藏按钮的图标元素。');
+                return;
             }
+
+            try {
+                console.log('[论坛收藏] 正在查询数据库，检查是否已收藏...');
+                const existingFav = await db.forumFavorites.where('[userId+postId]').equals(['user', postId]).first();
+
+                if (existingFav) {
+                    console.log('[论坛收藏] 帖子已收藏，准备取消。记录:', existingFav);
+                    await db.forumFavorites.delete(existingFav.id);
+                    console.log('[论坛收藏] 数据库删除操作成功。');
+
+                    favIcon.className = 'far fa-star';
+                    showToast('已取消收藏', 'info');
+                    console.log('[论坛收藏] UI已更新为"未收藏"状态。');
+                } else {
+                    const newFav = { userId: 'user', postId: postId, timestamp: Date.now() };
+                    console.log('[论坛收藏] 帖子未收藏，准备添加。新记录:', newFav);
+                    await db.forumFavorites.add(newFav);
+                    console.log('[论坛收藏] 数据库添加操作成功。');
+
+                    favIcon.className = 'fas fa-star';
+                    showToast('收藏成功！', 'success');
+                    console.log('[论坛收藏] UI已更新为"已收藏"状态。');
+                }
+            } catch (error) {
+                console.error("--- [论坛收藏] 数据库操作失败！---", error);
+                showToast("收藏操作数据库失败，请查看控制台获取详情", "error");
+            }
+            console.log('--- [论坛收藏] 功能执行完毕 ---');
         }
 
         // 显示个人主页

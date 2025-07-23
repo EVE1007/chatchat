@@ -12864,9 +12864,11 @@ textarea.call-text-input {
         }
         .reply-input-area {
             display: flex;
+            align-items: center;
             padding: 10px;
             border-top: 1px solid #eee;
             background: #f9f9f9;
+            gap: 8px;
         }
         .reply-input-area input {
             flex: 1;
@@ -12874,15 +12876,74 @@ textarea.call-text-input {
             border-radius: 18px;
             padding: 8px 12px;
             font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease;
         }
-        .reply-input-area button {
-            background: var(--accent-color);
+
+        .reply-input-area input:focus {
+            border-color: rgba(115, 145, 185, 0.6);
+            box-shadow: 0 0 0 2px rgba(115, 145, 185, 0.1);
+        }
+        .reply-input-area button:not(.anonymous-toggle-btn) {
+            background: rgba(115, 145, 185, 0.88); /* 更亮的雾霾蓝色，88%透明度 */
             color: white;
             border: none;
             border-radius: 18px;
             padding: 8px 15px;
-            margin-left: 10px;
             cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(115, 145, 185, 0.30);
+            transition: all 0.2s ease;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .reply-input-area button:not(.anonymous-toggle-btn):hover {
+            background: rgba(105, 135, 175, 0.94); /* 悬停时稍深 */
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(115, 145, 185, 0.40);
+        }
+
+        .reply-input-area button:not(.anonymous-toggle-btn):active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(115, 145, 185, 0.30);
+        }
+
+        /* --- 匿名回复按钮样式 --- */
+        .anonymous-toggle-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(108, 117, 125, 0.15);
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            flex-shrink: 0;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .anonymous-toggle-btn:hover {
+            background: rgba(108, 117, 125, 0.25);
+            color: #495057;
+            transform: scale(1.05);
+        }
+
+        .anonymous-toggle-btn.active {
+            background: rgba(255, 193, 7, 0.2);
+            color: #f57c00;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .anonymous-toggle-btn.active:hover {
+            background: rgba(255, 193, 7, 0.3);
+            color: #e65100;
         }
 
         /* 收藏按钮 */
@@ -13613,6 +13674,260 @@ textarea.call-text-input {
             display: flex;
             flex-direction: column;
         }
+
+        /* 论坛悬浮发帖按钮样式 */
+        #forum-view-screen .floating-post-btn {
+            /* 1. 定位与悬浮 */
+            position: absolute; /* 绝对定位，相对于父容器 .app-screen */
+            bottom: 40px;       
+            right: 20px;       
+            z-index: 1000;     
+
+            /* 2. 尺寸与形状 - 稍微小一点 */
+            width: 50px;       
+            height: 50px;       
+            border-radius: 50%; 
+
+            /* 3. 毛玻璃效果与背景 - 使用主题按钮颜色但降低透明度 */
+            background: rgba(74, 132, 193, 0.35); /* 经典主题蓝色，35%透明度 */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* 添加阴影以增强立体感 */
+
+            /* 4. 图标样式 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;    /* 稍微小一点，从24px改为22px */
+
+            /* 5. 交互效果 */
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* 鼠标悬停时的放大和阴影效果 */
+        #forum-view-screen .floating-post-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            background: rgba(74, 132, 193, 0.55); /* 悬停时55%透明度 */
+        }
+
+        /* 可爱主题下的按钮颜色适配 */
+        body[data-theme="cute"] #forum-view-screen .floating-post-btn {
+            background: rgba(255, 182, 193, 0.35); /* 可爱主题粉色，35%透明度 */
+        }
+
+        body[data-theme="cute"] #forum-view-screen .floating-post-btn:hover {
+            background: rgba(255, 182, 193, 0.55); /* 可爱主题悬停时55%透明度 */
+        }
+
+        /* --- 论坛评论区美化 --- */
+
+        /* 1. 让每条评论的容器可以作为按钮定位的基准 */
+        .reply-item {
+            position: relative;
+            padding-bottom: 30px; /* 为按钮留出空间 */
+        }
+
+        /* 2. 移除旧的操作区边距 */
+        .reply-body .reply-actions {
+            margin-top: 0;
+        }
+
+        /* 3. 全新设计的操作按钮容器，定位到右下角 */
+        .reply-actions {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 18px; /* 增大按钮间距 */
+        }
+
+        /* 4. 全新设计的操作按钮样式（无边框，纯图标） */
+        .reply-action-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #888; /* 图标和文字的默认颜色 */
+            font-size: 13px; /* 点赞数文字大小 */
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px; /* 图标和点赞数的间距 */
+            transition: color 0.2s ease;
+        }
+
+        /* 5. 鼠标悬停时图标和文字变色 */
+        .reply-action-btn:hover {
+            color: #333;
+        }
+
+        /* 6. SVG图标的通用样式 */
+        .reply-action-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor; /* 让SVG图标颜色继承按钮的color属性 */
+            transition: transform 0.2s ease;
+        }
+
+        .reply-action-btn:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* 7. 用户点赞后的高亮样式 */
+        .reply-action-btn.liked {
+            color: #007AFF; /* 点赞后变为蓝色 */
+        }
+
+        /* --- 论坛投票组件样式 --- */
+        .forum-poll {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .forum-poll h4 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .poll-option {
+            background-color: #fff;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .poll-option:hover {
+            border-color: #007AFF;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+            transform: translateY(-1px);
+        }
+
+        .poll-option .option-text {
+            font-weight: 500;
+            color: #495057;
+            position: relative;
+            z-index: 2;
+        }
+
+        .poll-option .vote-count {
+            float: right;
+            font-size: 13px;
+            color: #6c757d;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 投票结果条 */
+        .result-bar-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #e9ecef;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+
+        .result-bar {
+            height: 100%;
+            width: 0%; /* 默认宽度为0 */
+            background-color: #cfe2ff;
+            border-radius: 8px;
+            transition: width 0.5s ease;
+        }
+
+        /* 用户投票后的样式 */
+        .forum-poll.voted .poll-option {
+            cursor: default;
+            pointer-events: none; /* 禁止再次点击 */
+        }
+
+        .forum-poll.voted .result-bar-bg {
+            opacity: 1; /* 显示结果条背景 */
+        }
+
+        .forum-poll.voted .option-text,
+        .forum-poll.voted .vote-count {
+            color: #000;
+        }
+
+        /* 用户投票的选项高亮样式 */
+        .poll-option.user-voted {
+            border-color: #007AFF !important;
+            background-color: #f0f8ff !important;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2) !important;
+        }
+
+        .poll-option.user-voted .option-text {
+            color: #007AFF !important;
+            font-weight: 600 !important;
+        }
+
+        .poll-option.user-voted .vote-count {
+            color: #007AFF !important;
+            font-weight: 600 !important;
+        }
+
+        .poll-option.user-voted .result-bar {
+            background-color: #007AFF !important;
+        }
+
+        /* --- 投票历史样式 --- */
+        .vote-history-modal {
+            max-width: 500px;
+            max-height: 70vh;
+        }
+
+        .vote-history-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .vote-history-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007AFF;
+        }
+
+        .vote-post-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .vote-choice {
+            color: #007AFF;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .vote-date {
+            color: #666;
+            font-size: 12px;
+        }
+
+
 
         .offline-mode-header {
             position: relative;
