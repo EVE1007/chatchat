@@ -675,13 +675,44 @@
                     <div class="app-content">
                         <div id="forum-posts-list" class="post-list">
                         </div>
+                        <!-- 用户发帖悬浮按钮 -->
+                        <div class="floating-post-btn" onclick="showCreatePostModal()" title="发帖">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户发帖模态框 -->
+                <div id="create-post-modal" class="modal-overlay" style="display: none;" onclick="hideCreatePostModal(event)">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h3>发布新帖</h3>
+                            <button class="modal-close-btn" onclick="hideCreatePostModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>标题</label>
+                                <input type="text" id="post-title-input" placeholder="请输入帖子标题..." maxlength="100">
+                            </div>
+                            <div class="form-group">
+                                <label>内容</label>
+                                <textarea id="post-content-input" placeholder="分享你的想法..." rows="8" maxlength="2000"></textarea>
+                            </div>
+                            <div class="char-count">
+                                <span id="title-count">0/100</span> | <span id="content-count">0/2000</span>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="hideCreatePostModal()">取消</button>
+                            <button class="btn-primary" onclick="submitUserPost()">发布</button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- 帖子详情和回复界面 -->
                 <div id="post-view-screen" class="app-screen">
                     <div class="app-header">
-                        <button class="back-button" onclick="hideApp('post-view-screen')">‹ 返回</button>
+                        <button class="back-button" onclick="backToForum()">‹ </button>
                         <div class="app-title">帖子详情</div>
                         <button id="favorite-btn" class="header-action-btn" onclick="toggleFavoritePost()" title="收藏"><i class="far fa-star"></i></button>
                     </div>
@@ -4128,9 +4159,9 @@
         }
 
 
-        // 🔥【最终版本19】统一的数据库结构定义 - 包含心声和论坛系统
-        db.version(19).stores({
-            // --- 保留所有旧的表结构 ---
+        // 🔥【最终版本20】统一的数据库结构定义 - 包含心声、论坛系统和评论点赞功能
+        db.version(20).stores({
+            // --- 首先，完整复制版本19的所有内容 ---
             // 基础数据表
             characters: '&id, name, groupId',
             contacts: '++id, characterId',
@@ -4199,13 +4230,16 @@
             // 心声系统
             innerThoughts: '&id, messageId, characterId, content, timestamp',
 
-            // --- 🔥【新增】论坛功能相关表 ---
-            forums: '++id, name', // 论坛存档表，name不设为唯一索引，在应用层面处理重复检查
-            forumPosts: '++id, forumId, timestamp', // 帖子表
-            forumReplies: '++id, postId, timestamp', // 回复表
-            forumFavorites: '++id, [userId+postId]' // 收藏夹，确保用户对一个帖子只能收藏一次
+            // --- 论坛功能相关表 ---
+            forums: '++id, name',
+            forumPosts: '++id, forumId, timestamp',
+            forumReplies: '++id, postId, timestamp',
+            forumFavorites: '++id, [userId+postId]',
+
+            // --- 然后，在末尾追加新表 ---
+            replyLikes: '++id, [userId+replyId], userId, replyId, timestamp' // 评论点赞表
         }).upgrade(async tx => {
-            console.log('🔧 升级到版本19：添加心声和论坛系统');
+            console.log('🔧 升级到版本20：添加评论点赞功能');
 
             // 🔥【安全迁移】检查并保护现有用户数据
             try {
@@ -4215,7 +4249,7 @@
 
                 if (existingCharacters > 0 || existingMessages > 0) {
                     console.log(`✅ 检测到现有用户数据：${existingCharacters}个角色，${existingMessages}条消息`);
-                    console.log('✅ 心声和论坛系统表已安全添加，现有数据完全保留');
+                    console.log('✅ 评论点赞功能已安全添加，现有数据完全保留');
                 } else {
                     console.log('✅ 新用户安装，心声和论坛系统表已创建');
                 }
@@ -12793,6 +12827,202 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                 padding: 15px;
             }
         }
+
+        /* 加载动画 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 悬浮发帖按钮 */
+        .floating-post-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: #007AFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-post-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+        }
+
+        /* 发帖模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #007AFF;
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-secondary,
+        .btn-primary {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056CC;
+        }
+
+        /* 评论互动按钮 */
+        .reply-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .reply-action-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .reply-action-btn:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .reply-action-btn.liked {
+            color: #ff3b30;
+        }
+
+        .reply-action-btn.liked i {
+            color: #ff3b30;
+        }
+
+        .like-count {
+            font-size: 11px;
+            min-width: 12px;
+        }
     </style>
 </head>
 <body>
@@ -18732,7 +18962,131 @@ ${timeInfo}${musicInfo}
             const data = await response.json();
             return isGemini ? data.candidates?.[0]?.content?.parts?.[0]?.text : data.choices?.[0]?.message?.content;
         }
-        
+
+        // 专门为论坛功能设计的API调用函数
+        async function callForumAPI(prompt) {
+            console.log('🔥 [callForumAPI] 函数被调用');
+            console.log('🔥 [callForumAPI] API设置:', apiSettings);
+
+            if (!apiSettings.key) {
+                console.error('🔥 [callForumAPI] API密钥未设置');
+                throw new Error('请先在设置中填写API密钥');
+            }
+
+            const isGemini = apiSettings.base.includes('generativelanguage.googleapis.com');
+            console.log('🔥 [callForumAPI] 是否为Gemini:', isGemini);
+
+            // 构建请求体
+            let requestBody;
+            let url;
+            let headers = { 'Content-Type': 'application/json' };
+
+            if (isGemini) {
+                url = `${apiSettings.base}/models/${apiSettings.model}:generateContent?key=${apiSettings.key}`;
+
+                // 🔥【关键修复】使用和callChatAPI相同的对话格式
+                const geminiContents = [
+                    {
+                        role: 'user',
+                        parts: [{ text: prompt }]
+                    },
+                    {
+                        role: 'model',
+                        parts: [{ text: '我明白了，我会按照这些要求生成论坛帖子。' }]
+                    },
+                    {
+                        role: 'user',
+                        parts: [{ text: '请现在开始生成帖子，严格按照JSON格式输出。' }]
+                    }
+                ];
+
+                requestBody = {
+                    contents: geminiContents,
+                    generationConfig: {
+                        temperature: 0.8
+                        // 移除maxOutputTokens，Gemini可能不支持
+                    }
+                };
+            } else {
+                url = apiSettings.base.endsWith('/v1') ? `${apiSettings.base}/chat/completions` : `${apiSettings.base}/v1/chat/completions`;
+                headers['Authorization'] = `Bearer ${apiSettings.key}`;
+                requestBody = {
+                    model: apiSettings.model,
+                    messages: [
+                        { role: "system", content: "你是一个论坛内容生成AI，请严格按照用户的指令和格式要求进行输出。" },
+                        { role: "user", content: prompt }
+                    ],
+                    temperature: 0.8,
+                    max_tokens: 2048
+                };
+            }
+
+            console.log('🔥 [callForumAPI] 请求URL:', url);
+            console.log('🔥 [callForumAPI] 请求体:', requestBody);
+            console.log('🔥 [callForumAPI] prompt内容:', prompt);
+            console.log('🔥 [callForumAPI] prompt长度:', prompt.length);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody)
+            });
+
+            console.log('🔥 [callForumAPI] 响应状态:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('🔥 [callForumAPI] API请求失败:', response.status, errorText);
+                throw new Error(`API请求失败: ${response.status} - ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('🔥 [callForumAPI] 响应数据:', data);
+
+            let result;
+            if (isGemini) {
+                // 检查Gemini响应结构
+                if (data.candidates && data.candidates.length > 0) {
+                    console.log('🔥 [callForumAPI] candidates详细信息:', JSON.stringify(data.candidates, null, 2));
+                    const candidate = data.candidates[0];
+                    console.log('🔥 [callForumAPI] 第一个candidate:', JSON.stringify(candidate, null, 2));
+
+                    if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+                        result = candidate.content.parts[0].text || '[]';
+                        console.log('🔥 [callForumAPI] 从candidates获取内容:', result);
+                    } else {
+                        console.error('🔥 [callForumAPI] candidate中没有content.parts或为空');
+                        console.error('🔥 [callForumAPI] candidate结构:', candidate);
+
+                        // 检查是否被安全过滤器拦截
+                        if (candidate.finishReason) {
+                            console.error('🔥 [callForumAPI] finishReason:', candidate.finishReason);
+                        }
+                        if (candidate.safetyRatings) {
+                            console.error('🔥 [callForumAPI] safetyRatings:', candidate.safetyRatings);
+                        }
+
+                        throw new Error(`Gemini没有生成内容，finishReason: ${candidate.finishReason || '未知'}`);
+                    }
+                } else {
+                    console.error('🔥 [callForumAPI] Gemini响应中没有candidates字段');
+                    console.error('🔥 [callForumAPI] 完整响应:', JSON.stringify(data, null, 2));
+
+                    // 检查是否有安全过滤或其他问题
+                    if (data.promptFeedback) {
+                        console.error('🔥 [callForumAPI] promptFeedback:', data.promptFeedback);
+                    }
+
+                    throw new Error('Gemini API没有返回内容，可能是内容被安全过滤器拦截了');
+                }
+            } else {
+                result = data.choices?.[0]?.message?.content || '[]';
+            }
+
+            console.log('🔥 [callForumAPI] 最终结果:', result);
+            return result;
+        }
+
         // 🔥【手动清理所有损坏消息】立即清理所有聊天记录中的[object Object]
         async function emergencyCleanupAllMessages() {
             console.log('🔥 [紧急清理] 开始清理所有聊天记录中的损坏消息...');
@@ -35063,54 +35417,141 @@ async function changeMyGroupAvatar() {
             hideApp('forum-view-screen');
         }
 
-        // 生成论坛帖子
+        // 优化后的论坛帖子生成函数
         async function generateForumPosts(forumId) {
             const forum = await db.forums.get(parseInt(forumId));
+            if (!forum) return;
+
             const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
             const persona = personas.find(p => p.id === forum.personaId);
 
-            let prompt = `你是一个论坛的内容生成AI。请为一个名为 "${forum.name}" 的论坛生成5个初始帖子。
+            // --- 核心修改：使用全新的、为论坛专门设计的Prompt ---
+            let prompt = `
+# 角色：论坛内容生成AI
+你的任务是为一个名为 "${forum.name}" 的虚拟论坛生成10个初始帖子，让这个社区看起来充满活力。
 
-世界观设定:
-${forum.worldview || '无补充设定，请基于角色人设自由发挥。'}
+## 论坛背景设定:
+世界观: ${forum.worldview || '一个现代都市，大家分享日常生活。'}
 
-论坛成员:
-${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
-- ${persona.name} (用户): ${persona.description}
+## 论坛成员:
+${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
+- ${persona.name} (这是用户, 人设: ${persona.description})
 
-请生成5个帖子的标题和内容，格式为JSON数组，每个帖子是一个对象:
+## 帖子生成指令:
+请严格遵循以下要求，生成10个帖子的标题和内容。
+
+### 内容要求:
+1.  **真实感**: 帖子要生动真实，充满生活气息，就像真人在发帖一样。
+2.  **多样性**: 话题要多样，可以是成员的日常分享、趣事、烦恼，也可以是向大家提问，或者发起一个讨论。
+3.  **发帖人分配**:
+    - 80-100%的帖子应该由虚构的NPC路人发布，使用符合世界观的网名
+    - 0-20%的帖子由上述论坛成员发布（10条帖子中最多0-2条），但要考虑身份合理性：
+      * 如果是明星、影帝等公众人物，发帖概率应该极低，且要用网名+括号标注身份
+      * 如果是普通学生、上班族等，可以偶尔发帖
+      * 内容要严格符合该角色的人设和身份
+    - 用户不在自动生成范围内，用户可以通过悬浮按钮主动发帖
+4.  **互动性**: 帖子内容可以引发其他角色的互动，比如@某人，或者讨论大家都关心的话题。
+5.  **世界观契合**: 所有内容都必须符合论坛的背景设定。例如，校园论坛就发校园相关内容；娱乐圈论坛就多一些八卦、作品讨论和生活分享。
+
+### **【极其重要】输出格式:**
+你的回复**必须**是一个严格的、不包含任何额外解释文字的JSON数组格式。每个帖子是一个对象，包含"authorName", "title", "content"三个字段。
+
+**关于authorName的格式要求：**
+- NPC路人：直接使用网名，如"学霸小王"、"夜猫子"、"篮球少年"等
+- 论坛成员角色：使用"网名(真实身份)"格式，如"影帝张三(张明辉)"、"小甜心(方回)"等
+
+\`\`\`json
 [
-  { "authorName": "角色名或用户名", "title": "帖子标题", "content": "帖子正文" },
-  ...
+  {
+    "authorName": "网名或网名(真实身份)",
+    "title": "这里是帖子的标题",
+    "content": "这里是帖子的详细正文内容，可以包含换行符\\n来分段。"
+  },
+  {
+    "authorName": "另一个网名",
+    "title": "帖子的标题2",
+    "content": "帖子的正文内容2。\\n可以有第二段。"
+  }
 ]
-
-要求:
-- 帖子要生动真实，有生活气息。
-- 话题可以围绕角色的日常、烦恼、趣事，也可以是向用户或其他角色提问。
-- 标题要吸引人，内容要有细节。
-- authorName 必须是上面列表中的名字之一。
+\`\`\`
 `;
 
-            showToast('AI正在生成帖子，请稍候...', 'info');
-            try {
-                const response = await callChatAPI(prompt, forumCharacters[0]); // 使用第一个角色作为API调用的主体
-                const posts = JSON.parse(response);
+            showToast('AI正在生成新帖子，请稍候...', 'info');
+            console.log('🔥 [论坛] 开始生成帖子，论坛ID:', forumId);
+            console.log('🔥 [论坛] 论坛信息:', forum);
+            console.log('🔥 [论坛] 角色列表:', forumCharacters);
+            console.log('🔥 [论坛] 用户身份:', persona);
+            console.log('🔥 [论坛] 生成的prompt:', prompt);
 
-                for (const post of posts) {
-                    const author = characters.find(c => c.name === post.authorName) || personas.find(p => p.name === post.authorName);
-                    await db.forumPosts.add({
-                        forumId: parseInt(forumId),
-                        title: post.title,
-                        content: post.content,
-                        authorId: author.id,
-                        authorName: author.name,
-                        authorAvatar: author.avatarUrl,
-                        timestamp: Date.now() - Math.random() * 86400000 // 随机时间戳，看起来更真实
-                    });
+            try {
+                // --- 核心修改：调用一个独立的API函数，避免上下文污染 ---
+                console.log('🔥 [论坛] 准备调用callForumAPI...');
+                const response = await callForumAPI(prompt);
+                console.log('🔥 [论坛] API响应:', response);
+
+                // --- 核心修改：增强JSON解析的健壮性 ---
+                let posts;
+                try {
+                    // 尝试直接解析
+                    posts = JSON.parse(response);
+                    console.log('🔥 [论坛] JSON解析成功:', posts);
+                } catch (e) {
+                    console.log('🔥 [论坛] 直接JSON解析失败，尝试提取Markdown代码块:', e.message);
+                    // 如果直接解析失败，尝试从Markdown代码块中提取JSON
+                    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch && jsonMatch[1]) {
+                        console.log('🔥 [论坛] 找到JSON代码块:', jsonMatch[1]);
+                        posts = JSON.parse(jsonMatch[1]);
+                        console.log('🔥 [论坛] Markdown JSON解析成功:', posts);
+                    } else {
+                        throw new Error("AI返回的不是有效的JSON格式。");
+                    }
                 }
+
+                if (!Array.isArray(posts)) {
+                    throw new Error("AI返回的数据不是一个数组。");
+                }
+
+                console.log('🔥 [论坛] 准备保存帖子，数量:', posts.length);
+                for (const post of posts) {
+                    console.log('🔥 [论坛] 处理帖子:', post);
+                    if (post.authorName && post.title && post.content) {
+                        // 检查是否是论坛成员（包含括号的格式）
+                        let author = null;
+                        let authorName = post.authorName;
+                        let authorAvatar = null;
+
+                        // 如果是"网名(真实身份)"格式，提取真实身份
+                        const realNameMatch = post.authorName.match(/^(.+)\((.+)\)$/);
+                        if (realNameMatch) {
+                            const realName = realNameMatch[2];
+                            author = characters.find(c => c.name === realName) || personas.find(p => p.name === realName);
+                            if (author) {
+                                authorAvatar = author.avatarUrl;
+                            }
+                        }
+
+                        // 如果没有找到真实角色，说明是NPC，使用默认头像
+                        if (!author) {
+                            authorAvatar = createDefaultAvatar(authorName);
+                        }
+
+                        const savedPost = await db.forumPosts.add({
+                            forumId: parseInt(forumId),
+                            title: post.title,
+                            content: post.content,
+                            authorId: author ? author.id : null,
+                            authorName: authorName,
+                            authorAvatar: authorAvatar,
+                            timestamp: Date.now() - Math.floor(Math.random() * 86400000) // 随机时间戳
+                        });
+                        console.log('🔥 [论坛] 帖子已保存:', savedPost);
+                    }
+                }
+                console.log('🔥 [论坛] 所有帖子处理完成');
             } catch (error) {
-                console.error("生成帖子失败:", error);
-                alert("AI生成帖子失败，请检查API设置或刷新重试。");
+                console.error("🔥 [论坛] 生成帖子失败:", error);
+                alert("AI生成帖子失败，请检查API设置或刷新重试。\n错误详情: " + error.message);
             }
         }
 
@@ -35138,9 +35579,51 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
         // 刷新帖子
         async function refreshPosts() {
             if (!currentForumId) return;
-            await generateForumPosts(currentForumId);
-            await renderForumPosts(currentForumId);
-            showToast("新帖子已刷新！", "success");
+
+            // 显示加载动画
+            const postsContainer = document.getElementById('forum-posts-list');
+            postsContainer.innerHTML = `
+                <div class="loading-container" style="text-align: center; padding: 50px;">
+                    <div class="loading-spinner" style="
+                        width: 40px;
+                        height: 40px;
+                        border: 3px solid #f3f3f3;
+                        border-top: 3px solid #007AFF;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 15px;
+                    "></div>
+                    <div style="color: #666; font-size: 14px;">正在生成新帖子...</div>
+                </div>
+            `;
+
+            try {
+                // 先清除当前论坛的所有帖子和回复
+                await db.forumPosts.where('forumId').equals(parseInt(currentForumId)).delete();
+                await db.forumReplies.where('postId').anyOf(
+                    await db.forumPosts.where('forumId').equals(parseInt(currentForumId)).primaryKeys()
+                ).delete();
+
+                await generateForumPosts(currentForumId);
+                await renderForumPosts(currentForumId);
+                showToast("新帖子已刷新！", "success");
+            } catch (error) {
+                console.error('刷新帖子失败:', error);
+                showToast('刷新失败: ' + error.message, 'error');
+                // 出错时重新加载现有帖子
+                await renderForumPosts(currentForumId);
+            }
+        }
+
+        // 从帖子详情返回论坛
+        function backToForum() {
+            // 🔥【修复】先显示目标页面，再隐藏当前页面，避免闪现主屏幕
+            if (currentForumId) {
+                loadAndDisplayForum(currentForumId);
+            } else {
+                showApp('forum-screen');
+            }
+            hideApp('post-view-screen');
         }
 
         // 显示帖子详情
@@ -35150,6 +35633,7 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
 
             window.currentPostId = postId; // 存储当前帖子ID
 
+            // 立即显示帖子内容和加载动画
             const contentContainer = document.getElementById('post-view-content');
             contentContainer.innerHTML = `
                 <div class="post-full-content">
@@ -35159,7 +35643,20 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
                 </div>
                 <div class="replies-section">
                     <h3>回复</h3>
-                    <div id="replies-list"></div>
+                    <div id="replies-list">
+                        <div class="loading-container" style="text-align: center; padding: 30px;">
+                            <div class="loading-spinner" style="
+                                width: 30px;
+                                height: 30px;
+                                border: 2px solid #f3f3f3;
+                                border-top: 2px solid #007AFF;
+                                border-radius: 50%;
+                                animation: spin 1s linear infinite;
+                                margin: 0 auto 10px;
+                            "></div>
+                            <div style="color: #666; font-size: 12px;">加载评论中...</div>
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -35168,8 +35665,123 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             const favIcon = document.querySelector('#favorite-btn i');
             favIcon.className = isFav ? 'fas fa-star' : 'far fa-star';
 
-            await renderReplies(postId);
+            // 立即显示帖子详情页面
             showApp('post-view-screen');
+
+            // 异步加载评论
+            setTimeout(async () => {
+                // 检查是否已有评论，如果没有则生成
+                const existingReplies = await db.forumReplies.where('postId').equals(postId).count();
+                if (existingReplies === 0) {
+                    await generateRepliesForPost(postId);
+                }
+
+                await renderReplies(postId);
+            }, 100);
+        }
+
+        // 生成帖子评论
+        async function generateRepliesForPost(postId) {
+            const post = await db.forumPosts.get(postId);
+            if (!post) return;
+
+            const forum = await db.forums.get(post.forumId);
+            const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
+            const persona = personas.find(p => p.id === forum.personaId);
+
+            // 显示加载动画
+            const repliesContainer = document.getElementById('replies-list');
+            repliesContainer.innerHTML = `
+                <div class="loading-container" style="text-align: center; padding: 30px;">
+                    <div class="loading-spinner" style="
+                        width: 30px;
+                        height: 30px;
+                        border: 2px solid #f3f3f3;
+                        border-top: 2px solid #007AFF;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 10px;
+                    "></div>
+                    <div style="color: #666; font-size: 12px;">正在生成评论...</div>
+                </div>
+            `;
+
+            const prompt = `
+# 角色：论坛评论生成AI
+请为以下帖子生成10条真实的评论回复。
+
+## 帖子信息:
+标题: ${post.title}
+内容: ${post.content}
+作者: ${post.authorName}
+
+## 论坛背景:
+世界观: ${forum.worldview || '现代都市生活分享社区'}
+
+## 可参与评论的角色:
+${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
+
+**重要：绝对不要生成用户(${persona.name})的评论！用户会自己评论！**
+
+## 评论生成要求:
+1. **真实感**: 评论要像真人写的，有不同的观点和语气
+2. **多样性**: 包括赞同、反对、提问、分享经验等不同类型
+3. **角色分配**:
+   - 70%由虚构的路人网友评论（请创造符合世界观的网友昵称）
+   - 30%由上述角色评论，要符合人设
+4. **互动性**: 评论之间可以有回应和讨论
+5. **长度适中**: 每条评论1-3句话即可
+
+### 输出格式:
+严格的JSON数组，不要其他文字：
+
+[
+  {
+    "authorName": "评论者姓名",
+    "content": "评论内容"
+  }
+]
+`;
+
+            try {
+                const response = await callForumAPI(prompt);
+                let replies;
+                try {
+                    replies = JSON.parse(response);
+                } catch (e) {
+                    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch && jsonMatch[1]) {
+                        replies = JSON.parse(jsonMatch[1]);
+                    } else {
+                        throw new Error("AI返回的不是有效的JSON格式。");
+                    }
+                }
+
+                if (!Array.isArray(replies)) {
+                    throw new Error("AI返回的数据不是一个数组。");
+                }
+
+                // 保存评论到数据库
+                for (let i = 0; i < replies.length; i++) {
+                    const reply = replies[i];
+                    if (reply.authorName && reply.content) {
+                        // 查找作者信息
+                        const author = characters.find(c => c.name === reply.authorName) ||
+                                     personas.find(p => p.name === reply.authorName);
+
+                        await db.forumReplies.add({
+                            postId: postId,
+                            content: reply.content,
+                            authorName: reply.authorName,
+                            authorAvatar: author ? author.avatarUrl : createDefaultAvatar(reply.authorName),
+                            timestamp: Date.now() + i * 1000 // 错开时间戳
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("生成评论失败:", error);
+                showToast("生成评论失败: " + error.message, 'error');
+            }
         }
 
         // 渲染回复
@@ -35177,15 +35789,352 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             const replies = await db.forumReplies.where('postId').equals(postId).sortBy('timestamp');
             const listContainer = document.getElementById('replies-list');
 
-            listContainer.innerHTML = replies.map(reply => `
-                <div class="reply-item">
-                    <img class="reply-avatar" src="${reply.authorAvatar || createDefaultAvatar(reply.authorName)}" alt="${reply.authorName}">
-                    <div class="reply-body">
-                        <div class="reply-author">${reply.authorName}</div>
-                        <div class="reply-content">${reply.content.replace(/\n/g, '<br>')}</div>
+            // 获取用户的点赞状态
+            const userLikes = await db.replyLikes.where('userId').equals('user').toArray();
+            const likedReplyIds = new Set(userLikes.map(like => like.replyId));
+
+            listContainer.innerHTML = replies.map(reply => {
+                const isLiked = likedReplyIds.has(reply.id);
+                const heartIcon = isLiked ? 'fas fa-heart' : 'far fa-heart';
+                const likedClass = isLiked ? 'liked' : '';
+
+                return `
+                    <div class="reply-item" data-reply-id="${reply.id}">
+                        <img class="reply-avatar" src="${reply.authorAvatar || createDefaultAvatar(reply.authorName)}" alt="${reply.authorName}">
+                        <div class="reply-body">
+                            <div class="reply-author">${reply.authorName}</div>
+                            <div class="reply-content">${reply.content.replace(/\n/g, '<br>')}</div>
+                            <div class="reply-actions">
+                                <button class="reply-action-btn ${likedClass}" onclick="likeReply(${reply.id})" title="点赞">
+                                    <i class="${heartIcon}"></i>
+                                    <span class="like-count">${reply.likes || 0}</span>
+                                </button>
+                                <button class="reply-action-btn" onclick="replyToComment(${reply.id}, '${reply.authorName}')" title="回复">
+                                    <i class="far fa-comment"></i>
+                                    回复
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+        }
+
+        // 显示发帖模态框
+        function showCreatePostModal() {
+            const modal = document.getElementById('create-post-modal');
+            modal.style.display = 'flex';
+
+            // 清空输入框
+            document.getElementById('post-title-input').value = '';
+            document.getElementById('post-content-input').value = '';
+            updateCharCount();
+
+            // 添加字符计数监听
+            const titleInput = document.getElementById('post-title-input');
+            const contentInput = document.getElementById('post-content-input');
+
+            titleInput.oninput = updateCharCount;
+            contentInput.oninput = updateCharCount;
+        }
+
+        // 隐藏发帖模态框
+        function hideCreatePostModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            const modal = document.getElementById('create-post-modal');
+            modal.style.display = 'none';
+        }
+
+        // 更新字符计数
+        function updateCharCount() {
+            const titleInput = document.getElementById('post-title-input');
+            const contentInput = document.getElementById('post-content-input');
+            const titleCount = document.getElementById('title-count');
+            const contentCount = document.getElementById('content-count');
+
+            titleCount.textContent = `${titleInput.value.length}/100`;
+            contentCount.textContent = `${contentInput.value.length}/2000`;
+
+            // 超出限制时变红
+            titleCount.style.color = titleInput.value.length > 100 ? '#ff3b30' : '#666';
+            contentCount.style.color = contentInput.value.length > 2000 ? '#ff3b30' : '#666';
+        }
+
+        // 提交用户发帖
+        async function submitUserPost() {
+            const titleInput = document.getElementById('post-title-input');
+            const contentInput = document.getElementById('post-content-input');
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+
+            if (!title) {
+                showToast('请输入帖子标题', 'error');
+                return;
+            }
+
+            if (!content) {
+                showToast('请输入帖子内容', 'error');
+                return;
+            }
+
+            if (title.length > 100 || content.length > 2000) {
+                showToast('标题或内容超出字数限制', 'error');
+                return;
+            }
+
+            try {
+                const forum = await db.forums.get(currentForumId);
+                const persona = personas.find(p => p.id === forum.personaId);
+
+                // 创建用户帖子
+                const postId = await db.forumPosts.add({
+                    forumId: parseInt(currentForumId),
+                    title: title,
+                    content: content,
+                    authorId: persona.id,
+                    authorName: persona.name,
+                    authorAvatar: persona.avatarUrl,
+                    timestamp: Date.now(),
+                    isUserPost: true // 标记为用户发帖
+                });
+
+                // 隐藏模态框
+                hideCreatePostModal();
+
+                // 刷新帖子列表
+                await renderForumPosts(currentForumId);
+
+                // 为用户帖子生成AI回复
+                setTimeout(() => {
+                    generateRepliesForUserPost(postId);
+                }, 1000);
+
+                showToast('帖子发布成功！', 'success');
+
+            } catch (error) {
+                console.error('发帖失败:', error);
+                showToast('发帖失败: ' + error.message, 'error');
+            }
+        }
+
+        // 为用户帖子生成AI回复
+        async function generateRepliesForUserPost(postId) {
+            const post = await db.forumPosts.get(postId);
+            if (!post) return;
+
+            const forum = await db.forums.get(post.forumId);
+            const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
+
+            const prompt = `
+# 角色：论坛回复生成AI
+用户在论坛发了一个帖子，请生成5-8条真实的回复。
+
+## 用户帖子:
+标题: ${post.title}
+内容: ${post.content}
+作者: ${post.authorName}
+
+## 论坛背景:
+世界观: ${forum.worldview || '现代都市生活分享社区'}
+
+## 可参与回复的角色:
+${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
+
+## 回复生成要求:
+1. **真实感**: 回复要像真人写的，有不同的观点和语气
+2. **多样性**: 包括赞同、反对、提问、分享经验、调侃等
+3. **角色分配**:
+   - 60%由虚构的路人网友回复（创造符合世界观的网友昵称）
+   - 40%由上述角色回复，要符合人设，使用"网名(真实身份)"格式
+4. **互动性**: 可以@用户或其他回复者
+5. **长度适中**: 每条回复1-3句话
+
+### 输出格式:
+严格的JSON数组：
+
+[
+  {
+    "authorName": "回复者网名或网名(真实身份)",
+    "content": "回复内容"
+  }
+]
+`;
+
+            try {
+                const response = await callForumAPI(prompt);
+                let replies;
+                try {
+                    replies = JSON.parse(response);
+                } catch (e) {
+                    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch && jsonMatch[1]) {
+                        replies = JSON.parse(jsonMatch[1]);
+                    } else {
+                        return; // 静默失败，不影响用户体验
+                    }
+                }
+
+                if (Array.isArray(replies)) {
+                    // 保存回复到数据库
+                    for (let i = 0; i < replies.length; i++) {
+                        const reply = replies[i];
+                        if (reply.authorName && reply.content) {
+                            // 查找作者信息
+                            const author = characters.find(c => c.name === reply.authorName) ||
+                                         personas.find(p => p.name === reply.authorName);
+
+                            await db.forumReplies.add({
+                                postId: postId,
+                                content: reply.content,
+                                authorName: reply.authorName,
+                                authorAvatar: author ? author.avatarUrl : createDefaultAvatar(reply.authorName),
+                                timestamp: Date.now() + i * 2000 // 错开时间戳
+                            });
+                        }
+                    }
+
+                    showToast(`收到了${replies.length}条回复！`, 'success');
+                }
+            } catch (error) {
+                console.error("生成用户帖子回复失败:", error);
+                // 静默失败，不影响用户体验
+            }
+        }
+
+        // 点赞评论
+        async function likeReply(replyId) {
+            try {
+                const reply = await db.forumReplies.get(replyId);
+                if (!reply) return;
+
+                // 检查是否已经点赞
+                const existingLike = await db.replyLikes.where('[userId+replyId]').equals(['user', replyId]).first();
+
+                if (existingLike) {
+                    // 取消点赞
+                    await db.replyLikes.delete(existingLike.id);
+                    reply.likes = Math.max(0, (reply.likes || 0) - 1);
+                } else {
+                    // 添加点赞
+                    await db.replyLikes.add({
+                        userId: 'user',
+                        replyId: replyId,
+                        timestamp: Date.now()
+                    });
+                    reply.likes = (reply.likes || 0) + 1;
+                }
+
+                // 更新数据库
+                await db.forumReplies.update(replyId, { likes: reply.likes });
+
+                // 更新UI
+                const likeBtn = document.querySelector(`[data-reply-id="${replyId}"] .reply-action-btn`);
+                const likeCount = likeBtn.querySelector('.like-count');
+                const icon = likeBtn.querySelector('i');
+
+                if (existingLike) {
+                    likeBtn.classList.remove('liked');
+                    icon.className = 'far fa-heart';
+                } else {
+                    likeBtn.classList.add('liked');
+                    icon.className = 'fas fa-heart';
+                }
+
+                likeCount.textContent = reply.likes || 0;
+
+            } catch (error) {
+                console.error('点赞失败:', error);
+                showToast('点赞失败', 'error');
+            }
+        }
+
+        // 回复评论
+        async function replyToComment(replyId, authorName) {
+            const input = document.getElementById('reply-input');
+            if (input) {
+                input.value = `@${authorName} `;
+                input.focus();
+                // 将光标移到末尾
+                input.setSelectionRange(input.value.length, input.value.length);
+            }
+        }
+
+        // 处理AI角色对评论的智能回复
+        async function handleAIReplyToComment(userContent, postId) {
+            try {
+                // 检查用户是否@了某个AI角色
+                const mentionMatch = userContent.match(/@(\S+)/);
+                if (!mentionMatch) return;
+
+                const mentionedName = mentionMatch[1];
+
+                // 查找被@的角色
+                const post = await db.forumPosts.get(postId);
+                const forum = await db.forums.get(post.forumId);
+                const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
+                const mentionedCharacter = forumCharacters.find(c => c.name === mentionedName);
+
+                if (!mentionedCharacter) return;
+
+                // 获取帖子和评论的上下文
+                const replies = await db.forumReplies.where('postId').equals(postId).sortBy('timestamp');
+                const recentReplies = replies.slice(-5); // 最近5条评论作为上下文
+
+                // 构建AI回复的prompt
+                const prompt = `
+# 角色：${mentionedCharacter.name}
+${mentionedCharacter.bio}
+
+## 情况：
+你在论坛中被用户@了，需要回复用户的评论。
+
+## 帖子信息：
+标题：${post.title}
+内容：${post.content}
+
+## 最近的评论上下文：
+${recentReplies.map(r => `${r.authorName}：${r.content}`).join('\n')}
+
+## 用户刚刚@你说：
+${userContent}
+
+## 回复要求：
+1. 保持角色人设，用符合你性格的语气回复
+2. 针对用户的@内容进行回应
+3. 回复要自然、有趣，不要太正式
+4. 控制在1-2句话内
+5. 可以适当使用表情符号
+
+请直接回复内容，不要其他格式：`;
+
+                // 调用AI生成回复
+                const aiReply = await callChatAPI([{
+                    role: 'user',
+                    content: prompt
+                }], mentionedCharacter.id);
+
+                if (aiReply && aiReply.trim()) {
+                    // 添加AI角色的回复到数据库
+                    const characterReply = {
+                        postId: postId,
+                        authorId: mentionedCharacter.id,
+                        authorName: mentionedCharacter.name,
+                        authorAvatar: mentionedCharacter.avatarUrl,
+                        content: aiReply.trim(),
+                        timestamp: Date.now() + 1000 // 稍微延后一点，确保在用户回复之后
+                    };
+
+                    await db.forumReplies.add(characterReply);
+
+                    // 延迟一下再刷新，模拟真实回复时间
+                    setTimeout(async () => {
+                        await renderReplies(postId);
+                    }, 1500);
+                }
+
+            } catch (error) {
+                console.error('AI角色回复失败:', error);
+            }
         }
 
         // 发送回复
@@ -35209,6 +36158,9 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             await db.forumReplies.add(reply);
             input.value = '';
             await renderReplies(window.currentPostId);
+
+            // 检查是否@了某个AI角色，如果是则触发该角色的智能回复
+            await handleAIReplyToComment(content, window.currentPostId);
 
             // 触发NPC回复
             triggerNpcReply(window.currentPostId);
