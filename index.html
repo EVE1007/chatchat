@@ -35840,8 +35840,9 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
 
 ### 内容要求:
 1.  **真实感与多样性**: 帖子要生动真实，话题多样，符合成员人设。
-2.  **发帖人分配**: 大部分帖子由NPC路人发布，0-2个帖子由论坛成员发布（公众人物发帖概率低）。
+2.  **发帖人分配**: 大部分帖子由NPC路人发布，最多只有1个帖子由论坛成员发布（角色出现概率很低）。
 3.  **互动性**: 帖子可以引发讨论，比如@某人。
+4.  **表情使用**: 论坛里AI少量使用文字版表情包（真香.jpg、给你一拳.gif）、颜文字、emoji，一条帖子下面这些表情不能超过两次。
 
 ### **【新增功能】互动内容生成 (可选):**
 - 你有大约20%的概率，为合适的帖子（如人气比拼、意见征集）额外添加一个互动投票。
@@ -36206,14 +36207,10 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
 1. **真实感**: 评论要像真人写的，有不同的观点和语气
 2. **多样性**: 包括赞同、反对、提问、分享经验等不同类型
 3. **角色分配**:
-   - 85%由虚构的路人网友评论（请创造符合世界观的网友昵称）
-   - 15%由上述角色评论，要符合人设，且不要让所有角色都出现
+   - 70%由虚构的路人网友评论（请创造符合世界观的网友昵称）
+   - 30%由上述角色评论，要符合人设
 4. **互动性**: 评论之间可以有回应和讨论
 5. **长度适中**: 每条评论1-3句话即可
-6. **表情使用**: 可以适当使用emoji、颜文字或文字表情包，但每个帖子下的所有评论中不超过2个
-   - emoji: 😊😂🤔👍❤️🎉😭🙄等
-   - 颜文字: (╯°□°）╯ ┻━┻、(｡◕‿◕｡)、(￣▽￣)、╮(╯▽╰)╭等
-   - 文字表情包: 我可以来吃饭吗就一勺.jpg、小猫后空翻.gif、狗头保命.jpg、这就离谱.png、社死现场.gif、有内味了.jpg、真香.gif、柠檬精.png、我酸了.jpg、打工人.gif、emo了.png、绝绝子.jpg等
 
 ### 输出格式:
 严格的JSON数组，不要其他文字：
@@ -36535,177 +36532,42 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             }
         }
 
-        // 【新增】智能回复概率系统
-        async function handleSmartReplySystem(userContent, postId) {
-            try {
-                const post = await db.forumPosts.get(postId);
-                const forum = await db.forums.get(post.forumId);
-                const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
-
-                if (forumCharacters.length === 0) return;
-
-                // 检查是否@了某个角色或NPC
-                const mentionMatch = userContent.match(/@(\S+)/);
-                let replyProbability = 0;
-                let preferredType = null; // 'character' 或 'npc'
-                let targetCharacter = null;
-
-                if (mentionMatch) {
-                    const mentionedName = mentionMatch[1];
-
-                    // 查找被@的角色
-                    const mentionedCharacter = forumCharacters.find(c => c.name === mentionedName);
-
-                    if (mentionedCharacter) {
-                        // @了角色：60%概率角色回复，40%概率NPC回复
-                        if (Math.random() < 0.6) {
-                            preferredType = 'character';
-                            targetCharacter = mentionedCharacter;
-                            replyProbability = 1; // 100%回复
-                        } else {
-                            preferredType = 'npc';
-                            replyProbability = 1; // 100%回复
-                        }
-                    } else {
-                        // @了NPC（或不存在的用户）：70%概率NPC回复，30%概率角色回复
-                        if (Math.random() < 0.7) {
-                            preferredType = 'npc';
-                            replyProbability = 1; // 100%回复
-                        } else {
-                            preferredType = 'character';
-                            replyProbability = 1; // 100%回复
-                        }
-                    }
-                } else {
-                    // 普通回复/匿名回复：70%概率被回复，30%概率无回复
-                    if (Math.random() < 0.7) {
-                        // 随机选择角色或NPC回复
-                        preferredType = Math.random() < 0.5 ? 'character' : 'npc';
-                        replyProbability = 1;
-                    } else {
-                        return; // 30%概率不回复
-                    }
-                }
-
-                // 执行回复
-                if (replyProbability > 0) {
-                    if (preferredType === 'character') {
-                        await handleCharacterReply(userContent, postId, targetCharacter);
-                    } else {
-                        await handleNpcReply(userContent, postId);
-                    }
-                }
-
-            } catch (error) {
-                console.error('智能回复系统错误:', error);
+        // 【新增】为论坛回复设计的简化版API调用函数
+        async function callSimpleTextAPI(prompt) {
+            if (!apiSettings.key) {
+                throw new Error('API密钥未设置');
             }
-        }
 
-        // 【修改】处理角色回复
-        async function handleCharacterReply(userContent, postId, targetCharacter = null) {
-            try {
-                const post = await db.forumPosts.get(postId);
-                const forum = await db.forums.get(post.forumId);
-                const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
+            const requestBody = {
+                model: apiSettings.model,
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.85 // 稍微提高一点创造性
+            };
 
-                // 如果没有指定目标角色，随机选择一个（降低出现频率）
-                let replyingCharacter = targetCharacter;
-                if (!replyingCharacter) {
-                    // 随机选择，但避免总是选择同一个角色
-                    const availableCharacters = forumCharacters.filter(c => {
-                        // 简单的冷却机制：避免同一角色连续回复
-                        return Math.random() < 0.6; // 60%概率该角色可以回复
-                    });
+            const isGemini = apiSettings.base.includes('generativelanguage.googleapis.com');
+            let url, headers, body;
 
-                    if (availableCharacters.length === 0) {
-                        // 如果所有角色都在冷却，随机选择一个
-                        replyingCharacter = forumCharacters[Math.floor(Math.random() * forumCharacters.length)];
-                    } else {
-                        replyingCharacter = availableCharacters[Math.floor(Math.random() * availableCharacters.length)];
-                    }
-                }
+            if (isGemini) {
+                url = `${apiSettings.base}/models/${apiSettings.model}:generateContent?key=${apiSettings.key}`;
+                headers = { 'Content-Type': 'application/json' };
+                body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+            } else {
+                url = apiSettings.base.endsWith('/v1') ? `${apiSettings.base}/chat/completions` : `${apiSettings.base}/v1/chat/completions`;
+                headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiSettings.key}` };
+                body = JSON.stringify(requestBody);
+            }
 
-                if (!replyingCharacter) return;
+            const response = await fetch(url, { method: 'POST', headers: headers, body: body });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API请求失败: ${response.status} - ${errorText}`);
+            }
 
-                // 获取帖子和评论的上下文
-                const replies = await db.forumReplies.where('postId').equals(postId).sortBy('timestamp');
-                const recentReplies = replies.slice(-5); // 最近5条评论作为上下文
-
-                // 构建AI回复的prompt
-                const isDirectMention = userContent.includes(`@${replyingCharacter.name}`);
-                const prompt = `
-# 角色：${replyingCharacter.name}
-${replyingCharacter.bio}
-
-## 情况：
-你在论坛中${isDirectMention ? '被用户@了' : '看到了用户的评论'}，需要回复用户的评论。
-
-## 帖子信息：
-标题：${post.title}
-内容：${post.content}
-
-## 最近的评论上下文：
-${recentReplies.map(r => `${r.authorName}：${r.content}`).join('\n')}
-
-## 用户刚刚${isDirectMention ? '@你' : ''}说：
-${userContent}
-
-## 回复要求：
-1. 保持角色人设，用符合你性格的语气回复
-2. 针对用户的@内容进行回应
-3. 回复要自然、有趣，不要太正式
-4. 控制在1-2句话内
-5. 可以适当使用emoji、颜文字或文字表情包，但整条回复中不超过1个
-6. **表情使用建议**：
-   - emoji: 😊😂🤔👍❤️🎉😭🙄等
-   - 颜文字: (╯°□°）╯ ┻━┻、(｡◕‿◕｡)、(￣▽￣)、╮(╯▽╰)╭等
-   - 文字表情包: 我可以来吃饭吗就一勺.jpg、小猫后空翻.gif、狗头保命.jpg、这就离谱.png、社死现场.gif、有内味了.jpg、真香.gif、柠檬精.png、我酸了.jpg、打工人.gif、emo了.png、绝绝子.jpg等
-7. **重要**：只返回回复的文本内容，不要包含任何JSON、引号、格式标记
-
-请直接回复内容（纯文本）：`;
-
-                // 调用AI生成回复
-                const aiReply = await callChatAPI([{
-                    role: 'user',
-                    content: prompt
-                }], replyingCharacter.id);
-
-                if (aiReply && aiReply.trim()) {
-                    // 【修复】清理AI回复内容，移除JSON格式和多余引号
-                    let cleanedReply = aiReply.trim();
-
-                    // 移除可能的JSON格式包装
-                    if (cleanedReply.startsWith('{') && cleanedReply.endsWith('}')) {
-                        try {
-                            const parsed = JSON.parse(cleanedReply);
-                            cleanedReply = parsed.content || parsed.reply || parsed.message || cleanedReply;
-                        } catch (e) {
-                            // 如果不是有效JSON，保持原内容
-                        }
-                    }
-
-                    // 移除多余的引号
-                    cleanedReply = cleanedReply.replace(/^["']|["']$/g, '');
-
-                    // 移除可能的格式标记
-                    cleanedReply = cleanedReply.replace(/```json|```/g, '');
-
-                    // 添加AI角色的回复到数据库
-                    const characterReply = {
-                        postId: postId,
-                        authorId: replyingCharacter.id,
-                        authorName: replyingCharacter.name,
-                        authorAvatar: replyingCharacter.avatarUrl,
-                        content: cleanedReply.trim(),
-                        timestamp: Date.now() + 100 // 稍微延后一点，确保在用户回复之后
-                    };
-
-                    await db.forumReplies.add(characterReply);
-                    await renderReplies(postId);
-                }
-
-            } catch (error) {
-                console.error('AI角色回复失败:', error);
+            const data = await response.json();
+            if (isGemini) {
+                return data.candidates?.[0]?.content?.parts?.[0]?.text;
+            } else {
+                return data.choices?.[0]?.message?.content;
             }
         }
 
@@ -36811,89 +36673,100 @@ ${userContent}
             input.value = '';
             await renderReplies(window.currentPostId);
 
-            // 【新逻辑】智能回复概率系统
-            await handleSmartReplySystem(content, window.currentPostId);
+            // 【核心修改】调用新的、专属的论坛AI回复控制器
+            handleForumAIReply(content, window.currentPostId);
         }
 
-        // 【修改】处理NPC回复
-        async function handleNpcReply(userContent, postId) {
+        // 【新增】论坛AI回复的总控制器
+        async function handleForumAIReply(userContent, postId) {
             try {
                 const post = await db.forumPosts.get(postId);
                 const forum = await db.forums.get(post.forumId);
-                const replies = await db.forumReplies.where('postId').equals(postId).toArray();
                 const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
 
-                if (forumCharacters.length === 0) return;
+                const mentionMatch = userContent.match(/@(\S+)/);
+                let replyingCharacter = null;
+                let shouldReply = false;
 
-                // 【改进】更智能的NPC选择，降低出现频率
-                const availableCharacters = forumCharacters.filter(c => {
-                    // 避免同一角色频繁出现
-                    return Math.random() < 0.4; // 40%概率该角色可以作为NPC回复
-                });
+                if (mentionMatch) { // 用户@了某人
+                    const mentionedName = mentionMatch[1];
+                    const targetCharacter = forumCharacters.find(c => c.name === mentionedName);
 
-                let replyingChar;
-                if (availableCharacters.length === 0) {
-                    // 如果所有角色都在冷却，随机选择一个
-                    replyingChar = forumCharacters[Math.floor(Math.random() * forumCharacters.length)];
+                    if (targetCharacter) { // @的是主要角色
+                        shouldReply = Math.random() < 0.6; // 60%概率角色回复
+                        replyingCharacter = targetCharacter;
+                    } else { // @的是NPC
+                        shouldReply = Math.random() < 0.7; // 70%概率NPC回复
+                        replyingCharacter = { name: mentionedName, bio: '一个论坛路人' }; // 模拟一个NPC对象
+                    }
+                } else { // 用户没有@任何人，是普通回复
+                    shouldReply = Math.random() < 0.7; // 70%概率有人回复
+                    if (shouldReply && forumCharacters.length > 0) {
+                        // 随机选一个角色来回复
+                        replyingCharacter = forumCharacters[Math.floor(Math.random() * forumCharacters.length)];
+                    }
+                }
+
+                if (shouldReply && replyingCharacter) {
+                    console.log(`[论坛回复决策] 决定由 "${replyingCharacter.name}" 进行回复。`);
+                    const prompt = await buildForumReplyPrompt(replyingCharacter, post, userContent);
+
+                    // 【重要】调用一个简化的API函数，避免上下文污染
+                    const aiReplyText = await callSimpleTextAPI(prompt);
+
+                    if (aiReplyText && aiReplyText.trim()) {
+                        const reply = {
+                            postId: postId,
+                            authorId: replyingCharacter.id || 'npc',
+                            authorName: replyingCharacter.name,
+                            authorAvatar: replyingCharacter.avatarUrl || createDefaultAvatar(replyingCharacter.name),
+                            content: aiReplyText.trim(),
+                            timestamp: Date.now() + 1000 // 确保在用户回复之后
+                        };
+                        await db.forumReplies.add(reply);
+                        // 延迟刷新，模拟真实回复
+                        setTimeout(() => renderReplies(postId), 1500);
+                    }
                 } else {
-                    replyingChar = availableCharacters[Math.floor(Math.random() * availableCharacters.length)];
+                    console.log('[论坛回复决策] 本次决定不触发AI回复。');
                 }
-
-                // 改进的NPC回复prompt，考虑用户的具体回复
-                const isDirectMention = userContent.includes(`@${replyingChar.name}`);
-                let prompt = `你正在一个名为 "${forum.name}" 的论坛里。
-世界观: ${forum.worldview || '无'}
-你的身份是 ${replyingChar.name}，人设: ${replyingChar.bio}
-
-当前帖子标题: "${post.title}"
-帖子内容: "${post.content}"
-
-以下是最近的几条回复:
-${replies.slice(-5).map(r => `${r.authorName}: ${r.content}`).join('\n')}
-
-用户刚刚${isDirectMention ? '@你' : ''}说: "${userContent}"
-
-现在请你作为 ${replyingChar.name}，${isDirectMention ? '回应用户的@' : '对这个讨论发表看法'}。
-
-## 回复要求：
-1. 回复要自然、简短，符合你的人设
-2. 控制在1-2句话内
-3. 可以适当使用emoji、颜文字或文字表情包，但整条回复中不超过1个
-4. **表情使用建议**：
-   - emoji: 😊😂🤔👍❤️🎉😭🙄等
-   - 颜文字: (╯°□°）╯ ┻━┻、(｡◕‿◕｡)、(￣▽￣)、╮(╯▽╰)╭等
-   - 文字表情包: 我可以来吃饭吗就一勺.jpg、小猫后空翻.gif、狗头保命.jpg、这就离谱.png、社死现场.gif、有内味了.jpg、真香.gif、柠檬精.png、我酸了.jpg、打工人.gif、emo了.png、绝绝子.jpg等
-5. 直接输出回复内容，不要用JSON格式
-
-请回复：`;
-
-                const response = await callChatAPI([{
-                    role: 'user',
-                    content: prompt
-                }], replyingChar.id);
-
-                if (response && response.trim()) {
-                    // 清理回复内容
-                    let cleanedReply = response.trim();
-                    cleanedReply = cleanedReply.replace(/^["']|["']$/g, '');
-                    cleanedReply = cleanedReply.replace(/```json|```/g, '');
-
-                    const npcReply = {
-                        postId: postId,
-                        authorId: replyingChar.id,
-                        authorName: replyingChar.name,
-                        authorAvatar: replyingChar.avatarUrl,
-                        content: cleanedReply,
-                        timestamp: Date.now() + 200 // 稍微延后一点，确保在用户回复之后
-                    };
-
-                    await db.forumReplies.add(npcReply);
-                    await renderReplies(postId);
-                }
-
             } catch (error) {
-                console.error("NPC回复失败:", error);
+                console.error("处理论坛AI回复失败:", error);
             }
+        }
+
+        // 【新增】为论坛回复构建专属的AI指令
+        async function buildForumReplyPrompt(replyingCharacter, post, userContent) {
+            const replies = await db.forumReplies.where('postId').equals(post.id).sortBy('timestamp');
+            const recentReplies = replies.slice(-5); // 最近5条评论作为上下文
+
+            return `
+角色：论坛评论员
+你的身份是 ${replyingCharacter.name}，你的人设是: ${replyingCharacter.bio || '一个普通的论坛网友'}
+
+当前场景:
+在一个名为 "${post.title}" 的帖子里，你看到了用户的一条新评论。
+
+帖子内容:
+${post.content}
+
+最近的几条评论:
+${recentReplies.map(r => `${r.authorName}: ${r.content}`).join('\n')}
+
+用户刚刚说:
+"${userContent}"
+
+你的任务:
+作为 ${replyingCharacter.name}，对用户的评论做出自然的回应。
+
+回复要求:
+1. 保持人设: 严格按照你的性格和身份进行回复。
+2. 自然简短: 回复要像真实的论坛评论，1-3句话即可。
+3. 使用表情: 为了让论坛更有趣，请在你的回复中少量使用文字表情、颜文字或emoji，但整条帖子的评论区这类表情的总数不应超过两个。
+4. 直接输出: 只返回纯文本的回复内容，不要添加任何JSON格式或多余的解释。
+
+请现在开始你的回复:
+`;
         }
 
         // 收藏/取消收藏帖子 (已修复并增加调试日志的版本)
