@@ -665,20 +665,27 @@
                         <button class="back-button" onclick="backToForumArchives()">‹</button>
                         <div class="app-title" id="forum-view-title">论坛</div>
                         <div class="header-actions">
-                            <span class="action-btn" onclick="refreshPosts()" title="刷新帖子">
-                                <i class="fas fa-redo"></i>
+                            <span class="action-btn" onclick="showMakeNewsModal()" title="搞个大新闻">
+                                <i class="fas fa-pencil-alt"></i>
                             </span>
                             <span class="action-btn" onclick="showForumProfile()" title="个人主页">
                                 <i class="fas fa-user"></i>
-                            </span>  </div>
+                            </span>
+                        </div>
                     </div>
                     <div class="app-content">
                         <div id="forum-posts-list" class="post-list">
                         </div>
                     </div>
-                    <!-- 用户发帖悬浮按钮 -->
-                    <div class="floating-post-btn" onclick="showCreatePostModal()" title="发帖">
-                        <i class="fas fa-plus"></i>
+
+                    <!-- 悬浮按钮组 -->
+                    <div class="floating-action-buttons">
+                        <div class="floating-btn refresh-btn" onclick="refreshPosts()" title="刷新帖子">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="floating-btn post-btn" onclick="showCreatePostModal()" title="发帖">
+                            <i class="fas fa-plus"></i>
+                        </div>
                     </div>
                 </div>
 
@@ -711,10 +718,24 @@
 
                 <!-- 帖子详情和回复界面 -->
                 <div id="post-view-screen" class="app-screen">
+                    <div class="app-status-bar">
+                        <div class="app-status-time"></div>
+                        <div class="app-battery-container">
+                            <span class="battery-text">ᰔᩚ</span>
+                            <div class="app-battery-icon"><div class="app-battery-level"></div></div>
+                        </div>
+                    </div>
                     <div class="app-header">
                         <button class="back-button" onclick="backToForum()">‹ </button>
                         <div class="app-title">帖子详情</div>
-                        <button id="favorite-btn" class="header-action-btn" onclick="toggleFavoritePost()" title="收藏"><i class="far fa-star"></i></button>
+                        <div class="header-actions">
+                            <button id="favorite-btn" class="header-action-btn" onclick="toggleFavoritePost()" title="收藏">
+                                <i class="far fa-star"></i>
+                            </button>
+                            <button id="share-btn" class="header-action-btn" onclick="showSharePostModal()" title="分享">
+                                <i class="fas fa-share-square"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="app-content" id="post-view-content">
                     </div>
@@ -743,8 +764,15 @@
                             <i class="fas fa-vote-yea"></i>
                         </button>
                     </div>
-                    <div class="app-content">
-                        <div id="favorite-posts-list" class="post-list">
+                    <div class="app-content" style="padding: 0;">
+                        <div class="profile-tabs">
+                            <div class="profile-tab active" onclick="switchProfileTab('my-posts')">我的帖子</div>
+                            <div class="profile-tab" onclick="switchProfileTab('my-favorites')">我的收藏</div>
+                        </div>
+
+                        <div id="my-posts-list" class="post-list profile-post-list">
+                        </div>
+                        <div id="favorite-posts-list" class="post-list profile-post-list" style="display: none;">
                         </div>
                     </div>
                 </div>
@@ -4165,9 +4193,12 @@
         }
 
 
-        // 🔥【最终版本20】统一的数据库结构定义 - 包含心声、论坛系统和评论点赞功能
-        db.version(20).stores({
-            // --- 首先，完整复制版本19的所有内容 ---
+
+
+
+        // 🔥【版本21】添加论坛帖子用户标识索引
+        db.version(21).stores({
+            // --- 首先，完整复制版本20的所有内容 ---
             // 基础数据表
             characters: '&id, name, groupId',
             contacts: '++id, characterId',
@@ -4238,29 +4269,26 @@
 
             // --- 论坛功能相关表 ---
             forums: '++id, name',
-            forumPosts: '++id, forumId, timestamp',
+            forumPosts: '++id, forumId, timestamp, isUserPost', // 添加isUserPost索引
             forumReplies: '++id, postId, timestamp',
             forumFavorites: '++id, [userId+postId]',
 
-            // --- 然后，在末尾追加新表 ---
-            replyLikes: '++id, [userId+replyId], userId, replyId, timestamp' // 评论点赞表
+            // --- 评论点赞表 ---
+            replyLikes: '++id, [userId+replyId], userId, replyId, timestamp'
         }).upgrade(async tx => {
-            console.log('🔧 升级到版本20：添加评论点赞功能');
+            console.log('🔧 升级到版本21：添加论坛帖子用户标识索引');
 
             // 🔥【安全迁移】检查并保护现有用户数据
             try {
                 // 检查是否有现有数据需要保护
-                const existingCharacters = await tx.characters.count();
-                const existingMessages = await tx.chatMessages.count();
+                const existingPosts = await tx.forumPosts.count();
 
-                if (existingCharacters > 0 || existingMessages > 0) {
-                    console.log(`✅ 检测到现有用户数据：${existingCharacters}个角色，${existingMessages}条消息`);
-                    console.log('✅ 评论点赞功能已安全添加，现有数据完全保留');
+                if (existingPosts > 0) {
+                    console.log(`✅ 检测到现有论坛帖子：${existingPosts}条`);
+                    console.log('✅ 论坛帖子用户标识索引已安全添加，现有数据完全保留');
                 } else {
-                    console.log('✅ 新用户安装，心声和论坛系统表已创建');
+                    console.log('✅ 新用户或无现有论坛数据，索引已创建');
                 }
-
-                // 新表会自动创建：innerThoughts, forums, forumPosts, forumReplies, forumFavorites
 
             } catch (error) {
                 console.error('⚠️ 数据迁移检查失败，但不影响功能:', error);
@@ -9579,7 +9607,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         // 用户转账消息 - 在renderChatMessages中处理
                         let cardClass = '';
                         let statusHtml = '';
-                        
+
                         if (message.status === 'accepted') {
                             statusHtml = `<div class="transfer-status">对方已收款</div>`;
                             cardClass = 'accepted';
@@ -9587,7 +9615,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                             statusHtml = `<div class="transfer-status">对方已退回</div>`;
                             cardClass = 'rejected';
                         }
-                        
+
                         myMessageContent = `
                             <div class="transfer-message-container sent">
                                 <div class="transfer-card ${cardClass}" data-transfer-id="${message.timestamp}">
@@ -9596,6 +9624,16 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                                     <div class="transfer-note">${message.note || '转账'}</div>
                                     ${statusHtml}
                                 </div>
+                            </div>
+                        `;
+                    } else if (message.type === 'shared_post') {
+                        // 【新增】处理分享的论坛帖子卡片
+                        const postData = message.postData || {};
+                        myMessageContent = `
+                            <div class="shared-post-card" onclick="showPostView(${postData.id})">
+                                <div class="shared-post-header">论坛帖子分享</div>
+                                <div class="shared-post-title">${postData.title || '帖子加载失败'}</div>
+                                <div class="shared-post-content">${truncateText(postData.content || '', 50)}</div>
                             </div>
                         `;
                     } else if (message.type === 'location') {
@@ -10032,7 +10070,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         let cardClass = '';
                         let statusHtml = '';
                         let clickHandler = '';
-                        
+
                         if (message.status === 'accepted') {
                             statusHtml = `<div class="transfer-status">${isUser ? '对方已收款' : '已收款'}</div>`;
                             cardClass = 'accepted';
@@ -10043,8 +10081,18 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                             // AI发来的转账且未处理，添加点击处理
                             clickHandler = `onclick="showTransferConfirmDialog(${JSON.stringify(message).replace(/"/g, '&quot;')})"`;
                         }
-                        
+
                         messageContent = `<div class="transfer-message-container received"><div class="transfer-card ${cardClass}" data-transfer-id="${message.timestamp}" ${clickHandler}><div class="transfer-title">${heartIcon} ${titleText}</div><div class="transfer-amount">¥ ${Number(message.amount).toFixed(2)}</div><div class="transfer-note">${message.note || '转账'}</div>${statusHtml}</div></div>`;
+                    } else if (message.type === 'shared_post') {
+                        // 【新增】处理分享的论坛帖子卡片
+                        const postData = message.postData || {};
+                        messageContent = `
+                            <div class="shared-post-card" onclick="showPostView(${postData.id})">
+                                <div class="shared-post-header">论坛帖子分享</div>
+                                <div class="shared-post-title">${postData.title || '帖子加载失败'}</div>
+                                <div class="shared-post-content">${truncateText(postData.content || '', 50)}</div>
+                            </div>
+                        `;
                     } else if (message.type === 'friend_request') {
                         // 🔥【新增】AI主动发送的好友申请(第二处)
                         messageContent = `
@@ -16581,8 +16629,8 @@ function onWorldbookAddClick() {
                         if (activeLyricEl && currentIndex >= 0) {
                             const containerHeight = container.clientHeight;
 
-                          // 调整位置让歌词再靠上一点：使用1/4位置而不是1/3
-                            const offset = (containerHeight / 4) - activeLyricEl.offsetTop - (activeLyricEl.offsetHeight / 2);
+                          // 调整位置让歌词再靠上一点：使用1/3位置
+                            const offset = (containerHeight / 3) - activeLyricEl.offsetTop - (activeLyricEl.offsetHeight / 2);
 
                             // 使用transform实现平滑滚动
                             fullLyricsEl.style.transform = `translateY(${offset}px)`;
@@ -18725,6 +18773,11 @@ ${timeInfo}${musicInfo}
                             } else {
                                 content = `[AI发起了转账：${msg.amount}元，备注：${msg.note || '无'}]`;
                             }
+                        } else if (msg.type === 'shared_post') {
+                            // 【新增】处理分享的论坛帖子
+                            const post = msg.postData || {};
+                            const sender = msg.sender === 'sent' ? '用户' : 'AI';
+                            content = `[${sender} 分享了一个论坛帖子, 标题: "${post.title}", 内容: "${truncateText(post.content, 100)}"]`;
                         } else if (msg.type === 'ai_image') {
                             // 🔥【修复】处理AI发送的图片
                             content = `[AI发送了一张图片，描述：${msg.imageDescription || '无描述'}]`;
@@ -35267,6 +35320,7 @@ async function changeMyGroupAvatar() {
         // --- 论坛功能 ---
 
         let currentForumId = null;
+        let worldEvent = null; // 用于存储"搞个大新闻"的事件
 
         // 【新增】处理用户投票的函数
         async function handlePollVote(optionElement, optionId) {
@@ -35823,13 +35877,70 @@ async function changeMyGroupAvatar() {
             const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
             const persona = personas.find(p => p.id === forum.personaId);
 
-            // 新的、更健壮的Prompt指令
+            // 【优化】1. 定义一个函数来安全地拼接上下文，并控制总长度
+            const MAX_CONTEXT_LENGTH = 8000; // 设置一个安全的上下文总长度限制（约8000字符）
+            let currentLength = 0;
+            let finalContext = '';
+
+            const appendContext = (title, content) => {
+                if (!content || content.trim() === '') return;
+                const section = `\n\n## ${title}:\n${content}\n`;
+                if (currentLength + section.length < MAX_CONTEXT_LENGTH) {
+                    finalContext += section;
+                    currentLength += section.length;
+                } else {
+                    // 如果超出长度，则截断并添加提示
+                    const remainingLength = MAX_CONTEXT_LENGTH - currentLength - title.length - 20;
+                    if (remainingLength > 100) {
+                         finalContext += `\n\n## ${title}:\n${content.substring(0, remainingLength)}...\n[内容已截断]\n`;
+                    }
+                    currentLength = MAX_CONTEXT_LENGTH; // 标记为已满
+                }
+            };
+
+            // 【优化】2. 按优先级构建上下文内容
+
+            // 优先级 1: 世界事件 ("大新闻")
+            let eventContext = '';
+            if (worldEvent && worldEvent.expires > Date.now()) {
+                eventContext = `**这是刚刚发生的、最重要的新闻，请务必围绕这个事件生成一些帖子:**\n${worldEvent.content}`;
+            }
+            appendContext("头条新闻/世界线变动", eventContext);
+
+            // 优先级 2: 角色近期记忆 (只选取部分角色的部分记忆)
+            let memoryContext = '';
+            let memoriesFound = false;
+            // 只随机选择最多3个角色来提供记忆，避免信息过载
+            const charactersForMemory = forumCharacters.sort(() => 0.5 - Math.random()).slice(0, 3);
+            for (const char of charactersForMemory) {
+                // 每个角色最多只取2条核心记忆和3条情景记忆
+                const coreMemories = await db.coreMemories.where('characterId').equals(char.id).limit(2).toArray();
+                const episodicMemories = await db.episodicMemories.where('characterId').equals(char.id).reverse().limit(3).toArray();
+
+                if (coreMemories.length > 0 || episodicMemories.length > 0) {
+                    memoriesFound = true;
+                    memoryContext += `### 关于 ${char.name} 的近期动态:\n`;
+                    coreMemories.forEach(mem => { memoryContext += `- (核心记忆) ${mem.fact}\n`; });
+                    episodicMemories.forEach(mem => { memoryContext += `- (最近发生) ${mem.fact}\n`; });
+                }
+            }
+            if (memoriesFound) {
+                appendContext("最近发生的大事件 (角色记忆)", memoryContext);
+            }
+
+            // 优先级 3: 世界书 (如果还有空间)
+            const allWorldbooks = await db.worldbooks.toArray();
+            let worldbookContext = allWorldbooks.map(book => `### ${book.title}\n${book.content}`).join('\n\n');
+            appendContext("论坛参考的世界观设定 (世界书)", worldbookContext);
+
+            // 【最终修复】构建最终的Prompt
             let prompt = `
 # 角色：论坛内容生成AI
-你的任务是为一个名为 "${forum.name}" 的虚拟论坛生成10个初始帖子。
+你的任务是为一个名为 "${forum.name}" 的虚拟论坛生成10个新的帖子。
 
 ## 论坛背景设定:
-世界观: ${forum.worldview || '一个现代都市，大家分享日常生活。'}
+**核心世界观**: ${forum.worldview || '一个普通的现代社区，大家在这里分享日常生活与见闻。'}
+${finalContext}
 
 ## 论坛成员:
 ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
@@ -35838,167 +35949,76 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
 ## 帖子生成指令:
 请严格遵循以下要求，生成10个帖子的JSON对象。
 
+### 【重要】发帖人分配规则:
+- **8-9个帖子**: 必须由普通NPC路人发布，使用符合世界观的普通网名（如"学霸小王"、"夜猫子"、"篮球少年"等）
+- **最多1-2个帖子**: 可以由论坛成员角色发布，格式为"网名(真实姓名)"
+
 ### 内容要求:
-1.  **真实感与多样性**: 帖子要生动真实，话题多样，符合成员人设。
-2.  **发帖人分配**: 大部分帖子由NPC路人发布，最多只有1个帖子由论坛成员发布（角色出现概率很低）。
-3.  **互动性**: 帖子可以引发讨论，比如@某人。
-4.  **表情使用**: 论坛里AI少量使用文字版表情包（真香.jpg、给你一拳.gif）、颜文字、emoji，一条帖子下面这些表情不能超过两次。
+1.  **真实论坛感**: 大部分帖子应该是普通人的日常分享、求助、吐槽、闲聊等，就像真实论坛一样
+2.  **世界观融合**: 在保持真实感的前提下，适度融入背景世界观
+3.  **话题多样性**: 包括学习、生活、娱乐、求助、分享、八卦等各种日常话题
+4.  **避免过度关联**: 不要让太多帖子都围绕论坛成员角色展开
 
-### **【新增功能】互动内容生成 (可选):**
-- 你有大约20%的概率，为合适的帖子（如人气比拼、意见征集）额外添加一个互动投票。
-- 如果决定添加投票，**必须**在JSON对象中增加一个名为 "interactiveContent" 的字段。
-
-### **【极其重要】输出格式:**
-你的回复**必须**是一个严格的JSON数组。每个帖子是一个对象，包含以下字段：
-- \`authorName\`: "网名" 或 "网名(真实身份)"
-- \`title\`: "帖子标题"
-- \`content\`: "帖子的**纯文本**正文内容。这里**禁止**包含任何HTML代码。"
-- \`interactiveContent\` (可选): 如果有投票，则此字段包含投票的HTML代码。如果没投票，则**必须省略**此字段。
-
-**投票HTML模板 (必须严格遵守):**
-\`\`\`html
-<div class="forum-poll">
-    <h4>【投票】这里是投票的标题</h4>
-    <div class="poll-option" onclick="handlePollVote(this, '选项1的ID')">
-        <span class="option-text">选项1的文字</span>
-        <div class="result-bar-bg"><div class="result-bar"></div></div>
-        <span class="vote-count">0票</span>
-    </div>
-    <div class="poll-option" onclick="handlePollVote(this, '选项2的ID')">
-        <span class="option-text">选项2的文字</span>
-        <div class="result-bar-bg"><div class="result-bar"></div></div>
-        <span class="vote-count">0票</span>
-    </div>
-</div>
-\`\`\`
-
-**JSON输出示例:**
-\`\`\`json
-[
-  {
-    "authorName": "篮球少年",
-    "title": "下午有人一起打球吗？",
-    "content": "天气不错，三缺二，有兄弟来吗？"
-  },
-  {
-    "authorName": "美食探险家",
-    "title": "【投票】大家觉得食堂新品哪个最好吃？",
-    "content": "这周食堂出了几个新菜，我感觉麻辣香锅 YYDS，你们觉得呢？都来投个票！",
-    "interactiveContent": "<div class='forum-poll'><h4>【投票】食堂新品哪个最好吃？</h4><div class='poll-option' onclick='handlePollVote(this, \\"xiangguo\\")'><span class='option-text'>麻辣香锅</span><div class='result-bar-bg'><div class='result-bar'></div></div><span class='vote-count'>0票</span></div><div class='poll-option' onclick='handlePollVote(this, \\"suancaiyu\\")'><span class='option-text'>酸菜鱼</span><div class='result-bar-bg'><div class='result-bar'></div></div><span class='vote-count'>0票</span></div></div>"
-  }
-]
-\`\`\`
-
-### **【极其重要】输出格式:**
-你的回复**必须**是一个严格的、不包含任何额外解释文字的JSON数组格式。每个帖子是一个对象，包含"authorName", "title", "content"三个字段。
-
-**关于authorName的格式要求：**
-- NPC路人：直接使用网名，如"学霸小王"、"夜猫子"、"篮球少年"等
-- 论坛成员角色：使用"网名(真实身份)"格式，如"影帝张三(张明辉)"、"小甜心(方回)"等
-
-\`\`\`json
-[
-  {
-    "authorName": "网名或网名(真实身份)",
-    "title": "这里是帖子的标题",
-    "content": "这里是帖子的详细正文内容，可以包含换行符\\n来分段。"
-  },
-  {
-    "authorName": "另一个网名",
-    "title": "帖子的标题2",
-    "content": "帖子的正文内容2。\\n可以有第二段。"
-  }
-]
-\`\`\`
+### 【极其重要】输出格式:
+你的回复**必须**是一个严格的、不包含任何额外解释文字的JSON数组格式。
 `;
 
             showToast('AI正在生成新帖子，请稍候...', 'info');
-            console.log('🔥 [论坛] 开始生成帖子，论坛ID:', forumId);
-            console.log('🔥 [论坛] 论坛信息:', forum);
-            console.log('🔥 [论坛] 角色列表:', forumCharacters);
-            console.log('🔥 [论坛] 用户身份:', persona);
-            console.log('🔥 [论坛] 生成的prompt:', prompt);
 
             try {
-                // --- 核心修改：调用一个独立的API函数，避免上下文污染 ---
-                console.log('🔥 [论坛] 准备调用callForumAPI...');
                 const response = await callForumAPI(prompt);
-                console.log('🔥 [论坛] API响应:', response);
-
-                // --- 核心修改：增强JSON解析的健壮性 ---
                 let posts;
                 try {
-                    // 尝试直接解析
                     posts = JSON.parse(response);
-                    console.log('🔥 [论坛] JSON解析成功:', posts);
                 } catch (e) {
-                    console.log('🔥 [论坛] 直接JSON解析失败，尝试提取Markdown代码块:', e.message);
-                    // 如果直接解析失败，尝试从Markdown代码块中提取JSON
                     const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
                     if (jsonMatch && jsonMatch[1]) {
-                        console.log('🔥 [论坛] 找到JSON代码块:', jsonMatch[1]);
                         posts = JSON.parse(jsonMatch[1]);
-                        console.log('🔥 [论坛] Markdown JSON解析成功:', posts);
                     } else {
                         throw new Error("AI返回的不是有效的JSON格式。");
                     }
                 }
 
-                if (!Array.isArray(posts)) {
-                    throw new Error("AI返回的数据不是一个数组。");
-                }
+                if (!Array.isArray(posts)) throw new Error("AI返回的数据不是一个数组。");
 
-                console.log('🔥 [论坛] 准备保存帖子，数量:', posts.length);
                 for (const post of posts) {
-                    console.log('🔥 [论坛] 处理帖子:', post);
-                    if (post.authorName && post.title && post.content) {
+                    // 【关键修复】灵活识别作者字段名
+                    const authorName = post.authorName || post.author;
 
-                        // 【核心修改】将纯文本内容和互动内容合并
-                        let finalContent = post.content;
-                        if (post.interactiveContent) {
-                            // 将互动HTML附加到纯文本内容的后面
-                            finalContent += `\n\n${post.interactiveContent}`;
-
-                        }
-
-                        // 查找作者信息... (这部分逻辑与之前相同)
+                    if (post && typeof authorName === 'string' && post.title && post.content) {
                         let author = null;
-                        let authorName = post.authorName;
                         let authorAvatar = null;
-                        const realNameMatch = post.authorName.match(/^(.+)\((.+)\)$/);
+                        const realNameMatch = authorName.match(/^(.+)\((.+)\)$/);
                         if (realNameMatch) {
                             const realName = realNameMatch[2];
                             author = characters.find(c => c.name === realName) || personas.find(p => p.name === realName);
-                            if (author) {
-                                authorAvatar = author.avatarUrl;
-                            }
+                            if (author) authorAvatar = author.avatarUrl;
                         }
-                        if (!author) {
-                            authorAvatar = createDefaultAvatar(authorName);
-                        }
-
-                        const savedPost = await db.forumPosts.add({
+                        if (!author) authorAvatar = createDefaultAvatar(authorName);
+                        await db.forumPosts.add({
                             forumId: parseInt(forumId),
                             title: post.title,
-                            content: finalContent, // 【核心修改】保存合并后的内容
+                            content: post.content,
                             authorId: author ? author.id : null,
                             authorName: authorName,
                             authorAvatar: authorAvatar,
-                            timestamp: Date.now() - Math.floor(Math.random() * 86400000)
+                            timestamp: Date.now() - Math.floor(Math.random() * 10000),
+                            replies: 0,
+                            likes: 0
                         });
-                        console.log('🔥 [论坛] 帖子已保存:', savedPost);
+                    } else {
+                        console.warn("AI生成了一个格式不规范的帖子，已跳过:", post);
                     }
                 }
-                console.log('🔥 [论坛] 所有帖子处理完成');
             } catch (error) {
-                console.error("🔥 [论坛] 生成帖子失败:", error);
+                console.error("生成帖子失败:", error);
                 alert("AI生成帖子失败，请检查API设置或刷新重试。\n错误详情: " + error.message);
             }
         }
 
         // 渲染帖子列表
         async function renderForumPosts(forumId) {
-            const posts = await db.forumPosts.where('forumId').equals(parseInt(forumId)).reverse().sortBy('timestamp');
+            const posts = await db.forumPosts.where('forumId').equals(parseInt(forumId)).toArray();
             const listContainer = document.getElementById('forum-posts-list');
 
             if (posts.length === 0) {
@@ -36006,71 +36026,115 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                 return;
             }
 
-            listContainer.innerHTML = posts.map(post => `
-                <div class="post-item" onclick="showPostView(${post.id})">
-                    <div class="post-title">${post.title}</div>
-                    <div class="post-meta">
-                        <span class="post-author">${post.authorName}</span>
-                        <span>${formatTime(post.timestamp)}</span>
+            // 1. 计算每个帖子的热度
+            for (const post of posts) {
+                const repliesCount = await db.forumReplies.where('postId').equals(post.id).count();
+                // 简单热度算法：回复数 * 2 + 点赞数 (为未来点赞功能预留)
+                post.hotness = (repliesCount * 2) + (post.likes || 0);
+            }
+
+            // 2. 按热度降序排列
+            posts.sort((a, b) => b.hotness - a.hotness);
+
+            // 3. 分离出热帖和最新帖子 (最多3个热帖)
+            const hotPostsCount = Math.min(3, posts.length);
+            const hotPosts = posts.slice(0, hotPostsCount);
+            const newestPosts = posts.slice(hotPostsCount).sort((a, b) => b.timestamp - a.timestamp);
+
+            // 4. 渲染HTML
+            let html = '';
+
+            // 渲染热帖区
+            if (hotPosts.length > 0) {
+                html += '<div class="forum-section-header">热门帖子</div>';
+                html += hotPosts.map(post => `
+                    <div class="post-item hot" onclick="showPostView(${post.id})">
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-meta">
+                            <span class="post-author">${post.authorName}</span>
+                            <span>${formatTime(post.timestamp)}</span>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
+
+            // 渲染最新帖子区
+            if (newestPosts.length > 0) {
+                html += '<div class="forum-section-header">最新帖子</div>';
+                html += newestPosts.map(post => `
+                    <div class="post-item" onclick="showPostView(${post.id})">
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-meta">
+                            <span class="post-author">${post.authorName}</span>
+                            <span>${formatTime(post.timestamp)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            listContainer.innerHTML = html;
         }
 
         // 刷新帖子
         async function refreshPosts() {
             if (!currentForumId) return;
 
-            // 显示加载动画
-            const postsContainer = document.getElementById('forum-posts-list');
-            postsContainer.innerHTML = `
-                <div class="loading-container" style="text-align: center; padding: 50px;">
-                    <div class="loading-spinner" style="
-                        width: 40px;
-                        height: 40px;
-                        border: 3px solid #f3f3f3;
-                        border-top: 3px solid #007AFF;
-                        border-radius: 50%;
-                        animation: spin 1s linear infinite;
-                        margin: 0 auto 15px;
-                    "></div>
-                    <div style="color: #666; font-size: 14px;">正在生成新帖子...</div>
-                </div>
-            `;
+            showToast("正在获取最新动态...", "info");
 
             try {
-                // --- 核心修复开始 ---
+                // 1. 生成10条新帖子
+                await generateForumPosts(currentForumId);
 
-                // 1. 首先，获取所有用户已收藏的帖子ID
+                // --- 帖子的"新陈代谢"与"永久珍藏"逻辑 ---
+
+                // 2. 获取所有帖子ID、用户收藏的帖子ID、用户自己发布的帖子ID
+                const allPostsInForum = await db.forumPosts.where('forumId').equals(parseInt(currentForumId)).toArray();
+                const allPostIds = new Set(allPostsInForum.map(post => post.id));
+
                 const favoriteRecords = await db.forumFavorites.where({ userId: 'user' }).toArray();
                 const favoritedPostIds = new Set(favoriteRecords.map(fav => fav.postId));
-                console.log('保留的收藏帖子ID:', Array.from(favoritedPostIds));
 
-                // 2. 找出当前论坛中所有未被收藏的帖子
-                const allPostsInForum = await db.forumPosts.where('forumId').equals(parseInt(currentForumId)).toArray();
-                const postsToDeleteIds = allPostsInForum
-                    .filter(post => !favoritedPostIds.has(post.id))
-                    .map(post => post.id);
-                console.log('准备删除的帖子ID:', postsToDeleteIds);
+                const userPosts = allPostsInForum.filter(post => post.isUserPost === true);
+                const userPostIds = new Set(userPosts.map(post => post.id));
 
-                // 3. 只删除未被收藏的帖子及其回复
+                // 3. 确定需要保留的帖子：最新的30条 + 所有收藏的 + 所有用户发布的
+                const postsToKeepIds = new Set();
+
+                // 3.1 添加最新的30条
+                allPostsInForum
+                    .sort((a, b) => b.timestamp - a.timestamp)
+                    .slice(0, 30)
+                    .forEach(post => postsToKeepIds.add(post.id));
+
+                // 3.2 添加所有收藏的
+                favoritedPostIds.forEach(id => postsToKeepIds.add(id));
+
+                // 3.3 添加所有用户自己发布的
+                userPostIds.forEach(id => postsToKeepIds.add(id));
+
+                // 4. 找出需要删除的帖子
+                const postsToDeleteIds = [];
+                allPostIds.forEach(id => {
+                    if (!postsToKeepIds.has(id)) {
+                        postsToDeleteIds.push(id);
+                    }
+                });
+
+                // 5. 执行删除
                 if (postsToDeleteIds.length > 0) {
+                    console.log(`论坛帖子清理：准备删除 ${postsToDeleteIds.length} 条过期/未收藏/非用户发布的帖子。`);
                     await db.forumPosts.bulkDelete(postsToDeleteIds);
                     await db.forumReplies.where('postId').anyOf(postsToDeleteIds).delete();
-                    console.log(`成功删除了 ${postsToDeleteIds.length} 条未收藏的帖子及其回复。`);
-                } else {
-                    console.log('没有需要删除的未收藏帖子。');
+                    console.log(`✅ 清理完成！`);
                 }
 
-                // --- 核心修复结束 ---
-
-                await generateForumPosts(currentForumId);
+                // 6. 重新渲染界面
                 await renderForumPosts(currentForumId);
-                showToast("新帖子已刷新！收藏的帖子已保留。", "success");
+                showToast("论坛已刷新！", "success");
+
             } catch (error) {
                 console.error('刷新帖子失败:', error);
                 showToast('刷新失败: ' + error.message, 'error');
-                // 出错时重新加载现有帖子
                 await renderForumPosts(currentForumId);
             }
         }
@@ -36821,16 +36885,24 @@ ${recentReplies.map(r => `${r.authorName}: ${r.content}`).join('\n')}
 
         // 显示个人主页
         async function showForumProfile() {
-            // 🔥【修复】先加载数据和显示页面，再隐藏当前页面，避免闪现主屏幕
-            const favoriteRecords = await db.forumFavorites.where('userId').equals('user').toArray();
-            const postIds = favoriteRecords.map(fav => fav.postId);
-            const favoritePosts = await db.forumPosts.where('id').anyOf(postIds).toArray();
+            // 切换到个人主页视图
+            showApp('forum-profile-screen');
+            hideApp('forum-view-screen');
 
-            const listContainer = document.getElementById('favorite-posts-list');
-            if (favoritePosts.length === 0) {
-                listContainer.innerHTML = `<div class="forum-empty-state"><p>你还没有收藏任何帖子</p></div>`;
+            // 默认显示"我的帖子"
+            switchProfileTab('my-posts');
+
+            // --- 异步加载两个分区的数据 ---
+
+            // 1. 加载并渲染"我的帖子"
+            const myPostsList = document.getElementById('my-posts-list');
+            // 使用filter方法来安全地查询用户帖子
+            const allPosts = await db.forumPosts.toArray();
+            const userPosts = allPosts.filter(post => post.isUserPost === true).sort((a, b) => b.timestamp - a.timestamp);
+            if (userPosts.length === 0) {
+                myPostsList.innerHTML = `<div class="forum-empty-state"><p>你还没有发过帖子</p></div>`;
             } else {
-                listContainer.innerHTML = favoritePosts.sort((a,b) => b.timestamp - a.timestamp).map(post => `
+                myPostsList.innerHTML = userPosts.map(post => `
                     <div class="post-item" onclick="showPostView(${post.id})">
                         <div class="post-title">${post.title}</div>
                         <div class="post-meta">
@@ -36841,8 +36913,25 @@ ${recentReplies.map(r => `${r.authorName}: ${r.content}`).join('\n')}
                 `).join('');
             }
 
-            showApp('forum-profile-screen');
-            hideApp('forum-view-screen');
+            // 2. 加载并渲染"我的收藏"
+            const favListContainer = document.getElementById('favorite-posts-list');
+            const favoriteRecords = await db.forumFavorites.where('userId').equals('user').toArray();
+            const postIds = favoriteRecords.map(fav => fav.postId);
+
+            if (postIds.length === 0) {
+                favListContainer.innerHTML = `<div class="forum-empty-state"><p>你还没有收藏任何帖子</p></div>`;
+            } else {
+                const favoritePosts = await db.forumPosts.where('id').anyOf(postIds).toArray();
+                favListContainer.innerHTML = favoritePosts.sort((a,b) => b.timestamp - a.timestamp).map(post => `
+                    <div class="post-item" onclick="showPostView(${post.id})">
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-meta">
+                            <span class="post-author">${post.authorName}</span>
+                            <span>${formatTime(post.timestamp)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
         }
 
         // 🔥【新增】从个人主页返回当前论坛社区
@@ -47239,6 +47328,174 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
+// 【新增】"搞个大新闻"相关函数
+
+// 显示"搞个大新闻"模态框
+function showMakeNewsModal() {
+    const modalHTML = `
+        <div id="make-news-modal" class="modal" style="display: flex;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">搞个大新闻</h3>
+                    <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                        输入一个世界事件，AI将在24小时内围绕这个事件生成新的论坛帖子。
+                    </p>
+                    <textarea id="news-content-input" class="form-textarea" placeholder="例如：听闻魔尊即将出关，正道各派将在昆仑之巅会盟商议对策。" style="min-height: 100px;"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-button modal-secondary" onclick="this.closest('.modal').remove()">取消</button>
+                    <button class="modal-button modal-primary" onclick="submitMakeNews()">发布事件</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    setTimeout(() => document.getElementById('news-content-input').focus(), 100);
+}
+
+// 提交"大新闻"
+function submitMakeNews() {
+    const contentInput = document.getElementById('news-content-input');
+    const content = contentInput.value.trim();
+
+    if (!content) {
+        alert('请输入事件内容！');
+        return;
+    }
+
+    // 设置世界事件，有效期为24小时
+    worldEvent = {
+        content: content,
+        expires: Date.now() + 24 * 60 * 60 * 1000
+    };
+
+    const modal = document.getElementById('make-news-modal');
+    if (modal) modal.remove();
+
+    showToast('世界线已变动！正在刷新论坛...', 'success');
+
+    // 立即刷新帖子以体现新事件
+    refreshPosts();
+}
+
+// --- 个人主页分区切换 ---
+function switchProfileTab(tab) {
+    const myPostsList = document.getElementById('my-posts-list');
+    const favListContainer = document.getElementById('favorite-posts-list');
+    const tabs = document.querySelectorAll('.profile-tab');
+
+    tabs.forEach(t => t.classList.remove('active'));
+    document.querySelector(`.profile-tab[onclick*="${tab}"]`).classList.add('active');
+
+    if (tab === 'my-posts') {
+        myPostsList.style.display = 'block';
+        favListContainer.style.display = 'none';
+    } else {
+        myPostsList.style.display = 'none';
+        favListContainer.style.display = 'block';
+    }
+}
+
+// --- 帖子分享功能 ---
+
+// 1. 显示分享模态框
+async function showSharePostModal() {
+    const conversations = [];
+    // 获取单聊
+    characters.forEach(char => {
+        if (contacts.includes(char.id)) {
+            conversations.push({ id: char.id, name: char.name, avatarUrl: char.avatarUrl, isGroup: false });
+        }
+    });
+    // 获取群聊
+    groupChats.forEach(group => {
+        conversations.push({ id: group.id, name: group.name, avatarUrl: group.avatarUrl, isGroup: true });
+    });
+
+    const modalHTML = `
+        <div id="share-post-modal" class="modal" style="display: flex;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">分享到...</h3>
+                    <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                    ${conversations.map(chat => `
+                        <div class="chat-option-item" onclick="sharePostToChat('${chat.id}')">
+                            <div class="chat-option-icon" style="background-image: url(${chat.avatarUrl || createDefaultAvatar(chat.name)})">
+                                ${chat.isGroup && !chat.avatarUrl ? '群' : ''}
+                            </div>
+                            <div class="chat-option-text">
+                                <div class="chat-option-title">${chat.name}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// 2. 将帖子分享到指定对话
+async function sharePostToChat(chatId) {
+    if (!window.currentPostId) return;
+
+    try {
+        const post = await db.forumPosts.get(window.currentPostId);
+        if (!post) {
+            showToast('帖子不存在', 'error');
+            return;
+        }
+
+        // 获取当前用户身份
+        const forum = await db.forums.get(parseInt(currentForumId));
+        const persona = personas.find(p => p.id === forum.personaId);
+
+        // 创建分享消息
+        const shareMessage = {
+            id: Date.now().toString(),
+            sender: 'sent', // 消息是你发送的
+            type: 'shared_post',
+            postData: { // 嵌入帖子核心信息
+                id: post.id,
+                title: post.title,
+                authorName: post.authorName,
+                content: post.content,
+            },
+            timestamp: Date.now(),
+            senderName: persona.name, // 记录发送者是你自己
+            content: `[分享帖子] ${post.title}` // 这是一个给AI看的简短文本描述
+        };
+
+        if (!chatMessages[chatId]) {
+            chatMessages[chatId] = [];
+        }
+        chatMessages[chatId].push(shareMessage);
+        await saveChatMessages();
+
+        // 关闭分享模态框
+        const modal = document.getElementById('share-post-modal');
+        if(modal) modal.remove();
+
+        showToast(`成功分享到对话！`, 'success');
+
+        // 如果分享给了当前打开的对话，则立即刷新
+        if (currentChatCharacter && currentChatCharacter.id === chatId) {
+            renderChatMessages(chatId);
+        }
+        // 无论如何都刷新消息列表，以显示最新的分享消息
+        renderMessageList();
+
+    } catch (error) {
+        console.error('分享帖子失败:', error);
+        showToast('分享失败', 'error');
+    }
+}
+
 // 添加音乐播放器文件选择事件监听器
 document.addEventListener('DOMContentLoaded', function() {
     // 本地音乐文件选择
@@ -47290,6 +47547,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+
+
 });
     </script>
 </body>

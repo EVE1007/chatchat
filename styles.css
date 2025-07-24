@@ -12946,13 +12946,105 @@ textarea.call-text-input {
             color: #e65100;
         }
 
-        /* 收藏按钮 */
-        #favorite-btn {
-            color: #ffc107;
-            right: 60px; /* 调整位置 */
+        /* --- 论坛个人主页分区 --- */
+        .profile-tabs {
+            display: flex;
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+        }
+        .profile-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            font-size: 15px;
+            font-weight: 500;
+            color: #888;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .profile-tab.active {
+            color: #333;
+        }
+        .profile-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 3px;
+            background-color: var(--accent-color);
+            border-radius: 2px;
+        }
+        .profile-post-list {
+            padding: 10px;
+            height: calc(100% - 45px); /* 减去tab的高度 */
+            overflow-y: auto;
+        }
+
+        /* --- 帖子详情页分享按钮 --- */
+        #post-view-screen .header-actions {
+            position: absolute !important;
+            right: 20px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            display: flex !important;
+            gap: 15px !important;
+            z-index: 1000 !important;
+        }
+        #post-view-screen .header-action-btn {
+            background: none !important;
+            border: none !important;
+            font-size: 20px !important;
+            color: #555 !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 32px !important;
+            height: 32px !important;
+            padding: 0 !important;
         }
         #favorite-btn.favorited i {
             font-weight: 900; /* 实心图标 */
+            color: #ffc107;
+        }
+
+        /* --- 聊天界面中的分享卡片样式 --- */
+        .shared-post-card {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px;
+            max-width: 240px; /* 限制卡片最大宽度 */
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .shared-post-card:hover {
+            background-color: #e9ecef;
+        }
+        .shared-post-header {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 8px;
+        }
+        .shared-post-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #343a40;
+            margin-bottom: 6px;
+        }
+        .shared-post-content {
+            font-size: 13px;
+            color: #495057;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* 论坛个人主页 */
@@ -13675,52 +13767,83 @@ textarea.call-text-input {
             flex-direction: column;
         }
 
-        /* 论坛悬浮发帖按钮样式 */
-        #forum-view-screen .floating-post-btn {
-            /* 1. 定位与悬浮 */
-            position: absolute; /* 绝对定位，相对于父容器 .app-screen */
-            bottom: 40px;       
-            right: 20px;       
-            z-index: 1000;     
+        /* --- 论坛悬浮按钮组 --- */
+        .floating-action-buttons {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* 按钮之间的间距 */
+        }
 
-            /* 2. 尺寸与形状 - 稍微小一点 */
-            width: 50px;       
-            height: 50px;       
-            border-radius: 50%; 
-
-            /* 3. 毛玻璃效果与背景 - 使用主题按钮颜色但降低透明度 */
-            background: rgba(74, 132, 193, 0.35); /* 经典主题蓝色，35%透明度 */
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+        .floating-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(74, 132, 193, 0.85); /* 主题蓝色 */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* 添加阴影以增强立体感 */
-
-            /* 4. 图标样式 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 22px;    /* 稍微小一点，从24px改为22px */
-
-            /* 5. 交互效果 */
+            font-size: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        /* 鼠标悬停时的放大和阴影效果 */
-        #forum-view-screen .floating-post-btn:hover {
-            transform: scale(1.05);
+        .floating-btn:hover {
+            transform: scale(1.1);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-            background: rgba(74, 132, 193, 0.55); /* 悬停时55%透明度 */
+        }
+
+        /* 刷新按钮使用稍微不同的颜色以作区分 */
+        .floating-btn.refresh-btn {
+            background: rgba(108, 117, 125, 0.8); /* 中性灰色 */
+        }
+        .floating-btn.refresh-btn:hover {
+            background: rgba(108, 117, 125, 1.0);
         }
 
         /* 可爱主题下的按钮颜色适配 */
-        body[data-theme="cute"] #forum-view-screen .floating-post-btn {
-            background: rgba(255, 182, 193, 0.35); /* 可爱主题粉色，35%透明度 */
+        body[data-theme="cute"] .floating-btn.post-btn {
+            background: rgba(255, 182, 193, 0.85); /* 可爱主题粉色 */
         }
 
-        body[data-theme="cute"] #forum-view-screen .floating-post-btn:hover {
-            background: rgba(255, 182, 193, 0.55); /* 可爱主题悬停时55%透明度 */
+        body[data-theme="cute"] .floating-btn.post-btn:hover {
+            background: rgba(255, 182, 193, 1.0);
+        }
+
+        /* --- 帖子列表分区样式 --- */
+        .forum-section-header {
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #888;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            margin-top: 10px;
+        }
+
+        .forum-section-header:first-child {
+            margin-top: 0;
+        }
+
+        /* --- 热帖标题样式 --- */
+        .post-item.hot .post-title::before {
+            content: '🔥HOT';
+            background-color: #ff6b6b;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 8px;
+            vertical-align: middle;
         }
 
         /* --- 论坛评论区美化 --- */
