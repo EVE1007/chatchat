@@ -729,12 +729,12 @@
                         <button class="back-button" onclick="backToForum()">‹ </button>
                         <div class="app-title">帖子详情</div>
                         <div class="header-actions">
-                            <button id="favorite-btn" class="header-action-btn" onclick="toggleFavoritePost()" title="收藏">
+                            <span id="favorite-btn" class="action-btn" onclick="toggleFavoritePost()" title="收藏">
                                 <i class="far fa-star"></i>
-                            </button>
-                            <button id="share-btn" class="header-action-btn" onclick="showSharePostModal()" title="分享">
+                            </span>
+                            <span id="share-btn" class="action-btn" onclick="showSharePostModal()" title="分享">
                                 <i class="fas fa-share-square"></i>
-                            </button>
+                            </span>
                         </div>
                     </div>
                     <div class="app-content" id="post-view-content">
@@ -18774,10 +18774,10 @@ ${timeInfo}${musicInfo}
                                 content = `[AI发起了转账：${msg.amount}元，备注：${msg.note || '无'}]`;
                             }
                         } else if (msg.type === 'shared_post') {
-                            // 【新增】处理分享的论坛帖子
-                            const post = msg.postData || {};
+                            // 【修复】处理分享的论坛帖子 - 使用完整内容包含评论
                             const sender = msg.sender === 'sent' ? '用户' : 'AI';
-                            content = `[${sender} 分享了一个论坛帖子, 标题: "${post.title}", 内容: "${truncateText(post.content, 100)}"]`;
+                            // 使用完整的content字段，包含帖子正文和所有评论
+                            content = `[${sender} 分享了一个论坛帖子]\n${msg.content}`;
                         } else if (msg.type === 'ai_image') {
                             // 🔥【修复】处理AI发送的图片
                             content = `[AI发送了一张图片，描述：${msg.imageDescription || '无描述'}]`;
@@ -36026,11 +36026,29 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                 return;
             }
 
-            // 1. 计算每个帖子的热度
+            // 1. 计算每个帖子的热度（改进算法）
+            const now = Date.now();
             for (const post of posts) {
                 const repliesCount = await db.forumReplies.where('postId').equals(post.id).count();
-                // 简单热度算法：回复数 * 2 + 点赞数 (为未来点赞功能预留)
-                post.hotness = (repliesCount * 2) + (post.likes || 0);
+
+                // 🔥【改进热度算法】考虑时间衰减和活跃度
+                const ageInHours = (now - post.timestamp) / (1000 * 60 * 60); // 帖子年龄（小时）
+                const timeFactor = Math.max(0.1, 1 / (1 + ageInHours / 24)); // 时间衰减因子，24小时后开始明显衰减
+
+                // 获取最近24小时的回复数（活跃度指标）
+                const recentReplies = await db.forumReplies
+                    .where('postId').equals(post.id)
+                    .and(reply => reply.timestamp > (now - 24 * 60 * 60 * 1000))
+                    .count();
+
+                // 热度计算：基础分数 + 时间衰减 + 近期活跃度加成
+                const baseScore = repliesCount * 2 + (post.likes || 0);
+                const recentActivityBonus = recentReplies * 5; // 近期回复权重更高
+
+                post.hotness = (baseScore + recentActivityBonus) * timeFactor;
+
+                // 调试信息
+                console.log(`帖子"${post.title}": 回复${repliesCount}, 近期回复${recentReplies}, 年龄${ageInHours.toFixed(1)}h, 热度${post.hotness.toFixed(2)}`);
             }
 
             // 2. 按热度降序排列
@@ -36210,7 +36228,11 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
             favIcon.className = isFav ? 'fas fa-star' : 'far fa-star';
 
             // 立即显示帖子详情页面
+            console.log('准备显示帖子详情页面');
             showApp('post-view-screen');
+            console.log('帖子详情页面显示完成');
+
+
 
             // 异步加载评论
             setTimeout(async () => {
@@ -36341,16 +36363,24 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             const svgThumbsUpOutline = `<svg viewBox="0 0 24 24"><path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V3a.75.75 0 0 1 .75-.75A2.25 2.25 0 0 1 16.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558-.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.727a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507C2.28 19.482 3.105 20 3.994 20H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z"></path></svg>`;
             const svgThumbsUpFilled = `<svg viewBox="0 0 24 24"><path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V3a.75.75 0 0 1 .75-.75A2.25 2.25 0 0 1 16.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558-.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.727a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507C2.28 19.482 3.105 20 3.994 20H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" fill="currentColor"></path></svg>`;
 
-            listContainer.innerHTML = replies.map(reply => {
+            listContainer.innerHTML = replies.map((reply, index) => { // 🔥【修复】添加 index 参数
                 const isLiked = likedReplyIds.has(reply.id);
                 const likedClass = isLiked ? 'liked' : '';
                 const thumbsUpIcon = isLiked ? svgThumbsUpFilled : svgThumbsUpOutline;
+                // 🔥【修复】格式化时间戳
+                const formattedTime = new Date(reply.timestamp).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
                 return `
                     <div class="reply-item" data-reply-id="${reply.id}">
                         <img class="reply-avatar" src="${reply.authorAvatar || createDefaultAvatar(reply.authorName)}" alt="${reply.authorName}">
                         <div class="reply-body">
                             <div class="reply-author">${reply.authorName}</div>
+
+                            <div class="reply-meta">
+                                <span>No.${index + 1}</span>
+                                <span>${formattedTime}</span>
+                            </div>
+
                             <div class="reply-content">${reply.content.replace(/\n/g, '<br>')}</div>
                             <div class="reply-actions">
                                 <button class="reply-action-btn like-btn ${likedClass}" onclick="likeReply(${reply.id})" title="点赞">
@@ -47425,7 +47455,7 @@ async function showSharePostModal() {
                 <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
                     ${conversations.map(chat => `
                         <div class="chat-option-item" onclick="sharePostToChat('${chat.id}')">
-                            <div class="chat-option-icon" style="background-image: url(${chat.avatarUrl || createDefaultAvatar(chat.name)})">
+                            <div class="chat-option-icon" style="background-image: url('${chat.avatarUrl || createDefaultAvatar(chat.name)}'); background-size: cover; background-position: center;">
                                 ${chat.isGroup && !chat.avatarUrl ? '群' : ''}
                             </div>
                             <div class="chat-option-text">
@@ -47455,6 +47485,33 @@ async function sharePostToChat(chatId) {
         const forum = await db.forums.get(parseInt(currentForumId));
         const persona = personas.find(p => p.id === forum.personaId);
 
+        // 获取帖子的评论
+        const replies = await db.forumReplies.where('postId').equals(window.currentPostId).sortBy('timestamp');
+
+        // 创建包含评论的完整内容
+        let fullContent = `【帖子标题】${post.title}\n\n【作者】${post.authorName}\n\n【正文】\n${post.content}`;
+
+        if (replies && replies.length > 0) {
+            fullContent += '\n\n【评论区】\n';
+            replies.forEach((reply, index) => {
+                const replyTime = new Date(reply.timestamp).toLocaleString('zh-CN', {
+                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                });
+
+                // 🔥【隐私保护】正确处理用户回复的身份显示
+                let displayAuthor = reply.authorName;
+                if (reply.isAnonymous && reply.authorId === 'user') {
+                    // 用户的匿名回复，保持匿名显示，不暴露身份
+                    displayAuthor = reply.authorName; // 保持原来的匿名名称
+                } else if (reply.authorId === 'user' && !reply.isAnonymous) {
+                    // 用户的非匿名回复，显示用户在该社区的身份面具名字
+                    displayAuthor = persona ? persona.name : reply.authorName;
+                }
+
+                fullContent += `\n${index + 1}楼 ${displayAuthor} (${replyTime}):\n${reply.content}\n`;
+            });
+        }
+
         // 创建分享消息
         const shareMessage = {
             id: Date.now().toString(),
@@ -47465,10 +47522,11 @@ async function sharePostToChat(chatId) {
                 title: post.title,
                 authorName: post.authorName,
                 content: post.content,
+                replies: replies // 包含评论数据
             },
             timestamp: Date.now(),
             senderName: persona.name, // 记录发送者是你自己
-            content: `[分享帖子] ${post.title}` // 这是一个给AI看的简短文本描述
+            content: fullContent // 包含完整内容的文本，AI可以看到这个
         };
 
         if (!chatMessages[chatId]) {

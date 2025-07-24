@@ -1973,15 +1973,7 @@
 
         .header .header-actions { display: flex; align-items: center; gap: 10px; position: absolute; right: 20px; top: 70%; transform: translateY(-50%); }
 
-        /* 记忆查看器专用的header-actions样式 - 学习chat app的定位方式 */
-        #memory-viewer-screen .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 5px; /* 稍微减少间距以容纳3个按钮 */
-            position: absolute;
-            right: 15px; /* 稍微向左移动 */
-            top: 42px; /* 稍微调低一点 */
-        }
+
 
         /* 记忆查看器左侧按钮组样式 */
         #memory-viewer-screen .header-left-actions {
@@ -12983,29 +12975,7 @@ textarea.call-text-input {
             overflow-y: auto;
         }
 
-        /* --- 帖子详情页分享按钮 --- */
-        #post-view-screen .header-actions {
-            position: absolute !important;
-            right: 20px !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            display: flex !important;
-            gap: 15px !important;
-            z-index: 1000 !important;
-        }
-        #post-view-screen .header-action-btn {
-            background: none !important;
-            border: none !important;
-            font-size: 20px !important;
-            color: #555 !important;
-            cursor: pointer !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 32px !important;
-            height: 32px !important;
-            padding: 0 !important;
-        }
+        /* 收藏按钮特殊样式 */
         #favorite-btn.favorited i {
             font-weight: 900; /* 实心图标 */
             color: #ffc107;
@@ -13042,6 +13012,7 @@ textarea.call-text-input {
             color: #495057;
             display: -webkit-box;
             -webkit-line-clamp: 3;
+            line-clamp: 3; /* 标准属性 */
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -13052,26 +13023,37 @@ textarea.call-text-input {
             padding-top: 0;
         }
 
-        /* 论坛头部操作按钮组 */
+        /* --- 通用头部操作按钮组 (最终修复方案) --- */
+        /* 这个统一的规则将修复所有页面的右上角按钮，包括帖子详情和记忆查看器 */
         #forum-screen .header-actions,
         #forum-profile-screen .header-actions,
-        #forum-view-screen .header-actions {
+        #forum-view-screen .header-actions,
+        #post-view-screen .header-actions,
+        #memory-viewer-screen .header-actions {
             position: absolute;
             right: 20px;
-            top: 70%;
+            top: 70%; /* 使用正确且统一的垂直居中定位 */
             transform: translateY(-50%);
             display: flex;
             align-items: center;
             gap: 15px;
         }
+        /* --- 确保按钮本身样式正确 --- */
         #forum-screen .header-action-btn,
-        #forum-profile-screen .header-action-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: var(--text-primary);
-            padding: 5px;
+        #forum-profile-screen .header-action-btn,
+        #post-view-screen .header-action-btn,
+        #memory-viewer-screen .header-action-btn {
+            background: none !important;
+            border: none !important;
+            font-size: 20px !important;
+            color: #555 !important;
+            cursor: pointer !important;
+            padding: 0 !important;
+            width: 32px !important;
+            height: 32px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
         }
 
         /* 日记头部信息样式 */
@@ -13778,6 +13760,20 @@ textarea.call-text-input {
             gap: 15px; /* 按钮之间的间距 */
         }
 
+        /* 🔥【精准修复】只针对论坛页面的悬浮按钮，不影响其他按钮 */
+        #forum-view-screen .floating-action-buttons .floating-btn {
+            opacity: 0.95 !important;
+            background: rgba(74, 132, 193, 0.9) !important;
+        }
+
+        #forum-view-screen .floating-action-buttons .floating-btn:not(.hidden) {
+            opacity: 0.95 !important;
+        }
+
+        body[data-theme="cute"] #forum-view-screen .floating-action-buttons .floating-btn {
+            background: rgba(255, 182, 193, 0.9) !important;
+        }
+
         .floating-btn {
             width: 50px;
             height: 50px;
@@ -13816,6 +13812,19 @@ textarea.call-text-input {
 
         body[data-theme="cute"] .floating-btn.post-btn:hover {
             background: rgba(255, 182, 193, 1.0);
+        }
+
+        /* --- 论坛评论区美化 --- */
+
+        /* 论坛回复元信息 (楼层和时间) */
+        .reply-meta {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+            margin-bottom: 6px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
         }
 
         /* --- 帖子列表分区样式 --- */
