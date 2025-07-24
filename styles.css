@@ -12690,16 +12690,38 @@ textarea.call-text-input {
         .forum-archive-item {
             background: #fff;
             border-radius: 12px;
-            padding: 15px;
             margin-bottom: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            cursor: pointer;
             transition: all 0.2s ease;
             border-left: 4px solid var(--accent-color);
+            display: flex;
+            align-items: center;
+            position: relative;
         }
         .forum-archive-item:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .forum-archive-content {
+            flex: 1;
+            padding: 15px;
+            cursor: pointer;
+        }
+        .forum-edit-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-right: 10px;
+            transition: all 0.2s ease;
+        }
+        .forum-edit-btn:hover {
+            background: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
         }
         .forum-archive-title {
             font-weight: 600;
@@ -14019,6 +14041,157 @@ textarea.call-text-input {
 
         .poll-option.user-voted .result-bar {
             background-color: #007AFF !important;
+        }
+
+        /* --- 多选投票增强样式 --- */
+
+        /* 多选投票选项的选中状态 */
+        .poll-option[data-selected="true"] {
+            border-color: #007AFF !important;
+            background-color: #f0f8ff !important;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2) !important;
+        }
+
+        .poll-option[data-selected="true"] .option-text {
+            color: #007AFF !important;
+            font-weight: 600 !important;
+        }
+
+        .poll-option[data-selected="true"] .vote-count {
+            color: #007AFF !important;
+            font-weight: 600 !important;
+        }
+
+        /* 多选投票的提交按钮 */
+        .vote-submit-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(74, 132, 193, 0.9);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .vote-submit-btn:hover {
+            background: rgba(74, 132, 193, 1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 132, 193, 0.3);
+        }
+
+        .vote-submit-btn:disabled {
+            background: rgba(128, 128, 128, 0.6);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 可爱主题下的投票按钮 */
+        body[data-theme="cute"] .vote-submit-btn {
+            background: rgba(255, 182, 193, 0.9);
+        }
+
+        body[data-theme="cute"] .vote-submit-btn:hover {
+            background: rgba(255, 182, 193, 1);
+            box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
+        }
+
+        /* 投票后隐藏提交按钮 */
+        .forum-poll.voted .vote-submit-btn {
+            display: none;
+        }
+
+        /* 多选投票标题样式 */
+        .forum-poll[data-poll-type="multiple"] h4::after {
+            content: " [多选]";
+            color: #007AFF;
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        body[data-theme="cute"] .forum-poll[data-poll-type="multiple"] h4::after {
+            color: #ff6b9d;
+        }
+
+        /* --- 投票结果进度条样式 --- */
+
+        /* 进度条背景容器 */
+        .poll-option .result-bar-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f9fa;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* 进度条本体 */
+        .poll-option .result-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, rgba(74, 132, 193, 0.3) 0%, rgba(74, 132, 193, 0.6) 100%);
+            border-radius: 8px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 可爱主题的进度条颜色 */
+        body[data-theme="cute"] .poll-option .result-bar {
+            background: linear-gradient(90deg, rgba(255, 182, 193, 0.3) 0%, rgba(255, 182, 193, 0.6) 100%);
+        }
+
+        /* 用户投票选项的进度条高亮 */
+        .poll-option.user-voted .result-bar {
+            background: linear-gradient(90deg, rgba(0, 122, 255, 0.6) 0%, rgba(0, 122, 255, 0.8) 100%) !important;
+            box-shadow: 0 0 10px rgba(0, 122, 255, 0.3);
+        }
+
+        body[data-theme="cute"] .poll-option.user-voted .result-bar {
+            background: linear-gradient(90deg, rgba(255, 107, 157, 0.6) 0%, rgba(255, 107, 157, 0.8) 100%) !important;
+            box-shadow: 0 0 10px rgba(255, 107, 157, 0.3);
+        }
+
+        /* 投票后显示进度条 */
+        .forum-poll.voted .result-bar-bg {
+            opacity: 1;
+        }
+
+        /* 确保文字显示在进度条上方 */
+        .forum-poll.voted .option-text,
+        .forum-poll.voted .vote-count {
+            position: relative;
+            z-index: 2;
+            color: #333;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        /* 用户投票选项的文字高亮 */
+        .poll-option.user-voted .option-text {
+            color: #007AFF !important;
+            font-weight: 600 !important;
+        }
+
+        .poll-option.user-voted .vote-count {
+            color: #007AFF !important;
+            font-weight: 600 !important;
+        }
+
+        body[data-theme="cute"] .poll-option.user-voted .option-text,
+        body[data-theme="cute"] .poll-option.user-voted .vote-count {
+            color: #ff6b9d !important;
         }
 
         /* --- 投票历史样式 --- */
@@ -16863,6 +17036,126 @@ textarea.call-text-input {
             color: #333;
         }
 
+        /* 🔥【新增】发帖图片上传样式 */
+        .image-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .image-upload-area:hover {
+            border-color: #007AFF;
+            background: #f0f8ff;
+        }
+
+        .image-upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+        }
+
+        .image-upload-placeholder i {
+            font-size: 24px;
+            color: #999;
+        }
+
+        .image-preview-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ff3b30;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .remove-image-btn:hover {
+            background: #d70015;
+        }
+
+        /* 论坛帖子中的图片样式 */
+        .post-image {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .post-image:hover {
+            transform: scale(1.02);
+        }
+
+        /* 表单提示文字样式 */
+        .form-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        /* 图片模态框样式 */
+        .image-modal-content {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .image-modal-close:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        /* 世界书图标样式 */
+        .worldbook-icon {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
         .inner-thoughts-loading {
             display: flex;
             flex-direction: column;
@@ -16889,6 +17182,24 @@ textarea.call-text-input {
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* 论坛加载动画 */
+        .forum-loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #333;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* 可爱主题下的加载动画 */
+        body[data-theme="cute"] .forum-loading-spinner {
+            border-top-color: #333;
         }
 
         .inner-thoughts-text {
