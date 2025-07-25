@@ -12817,6 +12817,8 @@ textarea.call-text-input {
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 10px;
+            text-align: left;
+            flex: 1;
         }
         .post-full-meta {
             font-size: 13px;
@@ -12827,6 +12829,9 @@ textarea.call-text-input {
             font-size: 15px;
             line-height: 1.7;
             white-space: pre-wrap;
+            text-align: left;
+            word-wrap: break-word;
+            word-break: break-word;
         }
         .replies-section h3 {
             font-size: 16px;
@@ -13853,6 +13858,47 @@ textarea.call-text-input {
             border-radius: 4px;
             margin-right: 8px;
             vertical-align: middle;
+        }
+
+        /* --- 用户帖子和图片帖子标记样式 --- */
+        .post-title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .post-full-title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .user-post-badge {
+            background-color: #8E8E93;
+            color: white;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            align-self: flex-start;
+        }
+
+        .image-post-badge {
+            width: 14px;
+            height: 14px;
+            margin-left: 6px;
+            vertical-align: middle;
+            opacity: 0.6;
+            fill: #666;
+        }
+
+        /* 可爱主题下的用户帖子标记颜色 */
+        body[data-theme="cute"] .user-post-badge {
+            background-color: #C7C7CC;
+            color: #666;
         }
 
         /* --- 论坛评论区美化 --- */
@@ -17106,4 +17152,84 @@ textarea.call-text-input {
         #memory-share-modal .checkbox-desc {
             font-size: 12px;
             color: #666;
+        }
+
+        /* 🔥【新增】论坛编辑按钮和相关UI样式 */
+        .forum-archive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .forum-archive-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 0; /* 移除原来的边距 */
+            flex: 1; /* 占据剩余空间 */
+        }
+
+        .forum-edit-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .forum-edit-btn:hover {
+            background-color: #f0f0f0;
+            color: #555;
+        }
+
+        .selection-item-icon {
+            font-size: 24px;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        #forum-worldbook-selection {
+            max-height: 200px; /* 增加世界书选择区域的高度 */
+        }
+
+        /* 修复创建/编辑界面按钮的点击事件 */
+        #create-forum-screen .form-submit,
+        #edit-forum-screen .form-submit {
+            margin-top: 15px; /* 与其他元素保持间距 */
+        }
+
+        /* 🔥【新增】用户发帖图片上传样式 */
+        .form-upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .form-upload-btn:hover {
+            background: #e9ecef;
+            border-color: #ced4da;
+        }
+
+        #post-image-preview-container {
+            border: 1px solid #eee;
+            padding: 5px;
+            border-radius: 8px;
+            background: #f9f9f9;
+            display: inline-block;
         }
