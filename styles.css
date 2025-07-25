@@ -12690,38 +12690,16 @@ textarea.call-text-input {
         .forum-archive-item {
             background: #fff;
             border-radius: 12px;
+            padding: 15px;
             margin-bottom: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
             transition: all 0.2s ease;
             border-left: 4px solid var(--accent-color);
-            display: flex;
-            align-items: center;
-            position: relative;
         }
         .forum-archive-item:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-        }
-        .forum-archive-content {
-            flex: 1;
-            padding: 15px;
-            cursor: pointer;
-        }
-        .forum-edit-btn {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-            cursor: pointer;
-            border-radius: 8px;
-            margin-right: 10px;
-            transition: all 0.2s ease;
-        }
-        .forum-edit-btn:hover {
-            background: rgba(0, 122, 255, 0.1);
-            color: #007AFF;
         }
         .forum-archive-title {
             font-weight: 600;
@@ -17034,126 +17012,6 @@ textarea.call-text-input {
             font-size: 14px;
             line-height: 1.6;
             color: #333;
-        }
-
-        /* 🔥【新增】发帖图片上传样式 */
-        .image-upload-area {
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #fafafa;
-        }
-
-        .image-upload-area:hover {
-            border-color: #007AFF;
-            background: #f0f8ff;
-        }
-
-        .image-upload-placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            color: #666;
-        }
-
-        .image-upload-placeholder i {
-            font-size: 24px;
-            color: #999;
-        }
-
-        .image-preview-container {
-            position: relative;
-            display: inline-block;
-        }
-
-        .image-preview {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .remove-image-btn {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #ff3b30;
-            color: white;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .remove-image-btn:hover {
-            background: #d70015;
-        }
-
-        /* 论坛帖子中的图片样式 */
-        .post-image {
-            max-width: 100%;
-            border-radius: 8px;
-            margin: 10px 0;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
-        .post-image:hover {
-            transform: scale(1.02);
-        }
-
-        /* 表单提示文字样式 */
-        .form-hint {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-            line-height: 1.4;
-        }
-
-        /* 图片模态框样式 */
-        .image-modal-content {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .image-modal-close {
-            position: absolute;
-            top: -15px;
-            right: -15px;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .image-modal-close:hover {
-            background: rgba(0, 0, 0, 0.9);
-        }
-
-        /* 世界书图标样式 */
-        .worldbook-icon {
-            font-size: 20px;
-            margin-bottom: 5px;
         }
 
         .inner-thoughts-loading {

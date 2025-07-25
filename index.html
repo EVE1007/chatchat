@@ -648,44 +648,7 @@
                             <label class="form-label">补充世界观 (可选)</label>
                             <textarea id="forum-worldview-input" class="form-textarea" rows="4" placeholder="补充一些背景故事或设定..."></textarea>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">挂载局部世界书 (可选)</label>
-                            <div id="forum-worldbook-selection" class="selection-grid"></div>
-                            <p class="form-hint">选择的世界书将为论坛提供背景设定和世界观参考</p>
-                        </div>
                         <button class="form-submit" onclick="createForum()">进入论坛</button>
-                    </div>
-                </div>
-
-                <!-- 编辑论坛界面 -->
-                <div id="edit-forum-screen" class="app-screen">
-                    <div class="app-header">
-                        <button class="back-button" onclick="hideApp('edit-forum-screen')">‹</button>
-                        <div class="app-title">编辑论坛</div>
-                    </div>
-                    <div class="app-content">
-                        <div class="form-group">
-                            <label class="form-label">论坛名称</label>
-                            <input type="text" id="edit-forum-name-input" class="form-input" placeholder="给这个世界线起个名字吧">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">选择角色 (可多选)</label>
-                            <div id="edit-forum-character-selection" class="selection-grid"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">选择你的身份</label>
-                            <div id="edit-forum-persona-selection" class="selection-grid single-selection"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">补充世界观 (可选)</label>
-                            <textarea id="edit-forum-worldview-input" class="form-textarea" rows="4" placeholder="补充一些背景故事或设定..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">挂载局部世界书 (可选)</label>
-                            <div id="edit-forum-worldbook-selection" class="selection-grid"></div>
-                            <p class="form-hint">选择的世界书将为论坛提供背景设定和世界观参考</p>
-                        </div>
-                        <button class="form-submit" onclick="saveForumEdit()">保存修改</button>
                     </div>
                 </div>
 
@@ -741,20 +704,6 @@
                             <div class="form-group">
                                 <label>内容</label>
                                 <textarea id="post-content-input" placeholder="分享你的想法..." rows="8" maxlength="2000"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>添加图片 (可选)</label>
-                                <div class="image-upload-area" onclick="document.getElementById('post-image-input').click()">
-                                    <input type="file" id="post-image-input" accept="image/*" style="display: none;" onchange="handlePostImageUpload(event)">
-                                    <div id="image-upload-placeholder" class="image-upload-placeholder">
-                                        <i class="fas fa-image"></i>
-                                        <span>点击选择图片</span>
-                                    </div>
-                                    <div id="image-preview-container" class="image-preview-container" style="display: none;">
-                                        <img id="image-preview" class="image-preview" src="" alt="预览图片">
-                                        <button type="button" class="remove-image-btn" onclick="removePostImage(event)">×</button>
-                                    </div>
-                                </div>
                             </div>
                             <div class="char-count">
                                 <span id="title-count">0/100</span> | <span id="content-count">0/2000</span>
@@ -4253,9 +4202,9 @@
 
 
 
-        // 🔥【版本22】添加论坛社区编辑和图片发帖功能
-        db.version(22).stores({
-            // --- 首先，完整复制版本21的所有内容 ---
+        // 🔥【版本21】添加论坛帖子用户标识索引
+        db.version(21).stores({
+            // --- 首先，完整复制版本20的所有内容 ---
             // 基础数据表
             characters: '&id, name, groupId',
             contacts: '++id, characterId',
@@ -4331,24 +4280,20 @@
             forumFavorites: '++id, [userId+postId]',
 
             // --- 评论点赞表 ---
-            replyLikes: '++id, [userId+replyId], userId, replyId, timestamp',
-
-            // --- 新增：论坛图片存储表 ---
-            forumImages: '++id, postId, imageData, timestamp'
+            replyLikes: '++id, [userId+replyId], userId, replyId, timestamp'
         }).upgrade(async tx => {
-            console.log('🔧 升级到版本22：添加论坛社区编辑和图片发帖功能');
+            console.log('🔧 升级到版本21：添加论坛帖子用户标识索引');
 
             // 🔥【安全迁移】检查并保护现有用户数据
             try {
                 // 检查是否有现有数据需要保护
-                const existingForums = await tx.forums.count();
                 const existingPosts = await tx.forumPosts.count();
 
-                if (existingForums > 0 || existingPosts > 0) {
-                    console.log(`✅ 检测到现有论坛数据：${existingForums}个社区，${existingPosts}条帖子`);
-                    console.log('✅ 论坛图片存储表已安全添加，现有数据完全保留');
+                if (existingPosts > 0) {
+                    console.log(`✅ 检测到现有论坛帖子：${existingPosts}条`);
+                    console.log('✅ 论坛帖子用户标识索引已安全添加，现有数据完全保留');
                 } else {
-                    console.log('✅ 新用户或无现有论坛数据，新表已创建');
+                    console.log('✅ 新用户或无现有论坛数据，索引已创建');
                 }
 
             } catch (error) {
@@ -35967,7 +35912,6 @@ async function changeMyGroupAvatar() {
             hideApp('forum-screen');
             const characterContainer = document.getElementById('forum-character-selection');
             const personaContainer = document.getElementById('forum-persona-selection');
-            const worldbookContainer = document.getElementById('forum-worldbook-selection');
 
             // 渲染角色和身份面具选项
             characterContainer.innerHTML = characters.map(char => `
@@ -35981,15 +35925,6 @@ async function changeMyGroupAvatar() {
                 <div class="selection-item" data-id="${p.id}" onclick="toggleSelection(this, true)">
                     <img src="${p.avatarUrl || createDefaultAvatar(p.name)}" alt="${p.name}">
                     <div class="selection-item-name">${p.name}</div>
-                </div>
-            `).join('');
-
-            // 渲染局部世界书选项（过滤掉全局世界书）
-            const localWorldbooks = worldbooks.filter(w => !w.isGlobal);
-            worldbookContainer.innerHTML = localWorldbooks.map(wb => `
-                <div class="selection-item" data-id="${wb.id}" onclick="toggleSelection(this)">
-                    <div class="worldbook-icon">📚</div>
-                    <div class="selection-item-name">${wb.title || wb.name}</div>
                 </div>
             `).join('');
 
@@ -36016,7 +35951,6 @@ async function changeMyGroupAvatar() {
 
             const selectedCharElements = document.querySelectorAll('#forum-character-selection .selected');
             const selectedPersonaElement = document.querySelector('#forum-persona-selection .selected');
-            const selectedWorldbookElements = document.querySelectorAll('#forum-worldbook-selection .selected');
 
             if (!name) return alert('请输入论坛名称');
             if (selectedCharElements.length === 0) return alert('请至少选择一个角色');
@@ -36024,7 +35958,6 @@ async function changeMyGroupAvatar() {
 
             const characterIds = Array.from(selectedCharElements).map(el => el.dataset.id);
             const personaId = selectedPersonaElement.dataset.id;
-            const worldbookIds = Array.from(selectedWorldbookElements).map(el => el.dataset.id);
 
             try {
                 // 检查论坛名称是否重复
@@ -36039,7 +35972,6 @@ async function changeMyGroupAvatar() {
                     characterIds,
                     personaId,
                     worldview,
-                    worldbookIds: worldbookIds || [], // 新增：挂载的局部世界书ID列表
                     createdAt: Date.now()
                 };
 
@@ -36051,108 +35983,6 @@ async function changeMyGroupAvatar() {
             } catch (error) {
                 console.error("创建论坛失败:", error);
                 alert("创建论坛失败，请重试。");
-            }
-        }
-
-        // 显示编辑论坛界面
-        async function showEditForumScreen(forumId) {
-            const forum = await db.forums.get(parseInt(forumId));
-            if (!forum) {
-                alert('找不到该论坛');
-                return;
-            }
-
-            hideApp('forum-screen');
-
-            // 填充表单数据
-            document.getElementById('edit-forum-name-input').value = forum.name;
-            document.getElementById('edit-forum-worldview-input').value = forum.worldview || '';
-
-            const characterContainer = document.getElementById('edit-forum-character-selection');
-            const personaContainer = document.getElementById('edit-forum-persona-selection');
-            const worldbookContainer = document.getElementById('edit-forum-worldbook-selection');
-
-            // 渲染角色选项并标记已选中的
-            characterContainer.innerHTML = characters.map(char => `
-                <div class="selection-item ${forum.characterIds.includes(char.id) ? 'selected' : ''}"
-                     data-id="${char.id}" onclick="toggleSelection(this)">
-                    <img src="${char.avatarUrl || createDefaultAvatar(char.name)}" alt="${char.name}">
-                    <div class="selection-item-name">${char.name}</div>
-                </div>
-            `).join('');
-
-            // 渲染身份选项并标记已选中的
-            personaContainer.innerHTML = personas.map(p => `
-                <div class="selection-item ${forum.personaId === p.id ? 'selected' : ''}"
-                     data-id="${p.id}" onclick="toggleSelection(this, true)">
-                    <img src="${p.avatarUrl || createDefaultAvatar(p.name)}" alt="${p.name}">
-                    <div class="selection-item-name">${p.name}</div>
-                </div>
-            `).join('');
-
-            // 渲染世界书选项并标记已选中的
-            const localWorldbooks = worldbooks.filter(w => !w.isGlobal);
-            const selectedWorldbookIds = forum.worldbookIds || [];
-            worldbookContainer.innerHTML = localWorldbooks.map(wb => `
-                <div class="selection-item ${selectedWorldbookIds.includes(wb.id) ? 'selected' : ''}"
-                     data-id="${wb.id}" onclick="toggleSelection(this)">
-                    <div class="worldbook-icon">📚</div>
-                    <div class="selection-item-name">${wb.title || wb.name}</div>
-                </div>
-            `).join('');
-
-            // 保存当前编辑的论坛ID
-            window.currentEditingForumId = forumId;
-            showApp('edit-forum-screen');
-        }
-
-        // 保存论坛编辑
-        async function saveForumEdit() {
-            if (!window.currentEditingForumId) {
-                alert('编辑状态异常，请重新进入编辑');
-                return;
-            }
-
-            const name = document.getElementById('edit-forum-name-input').value.trim();
-            const worldview = document.getElementById('edit-forum-worldview-input').value.trim();
-
-            const selectedCharElements = document.querySelectorAll('#edit-forum-character-selection .selected');
-            const selectedPersonaElement = document.querySelector('#edit-forum-persona-selection .selected');
-            const selectedWorldbookElements = document.querySelectorAll('#edit-forum-worldbook-selection .selected');
-
-            if (!name) return alert('请输入论坛名称');
-            if (selectedCharElements.length === 0) return alert('请至少选择一个角色');
-            if (!selectedPersonaElement) return alert('请选择你的身份');
-
-            const characterIds = Array.from(selectedCharElements).map(el => el.dataset.id);
-            const personaId = selectedPersonaElement.dataset.id;
-            const worldbookIds = Array.from(selectedWorldbookElements).map(el => el.dataset.id);
-
-            try {
-                // 检查论坛名称是否与其他论坛重复
-                const existingForum = await db.forums.where('name').equals(name).first();
-                if (existingForum && existingForum.id !== parseInt(window.currentEditingForumId)) {
-                    alert('论坛名称已存在，请选择其他名称');
-                    return;
-                }
-
-                // 更新论坛数据
-                await db.forums.update(parseInt(window.currentEditingForumId), {
-                    name,
-                    characterIds,
-                    personaId,
-                    worldview,
-                    worldbookIds: worldbookIds || [],
-                    updatedAt: Date.now()
-                });
-
-                showToast(`论坛 "${name}" 修改成功！`, 'success');
-                hideApp('edit-forum-screen');
-                await renderForumArchives();
-                showApp('forum-screen');
-            } catch (error) {
-                console.error("保存论坛失败:", error);
-                alert("保存论坛失败，请重试。");
             }
         }
 
@@ -36172,16 +36002,11 @@ async function changeMyGroupAvatar() {
             }
 
             listContainer.innerHTML = forums.sort((a, b) => b.createdAt - a.createdAt).map(forum => `
-                <div class="forum-archive-item">
-                    <div class="forum-archive-content" onclick="loadAndDisplayForum('${forum.id}')">
-                        <div class="forum-archive-title">${forum.name}</div>
-                        <div class="forum-archive-meta">
-                            <span>👥 ${forum.characterIds.length} 个角色</span>
-                            <span>${new Date(forum.createdAt).toLocaleDateString()}</span>
-                        </div>
-                    </div>
-                    <div class="forum-edit-btn" onclick="event.stopPropagation(); showEditForumScreen('${forum.id}')">
-                        <i class="fas fa-pencil-alt"></i>
+                <div class="forum-archive-item" onclick="loadAndDisplayForum('${forum.id}')">
+                    <div class="forum-archive-title">${forum.name}</div>
+                    <div class="forum-archive-meta">
+                        <span>👥 ${forum.characterIds.length} 个角色</span>
+                        <span>${new Date(forum.createdAt).toLocaleDateString()}</span>
                     </div>
                 </div>
             `).join('');
@@ -36307,31 +36132,9 @@ async function changeMyGroupAvatar() {
             }
 
             // 优先级 3: 世界书 (如果还有空间)
-            let worldbookContext = '';
-
-            // 首先读取论坛挂载的局部世界书
-            if (forum.worldbookIds && forum.worldbookIds.length > 0) {
-                const mountedWorldbooks = await Promise.all(
-                    forum.worldbookIds.map(id => db.worldbooks.get(id))
-                );
-                const validMountedBooks = mountedWorldbooks.filter(book => book && book.content);
-                if (validMountedBooks.length > 0) {
-                    worldbookContext += '### 论坛专属设定:\n';
-                    worldbookContext += validMountedBooks.map(book => `**${book.title || book.name}**: ${book.content}`).join('\n\n');
-                    worldbookContext += '\n\n';
-                }
-            }
-
-            // 然后读取全局世界书
-            const globalWorldbooks = await db.worldbooks.where('isGlobal').equals(true).toArray();
-            if (globalWorldbooks.length > 0) {
-                worldbookContext += '### 全局世界观设定:\n';
-                worldbookContext += globalWorldbooks.map(book => `**${book.title || book.name}**: ${book.content}`).join('\n\n');
-            }
-
-            if (worldbookContext) {
-                appendContext("论坛参考的世界观设定 (世界书)", worldbookContext);
-            }
+            const allWorldbooks = await db.worldbooks.toArray();
+            let worldbookContext = allWorldbooks.map(book => `### ${book.title}\n${book.content}`).join('\n\n');
+            appendContext("论坛参考的世界观设定 (世界书)", worldbookContext);
 
             // 【最终修复】构建最终的Prompt
             let prompt = `
@@ -36380,6 +36183,26 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
 
 ### 【极其重要】输出格式:
 你的回复**必须**是一个严格的、不包含任何额外解释文字的JSON数组格式。
+
+**标准帖子格式示例**:
+\`\`\`json
+[
+  {
+    "authorName": "学霸小王",
+    "title": "今天的数学作业好难啊",
+    "content": "有没有大神能帮忙解答一下这道题？感觉自己要被绕糊涂了...",
+    "timestamp": "12:30"
+  },
+  {
+    "authorName": "夜猫子(张明辉)",
+    "title": "深夜食堂推荐",
+    "content": "刚发现学校附近有家24小时营业的小店，泡面加蛋才8块钱，性价比超高！",
+    "timestamp": "23:45"
+  }
+]
+\`\`\`
+
+**重要**: 每个帖子对象必须包含 authorName、title、content 三个字段，timestamp 字段可选。
 `;
 
             showToast('AI正在生成新帖子，请稍候...', 'info');
@@ -36483,7 +36306,7 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
 
                 for (const post of posts) {
                     // 【关键修复】灵活识别作者字段名
-                    const authorName = post.authorName || post.author;
+                    const authorName = post.authorName || post.author || post.poster;
 
                     if (post && typeof authorName === 'string' && post.title && post.content) {
                         let author = null;
@@ -36565,35 +36388,29 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
             // 渲染热帖区
             if (hotPosts.length > 0) {
                 html += '<div class="forum-section-header">热门帖子</div>';
-                html += await Promise.all(hotPosts.map(async post => {
-                    const imageIcon = post.hasImage ? '<i class="fas fa-image" style="color: #007AFF; margin-left: 5px;"></i>' : '';
-                    return `
-                        <div class="post-item hot" onclick="showPostView(${post.id})">
-                            <div class="post-title">${post.title}${imageIcon}</div>
-                            <div class="post-meta">
-                                <span class="post-author">${post.authorName}</span>
-                                <span>${formatTime(post.timestamp)}</span>
-                            </div>
+                html += hotPosts.map(post => `
+                    <div class="post-item hot" onclick="showPostView(${post.id})">
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-meta">
+                            <span class="post-author">${post.authorName}</span>
+                            <span>${formatTime(post.timestamp)}</span>
                         </div>
-                    `;
-                })).then(results => results.join(''));
+                    </div>
+                `).join('');
             }
 
             // 渲染最新帖子区
             if (newestPosts.length > 0) {
                 html += '<div class="forum-section-header">最新帖子</div>';
-                html += await Promise.all(newestPosts.map(async post => {
-                    const imageIcon = post.hasImage ? '<i class="fas fa-image" style="color: #007AFF; margin-left: 5px;"></i>' : '';
-                    return `
-                        <div class="post-item" onclick="showPostView(${post.id})">
-                            <div class="post-title">${post.title}${imageIcon}</div>
-                            <div class="post-meta">
-                                <span class="post-author">${post.authorName}</span>
-                                <span>${formatTime(post.timestamp)}</span>
-                            </div>
+                html += newestPosts.map(post => `
+                    <div class="post-item" onclick="showPostView(${post.id})">
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-meta">
+                            <span class="post-author">${post.authorName}</span>
+                            <span>${formatTime(post.timestamp)}</span>
                         </div>
-                    `;
-                })).then(results => results.join(''));
+                    </div>
+                `).join('');
             }
 
             listContainer.innerHTML = html;
@@ -36746,23 +36563,6 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                 postBodyContainer.innerHTML = postContent.replace(/\n/g, '<br>');
             }
 
-            // 如果帖子包含图片，加载并显示图片
-            if (post.hasImage) {
-                try {
-                    const imageRecord = await db.forumImages.where('postId').equals(postId).first();
-                    if (imageRecord && imageRecord.imageData) {
-                        const imageElement = document.createElement('img');
-                        imageElement.src = imageRecord.imageData;
-                        imageElement.className = 'post-image';
-                        imageElement.alt = '帖子图片';
-                        imageElement.onclick = () => showImageModal(imageRecord.imageData);
-                        postBodyContainer.appendChild(imageElement);
-                    }
-                } catch (error) {
-                    console.error('加载帖子图片失败:', error);
-                }
-            }
-
             // 更新收藏按钮状态
             const isFav = await db.forumFavorites.where('[userId+postId]').equals(['user', postId]).first();
             const favIcon = document.querySelector('#favorite-btn i');
@@ -36813,17 +36613,6 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                 </div>
             `;
 
-            // 🔥【新增】检查帖子是否包含图片
-            let imageContext = '';
-            let postImage = null;
-            if (post.hasImage) {
-                const imageRecord = await db.forumImages.where('postId').equals(postId).first();
-                if (imageRecord && imageRecord.imageData) {
-                    postImage = imageRecord.imageData;
-                    imageContext = '\n\n**重要**: 这个帖子包含一张图片，请仔细观察图片内容，并在评论中自然地提及你看到的内容。';
-                }
-            }
-
             const prompt = `
 # 角色：论坛评论生成AI
 请为以下帖子生成10条真实的评论回复。
@@ -36831,7 +36620,7 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
 ## 帖子信息:
 标题: ${post.title}
 内容: ${post.content}
-作者: ${post.authorName}${post.isAnonymous ? ' (匿名用户，身份未知)' : ''}${imageContext}
+作者: ${post.authorName}
 
 ## 论坛背景:
 世界观: ${forum.worldview || '现代都市生活分享社区'}
@@ -36839,7 +36628,7 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
 ## 可参与评论的角色:
 ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
 
-**重要：绝对不要生成用户(${persona ? persona.name : '用户'})的评论！用户会自己评论！**
+**重要：绝对不要生成用户(${persona.name})的评论！用户会自己评论！**
 
 ## 评论生成要求:
 1. **真实感**: 评论要像真人写的，有不同的观点和语气
@@ -36849,8 +36638,6 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
    - 30%由上述角色评论，要符合人设
 4. **互动性**: 评论之间可以有回应和讨论
 5. **长度适中**: 每条评论1-3句话即可
-6. **匿名保护**: ${post.isAnonymous ? '帖子作者是匿名的，评论者不应该认出或暗示知道作者的真实身份' : '正常互动即可'}
-${postImage ? '7. **图片识别**: 帖子包含图片，请在评论中自然地提及图片内容，展现你确实"看到"了图片' : ''}
 
 ### 输出格式:
 严格的JSON数组，不要其他文字：
@@ -36864,15 +36651,7 @@ ${postImage ? '7. **图片识别**: 帖子包含图片，请在评论中自然�
 `;
 
             try {
-                // 🔥【新增】如果有图片，使用图片识别API
-                let response;
-                if (postImage) {
-                    // 使用第一个论坛角色作为API调用的角色（仅用于API调用，不影响评论内容）
-                    const apiCharacter = forumCharacters[0] || { name: 'ForumAI', bio: '论坛AI助手' };
-                    response = await callChatAPIWithImage(prompt, apiCharacter, postImage);
-                } else {
-                    response = await callForumAPI(prompt);
-                }
+                const response = await callForumAPI(prompt);
                 let replies;
                 try {
                     replies = JSON.parse(response);
@@ -36968,13 +36747,6 @@ ${postImage ? '7. **图片识别**: 帖子包含图片，请在评论中自然�
             document.getElementById('post-title-input').value = '';
             document.getElementById('post-content-input').value = '';
             document.getElementById('anonymous-post-checkbox').checked = false;
-
-            // 清空图片上传
-            document.getElementById('post-image-input').value = '';
-            document.getElementById('image-upload-placeholder').style.display = 'block';
-            document.getElementById('image-preview-container').style.display = 'none';
-            window.currentPostImage = null;
-
             updateCharCount();
 
             // 添加字符计数监听
@@ -36990,75 +36762,7 @@ ${postImage ? '7. **图片识别**: 帖子包含图片，请在评论中自然�
             if (event && event.target !== event.currentTarget) return;
             const modal = document.getElementById('create-post-modal');
             modal.style.display = 'none';
-
-            // 清理图片数据
-            window.currentPostImage = null;
         }
-
-        // 显示图片模态框
-        function showImageModal(imageSrc) {
-            const modalHtml = `
-                <div class="modal-overlay" onclick="closeImageModal()" style="z-index: 10000;">
-                    <div class="image-modal-content" onclick="event.stopPropagation()">
-                        <img src="${imageSrc}" alt="图片" style="max-width: 90vw; max-height: 90vh; border-radius: 8px;">
-                        <button class="image-modal-close" onclick="closeImageModal()">×</button>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-        }
-
-        // 关闭图片模态框
-        function closeImageModal() {
-            const modal = document.querySelector('.modal-overlay');
-            if (modal) {
-                modal.remove();
-            }
-        }
-
-        // 处理帖子图片上传
-        function handlePostImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // 检查文件类型
-            if (!file.type.startsWith('image/')) {
-                alert('请选择图片文件');
-                return;
-            }
-
-            // 检查文件大小（限制为5MB）
-            if (file.size > 5 * 1024 * 1024) {
-                alert('图片文件不能超过5MB');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const imageData = e.target.result;
-
-                // 显示预览
-                document.getElementById('image-upload-placeholder').style.display = 'none';
-                document.getElementById('image-preview-container').style.display = 'block';
-                document.getElementById('image-preview').src = imageData;
-
-                // 保存图片数据
-                window.currentPostImage = imageData;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // 移除帖子图片
-        function removePostImage(event) {
-            event.stopPropagation();
-
-            document.getElementById('image-upload-placeholder').style.display = 'block';
-            document.getElementById('image-preview-container').style.display = 'none';
-            document.getElementById('post-image-input').value = '';
-            window.currentPostImage = null;
-        }
-
-
 
         // 更新字符计数
         function updateCharCount() {
@@ -37138,18 +36842,8 @@ ${postImage ? '7. **图片识别**: 帖子包含图片，请在评论中自然�
                     authorAvatar: authorAvatar,
                     timestamp: Date.now(),
                     isUserPost: true, // 标记为用户发帖
-                    isAnonymous: isAnonymous, // 标记是否匿名
-                    hasImage: !!window.currentPostImage // 标记是否包含图片
+                    isAnonymous: isAnonymous // 标记是否匿名
                 });
-
-                // 如果有图片，保存到图片表
-                if (window.currentPostImage) {
-                    await db.forumImages.add({
-                        postId: postId,
-                        imageData: window.currentPostImage,
-                        timestamp: Date.now()
-                    });
-                }
 
                 // 隐藏模态框
                 hideCreatePostModal();
@@ -37159,6 +36853,11 @@ ${postImage ? '7. **图片识别**: 帖子包含图片，请在评论中自然�
 
                 // 移除加载动画
                 forumTitle.innerHTML = originalTitle;
+
+                // 为用户帖子生成AI回复
+                setTimeout(() => {
+                    generateRepliesForUserPost(postId);
+                }, 1000);
 
                 showToast('帖子发布成功！', 'success');
 
@@ -37171,7 +36870,90 @@ ${postImage ? '7. **图片识别**: 帖子包含图片，请在评论中自然�
             }
         }
 
+        // 为用户帖子生成AI回复
+        async function generateRepliesForUserPost(postId) {
+            const post = await db.forumPosts.get(postId);
+            if (!post) return;
 
+            const forum = await db.forums.get(post.forumId);
+            const forumCharacters = characters.filter(c => forum.characterIds.includes(c.id));
+
+            const prompt = `
+# 角色：论坛回复生成AI
+用户在论坛发了一个帖子，请生成5-8条真实的回复。
+
+## 用户帖子:
+标题: ${post.title}
+内容: ${post.content}
+作者: ${post.authorName}${post.isAnonymous ? ' (匿名用户，身份未知)' : ''}
+
+## 论坛背景:
+世界观: ${forum.worldview || '现代都市生活分享社区'}
+
+## 可参与回复的角色:
+${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
+
+## 回复生成要求:
+1. **真实感**: 回复要像真人写的，有不同的观点和语气
+2. **多样性**: 包括赞同、反对、提问、分享经验、调侃等
+3. **角色分配**:
+   - 60%由虚构的路人网友回复（创造符合世界观的网友昵称）
+   - 40%由上述角色回复，要符合人设，使用"网名(真实身份)"格式
+4. **互动性**: 可以@用户或其他回复者${post.isAnonymous ? '，但不要试图猜测匿名用户的真实身份' : ''}
+5. **长度适中**: 每条回复1-3句话
+6. **匿名保护**: ${post.isAnonymous ? '帖子作者是匿名的，AI角色不应该认出或暗示知道作者的真实身份' : '正常互动即可'}
+
+### 输出格式:
+严格的JSON数组：
+
+[
+  {
+    "authorName": "回复者网名或网名(真实身份)",
+    "content": "回复内容"
+  }
+]
+`;
+
+            try {
+                const response = await callForumAPI(prompt);
+                let replies;
+                try {
+                    replies = JSON.parse(response);
+                } catch (e) {
+                    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch && jsonMatch[1]) {
+                        replies = JSON.parse(jsonMatch[1]);
+                    } else {
+                        return; // 静默失败，不影响用户体验
+                    }
+                }
+
+                if (Array.isArray(replies)) {
+                    // 保存回复到数据库
+                    for (let i = 0; i < replies.length; i++) {
+                        const reply = replies[i];
+                        if (reply.authorName && reply.content) {
+                            // 查找作者信息
+                            const author = characters.find(c => c.name === reply.authorName) ||
+                                         personas.find(p => p.name === reply.authorName);
+
+                            await db.forumReplies.add({
+                                postId: postId,
+                                content: reply.content,
+                                authorName: reply.authorName,
+                                authorAvatar: author ? author.avatarUrl : createDefaultAvatar(reply.authorName),
+                                timestamp: Date.now() + i * 2000 // 错开时间戳
+                            });
+                        }
+                    }
+
+                    showToast(`收到了${replies.length}条回复！`, 'success');
+                }
+            } catch (error) {
+                console.error("生成用户帖子回复失败:", error);
+                // 静默失败，不影响用户体验
+            }
+        }
 
         // 点赞评论 (已美化版本)
         async function likeReply(replyId) {
