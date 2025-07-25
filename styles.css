@@ -12817,8 +12817,6 @@ textarea.call-text-input {
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 10px;
-            text-align: left;
-            flex: 1;
         }
         .post-full-meta {
             font-size: 13px;
@@ -12829,9 +12827,6 @@ textarea.call-text-input {
             font-size: 15px;
             line-height: 1.7;
             white-space: pre-wrap;
-            text-align: left;
-            word-wrap: break-word;
-            word-break: break-word;
         }
         .replies-section h3 {
             font-size: 16px;
@@ -13873,6 +13868,7 @@ textarea.call-text-input {
             justify-content: space-between;
             align-items: flex-start;
             gap: 8px;
+            margin-bottom: 10px;
         }
 
         .user-post-badge {

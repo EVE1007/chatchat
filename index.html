@@ -36522,17 +36522,11 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
             contentContainer.innerHTML = `
                 <div class="post-full-content">
                     <div class="post-full-title-container">
-                        <div class="post-full-title">
-                            ${post.title}
-                            ${imageUrl ? '<svg class="image-post-badge" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ''}
-                        </div>
+                        <div class="post-full-title">${post.title}${imageUrl ? '<svg class="image-post-badge" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ''}</div>
                         ${post.isUserPost ? '<span class="user-post-badge">我</span>' : ''}
                     </div>
                     <div class="post-full-meta">由 ${post.authorName} 发布于 ${new Date(post.timestamp).toLocaleString()}</div>
-                    <div class="post-full-body" id="post-body-container">
-                        ${postBodyContainerHTML}
-                        ${imageUrl ? `<img src="${imageUrl}" alt="帖子图片" style="max-width: 100%; border-radius: 8px; margin-top: 15px;">` : ''}
-                    </div>
+                    <div class="post-full-body" id="post-body-container">${postBodyContainerHTML}${imageUrl ? `<img src="${imageUrl}" alt="帖子图片" style="max-width: 100%; border-radius: 8px; margin-top: 15px;">` : ''}</div>
                 </div>
                 <div class="replies-section">
                     <h3>回复</h3>
