@@ -3679,13 +3679,7 @@
                                         <div class="style-name">默认样式</div>
                                     </div>
                                     
-                                    <div class="bubble-style-option" data-style="glass">
-                                        <div class="style-preview bubble-style-glass">
-                                            <div class="preview-bubble sent-preview">毛玻璃</div>
-                                            <div class="preview-bubble received-preview">半透明</div>
-                                        </div>
-                                        <div class="style-name">毛玻璃</div>
-                                    </div>
+
                                     
                                     <div class="bubble-style-option" data-style="shadow">
                                         <div class="style-preview bubble-style-shadow">
@@ -3703,29 +3697,11 @@
                                         <div class="style-name">经典气泡</div>
                                     </div>
                                     
-                                    <div class="bubble-style-option" data-style="gradient">
-                                        <div class="style-preview bubble-style-gradient">
-                                            <div class="preview-bubble sent-preview">渐变色</div>
-                                            <div class="preview-bubble received-preview">美观</div>
-                                        </div>
-                                        <div class="style-name">渐变样式</div>
-                                    </div>
+
                                     
-                                    <div class="bubble-style-option" data-style="minimal">
-                                        <div class="style-preview bubble-style-minimal">
-                                            <div class="preview-bubble sent-preview">极简线条</div>
-                                            <div class="preview-bubble received-preview">简约</div>
-                                        </div>
-                                        <div class="style-name">极简样式</div>
-                                    </div>
+
                                     
-                                    <div class="bubble-style-option" data-style="neon">
-                                        <div class="style-preview bubble-style-neon">
-                                            <div class="preview-bubble sent-preview">霓虹发光</div>
-                                            <div class="preview-bubble received-preview">科技感</div>
-                                        </div>
-                                        <div class="style-name">霓虹样式</div>
-                                    </div>
+
                                     
                                     <div class="bubble-style-option" data-style="paper">
                                         <div class="style-preview bubble-style-paper">
@@ -3743,11 +3719,11 @@
                                     <div class="flex-gap-15">
                                         <div class="flex-1">
                                             <label class="label-small">我的气泡</label>
-                                            <input type="color" id="my-bubble-color" class="color-input" value="#007AFF">
+                                            <input type="color" id="my-bubble-color" class="color-input" value="#007AFF" oninput="updatePreview()">
                                         </div>
                                         <div class="flex-1">
                                             <label class="label-small">对方气泡</label>
-                                            <input type="color" id="ai-bubble-color" class="color-input" value="#f0f0f0">
+                                            <input type="color" id="ai-bubble-color" class="color-input" value="#f0f0f0" oninput="updatePreview()">
                                             <!-- 🔥【新增】群聊角色单独设置按钮 -->
                                             <div id="group-member-colors-btn" style="display: none; margin-top: 8px;">
                                                 <button type="button" class="theme-button theme-button-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="showGroupMemberColorSettings()">
@@ -3761,11 +3737,11 @@
                                     <div class="flex-gap-15-mb-15">
                                         <div class="flex-1">
                                             <label class="label-small">我的气泡透明度：<span id="my-bubble-opacity-value">100%</span></label>
-                                            <input type="range" id="my-bubble-opacity" min="0.1" max="1" step="0.1" value="1" class="width-100">
+                                            <input type="range" id="my-bubble-opacity" min="0.1" max="1" step="0.1" value="1" class="width-100" oninput="document.getElementById('my-bubble-opacity-value').textContent = Math.round(this.value * 100) + '%'; updatePreview();">
                                         </div>
                                         <div class="flex-1">
                                             <label class="label-small">对方气泡透明度：<span id="ai-bubble-opacity-value">100%</span></label>
-                                            <input type="range" id="ai-bubble-opacity" min="0.1" max="1" step="0.1" value="1" class="width-100">
+                                            <input type="range" id="ai-bubble-opacity" min="0.1" max="1" step="0.1" value="1" class="width-100" oninput="document.getElementById('ai-bubble-opacity-value').textContent = Math.round(this.value * 100) + '%'; updatePreview();">
                                         </div>
                                     </div>
                                 </div>
@@ -3775,12 +3751,51 @@
                                     <div class="flex-gap-15-mb-10">
                                         <div class="flex-1">
                                             <label class="label-small">内边距：<span id="bubble-padding-value">中等</span></label>
-                                            <input type="range" id="bubble-padding" min="4" max="16" step="2" value="12" class="width-100">
+                                            <input type="range" id="bubble-padding" min="4" max="16" step="2" value="12" class="width-100" oninput="updatePaddingValue(this.value); updatePreview();">
                                         </div>
                                     </div>
                                     <p class="tiny-text-gray margin-top-5">
                                         调整气泡内文字与边缘的距离，数值越大气泡越大
                                     </p>
+                                </div>
+
+                                <!-- 自定义CSS -->
+                                <div class="custom-css-section">
+                                    <label class="form-label">自定义CSS样式</label>
+                                    <textarea id="custom-bubble-css" placeholder="输入自定义CSS代码...
+
+示例：
+.message-bubble {
+    border-radius: 20px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+.sent .message-bubble {
+    background: linear-gradient(45deg, #007AFF, #5AC8FA) !important;
+}" rows="6" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 12px; resize: vertical;" oninput="updatePreview()"></textarea>
+                                </div>
+
+                                <!-- 实时预览 -->
+                                <div class="preview-section">
+                                    <label class="form-label">实时预览</label>
+                                    <div class="preview-container" id="bubble-preview">
+                                        <div class="preview-chat">
+                                            <!-- AI消息 -->
+                                            <div class="preview-msg ai-msg">
+                                                <div class="preview-avatar">AI</div>
+                                                <div class="preview-bubble ai-bubble" id="preview-ai">
+                                                    这是角色发送的消息预览
+                                                </div>
+                                            </div>
+                                            <!-- 用户消息 -->
+                                            <div class="preview-msg user-msg">
+                                                <div class="preview-bubble user-bubble" id="preview-user">
+                                                    这是用户发送的消息预览
+                                                </div>
+                                                <div class="preview-avatar">我</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4672,27 +4687,39 @@
             isMessageSelectionMode = false;
             selectedMessages.clear();
             
-            // 图片上传
+            // 图片上传 - 支持多选，但每张图片单独发送
             document.getElementById('image-upload').addEventListener('change', function(e) {
-                if (e.target.files && e.target.files[0]) {
-                    const file = e.target.files[0];
-                    
-                    // 检查文件类型，GIF格式不被Gemini API支持
-                    if (file.type === 'image/gif') {
-                        alert('抱歉，Gemini API 不支持 GIF 格式的图片。\n\n请选择其他格式的图片，如：\n• JPEG\n• PNG\n• WEBP');
-                        // 清空文件选择器
+                if (e.target.files && e.target.files.length > 0) {
+                    const files = Array.from(e.target.files);
+
+                    // 检查文件数量限制（最多9张）
+                    if (files.length > 9) {
+                        alert('一次最多只能选择9张图片');
                         e.target.value = '';
                         return;
                     }
-                    
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        // 🔥【修复】直接发送图片消息，就像正常的图片发送一样
-                        sendImageMessage(event.target.result);
-                    };
-                    reader.readAsDataURL(file);
+
+                    // 检查每个文件的类型
+                    const invalidFiles = files.filter(file => file.type === 'image/gif');
+                    if (invalidFiles.length > 0) {
+                        alert('抱歉，Gemini API 不支持 GIF 格式的图片。\n\n请选择其他格式的图片，如：\n• JPEG\n• PNG\n• WEBP');
+                        e.target.value = '';
+                        return;
+                    }
+
+                    // 每张图片单独发送，形成独立的消息气泡
+                    files.forEach((file, index) => {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            // 稍微延迟发送，避免时间戳完全相同，让消息有序显示
+                            setTimeout(() => {
+                                sendImageMessage(event.target.result);
+                            }, index * 100);
+                        };
+                        reader.readAsDataURL(file);
+                    });
                 }
-                
+
                 // 清空文件选择器，允许重复选择同一文件
                 e.target.value = '';
             });
@@ -13474,22 +13501,22 @@ async function applyChatBackground(backgroundUrl) {
         // 保存气泡样式设置
         function saveBubbleStyleSettings() {
             const chatSettings = getCurrentChatSettings();
-            
+
             // 保存样式设置
             chatSettings.bubbleStyle = window.selectedBubbleStyle || 'default';
             chatSettings.myBubbleColor = document.getElementById('my-bubble-color').value;
             chatSettings.aiBubbleColor = document.getElementById('ai-bubble-color').value;
             chatSettings.bubbleOpacity = document.getElementById('bubble-opacity').value;
+
+            // 保存自定义CSS
+            const customCSS = document.getElementById('custom-bubble-css')?.value || '';
+            chatSettings.customBubbleCSS = customCSS;
             
             // 更新显示文本
             const styleNames = {
                 'default': '默认样式',
-                'glass': '毛玻璃',
                 'shadow': '经典阴影',
                 'tail': '经典气泡',
-                'gradient': '渐变样式',
-                'minimal': '极简样式',
-                'neon': '霓虹样式',
                 'paper': '纸张样式'
             };
             
@@ -13528,8 +13555,22 @@ async function applyChatBackground(backgroundUrl) {
                 .filter(cls => !cls.startsWith('bubble-style-'))
                 .join(' ');
 
+            // 检查并修复已删除的样式
+            const removedStyles = ['glass', 'gradient', 'minimal', 'neon'];
+            let style = chatSettings.bubbleStyle || 'default';
+
+            if (removedStyles.includes(style)) {
+                console.log(`⚠️ 检测到已删除的气泡样式: ${style}，自动切换到默认样式`);
+                style = 'default';
+
+                // 如果有当前聊天角色，更新设置
+                if (currentChatCharacter) {
+                    chatSettings.bubbleStyle = 'default';
+                    saveCurrentChatSettings(chatSettings);
+                }
+            }
+
             // 添加当前样式类
-            const style = chatSettings.bubbleStyle || 'default';
             messagesContainer.classList.add(`bubble-style-${style}`);
 
             // 设置CSS变量用于动态颜色
@@ -13541,7 +13582,83 @@ async function applyChatBackground(backgroundUrl) {
             messagesContainer.style.setProperty('--ai-bubble-color', aiColor);
             messagesContainer.style.setProperty('--bubble-opacity', opacity);
 
+            // 应用自定义CSS
+            const customCSS = chatSettings.customBubbleCSS || '';
+            applyCustomCSS(customCSS);
+
             console.log(`🎨 气泡样式已应用: ${style} (角色: ${currentChatCharacter?.name || '无'})`);
+        }
+
+        // 更新预览
+        function updatePreview() {
+            const previewAi = document.getElementById('preview-ai');
+            const previewUser = document.getElementById('preview-user');
+            const previewContainer = document.getElementById('bubble-preview');
+
+            if (!previewAi || !previewUser || !previewContainer) return;
+
+            // 获取当前设置
+            const myColor = document.getElementById('my-bubble-color')?.value || '#007AFF';
+            const aiColor = document.getElementById('ai-bubble-color')?.value || '#f0f0f0';
+            const myOpacity = document.getElementById('my-bubble-opacity')?.value || '1';
+            const aiOpacity = document.getElementById('ai-bubble-opacity')?.value || '1';
+            const padding = document.getElementById('bubble-padding')?.value || '12';
+            const customCSS = document.getElementById('custom-bubble-css')?.value || '';
+
+            // 应用基础样式
+            previewUser.style.backgroundColor = myColor;
+            previewUser.style.opacity = myOpacity;
+            previewUser.style.padding = `${padding}px`;
+
+            previewAi.style.backgroundColor = aiColor;
+            previewAi.style.opacity = aiOpacity;
+            previewAi.style.padding = `${padding}px`;
+
+            // 应用气泡样式类
+            previewContainer.className = 'preview-container';
+            if (window.selectedBubbleStyle) {
+                previewContainer.classList.add(`bubble-style-${window.selectedBubbleStyle}`);
+            }
+
+            // 应用自定义CSS
+            applyPreviewCSS(customCSS);
+        }
+
+        // 应用自定义CSS到预览
+        function applyPreviewCSS(css) {
+            // 移除旧的预览样式
+            const oldStyle = document.getElementById('preview-custom-style');
+            if (oldStyle) oldStyle.remove();
+
+            if (!css.trim()) return;
+
+            // 创建新的样式
+            const style = document.createElement('style');
+            style.id = 'preview-custom-style';
+
+            // 将CSS限制在预览容器内
+            const scopedCSS = css
+                .replace(/\.message-bubble/g, '#bubble-preview .preview-bubble')
+                .replace(/\.sent\s+\.message-bubble/g, '#bubble-preview .user-bubble')
+                .replace(/\.received\s+\.message-bubble/g, '#bubble-preview .ai-bubble');
+
+            style.textContent = scopedCSS;
+            document.head.appendChild(style);
+        }
+
+        // 应用自定义CSS到实际聊天界面
+        function applyCustomCSS(css) {
+            // 移除旧的自定义样式
+            const oldStyle = document.getElementById('custom-bubble-style');
+            if (oldStyle) oldStyle.remove();
+
+            if (!css.trim()) return;
+
+            // 创建新的样式
+            const style = document.createElement('style');
+            style.id = 'custom-bubble-style';
+            style.textContent = css;
+            document.head.appendChild(style);
         }
         
         // 显示气泡颜色选择器
@@ -19932,17 +20049,24 @@ ${timeInfo}${musicInfo}
                     });
                     this.classList.add('selected');
                     window.selectedBubbleStyle = this.dataset.style;
+                    updatePreview(); // 实时预览
                 };
             });
             
             // 绑定分离的透明度事件
             document.getElementById('my-bubble-opacity').oninput = function() {
                 document.getElementById('my-bubble-opacity-value').textContent = Math.round(this.value * 100) + '%';
+                updatePreview();
             };
-            
+
             document.getElementById('ai-bubble-opacity').oninput = function() {
                 document.getElementById('ai-bubble-opacity-value').textContent = Math.round(this.value * 100) + '%';
+                updatePreview();
             };
+
+            // 绑定颜色变化事件
+            document.getElementById('my-bubble-color').oninput = updatePreview;
+            document.getElementById('ai-bubble-color').oninput = updatePreview;
             
             // 加载气泡大小设置
             document.getElementById('bubble-padding').value = chatSettings.bubblePadding || '12';
@@ -19953,8 +20077,17 @@ ${timeInfo}${musicInfo}
                 updatePaddingValue(this.value);
             };
             
+            // 加载自定义CSS
+            const customCSSTextarea = document.getElementById('custom-bubble-css');
+            if (customCSSTextarea) {
+                customCSSTextarea.value = chatSettings.customBubbleCSS || '';
+            }
+
             window.selectedBubbleStyle = currentStyle;
             showModal('bubble-style-modal');
+
+            // 初始化预览
+            setTimeout(updatePreview, 100);
         }
         
         // 显示定时发布设置
@@ -23155,12 +23288,8 @@ async function createGroupChat(personaId) {
             const chatSettings = await getAsyncChatSettings();
             const styleNames = {
                 'default': '默认样式',
-                'glass': '毛玻璃',
                 'shadow': '经典阴影',
                 'tail': '经典气泡',
-                'gradient': '渐变样式',
-                'minimal': '极简样式',
-                'neon': '霓虹样式',
                 'paper': '纸张样式'
             };
             

@@ -1232,12 +1232,8 @@
         /* 确保所有气泡样式都应用全局字体大小和字距 */
         .message-bubble,
         .bubble-style-default .message-bubble,
-        .bubble-style-glass .message-bubble,
         .bubble-style-shadow .message-bubble,
         .bubble-style-tail .message-bubble,
-        .bubble-style-gradient .message-bubble,
-        .bubble-style-minimal .message-bubble,
-        .bubble-style-neon .message-bubble,
         .bubble-style-paper .message-bubble {
             font-size: var(--global-font-size, 15px) !important;
             letter-spacing: var(--global-letter-spacing, 0px) !important;
@@ -2656,32 +2652,7 @@
             transition: all 0.2s ease;
         }
         
-        /* 毛玻璃效果 */
-        .bubble-style-glass .message-bubble {
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-light);
-            box-shadow: var(--shadow-xl), var(--shadow-md);
-            border-radius: 20px;
-            transition: all 0.3s ease;
-        }
-        
-        .bubble-style-glass .received .message-bubble {
-            background: var(--bubble-glass-bg-ai);
-            border: 1px solid var(--bubble-glass-border-ai);
-        }
-        
-        .bubble-style-glass .sent .message-bubble {
-            background: var(--bubble-glass-bg-user);
-            border: 1px solid var(--bubble-glass-border-user);
-        }
-        
-        .bubble-style-glass .message-bubble:hover {
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-mixed), var(--shadow-xl);
-        }
+
         
         /* 经典阴影样式 */
         .bubble-style-shadow .message-bubble {
@@ -2735,71 +2706,11 @@
             border-color: var(--my-bubble-color, var(--color-blue)) transparent transparent transparent;
         }
         
-        /* 渐变气泡样式 */
-        .bubble-style-gradient .received .message-bubble {
-            background: var(--gradient-gray);
-            color: var(--color-gray-dark);
-        }
+
         
-        .bubble-style-gradient .sent .message-bubble {
-            background: var(--gradient-blue);
-            color: white;
-        }
+
         
-        .bubble-style-gradient .message-bubble {
-            border-radius: 20px;
-            box-shadow: var(--shadow-md);
-        }
-        
-        /* 极简线条样式 */
-        .bubble-style-minimal .message-bubble {
-            border-radius: 12px;
-            border: 1.5px solid var(--color-gray-border);
-            box-shadow: none;
-            background: transparent;
-        }
-        
-        .bubble-style-minimal .received .message-bubble {
-            background: var(--color-gray-bg-lighter);
-            border-color: var(--color-gray-border);
-            color: var(--color-gray-dark);
-        }
-        
-        .bubble-style-minimal .sent .message-bubble {
-            background: var(--color-blue-light);
-            border-color: var(--color-blue);
-            color: var(--color-blue);
-        }
-        
-        /* 霓虹发光样式 */
-        .bubble-style-neon .message-bubble {
-            border-radius: 15px;
-            border: 1px solid;
-            animation: neonPulse 2s ease-in-out infinite alternate;
-        }
-        
-        .bubble-style-neon .received .message-bubble {
-            background: var(--bubble-neon-bg-ai);
-            border-color: var(--color-neon-green);
-            box-shadow: var(--shadow-neon-green);
-            color: var(--color-gray-dark);
-        }
-        
-        .bubble-style-neon .sent .message-bubble {
-            background: var(--bubble-neon-bg-user);
-            border-color: var(--color-neon-blue);
-            box-shadow: var(--shadow-neon-blue);
-            color: white;
-        }
-        
-        @keyframes neonPulse {
-            from {
-                box-shadow: var(--shadow-neon-green-small);
-            }
-            to {
-                box-shadow: var(--shadow-neon-green-large);
-            }
-        }
+
         
         /* 纸张卡片样式 */
         .bubble-style-paper .message-bubble {
@@ -2958,21 +2869,6 @@
         }
         
         /* 预览气泡特殊样式 */
-        .bubble-style-glass .preview-bubble {
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: var(--preview-glass-border);
-            border-radius: 16px;
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .bubble-style-glass .sent-preview {
-            background: var(--preview-glass-user);
-        }
-        
-        .bubble-style-glass .received-preview {
-            background: var(--preview-glass-ai);
-        }
         
         .bubble-style-shadow .preview-bubble {
             box-shadow: var(--shadow-form-mixed), var(--shadow-sm);
@@ -3007,45 +2903,11 @@
             border-color: transparent #f0f0f0 transparent transparent;
         }
         
-        .bubble-style-gradient .sent-preview {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+
         
-        .bubble-style-gradient .received-preview {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333;
-        }
+
         
-        .bubble-style-minimal .preview-bubble {
-            border: 1px solid #e0e0e0;
-            background: transparent;
-        }
-        
-        .bubble-style-minimal .sent-preview {
-            background: #f0f8ff;
-            border-color: var(--color-blue);
-            color: var(--color-blue);
-        }
-        
-        .bubble-style-minimal .received-preview {
-            background: #fafafa;
-            color: #333;
-        }
-        
-        .bubble-style-neon .preview-bubble {
-            border: 1px solid;
-            box-shadow: var(--shadow-neon-green-8px);
-        }
-        
-        .bubble-style-neon .sent-preview {
-            border-color: var(--color-neon-blue);
-            box-shadow: var(--shadow-neon-blue-8px);
-        }
-        
-        .bubble-style-neon .received-preview {
-            border-color: var(--color-neon-green);
-            box-shadow: var(--shadow-neon-green-8px);
-        }
+
         
         .bubble-style-paper .preview-bubble {
             border: var(--paper-border);
@@ -3099,6 +2961,83 @@
         
         .bubble-style-option.selected .style-name {
             color: var(--theme-button-bg, #4a84c1);
+        }
+
+        /* 自定义CSS区域 */
+        .custom-css-section {
+            margin: 20px 0;
+        }
+
+        /* 预览区域样式 */
+        .preview-section {
+            margin: 20px 0;
+        }
+
+        .preview-container {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .preview-chat {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .preview-msg {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .preview-msg.ai-msg {
+            justify-content: flex-start;
+        }
+
+        .preview-msg.user-msg {
+            justify-content: flex-end;
+        }
+
+        .preview-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .ai-msg .preview-avatar {
+            background: #666;
+        }
+
+        .user-msg .preview-avatar {
+            background: #007AFF;
+        }
+
+        .preview-bubble {
+            max-width: 180px;
+            padding: 8px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .ai-bubble {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .user-bubble {
+            background: #007AFF;
+            color: white;
         }
         
         .received .message-bubble {
