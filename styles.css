@@ -2590,7 +2590,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 10px;
-            padding-bottom: 100px; /* 为工具栏+输入框留出更多空间 */
+            padding-bottom: 75px; /* 适中的距离，比原来的100px稍微近一点 */
         }
         
         .message-container {
@@ -2602,9 +2602,9 @@
         
         .message-container.received {
             justify-content: flex-start;
-            padding-left: 5px;
+            padding-left: 1px;
         }
-        
+
         .message-container.sent {
             justify-content: flex-end;
             padding-right: 5px;
@@ -4166,8 +4166,10 @@ textarea.call-text-input {
             text-align: center;
             padding: 8px 20px;
             margin: 5px 0;
-            color: var(--color-gray);
-            font-size: 13px;
+            color: #666;
+            font-size: 14px;
+            font-weight: normal;
+            font-style: normal;
             opacity: 0;
             transform: translateY(10px);
             transition: all 0.3s ease;
@@ -4176,38 +4178,30 @@ textarea.call-text-input {
             left: 0;
             right: 0;
         }
-        
+
         .typing-indicator.show {
             opacity: 1;
             transform: translateY(0);
         }
-        
+
         .typing-indicator .dots {
             display: inline-block;
         }
-        
+
         .typing-indicator .dots::before {
             content: '...';
-            font-size: 16px;
-            color: var(--color-gray);
-            animation: typing-dot 1.4s infinite ease-in-out;
+            font-size: 14px;
+            color: #666;
+            font-weight: normal;
+            font-style: normal;
         }
-        
+
         .typing-indicator .dots::after {
             content: '';
         }
-        
+
         .typing-indicator .dot3 {
             display: none;
-        }
-        
-        @keyframes typing-dot {
-            0%, 100% {
-                opacity: 0.3;
-            }
-            50% {
-                opacity: 1;
-            }
         }
         
         /* 查看历史消息按钮 */
@@ -12688,30 +12682,69 @@ textarea.call-text-input {
             padding: 10px;
         }
         .forum-archive-item {
-            background: #fff;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
             cursor: pointer;
-            transition: all 0.2s ease;
-            border-left: 4px solid var(--accent-color);
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            border: 1px solid rgba(74, 132, 193, 0.12);
+            position: relative;
+            overflow: hidden;
         }
+
+        .forum-archive-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(74, 132, 193, 0.03), rgba(74, 132, 193, 0.01));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
         .forum-archive-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12), 0 3px 8px rgba(0, 0, 0, 0.08);
+            border-color: rgba(74, 132, 193, 0.25);
+        }
+
+        .forum-archive-item:hover::before {
+            opacity: 1;
         }
         .forum-archive-title {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 17px;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+            line-height: 1.3;
+            letter-spacing: -0.2px;
         }
         .forum-archive-meta {
-            font-size: 12px;
-            color: #888;
+            font-size: 13px;
+            color: #6b7280;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .forum-archive-meta i {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        /* 论坛用户图标样式 */
+        .forum-users-icon {
+            width: 14px;
+            height: 14px;
+            margin-right: 4px;
+            vertical-align: middle;
+            color: #6b7280;
         }
         .forum-empty-state {
             text-align: center;
@@ -13760,10 +13793,10 @@ textarea.call-text-input {
             gap: 15px; /* 按钮之间的间距 */
         }
 
-        /* 🔥【精准修复】只针对论坛页面的悬浮按钮，不影响其他按钮 */
+        /* 🔥【精准修复】只针对论坛页面的悬浮按钮，不影响其他按钮 - 调淡颜色 */
         #forum-view-screen .floating-action-buttons .floating-btn {
             opacity: 0.95 !important;
-            background: rgba(74, 132, 193, 0.9) !important;
+            background: rgba(74, 132, 193, 0.75) !important;
         }
 
         #forum-view-screen .floating-action-buttons .floating-btn:not(.hidden) {
@@ -13771,14 +13804,14 @@ textarea.call-text-input {
         }
 
         body[data-theme="cute"] #forum-view-screen .floating-action-buttons .floating-btn {
-            background: rgba(255, 182, 193, 0.9) !important;
+            background: rgba(255, 182, 193, 0.75) !important;
         }
 
         .floating-btn {
-            width: 50px;
-            height: 50px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
-            background: rgba(74, 132, 193, 0.85); /* 主题蓝色 */
+            background: rgba(74, 132, 193, 0.7); /* 主题蓝色 - 调淡 */
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -13787,7 +13820,7 @@ textarea.call-text-input {
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -13797,21 +13830,21 @@ textarea.call-text-input {
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
 
-        /* 刷新按钮使用稍微不同的颜色以作区分 */
+        /* 刷新按钮使用稍微不同的颜色以作区分 - 调淡 */
         .floating-btn.refresh-btn {
-            background: rgba(108, 117, 125, 0.8); /* 中性灰色 */
+            background: rgba(108, 117, 125, 0.65); /* 中性灰色 - 调淡 */
         }
         .floating-btn.refresh-btn:hover {
-            background: rgba(108, 117, 125, 1.0);
+            background: rgba(108, 117, 125, 0.85);
         }
 
-        /* 可爱主题下的按钮颜色适配 */
+        /* 可爱主题下的按钮颜色适配 - 调淡 */
         body[data-theme="cute"] .floating-btn.post-btn {
-            background: rgba(255, 182, 193, 0.85); /* 可爱主题粉色 */
+            background: rgba(255, 182, 193, 0.7); /* 可爱主题粉色 - 调淡 */
         }
 
         body[data-theme="cute"] .floating-btn.post-btn:hover {
-            background: rgba(255, 182, 193, 1.0);
+            background: rgba(255, 182, 193, 0.85);
         }
 
         /* --- 论坛评论区美化 --- */
@@ -13895,6 +13928,20 @@ textarea.call-text-input {
         body[data-theme="cute"] .user-post-badge {
             background-color: #C7C7CC;
             color: #666;
+        }
+
+        /* 可爱主题下的论坛社区卡片样式 */
+        body[data-theme="cute"] .forum-archive-item {
+            background: linear-gradient(135deg, rgba(255, 248, 252, 0.95), rgba(255, 240, 245, 0.95));
+            border-color: rgba(255, 182, 193, 0.15);
+        }
+
+        body[data-theme="cute"] .forum-archive-item::before {
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.04), rgba(255, 182, 193, 0.02));
+        }
+
+        body[data-theme="cute"] .forum-archive-item:hover {
+            border-color: rgba(255, 182, 193, 0.3);
         }
 
         /* --- 论坛评论区美化 --- */
@@ -15081,6 +15128,14 @@ textarea.call-text-input {
             flex: 1;
             color: #000000;
             position: relative; /* 为状态定位提供参考 */
+            transition: color 0.3s ease; /* 添加颜色过渡动画 */
+        }
+
+        /* 🔥【新增】正在输入状态的标题样式 */
+        .header .header-title.typing-status {
+            color: #666666; /* 更深的灰色文字 */
+            font-style: normal; /* 取消斜体 */
+            font-weight: normal; /* 正常字体粗细 */
         }
 
         /* 🔥【美化】拉黑状态提示样式 - 现代社交软件风格 */
@@ -17150,6 +17205,238 @@ textarea.call-text-input {
             color: #666;
         }
 
+        /* 🔥【新增】论坛个人主页多选删除功能样式 */
+
+        /* 多选模式下的帖子项布局 */
+        .multi-select-item {
+            display: flex !important;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px !important;
+            cursor: default !important;
+        }
+
+        .multi-select-item.selected {
+            background-color: rgba(135, 160, 180, 0.35);
+        }
+
+        /* 🔥【美化】选择框样式 - 更明显的雾霾蓝 */
+        .post-checkbox {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #5a7a95;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .post-checkbox:hover {
+            transform: scale(1.1);
+            color: #4a6a85;
+        }
+
+        /* 帖子内容区域 */
+        .post-content {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        /* 🔥【重新设计】悬浮操作按钮容器 - 横向排列 */
+        .floating-delete-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 12px;
+            border-radius: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 🔥【简化设计】横向排列的操作按钮 */
+        .select-all-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .select-all-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 🔥【简化设计】删除按钮 - 只显示垃圾桶和数字 */
+        .delete-action-btn {
+            background: #ff3b30;
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 18px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 36px;
+            min-width: 60px;
+            justify-content: center;
+        }
+
+        .delete-action-btn:hover {
+            background: #d70015;
+        }
+
+        /* 🔥【简化设计】取消按钮 - 纯文字 */
+        .cancel-action-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 18px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            height: 36px;
+            min-width: 50px;
+            justify-content: center;
+        }
+
+        .cancel-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .delete-action-btn i {
+            font-size: 16px;
+        }
+
+        /* 多选模式下隐藏原有的点击效果 */
+        .multi-select-item:hover {
+            transform: none !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+        }
+
+        /* 🔥【修正】多选按钮样式 - 黑色垃圾桶图标，无背景 */
+        .multi-select-toggle-btn {
+            background-color: transparent !important;
+            color: #333 !important;
+        }
+
+        .multi-select-toggle-btn i {
+            color: #333 !important;
+            font-size: 18px !important;
+        }
+
+        /* 🔥【修正】多选按钮激活状态样式 - 灰色圆形背景，显示叉号 */
+        #multi-select-btn[style*="color: rgb(255, 59, 48)"] {
+            background-color: #e0e0e0 !important;
+            border-radius: 50% !important;
+            color: #666 !important;
+            width: 32px !important;
+            height: 32px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* 🔥【修正】多选按钮激活状态的叉号图标样式 */
+        #multi-select-btn[style*="color: rgb(255, 59, 48)"] i {
+            color: #666 !important;
+            font-size: 16px !important;
+        }
+
+        /* 确保多选模式下的帖子内容区域保持正确的布局 */
+        .multi-select-item .post-content .post-title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .multi-select-item .post-content .post-meta {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 🔥【美化】选中状态的视觉反馈 - 更明显的雾霾蓝 */
+        .multi-select-item.selected .post-checkbox {
+            color: #5a7a95;
+            background-color: rgba(90, 122, 149, 0.4);
+            border-radius: 4px;
+        }
+
+        /* 删除按钮禁用状态 */
+        .floating-delete-btn[style*="opacity: 0.5"] {
+            cursor: not-allowed;
+        }
+
+        /* 🔥【简化设计】响应式设计 - 确保在小屏幕上也能正常显示 */
+        @media (max-width: 480px) {
+            .floating-delete-btn {
+                bottom: 20px;
+                gap: 8px;
+                padding: 6px 10px;
+            }
+
+            .select-all-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+
+            .delete-action-btn {
+                padding: 6px 10px;
+                font-size: 13px;
+                min-width: 50px;
+                height: 32px;
+            }
+
+            .cancel-action-btn {
+                padding: 6px 10px;
+                font-size: 13px;
+                min-width: 40px;
+                height: 32px;
+            }
+
+            .delete-action-btn i {
+                font-size: 14px;
+            }
+
+            .multi-select-item {
+                gap: 10px;
+                padding: 10px 12px !important;
+            }
+
+            .post-checkbox {
+                width: 20px;
+                height: 20px;
+                font-size: 16px;
+            }
+        }
+
         /* 🔥【新增】论坛编辑按钮和相关UI样式 */
         .forum-archive-header {
             display: flex;
@@ -17166,24 +17453,41 @@ textarea.call-text-input {
         }
 
         .forum-edit-btn {
-            background: none;
-            border: none;
-            color: #aaa;
+            background: rgba(74, 132, 193, 0.08);
+            border: 1px solid rgba(74, 132, 193, 0.15);
+            color: #4a84c1;
             font-size: 14px;
             cursor: pointer;
-            padding: 5px;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
+            padding: 6px;
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
+            opacity: 0.8;
         }
 
         .forum-edit-btn:hover {
-            background-color: #f0f0f0;
-            color: #555;
+            background: rgba(74, 132, 193, 0.15);
+            border-color: rgba(74, 132, 193, 0.25);
+            color: #3a74b1;
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        /* 可爱主题下的编辑按钮样式 */
+        body[data-theme="cute"] .forum-edit-btn {
+            background: rgba(255, 182, 193, 0.08);
+            border-color: rgba(255, 182, 193, 0.15);
+            color: #e91e63;
+        }
+
+        body[data-theme="cute"] .forum-edit-btn:hover {
+            background: rgba(255, 182, 193, 0.15);
+            border-color: rgba(255, 182, 193, 0.25);
+            color: #c2185b;
         }
 
         .selection-item-icon {

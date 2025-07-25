@@ -782,9 +782,14 @@
                     <div class="app-header">
                         <button class="back-button" onclick="backToCurrentForum()">‹</button>
                         <div class="app-title">个人主页</div>
-                        <button class="header-action-btn" onclick="showVoteHistory()" title="投票历史">
-                            <i class="fas fa-vote-yea"></i>
-                        </button>
+                        <div class="header-actions">
+                            <span class="action-btn multi-select-toggle-btn" onclick="toggleMultiSelectMode()" title="多选删除" id="multi-select-btn">
+                                <i class="fas fa-trash"></i>
+                            </span>
+                            <span class="action-btn" onclick="showVoteHistory()" title="投票历史">
+                                <i class="fas fa-vote-yea"></i>
+                            </span>
+                        </div>
                     </div>
                     <div class="app-content" style="padding: 0;">
                         <div class="profile-tabs">
@@ -9656,7 +9661,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         // 【新增】处理分享的论坛帖子卡片
                         const postData = message.postData || {};
                         myMessageContent = `
-                            <div class="shared-post-card" onclick="showPostView(${postData.id})">
+                            <div class="shared-post-card" onclick="showPostView(${postData.id}, 'chat')">
                                 <div class="shared-post-header">论坛帖子分享</div>
                                 <div class="shared-post-title">${postData.title || '帖子加载失败'}</div>
                                 <div class="shared-post-content">${truncateText(postData.content || '', 50)}</div>
@@ -9804,12 +9809,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                 }
             });
             
-            // 添加正在输入提示元素到消息底部（初始隐藏）
-            const typingIndicator = document.createElement('div');
-            typingIndicator.id = 'typing-indicator';
-            typingIndicator.className = 'typing-indicator';
-            typingIndicator.innerHTML = `${chatSettings.aiChatNickname || currentChatCharacter.name}正在输入中<span class="dots"></span>`;
-            messagesContainer.appendChild(typingIndicator);
+            // 🔥【移除】不再需要底部的正在输入提示元素，改为顶部标题变化
             
             // 如果不是加载更多，自动滚动到底部
             if (!loadMore) {
@@ -10113,7 +10113,7 @@ if ((!myDisplayAvatar || !myDisplayName) && chatSettings.selectedIdentityId) {
                         // 【新增】处理分享的论坛帖子卡片
                         const postData = message.postData || {};
                         messageContent = `
-                            <div class="shared-post-card" onclick="showPostView(${postData.id})">
+                            <div class="shared-post-card" onclick="showPostView(${postData.id}, 'chat')">
                                 <div class="shared-post-header">论坛帖子分享</div>
                                 <div class="shared-post-title">${postData.title || '帖子加载失败'}</div>
                                 <div class="shared-post-content">${truncateText(postData.content || '', 50)}</div>
@@ -10756,7 +10756,13 @@ async function startChat(character) {
                 displayTitle = `${displayTitle}（${memberCount}）`;
             }
 
-            document.getElementById('api-chat-title').textContent = displayTitle;
+            const chatTitle = document.getElementById('api-chat-title');
+            if (chatTitle) {
+                chatTitle.textContent = displayTitle;
+                // 🔥【新增】清除正在输入状态并保存新的原始标题
+                chatTitle.classList.remove('typing-status');
+                chatTitle.dataset.originalTitle = displayTitle;
+            }
             
             // 🔥【新增】渲染角色状态显示
             const headerContainer = document.querySelector('#api-chat-screen .header');
@@ -10894,55 +10900,45 @@ async function startChat(character) {
         
 
         
-        // 显示正在输入提示
+        // 显示正在输入提示 - 修改为顶部标题变化
         function showTypingIndicator() {
             console.log('🔧 尝试显示正在输入提示...');
-            let indicator = document.getElementById('typing-indicator');
-            
-            // 如果没有找到元素，尝试创建一个
-            if (!indicator) {
-                console.log('⚠️ 未找到typing-indicator元素，正在创建...');
-                const messagesContainer = document.getElementById('api-chat-messages');
-                if (messagesContainer) {
-                    indicator = document.createElement('div');
-                    indicator.id = 'typing-indicator';
-                    indicator.className = 'typing-indicator';
-                    
-                    // 获取当前角色名称
-                    const chatSettings = getCurrentChatSettings();
-                    const characterName = chatSettings.aiChatNickname || (currentChatCharacter ? currentChatCharacter.name : '对方');
-                    
-                    indicator.innerHTML = `${characterName}正在输入中<span class="dots"></span>`;
-                    messagesContainer.appendChild(indicator);
-                    console.log('✅ 已创建typing-indicator元素');
-                } else {
-                    console.error('❌ 找不到消息容器，无法创建typing-indicator');
-                    return;
-                }
+
+            const chatTitle = document.getElementById('api-chat-title');
+            if (!chatTitle) {
+                console.error('❌ 找不到聊天标题元素');
+                return;
             }
-            
-            if (indicator) {
-                console.log('✅ 显示正在输入提示');
-                indicator.classList.add('show');
-                // 滚动到底部显示提示
-                const messagesContainer = document.getElementById('api-chat-messages');
-                if (messagesContainer) {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                }
-            } else {
-                console.error('❌ 仍然找不到typing-indicator元素');
+
+            // 保存原始标题（如果还没保存的话）
+            if (!chatTitle.dataset.originalTitle) {
+                chatTitle.dataset.originalTitle = chatTitle.textContent;
             }
+
+            // 更改标题为"对方正在输入..."
+            chatTitle.textContent = '对方正在输入...';
+            chatTitle.classList.add('typing-status');
+
+            console.log('✅ 显示正在输入提示 - 标题已更改');
         }
-        
-        // 隐藏正在输入提示
+
+        // 隐藏正在输入提示 - 恢复原始标题
         function hideTypingIndicator() {
             console.log('🔧 尝试隐藏正在输入提示...');
-            const indicator = document.getElementById('typing-indicator');
-            if (indicator) {
-                console.log('✅ 隐藏正在输入提示');
-                indicator.classList.remove('show');
+
+            const chatTitle = document.getElementById('api-chat-title');
+            if (!chatTitle) {
+                console.error('❌ 找不到聊天标题元素');
+                return;
+            }
+
+            // 恢复原始标题
+            if (chatTitle.dataset.originalTitle) {
+                chatTitle.textContent = chatTitle.dataset.originalTitle;
+                chatTitle.classList.remove('typing-status');
+                console.log('✅ 隐藏正在输入提示 - 标题已恢复');
             } else {
-                console.log('⚠️ 未找到typing-indicator元素，可能已被移除');
+                console.log('⚠️ 未找到原始标题，可能已被清除');
             }
         }
         
@@ -10970,13 +10966,8 @@ async function startChat(character) {
             // 将系统消息放入居中容器
             centerContainer.appendChild(systemContainer);
             
-            // 插入到消息容器的最后（正在输入提示之前）
-            const typingIndicator = messagesContainer.querySelector('#typing-indicator');
-            if (typingIndicator) {
-                messagesContainer.insertBefore(centerContainer, typingIndicator);
-            } else {
-                messagesContainer.appendChild(centerContainer);
-            }
+            // 插入到消息容器的最后
+            messagesContainer.appendChild(centerContainer);
             
             // 滚动到底部
             setTimeout(() => {
@@ -11773,12 +11764,7 @@ async function startChat(character) {
                 tempContainer.innerHTML = avatarHtml + bubbleHtml;
                 
                 // 添加到消息容器
-                const typingIndicator = messagesContainer.querySelector('#typing-indicator');
-                if (typingIndicator) {
-                    messagesContainer.insertBefore(tempContainer, typingIndicator);
-                } else {
-                    messagesContainer.appendChild(tempContainer);
-                }
+                messagesContainer.appendChild(tempContainer);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 
                 // 等待1.2秒后撤回
@@ -12689,7 +12675,13 @@ ai注意，回复时请严格按照以下JSON格式回复，每条消息都必�
                 if (characterIndex !== -1) {
                     characters[characterIndex].name = newName.trim();
                     await saveCharacters();
-                    document.getElementById('api-chat-title').textContent = newName.trim();
+                    const chatTitle = document.getElementById('api-chat-title');
+                    if (chatTitle) {
+                        chatTitle.textContent = newName.trim();
+                        // 🔥【新增】清除正在输入状态并保存新的原始标题
+                        chatTitle.classList.remove('typing-status');
+                        chatTitle.dataset.originalTitle = newName.trim();
+                    }
                     renderCharacterList();
                     renderContactList();
                     renderMessageList();
@@ -19025,10 +19017,9 @@ ${timeInfo}${musicInfo}
             return isGemini ? data.candidates?.[0]?.content?.parts?.[0]?.text : data.choices?.[0]?.message?.content;
         }
 
-        // 专门为论坛功能设计的API调用函数
+        // 【恢复】专门为论坛功能设计的API调用函数 (仅处理文本)
         async function callForumAPI(prompt) {
-            console.log('🔥 [callForumAPI] 函数被调用');
-            console.log('🔥 [callForumAPI] API设置:', apiSettings);
+            console.log('🔥 [callForumAPI - Text Only] 函数被调用');
 
             if (!apiSettings.key) {
                 console.error('🔥 [callForumAPI] API密钥未设置');
@@ -19036,17 +19027,12 @@ ${timeInfo}${musicInfo}
             }
 
             const isGemini = apiSettings.base.includes('generativelanguage.googleapis.com');
-            console.log('🔥 [callForumAPI] 是否为Gemini:', isGemini);
-
-            // 构建请求体
             let requestBody;
             let url;
             let headers = { 'Content-Type': 'application/json' };
 
             if (isGemini) {
                 url = `${apiSettings.base}/models/${apiSettings.model}:generateContent?key=${apiSettings.key}`;
-
-                // 🔥【关键修复】使用和callChatAPI相同的对话格式
                 const geminiContents = [
                     {
                         role: 'user',
@@ -19054,19 +19040,17 @@ ${timeInfo}${musicInfo}
                     },
                     {
                         role: 'model',
-                        parts: [{ text: '我明白了，我会按照这些要求生成论坛帖子。' }]
+                        parts: [{ text: '我明白了，我会按照这些要求生成论坛帖子，严格输出JSON数组格式。' }]
                     },
                     {
                         role: 'user',
-                        parts: [{ text: '请现在开始生成帖子，严格按照JSON格式输出。' }]
+                        parts: [{ text: '请现在开始生成，只输出JSON数组，不要任何其他文字或解释。' }]
                     }
                 ];
-
                 requestBody = {
                     contents: geminiContents,
                     generationConfig: {
                         temperature: 0.8
-                        // 移除maxOutputTokens，Gemini可能不支持
                     }
                 };
             } else {
@@ -19083,18 +19067,11 @@ ${timeInfo}${musicInfo}
                 };
             }
 
-            console.log('🔥 [callForumAPI] 请求URL:', url);
-            console.log('🔥 [callForumAPI] 请求体:', requestBody);
-            console.log('🔥 [callForumAPI] prompt内容:', prompt);
-            console.log('🔥 [callForumAPI] prompt长度:', prompt.length);
-
             const response = await fetch(url, {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify(requestBody)
             });
-
-            console.log('🔥 [callForumAPI] 响应状态:', response.status);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -19103,50 +19080,106 @@ ${timeInfo}${musicInfo}
             }
 
             const data = await response.json();
-            console.log('🔥 [callForumAPI] 响应数据:', data);
-
             let result;
             if (isGemini) {
-                // 检查Gemini响应结构
-                if (data.candidates && data.candidates.length > 0) {
-                    console.log('🔥 [callForumAPI] candidates详细信息:', JSON.stringify(data.candidates, null, 2));
-                    const candidate = data.candidates[0];
-                    console.log('🔥 [callForumAPI] 第一个candidate:', JSON.stringify(candidate, null, 2));
-
-                    if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-                        result = candidate.content.parts[0].text || '[]';
-                        console.log('🔥 [callForumAPI] 从candidates获取内容:', result);
-                    } else {
-                        console.error('🔥 [callForumAPI] candidate中没有content.parts或为空');
-                        console.error('🔥 [callForumAPI] candidate结构:', candidate);
-
-                        // 检查是否被安全过滤器拦截
-                        if (candidate.finishReason) {
-                            console.error('🔥 [callForumAPI] finishReason:', candidate.finishReason);
-                        }
-                        if (candidate.safetyRatings) {
-                            console.error('🔥 [callForumAPI] safetyRatings:', candidate.safetyRatings);
-                        }
-
-                        throw new Error(`Gemini没有生成内容，finishReason: ${candidate.finishReason || '未知'}`);
-                    }
-                } else {
-                    console.error('🔥 [callForumAPI] Gemini响应中没有candidates字段');
-                    console.error('🔥 [callForumAPI] 完整响应:', JSON.stringify(data, null, 2));
-
-                    // 检查是否有安全过滤或其他问题
-                    if (data.promptFeedback) {
-                        console.error('🔥 [callForumAPI] promptFeedback:', data.promptFeedback);
-                    }
-
-                    throw new Error('Gemini API没有返回内容，可能是内容被安全过滤器拦截了');
-                }
+                result = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
             } else {
                 result = data.choices?.[0]?.message?.content || '[]';
             }
 
-            console.log('🔥 [callForumAPI] 最终结果:', result);
             return result;
+        }
+
+        // 【新增】为论坛功能设计的API调用函数 (支持图片)
+        async function callForumAPIWithImage(prompt, imageUrl) {
+            console.log('🔥 [callForumAPIWithImage] 函数被调用', { imageUrl: !!imageUrl });
+
+            if (!apiSettings.key) {
+                throw new Error('请先在API设置中填写密钥');
+            }
+            if (!imageUrl) {
+                // 如果没有图片，转而调用纯文本API
+                return callForumAPI(prompt);
+            }
+            if (!isVisionModelSupported()) {
+                throw new Error('当前模型不支持图片识别。请在API设置中选择支持视觉的模型，如 gpt-4o, gemini-1.5-pro 等。');
+            }
+
+            const isGemini = apiSettings.base.includes('generativelanguage.googleapis.com');
+            let requestBody;
+            let url;
+            let headers = { 'Content-Type': 'application/json' };
+            const systemPrompt = "你是一个论坛内容生成AI，请严格按照用户的指令和格式要求进行输出。";
+
+            if (isGemini) {
+                url = `${apiSettings.base}/models/${apiSettings.model}:generateContent?key=${apiSettings.key}`;
+
+                const mimeMatch = imageUrl.match(/data:image\/([^;]+);base64,(.+)/);
+                if (!mimeMatch) throw new Error('无效的图片数据格式');
+
+                const geminiContents = [
+                    {
+                        role: 'user',
+                        parts: [
+                            { text: systemPrompt },
+                            { text: prompt },
+                            {
+                                inline_data: {
+                                    mime_type: `image/${mimeMatch[1]}`,
+                                    data: mimeMatch[2]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        role: 'model',
+                        parts: [{ text: '我明白了，我会按照指令生成包含图片理解的论坛回复。' }]
+                    }
+                ];
+
+                requestBody = {
+                    contents: geminiContents,
+                    generationConfig: { temperature: 0.8 }
+                };
+
+            } else { // OpenAI 兼容格式
+                url = apiSettings.base.endsWith('/v1') ? `${apiSettings.base}/chat/completions` : `${apiSettings.base}/v1/chat/completions`;
+                headers['Authorization'] = `Bearer ${apiSettings.key}`;
+
+                requestBody = {
+                    model: apiSettings.model,
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        {
+                            role: "user",
+                            content: [
+                                { type: "text", text: prompt },
+                                { type: "image_url", image_url: { url: imageUrl } }
+                            ]
+                        }
+                    ],
+                    temperature: 0.8,
+                    max_tokens: 2048
+                };
+            }
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API请求失败: ${response.status} - ${errorText}`);
+            }
+
+            const data = await response.json();
+            const result = isGemini
+                ? data.candidates?.[0]?.content?.parts?.[0]?.text
+                : data.choices?.[0]?.message?.content;
+
+            return result || '[]';
         }
 
         // 🔥【手动清理所有损坏消息】立即清理所有聊天记录中的[object Object]
@@ -20312,7 +20345,13 @@ ${timeInfo}${musicInfo}
                     displayTitle = `${displayTitle}（${memberCount}）`;
                 }
 
-                document.getElementById('api-chat-title').textContent = displayTitle;
+                const chatTitle = document.getElementById('api-chat-title');
+                if (chatTitle) {
+                    chatTitle.textContent = displayTitle;
+                    // 🔥【新增】清除正在输入状态并保存新的原始标题
+                    chatTitle.classList.remove('typing-status');
+                    chatTitle.dataset.originalTitle = displayTitle;
+                }
             }
             
             // 刷新聊天界面
@@ -30003,7 +30042,6 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             if (!messagesContainer || !currentChatCharacter || characterId !== currentChatCharacter.id) return;
             
             const chatSettings = getCurrentChatSettings();
-            const typingIndicator = document.getElementById('typing-indicator');
             
             // 处理系统消息
             if (message.sender === 'system') {
@@ -30020,7 +30058,7 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                     systemContainer.textContent = message.content || '消息已发出，但被对方拒收了';
 
                     centerContainer.appendChild(systemContainer);
-                    messagesContainer.insertBefore(centerContainer, typingIndicator);
+                    messagesContainer.appendChild(centerContainer);
                     return;
                 }
 
@@ -30082,8 +30120,8 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                 // 为系统消息添加滑入动画
                 systemElement.style.opacity = '0';
                 systemElement.style.transform = 'translateY(20px)';
-                
-                messagesContainer.insertBefore(systemElement, typingIndicator);
+
+                messagesContainer.appendChild(systemElement);
                 
                 // 触发动画
                 requestAnimationFrame(() => {
@@ -30588,8 +30626,8 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
             // 添加滑入动画效果 - 简单自然的滑入
             messageContainer.style.opacity = '0';
             messageContainer.style.transform = 'translateY(20px)';
-            
-            messagesContainer.insertBefore(messageContainer, typingIndicator);
+
+            messagesContainer.appendChild(messageContainer);
             
             // 触发滑入动画
             requestAnimationFrame(() => {
@@ -34084,6 +34122,9 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                             displayTitle = `${character.name}（${memberCount}）`;
                         }
                         chatTitle.textContent = displayTitle;
+                        // 🔥【新增】清除正在输入状态并保存新的原始标题
+                        chatTitle.classList.remove('typing-status');
+                        chatTitle.dataset.originalTitle = displayTitle;
                     }
                     // 渲染该角色的聊天记录
                     renderChatMessages(character.id);
@@ -34321,7 +34362,13 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                             const memberCount = currentChatCharacter.members.length + 1; // +1 包括用户自己
                             displayTitle = `${currentChatCharacter.name}（${memberCount}）`;
                         }
-                        document.getElementById('api-chat-title').textContent = displayTitle;
+                        const chatTitle = document.getElementById('api-chat-title');
+                        if (chatTitle) {
+                            chatTitle.textContent = displayTitle;
+                            // 🔥【新增】清除正在输入状态并保存新的原始标题
+                            chatTitle.classList.remove('typing-status');
+                            chatTitle.dataset.originalTitle = displayTitle;
+                        }
                         
                         // 更新头像显示
                         const chatAvatarElement = document.querySelector('#api-chat-screen .message-avatar img');
@@ -34372,7 +34419,13 @@ ${originalComment.nickname} 评论说："${originalComment.text}"
                     const memberCount = currentChatCharacter.members.length + 1; // +1 包括用户自己
                     displayTitle = `${trimmedName}（${memberCount}）`;
                 }
-                document.getElementById('api-chat-title').textContent = displayTitle;
+                const chatTitle = document.getElementById('api-chat-title');
+                if (chatTitle) {
+                    chatTitle.textContent = displayTitle;
+                    // 🔥【新增】清除正在输入状态并保存新的原始标题
+                    chatTitle.classList.remove('typing-status');
+                    chatTitle.dataset.originalTitle = displayTitle;
+                }
                 renderContactList();
                 renderMessageList();
             }
@@ -34789,6 +34842,9 @@ async function changeMyGroupAvatar() {
                     const memberCount = currentChatCharacter.members.length + 1; // +1 包括用户自己
                     displayTitle = `${displayTitle}（${memberCount}）`;
                     chatTitle.textContent = displayTitle;
+                    // 🔥【新增】清除正在输入状态并保存新的原始标题
+                    chatTitle.classList.remove('typing-status');
+                    chatTitle.dataset.originalTitle = displayTitle;
                 }
 
                 showToast(`✅ ${selectedCharacter.name} 已加入群聊`, 'success');
@@ -34832,6 +34888,9 @@ async function changeMyGroupAvatar() {
                             const memberCount = currentChatCharacter.members.length + 1; // +1 包括用户自己
                             displayTitle = `${displayTitle}（${memberCount}）`;
                             chatTitle.textContent = displayTitle;
+                            // 🔥【新增】清除正在输入状态并保存新的原始标题
+                            chatTitle.classList.remove('typing-status');
+                            chatTitle.dataset.originalTitle = displayTitle;
                         }
 
                         showToast(`✅ ${selectedMember.name} 已被移出群聊`, 'success');
@@ -35909,23 +35968,7 @@ async function changeMyGroupAvatar() {
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
 
-        // 【新增】清空投票历史
-        function clearVoteHistory() {
-            if (confirm('确定要清空所有投票历史吗？此操作不可恢复。')) {
-                try {
-                    // 清空所有投票相关的localStorage
-                    Object.keys(localStorage)
-                        .filter(key => key.startsWith('poll_voted_') || key.startsWith('vote_detail_'))
-                        .forEach(key => localStorage.removeItem(key));
 
-                    showToast('投票历史已清空', 'success');
-                    closeModal();
-                } catch (error) {
-                    console.error('清空投票历史失败:', error);
-                    showToast('清空失败', 'error');
-                }
-            }
-        }
 
         // 🔥【优化后】显示创建论坛界面
         async function showCreateForumScreen() {
@@ -36092,7 +36135,7 @@ async function changeMyGroupAvatar() {
                         </button>
                     </div>
                     <div class="forum-archive-meta">
-                        <span>👥 ${forum.characterIds.length} 个角色</span>
+                        <span><svg class="forum-users-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zM4 18v-1c0-2.66 5.33-4 8-4s8 1.34 8 4v1H4zM12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm6 6c.2-.71.78-1.29 1.49-1.51A6.991 6.991 0 0 0 21 14c0-2.21-1.79-4-4-4-.51 0-1 .1-1.47.26C16.21 10.69 17 11.77 17 13v5h1z"/></svg> ${forum.characterIds.length} 个角色</span>
                         <span>${new Date(forum.createdAt).toLocaleDateString()}</span>
                     </div>
                 </div>
@@ -36493,22 +36536,33 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
 
         // 从帖子详情返回论坛
         function backToForum() {
-            // 🔥【修复】先显示目标页面，再隐藏当前页面，避免闪现主屏幕
-            if (currentForumId) {
-                loadAndDisplayForum(currentForumId);
+            // 🔥【修复】根据来源页面返回到正确位置
+            const source = window.postViewSource || 'forum';
+
+            if (source === 'chat') {
+                // 从聊天界面进入的，返回聊天界面
+                showApp('api-chat-screen');
             } else {
-                showApp('forum-screen');
+                // 从论坛进入的，返回论坛
+                if (currentForumId) {
+                    loadAndDisplayForum(currentForumId);
+                } else {
+                    showApp('forum-screen');
+                }
             }
             hideApp('post-view-screen');
         }
 
         // 🔥【优化后】显示帖子详情 (支持图片)
-        async function showPostView(postId) {
+        async function showPostView(postId, fromSource = 'forum') {
             const post = await db.forumPosts.get(postId);
             if (!post) return;
 
             window.currentPostId = postId;
             currentForumId = post.forumId;
+
+            // 🔥【新增】记录来源页面，用于返回导航
+            window.postViewSource = fromSource;
 
             const contentContainer = document.getElementById('post-view-content');
 
@@ -36530,7 +36584,7 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                 </div>
                 <div class="replies-section">
                     <h3>回复</h3>
-                    <div id="replies-list"><div class="loading-container" style="text-align: center; padding: 30px;"><div class="loading-spinner"></div><div style="color: #666; font-size: 12px;">加载评论中...</div></div></div>
+                    <div id="replies-list"><div class="loading-container" style="text-align: center; padding: 30px;"><div class="loading-spinner" style="width: 30px; height: 30px; border: 2px solid #f3f3f3; border-top: 2px solid #007AFF; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px auto;"></div><div style="color: #666; font-size: 12px;">加载评论中...</div></div></div>
                 </div>
             `;
 
@@ -36542,6 +36596,12 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
             showApp('post-view-screen');
 
             setTimeout(async () => {
+                // 🔥【恢复】为投票帖子生成智能票数数据
+                const pollElement = document.querySelector('.post-full-body .forum-poll');
+                if (pollElement) {
+                    await generateSmartPollData(postId, post);
+                }
+
                 const existingReplies = await db.forumReplies.where('postId').equals(postId).count();
                 if (existingReplies === 0) {
                     await generateRepliesForUserPost(postId, imageUrl);
@@ -36570,9 +36630,9 @@ ${forumCharacters.map(c => `- ${c.name} (人设: ${c.bio})`).join('\n')}
                         border-top: 2px solid #007AFF;
                         border-radius: 50%;
                         animation: spin 1s linear infinite;
-                        margin: 0 auto 10px;
+                        margin: 0 auto 15px auto;
                     "></div>
-                    <div style="color: #666; font-size: 12px;">正在生成评论...</div>
+                    <div style="color: #666; font-size: 12px;">加载评论中...</div>
                 </div>
             `;
 
@@ -36597,8 +36657,9 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
 1. **真实感**: 评论要像真人写的，有不同的观点和语气
 2. **多样性**: 包括赞同、反对、提问、分享经验等不同类型
 3. **角色分配**:
-   - 70%由虚构的路人网友评论（请创造符合世界观的网友昵称）
-   - 30%由上述角色评论，要符合人设
+   - 50%由虚构的路人网友评论（请创造符合世界观的网友昵称）
+   - 30%由上述角色评论，要符合人设，使用"网名(真实身份)"格式
+   - 20%由上述角色匿名评论，只使用网名，不暴露真实身份
 4. **互动性**: 评论之间可以有回应和讨论
 5. **长度适中**: 每条评论1-3句话即可
 
@@ -36635,9 +36696,19 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
                 for (let i = 0; i < replies.length; i++) {
                     const reply = replies[i];
                     if (reply.authorName && reply.content) {
-                        // 查找作者信息
-                        const author = characters.find(c => c.name === reply.authorName) ||
-                                     personas.find(p => p.name === reply.authorName);
+                        // 🔥【修复】正确识别角色身份，支持"网名(真实身份)"格式
+                        let author = null;
+                        let realName = '';
+
+                        // 检查是否是"网名(真实身份)"格式
+                        const nameMatch = reply.authorName.match(/^(.+)\((.+)\)$/);
+                        if (nameMatch) {
+                            realName = nameMatch[2]; // 提取真实身份
+                            author = characters.find(c => c.name === realName) || personas.find(p => p.name === realName);
+                        } else {
+                            // 直接匹配角色名
+                            author = characters.find(c => c.name === reply.authorName) || personas.find(p => p.name === reply.authorName);
+                        }
 
                         await db.forumReplies.add({
                             postId: postId,
@@ -36848,7 +36919,7 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             }
         }
 
-        // 🔥【优化后】为用户帖子生成AI回复 (支持识图)
+        // 【最终修复】为用户帖子生成AI回复 (智能分流)
         async function generateRepliesForUserPost(postId, imageUrl = null) {
             const post = await db.forumPosts.get(postId);
             if (!post) return;
@@ -36860,12 +36931,12 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
             let imageContext = '';
             if (imageUrl) {
                 // 这是告诉AI有图片存在的关键
-                imageContext = `\n\n**重要**：用户在帖子中附带了一张图片，你必须对图片内容进行回应。图片内容是 [图片]，请在回复中体现出你看到了这张图片。`;
+                imageContext = `\n\n**重要**：用户在帖子中附带了一张图片，你必须对图片内容进行回应。你的回复必须体现出你看到了这张图片。`;
             }
 
             const prompt = `
 # 角色：论坛回复生成AI
-用户在论坛发了一个帖子，请生成5-8条真实的回复。
+用户在论坛发了一个帖子，请生成8-12条真实的回复。
 
 ## 用户帖子:
 标题: ${post.title}
@@ -36882,18 +36953,19 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
 **重要：绝对不要生成用户(${persona.name})的评论！用户会自己评论！**
 
 ## 回复生成要求:
-1. **🔥 识图优先**: 如果帖子有图片，你的回复必须优先围绕图片内容展开。
-2. **真实感**: 回复要像真人写的，有不同的观点和语气
-3. **多样性**: 包括赞同、反对、提问、分享经验、调侃等不同类型
-4. **角色分配**:
-   - 60%由虚构的路人网友回复（请创造符合世界观的网友昵称）
-   - 40%由上述角色回复，要符合人设，使用"网名(真实身份)"格式
-5. **互动性**: 可以@用户或其他回复者${post.isAnonymous ? '，但不要试图猜测匿名用户的真实身份' : ''}
-6. **长度适中**: 每条回复1-3句话即可
-7. **匿名保护**: ${post.isAnonymous ? '帖子作者是匿名的，AI角色不应该认出或暗示知道作者的真实身份' : '正常互动即可'}
+1.  **🔥 识图优先**: 如果帖子有图片，你的回复必须优先围绕图片内容展开。
+2.  **真实感**: 回复要像真人写的，有不同的观点和语气
+3.  **多样性**: 包括赞同、反对、提问、分享经验、调侃等不同类型
+4.  **角色分配**:
+   - 50%由虚构的路人网友回复（请创造符合世界观的网友昵称）
+   - 30%由上述角色回复，要符合人设，使用"网名(真实身份)"格式
+   - 20%由上述角色匿名回复，只使用网名，不暴露真实身份
+5.  **互动性**: 可以@用户或其他回复者${post.isAnonymous ? '，但不要试图猜测匿名用户的真实身份' : ''}
+6.  **长度适中**: 每条回复1-3句话即可
+7.  **匿名保护**: ${post.isAnonymous ? '帖子作者是匿名的，AI角色不应该认出或暗示知道作者的真实身份' : '正常互动即可'}
 
 ### 输出格式:
-严格的JSON数组，不要其他文字：
+**重要：只输出JSON数组，不要任何其他文字、解释或代码块标记！**
 
 [
   {
@@ -36901,25 +36973,66 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
     "content": "回复内容"
   }
 ]
+
+**再次强调：直接输出JSON数组，不要包装在代码块中！**
 `;
 
             try {
                 let response;
-                // 🔥【关键】如果需要识图，需要调用支持多模态的API。
-                // 这里的 callForumAPI 内部的 callChatAPI 需要能处理图片。
-                // 鉴于你已有的 callChatAPIWithImage 函数，我们可以假设它能处理。
-                // 为简化，我们仍用 callForumAPI，但 prompt 中已包含识图指令。
-                response = await callForumAPI(prompt);
+                // 【智能分流】
+                if (imageUrl) {
+                    console.log("正在调用图片API...");
+                    response = await callForumAPIWithImage(prompt, imageUrl);
+                } else {
+                    console.log("正在调用文本API...");
+                    response = await callForumAPI(prompt);
+                }
 
                 let replies;
+                console.log('🔥 [generateRepliesForUserPost] AI原始响应:', response);
+
                 try {
                     replies = JSON.parse(response);
                 } catch (e) {
+                    console.log('🔥 [generateRepliesForUserPost] 直接解析JSON失败，尝试提取代码块');
+
+                    // 尝试提取 ```json 代码块
                     const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
                     if (jsonMatch && jsonMatch[1]) {
-                        replies = JSON.parse(jsonMatch[1]);
+                        console.log('🔥 [generateRepliesForUserPost] 找到JSON代码块:', jsonMatch[1]);
+                        try {
+                            replies = JSON.parse(jsonMatch[1]);
+                        } catch (e2) {
+                            console.error('🔥 [generateRepliesForUserPost] JSON代码块解析失败:', e2);
+                            throw new Error(`AI返回的JSON代码块格式错误: ${e2.message}`);
+                        }
                     } else {
-                        return;
+                        // 尝试提取普通的 ``` 代码块
+                        const codeMatch = response.match(/```\s*([\s\S]*?)\s*```/);
+                        if (codeMatch && codeMatch[1]) {
+                            console.log('🔥 [generateRepliesForUserPost] 找到普通代码块:', codeMatch[1]);
+                            try {
+                                replies = JSON.parse(codeMatch[1]);
+                            } catch (e3) {
+                                console.error('🔥 [generateRepliesForUserPost] 普通代码块解析失败:', e3);
+                                throw new Error(`AI返回的代码块格式错误: ${e3.message}`);
+                            }
+                        } else {
+                            // 尝试查找数组格式 [...]
+                            const arrayMatch = response.match(/\[[\s\S]*\]/);
+                            if (arrayMatch) {
+                                console.log('🔥 [generateRepliesForUserPost] 找到数组格式:', arrayMatch[0]);
+                                try {
+                                    replies = JSON.parse(arrayMatch[0]);
+                                } catch (e4) {
+                                    console.error('🔥 [generateRepliesForUserPost] 数组格式解析失败:', e4);
+                                    throw new Error(`AI返回的数组格式错误: ${e4.message}`);
+                                }
+                            } else {
+                                console.error('🔥 [generateRepliesForUserPost] 无法找到有效的JSON格式');
+                                throw new Error(`AI返回的不是有效的JSON格式。原始响应: ${response.substring(0, 200)}...`);
+                            }
+                        }
                     }
                 }
 
@@ -36927,7 +37040,20 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
                     for (let i = 0; i < replies.length; i++) {
                         const reply = replies[i];
                         if (reply.authorName && reply.content) {
-                            const author = characters.find(c => c.name === reply.authorName) || personas.find(p => p.name === reply.authorName);
+                            // 🔥【修复】正确识别角色身份，支持"网名(真实身份)"格式
+                            let author = null;
+                            let realName = '';
+
+                            // 检查是否是"网名(真实身份)"格式
+                            const nameMatch = reply.authorName.match(/^(.+)\((.+)\)$/);
+                            if (nameMatch) {
+                                realName = nameMatch[2]; // 提取真实身份
+                                author = characters.find(c => c.name === realName) || personas.find(p => p.name === realName);
+                            } else {
+                                // 直接匹配角色名
+                                author = characters.find(c => c.name === reply.authorName) || personas.find(p => p.name === reply.authorName);
+                            }
+
                             await db.forumReplies.add({
                                 postId: postId,
                                 content: reply.content,
@@ -36942,6 +37068,8 @@ ${forumCharacters.map(c => `- ${c.name}: ${c.bio}`).join('\n')}
 
             } catch (error) {
                 console.error("生成用户帖子回复失败:", error);
+                // 【重要】向用户显示具体的错误信息
+                showToast(`生成回复失败: ${error.message}`, 'error');
             }
         }
 
@@ -47818,6 +47946,13 @@ function switchProfileTab(tab) {
         myPostsList.style.display = 'none';
         favListContainer.style.display = 'block';
     }
+
+    // 🔥【新增】如果当前处于多选模式，重新渲染带选择框的列表
+    if (isForumMultiSelectMode) {
+        selectedPostIds.clear(); // 清空选择状态
+        renderPostsWithCheckboxes();
+        updateDeleteButtonState();
+    }
 }
 
 // --- 帖子分享功能 ---
@@ -48000,9 +48135,318 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-
-
 });
+
+        // 🔥【修复】添加缺失的 closeModal 函数 - 全局作用域
+        function closeModal() {
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 🔥【修复】添加缺失的 clearVoteHistory 函数 - 全局作用域
+        function clearVoteHistory() {
+            if (confirm('确定要清空所有投票历史吗？此操作不可恢复。')) {
+                try {
+                    // 清空所有投票相关的localStorage
+                    Object.keys(localStorage)
+                        .filter(key => key.startsWith('poll_voted_') || key.startsWith('vote_detail_'))
+                        .forEach(key => localStorage.removeItem(key));
+
+                    showToast('投票历史已清空', 'success');
+                    closeModal();
+                } catch (error) {
+                    console.error('清空投票历史失败:', error);
+                    showToast('清空失败', 'error');
+                }
+            }
+        }
+
+        // 🔥【新增】论坛个人主页多选删除功能 - 全局变量和函数
+        let isForumMultiSelectMode = false;
+        let selectedPostIds = new Set();
+
+        // 切换多选模式
+        function toggleMultiSelectMode() {
+            isForumMultiSelectMode = !isForumMultiSelectMode;
+            selectedPostIds.clear();
+
+            const multiSelectBtn = document.getElementById('multi-select-btn');
+            const icon = multiSelectBtn.querySelector('i');
+
+            if (isForumMultiSelectMode) {
+                // 🔥【修改】进入多选模式 - 改为叉号图标
+                icon.className = 'fas fa-times';
+                multiSelectBtn.title = '退出多选';
+                multiSelectBtn.style.color = '#ff3b30'; // 这个颜色会被CSS覆盖
+
+                // 重新渲染帖子列表，添加选择框
+                renderPostsWithCheckboxes();
+
+                // 显示删除按钮
+                showDeleteButton();
+            } else {
+                // 退出多选模式
+                icon.className = 'fas fa-trash';
+                multiSelectBtn.title = '多选删除';
+                multiSelectBtn.style.color = '';
+
+                // 重新渲染帖子列表，移除选择框
+                showForumProfile();
+
+                // 隐藏删除按钮
+                hideDeleteButton();
+            }
+        }
+
+        // 重新渲染帖子列表，添加选择框
+        async function renderPostsWithCheckboxes() {
+            const currentTab = document.querySelector('.profile-tab.active').textContent;
+
+            if (currentTab === '我的帖子') {
+                await renderMyPostsWithCheckboxes();
+            } else {
+                await renderFavoritePostsWithCheckboxes();
+            }
+        }
+
+        // 渲染我的帖子（带选择框）
+        async function renderMyPostsWithCheckboxes() {
+            const myPostsList = document.getElementById('my-posts-list');
+            const allPosts = await db.forumPosts.toArray();
+            const userPosts = allPosts.filter(post => post.isUserPost === true).sort((a, b) => b.timestamp - a.timestamp);
+
+            if (userPosts.length === 0) {
+                myPostsList.innerHTML = `<div class="forum-empty-state"><p>你还没有发过帖子</p></div>`;
+                return;
+            }
+
+            const userPostsHtml = await Promise.all(userPosts.map(async post => {
+                const hasImage = await db.forumPostImages.where('postId').equals(post.id).count() > 0;
+                const isSelected = selectedPostIds.has(post.id);
+
+                return `
+                    <div class="post-item multi-select-item ${isSelected ? 'selected' : ''}" data-post-id="${post.id}" onclick="togglePostSelection(${post.id}, event)">
+                        <div class="post-checkbox">
+                            <i class="fas ${isSelected ? 'fa-check-square' : 'fa-square'}"></i>
+                        </div>
+                        <div class="post-content">
+                            <div class="post-title-container">
+                                <div class="post-title">
+                                    ${post.title}
+                                    ${hasImage ? '<svg class="image-post-badge" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ''}
+                                </div>
+                                <span class="user-post-badge">我</span>
+                            </div>
+                            <div class="post-meta">
+                                <span class="post-author">${post.authorName}</span>
+                                <span>${formatTime(post.timestamp)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }));
+            myPostsList.innerHTML = userPostsHtml.join('');
+        }
+
+        // 渲染我的收藏（带选择框）
+        async function renderFavoritePostsWithCheckboxes() {
+            const favListContainer = document.getElementById('favorite-posts-list');
+            const favoriteRecords = await db.forumFavorites.where('userId').equals('user').toArray();
+            const postIds = favoriteRecords.map(fav => fav.postId);
+
+            if (postIds.length === 0) {
+                favListContainer.innerHTML = `<div class="forum-empty-state"><p>你还没有收藏任何帖子</p></div>`;
+                return;
+            }
+
+            const favoritePosts = await db.forumPosts.where('id').anyOf(postIds).toArray();
+            const favoritePostsHtml = await Promise.all(favoritePosts.sort((a,b) => b.timestamp - a.timestamp).map(async post => {
+                const hasImage = await db.forumPostImages.where('postId').equals(post.id).count() > 0;
+                const isSelected = selectedPostIds.has(post.id);
+
+                return `
+                    <div class="post-item multi-select-item ${isSelected ? 'selected' : ''}" data-post-id="${post.id}" onclick="togglePostSelection(${post.id}, event)">
+                        <div class="post-checkbox">
+                            <i class="fas ${isSelected ? 'fa-check-square' : 'fa-square'}"></i>
+                        </div>
+                        <div class="post-content">
+                            <div class="post-title-container">
+                                <div class="post-title">
+                                    ${post.title}
+                                    ${hasImage ? '<svg class="image-post-badge" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ''}
+                                </div>
+                                ${post.isUserPost ? '<span class="user-post-badge">我</span>' : ''}
+                            </div>
+                            <div class="post-meta">
+                                <span class="post-author">${post.authorName}</span>
+                                <span>${formatTime(post.timestamp)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }));
+            favListContainer.innerHTML = favoritePostsHtml.join('');
+        }
+
+        // 切换帖子选择状态
+        function togglePostSelection(postId, event) {
+            event.stopPropagation();
+
+            const postItem = document.querySelector(`[data-post-id="${postId}"]`);
+            const checkbox = postItem.querySelector('.post-checkbox i');
+
+            if (selectedPostIds.has(postId)) {
+                selectedPostIds.delete(postId);
+                postItem.classList.remove('selected');
+                checkbox.className = 'fas fa-square';
+            } else {
+                selectedPostIds.add(postId);
+                postItem.classList.add('selected');
+                checkbox.className = 'fas fa-check-square';
+            }
+
+            updateDeleteButtonState();
+        }
+
+        // 显示删除按钮
+        function showDeleteButton() {
+            const existingBtn = document.getElementById('multi-delete-btn');
+            if (existingBtn) return;
+
+            const deleteBtn = document.createElement('div');
+            deleteBtn.id = 'multi-delete-btn';
+            deleteBtn.className = 'floating-delete-btn';
+            deleteBtn.innerHTML = `
+                <button class="select-all-btn" onclick="toggleSelectAll()" title="全选/取消全选">
+                    <i class="fas fa-check-double"></i>
+                </button>
+                <button class="delete-action-btn" onclick="confirmDeleteSelectedPosts()" title="删除选中的帖子">
+                    <i class="fas fa-trash"></i>
+                    <span id="selected-count">0</span>
+                </button>
+                <button class="cancel-action-btn" onclick="toggleMultiSelectMode()" title="取消多选模式">
+                    取消
+                </button>
+            `;
+
+            document.getElementById('forum-profile-screen').appendChild(deleteBtn);
+        }
+
+        // 隐藏删除按钮
+        function hideDeleteButton() {
+            const deleteBtn = document.getElementById('multi-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.remove();
+            }
+        }
+
+        // 更新删除按钮状态
+        function updateDeleteButtonState() {
+            const countSpan = document.getElementById('selected-count');
+            const deleteBtn = document.getElementById('multi-delete-btn');
+
+            if (countSpan) {
+                countSpan.textContent = selectedPostIds.size;
+            }
+
+            if (deleteBtn) {
+                deleteBtn.style.opacity = selectedPostIds.size > 0 ? '1' : '0.5';
+                deleteBtn.style.pointerEvents = selectedPostIds.size > 0 ? 'auto' : 'none';
+            }
+        }
+
+        // 确认删除选中的帖子
+        async function confirmDeleteSelectedPosts() {
+            if (selectedPostIds.size === 0) {
+                showToast('请先选择要删除的帖子', 'warning');
+                return;
+            }
+
+            const currentTab = document.querySelector('.profile-tab.active').textContent;
+            const actionText = currentTab === '我的帖子' ? '删除这些帖子' : '取消收藏这些帖子';
+
+            if (!confirm(`确定要${actionText}吗？共 ${selectedPostIds.size} 个项目。${currentTab === '我的帖子' ? '\n\n注意：删除帖子将同时删除所有回复和相关数据，此操作不可撤销！' : ''}`)) {
+                return;
+            }
+
+            try {
+                if (currentTab === '我的帖子') {
+                    await deleteSelectedPosts();
+                } else {
+                    await unfavoriteSelectedPosts();
+                }
+
+                showToast(`成功${actionText}`, 'success');
+
+                // 退出多选模式并刷新列表
+                toggleMultiSelectMode();
+
+            } catch (error) {
+                console.error('删除操作失败:', error);
+                showToast('操作失败，请重试', 'error');
+            }
+        }
+
+        // 删除选中的帖子
+        async function deleteSelectedPosts() {
+            const postIdsArray = Array.from(selectedPostIds);
+
+            // 删除帖子相关的所有数据
+            await Promise.all([
+                // 删除帖子本身
+                db.forumPosts.where('id').anyOf(postIdsArray).delete(),
+                // 删除帖子的回复
+                db.forumReplies.where('postId').anyOf(postIdsArray).delete(),
+                // 删除帖子的点赞记录
+                db.forumPostLikes.where('postId').anyOf(postIdsArray).delete(),
+                // 删除帖子的收藏记录
+                db.forumFavorites.where('postId').anyOf(postIdsArray).delete(),
+                // 删除帖子的图片
+                db.forumPostImages.where('postId').anyOf(postIdsArray).delete(),
+                // 删除回复的点赞记录
+                db.replyLikes.where('postId').anyOf(postIdsArray).delete()
+            ]);
+        }
+
+        // 取消收藏选中的帖子
+        async function unfavoriteSelectedPosts() {
+            const postIdsArray = Array.from(selectedPostIds);
+
+            // 删除收藏记录
+            await db.forumFavorites.where('postId').anyOf(postIdsArray).and(fav => fav.userId === 'user').delete();
+        }
+
+        // 全选/取消全选功能
+        function toggleSelectAll() {
+            const allPostItems = document.querySelectorAll('.multi-select-item');
+            const allPostIds = Array.from(allPostItems).map(item => parseInt(item.dataset.postId));
+
+            // 判断是否已经全选
+            const isAllSelected = allPostIds.every(id => selectedPostIds.has(id));
+
+            if (isAllSelected) {
+                // 取消全选
+                selectedPostIds.clear();
+                allPostItems.forEach(item => {
+                    item.classList.remove('selected');
+                    const checkbox = item.querySelector('.post-checkbox i');
+                    checkbox.className = 'fas fa-square';
+                });
+            } else {
+                // 全选
+                allPostIds.forEach(id => selectedPostIds.add(id));
+                allPostItems.forEach(item => {
+                    item.classList.add('selected');
+                    const checkbox = item.querySelector('.post-checkbox i');
+                    checkbox.className = 'fas fa-check-square';
+                });
+            }
+
+            updateDeleteButtonState();
+        }
+
     </script>
 </body>
 </html>
